@@ -4,7 +4,7 @@ Systems³ Project Reporter - FastAPI Main Application
 import os
 import logging
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -75,10 +75,9 @@ async def startup_event():
 
 
 @app.get("/")
-async def root():
-    """Root endpoint - redirect to dashboard"""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/dashboard")
+async def root(request: Request):
+    """Landing page with hero section"""
+    return templates.TemplateResponse("landing.html", {"request": request})
 
 
 @app.get("/health")

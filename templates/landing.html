@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Systems³ Project Reporter - Automation at Exponential Scale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Hero Section -->
+    <div class="min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 hero-gradient rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">S³</span>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            Systems<sup class="text-lg">3</sup>
+                        </h1>
+                    </div>
+                    <a href="/dashboard" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        Launch App →
+                    </a>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Hero Content -->
+        <main class="flex-1 flex items-center">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    
+                    <!-- Left Column - Content -->
+                    <div class="fade-in-up">
+                        <div class="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-6">
+                            Project Reporter v2.0
+                        </div>
+                        
+                        <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                            Project Reporting<br>
+                            <span class="gradient-text">at Exponential Scale</span>
+                        </h1>
+                        
+                        <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                            Transform your MS Project data into stunning visualizations and automated reports. 
+                            Upload, analyze, and export—all in seconds.
+                        </p>
+                        
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="/dashboard" class="px-8 py-4 hero-gradient text-white rounded-lg font-semibold text-lg hover:opacity-90 transition-opacity text-center">
+                                Get Started
+                            </a>
+                            <a href="/upload" class="px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold text-lg hover:border-gray-400 transition-colors text-center">
+                                Upload XML
+                            </a>
+                        </div>
+                        
+                        <div class="mt-12 grid grid-cols-3 gap-6">
+                            <div>
+                                <div class="text-3xl font-bold gradient-text">3x</div>
+                                <div class="text-sm text-gray-600">Faster Reporting</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold gradient-text">100%</div>
+                                <div class="text-sm text-gray-600">Automated</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold gradient-text">∞</div>
+                                <div class="text-sm text-gray-600">Projects</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Feature Cards -->
+                    <div class="space-y-4 fade-in-up" style="animation-delay: 0.2s;">
+                        
+                        <!-- Feature Card 1 -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 hero-gradient rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Interactive Gantt Charts</h3>
+                                    <p class="text-gray-600">Visualize project timelines with beautiful, interactive Gantt charts powered by Plotly.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Feature Card 2 -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 hero-gradient rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Smart XML Upload</h3>
+                                    <p class="text-gray-600">Upload MS Project XML files with intelligent change detection and milestone tracking.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Feature Card 3 -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 hero-gradient rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">PowerPoint Export</h3>
+                                    <p class="text-gray-600">Generate professional PowerPoint presentations with one click. Perfect for stakeholder updates.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-600 text-sm mb-4 md:mb-0">
+                        © 2025 Systems³ | Project Reporter v2.0.0 | Automation at exponential scale
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="/dashboard" class="text-gray-600 hover:text-gray-900 text-sm">Dashboard</a>
+                        <a href="/upload" class="text-gray-600 hover:text-gray-900 text-sm">Upload</a>
+                        <a href="/health" class="text-gray-600 hover:text-gray-900 text-sm">Status</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        
+    </div>
+    
+</body>
+</html>
