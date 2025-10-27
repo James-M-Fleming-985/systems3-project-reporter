@@ -1,0 +1,77 @@
+project_name: "Quality Management System Implementation"
+project_code: "QMS-2025"
+status: "IN_PROGRESS"
+start_date: "2025-04-01"
+target_completion: "2026-02-28"
+completion_percentage: 68
+
+milestones:
+  - name: "Requirements Gathering"
+    target_date: "2025-05-31"
+    status: "COMPLETED"
+    completion_date: "2025-05-28"
+    
+  - name: "System Design"
+    target_date: "2025-07-15"
+    status: "COMPLETED"
+    completion_date: "2025-07-10"
+    
+  - name: "Process Documentation"
+    target_date: "2025-09-30"
+    status: "COMPLETED"
+    completion_date: "2025-09-28"
+    notes: "All SOPs documented and reviewed"
+    
+  - name: "Staff Training - Wave 1"
+    target_date: "2025-10-25"
+    status: "IN_PROGRESS"
+    completion_percentage: 80
+    notes: "Training sessions running daily"
+    
+  - name: "Staff Training - Wave 2"
+    target_date: "2025-11-15"
+    status: "NOT_STARTED"
+    
+  - name: "System Pilot Testing"
+    target_date: "2025-12-10"
+    status: "NOT_STARTED"
+    
+  - name: "Full Deployment"
+    target_date: "2026-01-31"
+    status: "NOT_STARTED"
+    
+  - name: "Post-Implementation Review"
+    target_date: "2026-02-28"
+    status: "NOT_STARTED"
+
+risks:
+  - id: "R001"
+    description: "Staff resistance to new procedures"
+    severity: "MEDIUM"
+    probability: "MEDIUM"
+    status: "ACTIVE"
+    mitigation: "Change management program with incentives, regular communication"
+    
+  - id: "R002"
+    description: "Integration issues with legacy systems"
+    severity: "HIGH"
+    probability: "LOW"
+    status: "MONITORING"
+    mitigation: "Technical team on standby, phased rollout approach"
+    
+  - id: "R003"
+    description: "Training schedule conflicts during peak season"
+    severity: "LOW"
+    probability: "MEDIUM"
+    status: "MONITORING"
+    mitigation: "Flexible training times, online modules available"
+
+changes:
+  - change_id: "CHG001"
+    date: "2025-10-05"
+    milestone: "Staff Training - Wave 1"
+    old_date: "2025-10-15"
+    new_date: "2025-10-25"
+    reason: "Additional training modules added based on feedback"
+    impact: "10 day delay"
+    approved_by: "Quality Director"

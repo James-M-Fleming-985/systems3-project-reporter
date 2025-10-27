@@ -1,0 +1,19 @@
+feature_id: FEATURE-003-006
+feature_name: PowerPoint Generator
+test_pyramid_timestamp: '20251020_204045'
+layer_tests:
+  unit_tests: 8
+  layer_count: 4
+feature_tests:
+  integration_tests:
+    location: tests/integration/
+    count: 7
+    status: COMPLETED
+  e2e_tests:
+    location: tests/e2e/
+    count: 4
+    status: COMPLETED
+integration_scenarios: []
+e2e_scenarios: []
+test_coverage_goal: 90%
+status: PYRAMID_STRUCTURE_DEFINED

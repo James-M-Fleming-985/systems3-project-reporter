@@ -1,0 +1,185 @@
+matrix_metadata:
+  timestamp: '20251020_210227'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Reads valid YAML files without errors
+  description: Reads valid YAML files without errors
+  test_files: &id001
+  - LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Reads valid XML files and converts to dict structure
+  description: Reads valid XML files and converts to dict structure
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Handles UTF-8 and UTF-16 encoded files correctly
+  description: Handles UTF-8 and UTF-16 encoded files correctly
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Raises FileNotFoundError for non-existent files with clear message
+  description: Raises FileNotFoundError for non-existent files with clear message
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: Raises FileParseError for malformed YAML with line number
+  description: Raises FileParseError for malformed YAML with line number
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: Factory returns correct reader type based on file extension
+  description: Factory returns correct reader type based on file extension
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: Processes 100 files in under 2 seconds
+  description: Processes 100 files in under 2 seconds
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_001_YAML_XML_Reader/src/implementation.py
+  lines: 172
+  methods:
+  - name: __init__
+    lines: 17-26
+  - name: read
+    lines: 27-38
+  - name: read
+    lines: 42-72
+  - name: read
+    lines: 76-101
+  - name: _xml_to_dict
+    lines: 102-146
+  - name: create_reader
+    lines: 151-161
+  classes:
+  - name: FileParseError
+    type: class
+    lines: 9-13
+  - name: BaseReader
+    type: class
+    lines: 14-38
+  - name: YAMLReader
+    type: class
+    lines: 39-72
+  - name: XMLReader
+    type: class
+    lines: 73-146
+  - name: FileReaderFactory
+    type: class
+    lines: 147-172
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  test_count: 0
+  implementation_files:
+  - LAYER_001_YAML_XML_Reader/src/implementation.py
+  methods_tested:
+  - __init__
+  - read
+  - read
+  - read
+  - _xml_to_dict
+  - create_reader
+  classes_tested:
+  - FileParseError
+  - BaseReader
+  - YAMLReader
+  - XMLReader
+  - FileReaderFactory
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_001_YAML_XML_Reader/src/implementation.py:17-26
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  verified: true
+- implementation_location: LAYER_001_YAML_XML_Reader/src/implementation.py:27-38
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  verified: true
+- implementation_location: LAYER_001_YAML_XML_Reader/src/implementation.py:42-72
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  verified: true
+- implementation_location: LAYER_001_YAML_XML_Reader/src/implementation.py:76-101
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  verified: true
+- implementation_location: LAYER_001_YAML_XML_Reader/src/implementation.py:102-146
+  method_name: _xml_to_dict
+  requirement: AC-001
+  test: test__xml_to_dict
+  test_file: LAYER_001_YAML_XML_Reader/tests/test_generated_20251020_210205.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 7
+  requirements_traced: 7
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

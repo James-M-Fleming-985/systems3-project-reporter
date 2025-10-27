@@ -1,0 +1,20 @@
+metadata:
+  requirement_id: "FEATURE-WEB-005"
+  feature_name: "Change Management Log"
+  feature_code: "CHANGES"
+  version: "1.0.0"
+  priority: "SHOULD HAVE"
+  
+overview:
+  description: "Display schedule changes with dates, reasons, and impact"
+  user_story: "As a PM, I want to see change history so I can track project volatility"
+  
+layers:
+  - layer_id: "LAYER-WEB-005-01"
+    layer_name: "Change Log Route Handler"
+    implementation_file: "routers/dashboard.py"
+  - layer_id: "LAYER-WEB-005-02"
+    layer_name: "Change Log Template"
+    implementation_file: "templates/changes.html"
+
+estimated_effort: "30 minutes"

@@ -1,0 +1,19 @@
+feature_id: FEATURE-003-002
+feature_name: Risk Aggregator
+test_pyramid_timestamp: '20251020_211841'
+layer_tests:
+  unit_tests: 6
+  layer_count: 3
+feature_tests:
+  integration_tests:
+    location: tests/integration/
+    count: 9
+    status: COMPLETED
+  e2e_tests:
+    location: tests/e2e/
+    count: 5
+    status: COMPLETED
+integration_scenarios: []
+e2e_scenarios: []
+test_coverage_goal: 90%
+status: PYRAMID_STRUCTURE_DEFINED

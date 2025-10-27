@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Systems³ Project Reporter{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 id="appTitle" class="text-2xl font-bold cursor-pointer hover:text-blue-200 transition" 
+                        contenteditable="true"
+                        onblur="saveTitle(this)"
+                        onkeydown="handleTitleKeydown(event)">Systems³ Project Reporter</h1>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                        Home
+                    </a>
+                    <a href="/gantt" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                        Gantt Chart
+                    </a>
+                    <a href="/milestones" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                        Milestones
+                    </a>
+                    <a href="/risks" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                        Risks
+                    </a>
+                    <a href="/changes" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                        Changes
+                    </a>
+                    <a href="/upload" class="hover:bg-blue-700 px-3 py-2 rounded transition bg-blue-700">
+                        📤 Upload XML
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 py-6 text-center">
+            <p>&copy; 2025 Systems³ | Project Reporter v2.0.0 | Automation at exponential scale</p>
+        </div>
+    </footer>
+
+    <script>
+        function handleTitleKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                event.target.blur();
+            }
+        }
+
+        function saveTitle(element) {
+            const newTitle = element.textContent.trim();
+            if (newTitle) {
+                localStorage.setItem('appTitle', newTitle);
+                console.log('Title saved:', newTitle);
+            }
+        }
+
+        // Load saved title on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTitle = localStorage.getItem('appTitle');
+            if (savedTitle) {
+                const titleElement = document.getElementById('appTitle');
+                if (titleElement) {
+                    titleElement.textContent = savedTitle;
+                }
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

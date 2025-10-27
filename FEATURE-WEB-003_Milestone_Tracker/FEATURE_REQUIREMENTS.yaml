@@ -1,0 +1,20 @@
+metadata:
+  requirement_id: "FEATURE-WEB-003"
+  feature_name: "Milestone Quadrant Tracker"
+  feature_code: "MILESTONES"
+  version: "1.0.0"
+  priority: "MUST HAVE"
+  
+overview:
+  description: "Categorize milestones into quadrants: completed past, current in-progress, upcoming future, delayed"
+  user_story: "As a PM, I want to see milestones grouped by status and timing so I can focus on what needs attention"
+  
+layers:
+  - layer_id: "LAYER-WEB-003-01"
+    layer_name: "Milestone Route Handler"
+    implementation_file: "routers/dashboard.py"
+  - layer_id: "LAYER-WEB-003-02"
+    layer_name: "Milestone Template"
+    implementation_file: "templates/milestones.html"
+
+estimated_effort: "1 hour"

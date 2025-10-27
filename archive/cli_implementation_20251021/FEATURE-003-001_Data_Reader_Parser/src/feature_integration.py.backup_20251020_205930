@@ -1,0 +1,455 @@
+"""
+Feature Integration Module for Data Reader Parser
+FEATURE ID: FEATURE-003-001
+
+This module orchestrates the integration of YAML/XML reading, data validation,
+and schema compliance checking layers to provide a unified data parsing solution.
+"""
+
+from pathlib import Path
+import sys
+from dataclasses import dataclass
+from typing import Dict, Any, Optional, List, Union
+from enum import Enum
+import logging
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import Layer 001: YAML XML Reader
+from LAYER_001_YAML_XML_Reader.src.implementation import (
+    FileParseError, BaseReader, YAMLReader, XMLReader, ReaderFactory
+)
+
+# Import Layer 002: Data Model Validator
+from LAYER_002_Data_Model_Validator.src.implementation import (
+    DataModelValidator, DataValidator, SchemaValidator, ValidationError
+)
+
+# Import Layer 003: Schema Compliance Checker
+from LAYER_003_Schema_Compliance_Checker.src.implementation import (
+    SchemaComplianceChecker
+)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class ResponseStatus(Enum):
+    """Enumeration for response statuses"""
+    SUCCESS = "success"
+    ERROR = "error"
+    WARNING = "warning"
+    PARTIAL_SUCCESS = "partial_success"
+
+
+@dataclass
+class FeatureResponse:
+    """
+    Unified response structure for feature operations
+    
+    Attributes:
+        status: The status of the operation
+        data: The resulting data from the operation
+        errors: List of errors encountered during operation
+        warnings: List of warnings generated during operation
+        metadata: Additional metadata about the operation
+    """
+    status: ResponseStatus
+    data: Optional[Dict[str, Any]] = None
+    errors: Optional[List[str]] = None
+    warnings: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class FeatureConfig:
+    """
+    Configuration settings for the Data Reader Parser feature
+    
+    Attributes:
+        schema_path: Path to the schema file for validation
+        strict_validation: Whether to enforce strict validation rules
+        file_type: Default file type (yaml or xml) if not auto-detected
+        max_file_size: Maximum allowed file size in bytes
+        enable_caching: Whether to enable caching of parsed data
+        custom_validators: Dictionary of custom validators to use
+    """
+    schema_path: Optional[str] = None
+    strict_validation: bool = True
+    file_type: Optional[str] = None
+    max_file_size: int = 10 * 1024 * 1024  # 10 MB default
+    enable_caching: bool = False
+    custom_validators: Optional[Dict[str, Any]] = None
+
+
+class FeatureOrchestrator:
+    """
+    Main orchestrator class for the Data Reader Parser feature
+    
+    This class coordinates the interaction between the YAML/XML reader,
+    data validator, and schema compliance checker layers.
+    """
+    
+    def __init__(self, config: Optional[FeatureConfig] = None):
+        """
+        Initialize the FeatureOrchestrator with the given configuration
+        
+        Args:
+            config: Feature configuration settings
+        """
+        self.config = config or FeatureConfig()
+        self.errors: List[str] = []
+        self.warnings: List[str] = []
+        
+        # Initialize layer components
+        self._initialize_layers()
+    
+    def _initialize_layers(self) -> None:
+        """Initialize all layer components with error handling"""
+        try:
+            # Initialize readers
+            self.reader_factory = ReaderFactory()
+            self.yaml_reader = YAMLReader()
+            self.xml_reader = XMLReader()
+            
+            # Initialize validators
+            self.data_model_validator = DataModelValidator()
+            self.data_validator = DataValidator()
+            self.schema_validator = SchemaValidator()
+            
+            # Initialize schema compliance checker
+            self.schema_compliance_checker = SchemaComplianceChecker()
+            
+            logger.info("All layers initialized successfully")
+            
+        except Exception as e:
+            error_msg = f"Failed to initialize layers: {str(e)}"
+            self.errors.append(error_msg)
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+    
+    def read_and_validate(self, file_path: str, schema: Optional[Dict[str, Any]] = None) -> FeatureResponse:
+        """
+        Read a file and validate its contents against a schema
+        
+        Args:
+            file_path: Path to the file to read
+            schema: Optional schema for validation. If not provided, will attempt to load from config
+            
+        Returns:
+            FeatureResponse containing the parsed and validated data
+        """
+        self.errors = []
+        self.warnings = []
+        
+        try:
+            # Step 1: Read the file
+            parsed_data = self._read_file(file_path)
+            
+            if not parsed_data:
+                return FeatureResponse(
+                    status=ResponseStatus.ERROR,
+                    errors=self.errors
+                )
+            
+            # Step 2: Validate the data model
+            validation_result = self._validate_data(parsed_data, schema)
+            
+            if not validation_result['is_valid']:
+                return FeatureResponse(
+                    status=ResponseStatus.ERROR,
+                    data=parsed_data,
+                    errors=self.errors,
+                    warnings=self.warnings
+                )
+            
+            # Step 3: Check schema compliance
+            compliance_result = self._check_compliance(parsed_data, schema)
+            
+            # Determine final status
+            status = self._determine_status()
+            
+            return FeatureResponse(
+                status=status,
+                data=parsed_data,
+                errors=self.errors if self.errors else None,
+                warnings=self.warnings if self.warnings else None,
+                metadata={
+                    'file_path': file_path,
+                    'validation_result': validation_result,
+                    'compliance_result': compliance_result
+                }
+            )
+            
+        except Exception as e:
+            error_msg = f"Unexpected error during read and validate: {str(e)}"
+            self.errors.append(error_msg)
+            logger.error(error_msg)
+            return FeatureResponse(
+                status=ResponseStatus.ERROR,
+                errors=self.errors
+            )
+    
+    def _read_file(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Read a file using the appropriate reader
+        
+        Args:
+            file_path: Path to the file to read
+            
+        Returns:
+            Parsed data dictionary or None if error
+        """
+        try:
+            # Check file size
+            file_size = Path(file_path).stat().st_size
+            if file_size > self.config.max_file_size:
+                error_msg = f"File size ({file_size} bytes) exceeds maximum allowed size ({self.config.max_file_size} bytes)"
+                self.errors.append(error_msg)
+                return None
+            
+            # Determine file type
+            if self.config.file_type:
+                file_type = self.config.file_type
+            else:
+                file_type = Path(file_path).suffix.lower().strip('.')
+            
+            # Get appropriate reader
+            reader = self.reader_factory.get_reader(file_path)
+            
+            # Read the file
+            data = reader.read(file_path)
+            logger.info(f"Successfully read {file_type.upper()} file: {file_path}")
+            
+            return data
+            
+        except FileParseError as e:
+            error_msg = f"File parsing error: {str(e)}"
+            self.errors.append(error_msg)
+            logger.error(error_msg)
+            return None
+        except Exception as e:
+            error_msg = f"Error reading file: {str(e)}"
+            self.errors.append(error_msg)
+            logger.error(error_msg)
+            return None
+    
+    def _validate_data(self, data: Dict[str, Any], schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Validate data against schema and data model rules
+        
+        Args:
+            data: Data to validate
+            schema: Optional schema for validation
+            
+        Returns:
+            Validation result dictionary
+        """
+        validation_result = {
+            'is_valid': True,
+            'errors': [],
+            'warnings': []
+        }
+        
+        try:
+            # Load schema if not provided
+            if not schema and self.config.schema_path:
+                schema = self._load_schema()
+            
+            # Perform data model validation
+            if hasattr(self.data_model_validator, 'validate'):
+                model_valid = self.data_model_validator.validate(data)
+                if not model_valid:
+                    validation_result['is_valid'] = False
+                    validation_result['errors'].append("Data model validation failed")
+            
+            # Perform schema validation if schema is available
+            if schema:
+                try:
+                    if self.config.strict_validation:
+                        self.schema_validator.validate_strict(data, schema)
+                    else:
+                        self.schema_validator.validate(data, schema)
+                    logger.info("Schema validation passed")
+                except ValidationError as e:
+                    validation_result['is_valid'] = False
+                    validation_result['errors'].append(f"Schema validation error: {str(e)}")
+                    self.errors.append(f"Schema validation failed: {str(e)}")
+            
+            # Perform additional data validation
+            if hasattr(self.data_validator, 'validate'):
+                data_valid = self.data_validator.validate(data)
+                if not data_valid:
+                    validation_result['warnings'].append("Data validation warnings present")
+                    self.warnings.append("Data validation generated warnings")
+            
+            # Apply custom validators if configured
+            if self.config.custom_validators:
+                for validator_name, validator in self.config.custom_validators.items():
+                    try:
+                        if callable(validator):
+                            custom_result = validator(data)
+                            if not custom_result:
+                                validation_result['warnings'].append(f"Custom validator '{validator_name}' failed")
+                    except Exception as e:
+                        validation_result['warnings'].append(f"Custom validator '{validator_name}' error: {str(e)}")
+            
+        except Exception as e:
+            validation_result['is_valid'] = False
+            validation_result['errors'].append(f"Validation error: {str(e)}")
+            self.errors.append(f"Validation failed: {str(e)}")
+        
+        return validation_result
+    
+    def _check_compliance(self, data: Dict[str, Any], schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Check schema compliance of the data
+        
+        Args:
+            data: Data to check compliance for
+            schema: Optional schema for compliance checking
+            
+        Returns:
+            Compliance result dictionary
+        """
+        compliance_result = {
+            'is_compliant': True,
+            'issues': [],
+            'recommendations': []
+        }
+        
+        try:
+            # Load schema if not provided
+            if not schema and self.config.schema_path:
+                schema = self._load_schema()
+            
+            # Perform compliance checking
+            if schema and hasattr(self.schema_compliance_checker, 'check_compliance'):
+                is_compliant = self.schema_compliance_checker.check_compliance(data, schema)
+                compliance_result['is_compliant'] = is_compliant
+                
+                if not is_compliant:
+                    compliance_result['issues'].append("Schema compliance check failed")
+                    self.warnings.append("Data is not fully compliant with schema")
+                else:
+                    logger.info("Schema compliance check passed")
+            
+            # Add recommendations if available
+            if hasattr(self.schema_compliance_checker, 'get_recommendations'):
+                recommendations = self.schema_compliance_checker.get_recommendations(data, schema)
+                if recommendations:
+                    compliance_result['recommendations'] = recommendations
+            
+        except Exception as e:
+            compliance_result['is_compliant'] = False
+            compliance_result['issues'].append(f"Compliance check error: {str(e)}")
+            self.warnings.append(f"Compliance check failed: {str(e)}")
+        
+        return compliance_result
+    
+    def _load_schema(self) -> Optional[Dict[str, Any]]:
+        """
+        Load schema from configured path
+        
+        Returns:
+            Schema dictionary or None if error
+        """
+        if not self.config.schema_path:
+            return None
+        
+        try:
+            # Determine schema file type
+            schema_type = Path(self.config.schema_path).suffix.lower().strip('.')
+            reader = self.reader_factory.get_reader(self.config.schema_path)
+            
+            schema = reader.read(self.config.schema_path)
+            logger.info(f"Schema loaded from: {self.config.schema_path}")
+            return schema
+            
+        except Exception as e:
+            error_msg = f"Failed to load schema: {str(e)}"
+            self.warnings.append(error_msg)
+            logger.warning(error_msg)
+            return None
+    
+    def _determine_status(self) -> ResponseStatus:
+        """
+        Determine the overall status based on errors and warnings
+        
+        Returns:
+            Appropriate ResponseStatus
+        """
+        if self.errors:
+            return ResponseStatus.ERROR
+        elif self.warnings:
+            return ResponseStatus.WARNING
+        else:
+            return ResponseStatus.SUCCESS
+    
+    def parse_file(self, file_path: str) -> FeatureResponse:
+        """
+        Simple file parsing without validation
+        
+        Args:
+            file_path: Path to the file to parse
+            
+        Returns:
+            FeatureResponse containing the parsed data
+        """
+        self.errors = []
+        self.warnings = []
+        
+        parsed_data = self._read_file(file_path)
+        
+        if parsed_data:
+            return FeatureResponse(
+                status=ResponseStatus.SUCCESS,
+                data=parsed_data,
+                metadata={'file_path': file_path}
+            )
+        else:
+            return FeatureResponse(
+                status=ResponseStatus.ERROR,
+                errors=self.errors
+            )
+    
+    def validate_data(self, data: Dict[str, Any], schema: Dict[str, Any]) -> FeatureResponse:
+        """
+        Validate data against a schema without reading from file
+        
+        Args:
+            data: Data to validate
+            schema: Schema for validation
+            
+        Returns:
+            FeatureResponse containing validation results
+        """
+        self.errors = []
+        self.warnings = []
+        
+        validation_result = self._validate_data(data, schema)
+        compliance_result = self._check_compliance(data, schema)
+        
+        status = self._determine_status()
+        
+        return FeatureResponse(
+            status=status,
+            data=data,
+            errors=self.errors if self.errors else None,
+            warnings=self.warnings if self.warnings else None,
+            metadata={
+                'validation_result': validation_result,
+                'compliance_result': compliance_result
+            }
+        )
+    
+    def get_supported_formats(self) -> List[str]:
+        """
+        Get list of supported file formats
+        
+        Returns:
+            List of supported file format extensions
+        """
+        return self.reader_factory.get_supported_formats()

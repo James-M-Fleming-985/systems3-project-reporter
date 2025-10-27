@@ -1,0 +1,428 @@
+# ================================================================================
+# LAYER REQUIREMENT: YAML/XML File Reader
+# ================================================================================
+# REQUIREMENT ID: REQ-003-001-001
+# FEATURE: FEATURE-003-001 (Data Reader and Parser)
+# LAYER: LAYER-001 (YAML/XML File Reader)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-001-001"
+  requirement_title: "YAML/XML File Reader"
+  layer: "LAYER-001_YAML_XML_Reader"
+  feature: "FEATURE-003-001_Data_Reader_Parser"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-23"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - YAML/XML file reading foundation"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "YAML/XML File Reader"
+  
+  description: |
+    Read and parse YAML and XML files from project folders across the 
+    professional_excellence repository. Handle multiple file formats (YAML, XML, JSON),
+    manage encoding issues (UTF-8, UTF-16), provide error handling for malformed files,
+    and return parsed content as Python dictionaries for downstream processing.
+    
+    This layer provides the foundational file I/O capability that all other features
+    depend on for accessing project data, risk information, and change logs.
+  
+  rationale: |
+    Project data is stored in YAML/XML files scattered across multiple project folders.
+    Centralizing file reading logic with comprehensive error handling ensures:
+    - Consistent data access patterns across all features
+    - Single point of encoding/decoding logic
+    - Robust error handling and logging
+    - Easy to extend for additional file formats
+    - Testable file I/O without filesystem dependencies (via mocking)
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/data_reader/file_reader.py"
+    modules:
+      - "file_reader.py"       # Main file reading classes
+      - "parsers.py"           # Format-specific parsers (YAML, XML, JSON)
+      - "exceptions.py"        # Custom exceptions for file operations
+  
+  classes:
+    - name: "FileReaderFactory"
+      purpose: "Factory to create appropriate reader based on file extension"
+      methods:
+        - name: "create_reader"
+          signature: "create_reader(file_path: Path) -> BaseFileReader"
+          purpose: "Return appropriate reader (YAMLReader, XMLReader, JSONReader)"
+          example: |
+            factory = FileReaderFactory()
+            reader = factory.create_reader(Path("project_plan.yaml"))
+            # Returns YAMLReader instance
+    
+    - name: "BaseFileReader"
+      purpose: "Abstract base class for all file readers"
+      methods:
+        - name: "read"
+          signature: "read(file_path: Path) -> Dict[str, Any]"
+          purpose: "Read file and return parsed content as dict"
+        
+        - name: "validate_path"
+          signature: "validate_path(file_path: Path) -> bool"
+          purpose: "Check if file exists and is readable"
+    
+    - name: "YAMLReader"
+      purpose: "Read and parse YAML files"
+      methods:
+        - name: "read"
+          signature: "read(file_path: Path) -> Dict[str, Any]"
+          purpose: "Parse YAML file content using pyyaml library"
+          example: |
+            reader = YAMLReader()
+            data = reader.read(Path("project_plan.yaml"))
+            # Returns: {'project_id': 'PROJ-001', 'project_name': '...', ...}
+        
+        - name: "handle_encoding"
+          signature: "handle_encoding(file_path: Path) -> str"
+          purpose: "Detect and handle UTF-8/UTF-16 encoding"
+    
+    - name: "XMLReader"
+      purpose: "Read and parse XML files"
+      methods:
+        - name: "read"
+          signature: "read(file_path: Path) -> Dict[str, Any]"
+          purpose: "Parse XML file and convert to dict structure"
+        
+        - name: "xml_to_dict"
+          signature: "xml_to_dict(xml_element: Element) -> Dict[str, Any]"
+          purpose: "Recursively convert XML tree to nested dicts"
+    
+    - name: "JSONReader"
+      purpose: "Read and parse JSON files"
+      methods:
+        - name: "read"
+          signature: "read(file_path: Path) -> Dict[str, Any]"
+          purpose: "Parse JSON file using json library"
+  
+  implementation_details:
+    libraries:
+      - "pyyaml"          # YAML parsing
+      - "xml.etree.ElementTree"  # XML parsing
+      - "json"            # JSON parsing (built-in)
+      - "pathlib"         # Path handling
+      - "chardet"         # Encoding detection
+    
+    patterns:
+      - "Factory Pattern"  # FileReaderFactory
+      - "Strategy Pattern" # Different readers for different formats
+      - "Template Method"  # BaseFileReader defines structure
+    
+    error_handling:
+      - error_type: "FileNotFoundError"
+        handling: "Raise FileNotFoundError with clear message including path"
+      
+      - error_type: "yaml.YAMLError"
+        handling: "Wrap in custom FileParseError with line number if available"
+      
+      - error_type: "UnicodeDecodeError"
+        handling: "Retry with different encodings, raise if all fail"
+      
+      - error_type: "PermissionError"
+        handling: "Raise with message about file permissions"
+  
+  inputs:
+    - name: "file_path"
+      type: "pathlib.Path"
+      description: "Absolute or relative path to YAML/XML/JSON file"
+      example: "/workspaces/professional_excellence/projects/PROJECT-001/project_plan.yaml"
+  
+  outputs:
+    - name: "parsed_data"
+      type: "Dict[str, Any]"
+      description: "File content parsed into Python dictionary"
+      example: "{'project_id': 'PROJ-001', 'project_name': 'ZnNi Documentation', 'start_date': '2025-01-15'}"
+    
+    - name: "exceptions"
+      type: "FileReaderException"
+      description: "Custom exceptions for various failure scenarios"
+      example: "FileNotFoundError, FileParseError, EncodingError"
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Reads valid YAML files without errors"
+    test: "pytest tests/unit/test_file_reader.py::test_read_valid_yaml -v"
+  
+  - criterion: "Reads valid XML files and converts to dict structure"
+    test: "pytest tests/unit/test_file_reader.py::test_read_valid_xml -v"
+  
+  - criterion: "Handles UTF-8 and UTF-16 encoded files correctly"
+    test: "Create UTF-16 encoded YAML, verify parsing succeeds"
+  
+  - criterion: "Raises FileNotFoundError for non-existent files with clear message"
+    test: "Pass invalid path, verify exception message includes path"
+  
+  - criterion: "Raises FileParseError for malformed YAML with line number"
+    test: "Pass YAML with syntax error, verify exception includes line number"
+  
+  - criterion: "Factory returns correct reader type based on file extension"
+    test: "Pass .yaml/.xml/.json files, verify correct reader class returned"
+  
+  - criterion: "Processes 100 files in under 2 seconds"
+    test: "Benchmark test with 100 sample YAML files"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build YAML/XML File Reader (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_file_reader.py"
+      tests:
+        - "test_read_valid_yaml_returns_dict"
+        - "test_read_valid_xml_returns_dict"
+        - "test_read_nonexistent_file_raises_error"
+        - "test_read_malformed_yaml_raises_parse_error"
+        - "test_handle_utf16_encoding"
+        - "test_factory_creates_yaml_reader_for_yaml_extension"
+        - "test_factory_creates_xml_reader_for_xml_extension"
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_file_reader.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement BaseFileReader abstract class (GREEN phase)"
+      file: "src/data_reader/file_reader.py"
+      methods:
+        - "validate_path(file_path: Path) -> bool"
+        - "read(file_path: Path) -> Dict[str, Any]  # Abstract method"
+      duration: "15 min"
+    
+    - step: 4
+      action: "Implement YAMLReader class"
+      file: "src/data_reader/file_reader.py"
+      methods:
+        - "read(file_path: Path) -> Dict[str, Any]"
+        - "handle_encoding(file_path: Path) -> str"
+      duration: "25 min"
+    
+    - step: 5
+      action: "Implement XMLReader class"
+      file: "src/data_reader/parsers.py"
+      methods:
+        - "read(file_path: Path) -> Dict[str, Any]"
+        - "xml_to_dict(xml_element: Element) -> Dict[str, Any]"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Implement FileReaderFactory class"
+      file: "src/data_reader/file_reader.py"
+      methods:
+        - "create_reader(file_path: Path) -> BaseFileReader"
+      duration: "10 min"
+    
+    - step: 7
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_file_reader.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 8
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Extract encoding detection to separate method"
+        - "Add comprehensive docstrings"
+        - "Extract error messages to constants"
+        - "Add type hints to all methods"
+      duration: "15 min"
+    
+    - step: 9
+      action: "Add custom exceptions"
+      file: "src/data_reader/exceptions.py"
+      classes:
+        - "FileReaderException (base)"
+        - "FileParseError"
+        - "EncodingError"
+      duration: "10 min"
+    
+    - step: 10
+      action: "Integration test with real files"
+      file: "tests/integration/test_file_reader_integration.py"
+      tests:
+        - "Read actual project_plan.yaml from PROJECT-002"
+        - "Read sample XML file"
+      duration: "10 min"
+  
+  total_time: "142 minutes (~2.5 hours)"
+  
+  deliverable: |
+    File reading infrastructure that can parse YAML/XML/JSON files with proper
+    error handling, encoding support, and factory-based reader selection. Ready
+    for use by Data Model Validator layer.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-003: Data-driven from YAML/XML project files"
+  
+  implements_system_requirements:
+    - "SYS-REQ-001: File-based data persistence (YAML files)"
+    - "SYS-REQ-004: Modular architecture - Data Access Layer"
+    - "SYS-REQ-005: Repository Pattern for data access"
+  
+  implements_system_components:
+    - "COMP-001: Project Data Scanner"
+    - "COMP-002: YAML Parser and Validator (parsing portion)"
+  
+  maps_to_feature:
+    - "FEATURE-003-001: Data Reader and Parser"
+  
+  depends_on_layers: []  # Foundation layer, no dependencies
+  
+  consumed_by_layers:
+    - "LAYER-003-001-002: Data Model Validator"
+    - "LAYER-003-002-001: Risk File Reader"
+    - "LAYER-003-005-003: Log File Writer"
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from: []  # Foundation layer, reads from filesystem
+  
+  output_to:
+    - layer: "LAYER-003-001-002"
+      data_type: "Dict[str, Any]"
+      interface: "FileReaderFactory.create_reader().read()"
+      description: "Parsed project plan dict passed to validator"
+  
+  shared_dependencies:
+    - "src/data_reader/exceptions.py - Used by all data reading layers"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_file_reader.py"
+    coverage_target: "95%"
+    key_scenarios:
+      - "Valid YAML file parsing"
+      - "Valid XML file parsing"
+      - "Malformed YAML error handling"
+      - "Encoding detection (UTF-8, UTF-16)"
+      - "File not found error"
+      - "Permission denied error"
+      - "Factory pattern reader selection"
+  
+  integration_tests:
+    location: "tests/integration/test_file_reader_integration.py"
+    scenarios:
+      - "Read actual project_plan.yaml from PROJECT-002"
+      - "Read multiple files in batch"
+      - "Handle files with special characters in path"
+  
+  fixtures:
+    location: "tests/fixtures/sample_files/"
+    files:
+      - "valid_project_plan.yaml"
+      - "valid_risks.xml"
+      - "malformed_project.yaml"
+      - "utf16_encoded.yaml"
+      - "empty_file.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+    - package: "pyyaml"
+      version: ">=6.0"
+      purpose: "YAML file parsing"
+    
+    - package: "chardet"
+      version: ">=5.0.0"
+      purpose: "Encoding detection"
+  
+  configuration:
+    - setting: "supported_extensions"
+      value: "['.yaml', '.yml', '.xml', '.json']"
+      location: "src/data_reader/config.py"
+    
+    - setting: "encoding_fallbacks"
+      value: "['utf-8', 'utf-16', 'latin-1']"
+      location: "src/data_reader/config.py"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from pathlib import Path
+    from src.data_reader.file_reader import FileReaderFactory
+    
+    factory = FileReaderFactory()
+    reader = factory.create_reader(Path("project_plan.yaml"))
+    
+    try:
+        data = reader.read(Path("/projects/PROJECT-001/project_plan.yaml"))
+        print(f"Project ID: {data['project_id']}")
+        print(f"Project Name: {data['project_name']}")
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    except FileParseError as e:
+        print(f"Parse error: {e}")
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This is the foundation layer for all data access - must be rock solid
+  - Encoding issues are common in real-world files - handle gracefully
+  - Error messages must be actionable (include file path, line number)
+  - Factory pattern allows easy addition of new file formats in future
+  
+  DESIGN DECISIONS:
+  - Chose Factory Pattern over direct instantiation for extensibility
+  - Using chardet for encoding detection vs. hardcoding encodings
+  - Returning dicts vs. Pydantic models (models added in next layer)
+  - Custom exceptions vs. built-in (better error context)
+  
+  FUTURE ENHANCEMENTS:
+  - Add support for TOML files
+  - Add caching for frequently-read files
+  - Add async file reading for performance
+  - Add file watching capability for real-time updates
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

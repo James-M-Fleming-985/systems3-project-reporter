@@ -1,0 +1,225 @@
+matrix_metadata:
+  timestamp: '20251020_075352'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py
+  lines: 410
+  methods:
+  - name: to_dict
+    lines: 58-76
+  - name: __init__
+    lines: 80-93
+  - name: create_slide
+    lines: 94-151
+  - name: create_title_slide
+    lines: 152-161
+  - name: create_content_slide
+    lines: 162-171
+  - name: create_chart_slide
+    lines: 172-181
+  - name: create_table_slide
+    lines: 182-191
+  - name: create_image_slide
+    lines: 192-201
+  - name: create_summary_slide
+    lines: 202-211
+  - name: get_slides
+    lines: 212-215
+  - name: get_slide_count
+    lines: 216-219
+  - name: clear_slides
+    lines: 220-225
+  - name: export_slides
+    lines: 226-242
+  - name: _validate_common_fields
+    lines: 243-253
+  - name: _validate_title_slide
+    lines: 254-258
+  - name: _validate_content_slide
+    lines: 259-273
+  - name: _validate_chart_slide
+    lines: 274-285
+  - name: _validate_table_slide
+    lines: 286-300
+  - name: _validate_image_slide
+    lines: 301-309
+  - name: _validate_summary_slide
+    lines: 310-324
+  - name: _get_layout_name
+    lines: 325-341
+  - name: validate_slide_data
+    lines: 342-367
+  - name: from_report_data
+    lines: 372-382
+  classes:
+  - name: SlideType
+    type: class
+    lines: 17-26
+  - name: ValidationError
+    type: class
+    lines: 27-31
+  - name: SlideCreationError
+    type: class
+    lines: 32-37
+  - name: SlideContent
+    type: class
+    lines: 38-49
+  - name: Slide
+    type: class
+    lines: 50-76
+  - name: SlideFactory
+    type: class
+    lines: 77-367
+  - name: SlideFactoryIntegration
+    type: class
+    lines: 368-410
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py
+  methods_tested:
+  - to_dict
+  - __init__
+  - create_slide
+  - create_title_slide
+  - create_content_slide
+  - create_chart_slide
+  - create_table_slide
+  - create_image_slide
+  - create_summary_slide
+  - get_slides
+  - get_slide_count
+  - clear_slides
+  - export_slides
+  - _validate_common_fields
+  - _validate_title_slide
+  - _validate_content_slide
+  - _validate_chart_slide
+  - _validate_table_slide
+  - _validate_image_slide
+  - _validate_summary_slide
+  - _get_layout_name
+  - validate_slide_data
+  - from_report_data
+  classes_tested:
+  - SlideType
+  - ValidationError
+  - SlideCreationError
+  - SlideContent
+  - Slide
+  - SlideFactory
+  - SlideFactoryIntegration
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py:58-76
+  method_name: to_dict
+  requirement: AC-001
+  test: test_to_dict
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py:80-93
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py:94-151
+  method_name: create_slide
+  requirement: AC-001
+  test: test_create_slide
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py:152-161
+  method_name: create_title_slide
+  requirement: AC-001
+  test: test_create_title_slide
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/src/implementation.py:162-171
+  method_name: create_content_slide
+  requirement: AC-001
+  test: test_create_content_slide
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-001
+    Slide Factory/tests/test_generated_20251020_075247.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

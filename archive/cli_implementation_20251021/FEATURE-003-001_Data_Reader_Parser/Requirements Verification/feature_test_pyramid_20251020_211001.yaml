@@ -1,0 +1,19 @@
+feature_id: FEATURE-003-001
+feature_name: Data Reader Parser
+test_pyramid_timestamp: '20251020_211001'
+layer_tests:
+  unit_tests: 8
+  layer_count: 3
+feature_tests:
+  integration_tests:
+    location: tests/integration/
+    count: 6
+    status: COMPLETED
+  e2e_tests:
+    location: tests/e2e/
+    count: 3
+    status: COMPLETED
+integration_scenarios: []
+e2e_scenarios: []
+test_coverage_goal: 90%
+status: PYRAMID_STRUCTURE_DEFINED

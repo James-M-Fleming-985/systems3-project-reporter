@@ -1,0 +1,274 @@
+# ================================================================================
+# LAYER REQUIREMENT: Risk Table Formatter
+# ================================================================================
+# REQUIREMENT ID: REQ-003-002-003
+# FEATURE: FEATURE-003-002 (Risk Aggregator)
+# LAYER: LAYER-003-002-003 (Risk_Table_Formatter)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-002-003"
+  requirement_title: "Risk Table Formatter"
+  layer: "003_Risk_Table_Formatter"
+  feature: "FEATURE-003-002_Risk_Aggregator"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Risk Table Formatter"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Risk Table Formatter"
+  
+  description: |
+    Format risks as tables for PowerPoint insertion. Create data structure with columns (Risk ID, Description, Probability, Impact, Mitigation, Owner), apply color coding (High=Red, Medium=Yellow, Low=Green).
+  
+  rationale: |
+    Transforms risk data into PowerPoint-ready format. Separates data logic from presentation, making it easy to change table styling without affecting filtering logic.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/risk_table_formatter/risk_table_formatter.py"
+    modules:
+      - "risk_table_formatter.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "RiskTableFormatter"
+      purpose: "Format risks for PowerPoint tables"
+      methods:
+        - name: "format_table"
+          signature: "format_table(risks: List[Risk]) -> TableData"
+          purpose: "Implement format_table logic" 
+        - name: "apply_color_coding"
+          signature: "apply_color_coding(risk: Risk) -> ColorScheme"
+          purpose: "Implement apply_color_coding logic" 
+        - name: "generate_summary_stats"
+          signature: "generate_summary_stats(risks: List[Risk]) -> Dict[str, int]"
+          purpose: "Implement generate_summary_stats logic" 
+
+  implementation_details:
+    libraries: []
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "Filtered risks from LAYER-003-002-002" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "TableData structure ready for PowerPoint insertion" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_risk_table_formatter.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_risk_table_formatter_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Risk Table Formatter (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_risk_table_formatter.py"
+      tests:
+        - "test_format_table_success"
+        - "test_format_table_failure" 
+        - "test_apply_color_coding_success"
+        - "test_apply_color_coding_failure" 
+        - "test_generate_summary_stats_success"
+        - "test_generate_summary_stats_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_risk_table_formatter.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement RiskTableFormatter class (GREEN phase)"
+      file: "src/risk_table_formatter/risk_table_formatter.py"
+      methods:
+        - "format_table(risks: List[Risk]) -> TableData" 
+        - "apply_color_coding(risk: Risk) -> ColorScheme" 
+        - "generate_summary_stats(risks: List[Risk]) -> Dict[str, int]" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_risk_table_formatter.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_risk_table_formatter_integration.py"
+      duration: "15 min"
+  
+  total_time: "1.5 hours"
+  
+  deliverable: |
+    Risk Table Formatter implementation ready for integration with 
+    FEATURE-003-006.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-002: Three-section report structure" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-001: File-based data persistence" 
+    - "SYS-REQ-004: Business Logic Layer" 
+  
+  implements_system_components:
+    - "COMP-004: Risk Aggregator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-002: Risk Aggregator"
+  
+  depends_on_layers:
+    - "LAYER-003-002-002" 
+  
+  consumed_by_layers:
+    - "FEATURE-003-006" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-002-002"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "FEATURE-003-006"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_risk_table_formatter.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_risk_table_formatter_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/risk_table_formatter/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.risk_table_formatter import RiskTableFormatter
+    
+    instance = RiskTableFormatter()
+    result = instance.format_table(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-002: Risk Aggregator
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

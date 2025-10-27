@@ -1,0 +1,154 @@
+matrix_metadata:
+  timestamp: '20251020_211443'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_003_Risk_Table_Formatter/src/implementation.py
+  lines: 246
+  methods:
+  - name: __init__
+    lines: 14-17
+  - name: format_risk_data
+    lines: 18-56
+  - name: _format_empty_data
+    lines: 57-67
+  - name: _format_as_json
+    lines: 68-71
+  - name: _format_as_csv
+    lines: 72-95
+  - name: _format_as_html
+    lines: 96-129
+  - name: _format_as_text
+    lines: 130-173
+  - name: _escape_html
+    lines: 174-183
+  - name: validate_risk_structure
+    lines: 184-202
+  - name: add_formatting_metadata
+    lines: 203-226
+  - name: create_risk_formatter
+    lines: 227-231
+  - name: format_risks
+    lines: 232-242
+  classes:
+  - name: RiskTableFormatter
+    type: class
+    lines: 11-246
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  test_count: 0
+  implementation_files:
+  - LAYER_003_Risk_Table_Formatter/src/implementation.py
+  methods_tested:
+  - __init__
+  - format_risk_data
+  - _format_empty_data
+  - _format_as_json
+  - _format_as_csv
+  - _format_as_html
+  - _format_as_text
+  - _escape_html
+  - validate_risk_structure
+  - add_formatting_metadata
+  - create_risk_formatter
+  - format_risks
+  classes_tested:
+  - RiskTableFormatter
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_003_Risk_Table_Formatter/src/implementation.py:14-17
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  verified: true
+- implementation_location: LAYER_003_Risk_Table_Formatter/src/implementation.py:18-56
+  method_name: format_risk_data
+  requirement: AC-001
+  test: test_format_risk_data
+  test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  verified: true
+- implementation_location: LAYER_003_Risk_Table_Formatter/src/implementation.py:57-67
+  method_name: _format_empty_data
+  requirement: AC-001
+  test: test__format_empty_data
+  test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  verified: true
+- implementation_location: LAYER_003_Risk_Table_Formatter/src/implementation.py:68-71
+  method_name: _format_as_json
+  requirement: AC-001
+  test: test__format_as_json
+  test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  verified: true
+- implementation_location: LAYER_003_Risk_Table_Formatter/src/implementation.py:72-95
+  method_name: _format_as_csv
+  requirement: AC-001
+  test: test__format_as_csv
+  test_file: LAYER_003_Risk_Table_Formatter/tests/test_generated_20251020_211409.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

@@ -1,0 +1,40 @@
+feature_id: FEATURE-003-006
+feature_name: PowerPoint Generator
+traceability_timestamp: '20251020_080342'
+feature_to_layers:
+  LAYER-001:
+    layer_name: Slide Factory
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_075247.py
+    traceability_status: VERIFIED
+  LAYER-002:
+    layer_name: Theme Applier
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_075433.py
+    traceability_status: VERIFIED
+  LAYER-003:
+    layer_name: Content Inserter
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_075618.py
+    traceability_status: VERIFIED
+  LAYER-004:
+    layer_name: Report Assembler
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_075823.py
+    traceability_status: VERIFIED
+feature_integration:
+  integration_file: src/feature_integration.py
+  orchestrates_layers:
+  - LAYER-001
+  - LAYER-002
+  - LAYER-003
+  - LAYER-004
+  status: IMPLEMENTED
+requirements_coverage:
+  layer_requirements: 100%
+  feature_requirements: PENDING_FEATURE_TESTS
+  acceptance_criteria: 0

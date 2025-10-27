@@ -1,0 +1,31 @@
+metadata:
+  requirement_id: "FEATURE-WEB-006"
+  feature_name: "PowerPoint Export"
+  feature_code: "EXPORT"
+  version: "1.0.0"
+  priority: "MUST HAVE"
+  
+overview:
+  description: "Capture dashboard screenshots and assemble into PowerPoint presentation"
+  user_story: "As a PM, I want to export dashboard to PowerPoint for presentations"
+  
+  export_flow: |
+    1. User clicks "Export to PowerPoint" button
+    2. Playwright captures screenshots of each page
+    3. PowerPoint service creates presentation with image slides
+    4. File downloaded as ZnNi_Report.pptx
+  
+layers:
+  - layer_id: "LAYER-WEB-006-01"
+    layer_name: "Export Route Handler"
+    implementation_file: "routers/export.py"
+  - layer_id: "LAYER-WEB-006-02"
+    layer_name: "Screenshot Service"
+    implementation_file: "services/screenshot_service.py"
+    dependencies: ["playwright"]
+  - layer_id: "LAYER-WEB-006-03"
+    layer_name: "PowerPoint Assembly Service"
+    implementation_file: "services/powerpoint_service.py"
+    dependencies: ["python-pptx"]
+
+estimated_effort: "2 hours"

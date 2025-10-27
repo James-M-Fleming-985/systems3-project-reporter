@@ -1,0 +1,499 @@
+metadata:
+  system_id: SYSTEM-003-WEB
+  system_name: "ZnNi Line Report Generator - Web Dashboard"
+  version: "2.0.0"
+  architecture_pattern: "FastAPI Web Application with Screenshot-to-PowerPoint Export"
+  migration_from: "SYSTEM-003 v1.0.0 CLI (archived 2025-10-21)"
+
+system_overview:
+  description: |
+    Web-based dashboard that reads project status data from YAML files and displays
+    interactive visualizations (Gantt charts, milestone tracking, risk analysis, change 
+    management). Includes "Export to PowerPoint" feature that captures dashboard screenshots
+    and assembles them into a professional presentation.
+  
+  deployment_model: "Web Application (FastAPI + Jinja2 Templates)"
+  execution_mode: "Always-on web server (http://localhost:8000)"
+  data_persistence: "File-based (YAML files for project data, change logs)"
+  
+  key_benefits:
+    - "Real-time visual feedback in browser (no blind CLI execution)"
+    - "Easier debugging with browser dev tools"
+    - "Simpler architecture (6 routes vs 24 layers)"
+    - "Better AI code generation (proven FastAPI patterns)"
+    - "Live preview before exporting to PowerPoint"
+
+architecture_change_rationale: |
+  **Why Web Instead of CLI:**
+  
+  CLI Problems (archived):
+  - 24 layers created integration nightmares with AI generation
+  - No visual feedback until runtime
+  - Hours of debugging invisible errors
+  - Complex orchestration between features
+  
+  Web Benefits:
+  - See output immediately in browser
+  - Standard HTTP/JSON integration patterns
+  - Browser dev tools for debugging
+  - Simpler code = less AI errors
+  - Screenshot approach simpler than programmatic slide building
+
+architecture:
+  stack:
+    backend: "FastAPI (Python 3.12+)"
+    templates: "Jinja2 (HTML templating)"
+    charts: "Plotly.js or Chart.js (interactive browser charts)"
+    styling: "Tailwind CSS or Bootstrap (responsive design)"
+    screenshot: "Playwright or Selenium (headless browser capture)"
+    export: "python-pptx (assemble screenshots into slides)"
+  
+  layers:
+    - layer: "Web Presentation Layer"
+      components:
+        - "FastAPI Routes (6 endpoints)"
+        - "Jinja2 HTML Templates (5-6 pages)"
+        - "Interactive Charts (Plotly/Chart.js)"
+        - "Export Button (trigger screenshot capture)"
+      
+    - layer: "Business Logic Layer"
+      components:
+        - "Project Data Aggregator"
+        - "Chart Data Formatter"
+        - "Screenshot Orchestrator"
+        - "PowerPoint Assembler"
+      
+    - layer: "Data Access Layer"
+      components:
+        - "YAML File Reader"
+        - "Schema Validator (Pydantic models)"
+        - "File System Scanner"
+  
+  patterns:
+    - pattern: "MVC (Model-View-Controller)"
+      usage: "FastAPI routes (controller), Jinja2 templates (view), Pydantic models (model)"
+    
+    - pattern: "Repository Pattern"
+      usage: "ProjectRepository for reading project data from YAML"
+    
+    - pattern: "Factory Pattern"
+      usage: "ChartFactory for creating different chart types"
+
+system_components:
+  # DATA LAYER
+  - component_id: "COMP-WEB-001"
+    name: "Project Data Repository"
+    responsibility: "Read and parse YAML project files"
+    interfaces:
+      - "load_all_projects() -> List[Project]"
+      - "load_project_by_id(project_id: str) -> Project"
+      - "get_projects_by_section(section: str) -> List[Project]"
+      - "validate_yaml_schema(file_path: Path) -> bool"
+    dependencies:
+      - "pyyaml"
+      - "pydantic"
+  
+  # BUSINESS LOGIC LAYER
+  - component_id: "COMP-WEB-002"
+    name: "Chart Data Formatter"
+    responsibility: "Transform project data into chart-ready JSON"
+    interfaces:
+      - "format_gantt_data(projects: List[Project]) -> GanttChartData"
+      - "format_milestone_data(projects: List[Project]) -> MilestoneChartData"
+      - "format_risk_data(projects: List[Project]) -> RiskChartData"
+      - "calculate_milestone_quadrants(projects: List[Project]) -> QuadrantData"
+    output: "JSON compatible with Plotly.js/Chart.js"
+  
+  - component_id: "COMP-WEB-003"
+    name: "Screenshot Capture Service"
+    responsibility: "Capture web pages as images using headless browser"
+    interfaces:
+      - "capture_page(url: str, output_path: Path) -> Path"
+      - "capture_with_scroll(url: str, output_path: Path) -> Path"
+      - "set_viewport_size(width: int, height: int) -> None"
+    dependencies:
+      - "playwright (or selenium alternative)"
+  
+  - component_id: "COMP-WEB-004"
+    name: "PowerPoint Assembly Service"
+    responsibility: "Create PowerPoint from screenshot images"
+    interfaces:
+      - "create_presentation() -> Presentation"
+      - "add_image_slide(image_path: Path, title: str) -> Slide"
+      - "add_title_slide(title: str, subtitle: str) -> Slide"
+      - "save_presentation(output_path: Path) -> Path"
+    dependencies:
+      - "python-pptx"
+  
+  # WEB PRESENTATION LAYER
+  - component_id: "COMP-WEB-005"
+    name: "Dashboard Web Routes"
+    responsibility: "FastAPI endpoints serving HTML pages and APIs"
+    routes:
+      - route: "GET /"
+        description: "Home page - Overview of all projects"
+        template: "index.html"
+        data: "All projects summary, key metrics"
+      
+      - route: "GET /gantt"
+        description: "Gantt chart page showing project timelines"
+        template: "gantt.html"
+        data: "Gantt chart data (Plotly.js)"
+      
+      - route: "GET /milestones"
+        description: "Milestone tracking page with quadrant analysis"
+        template: "milestones.html"
+        data: "Milestone quadrants (past complete, current in-progress, future upcoming)"
+      
+      - route: "GET /risks"
+        description: "Risk analysis page with severity breakdown"
+        template: "risks.html"
+        data: "Risks grouped by HIGH/MEDIUM/LOW"
+      
+      - route: "GET /changes"
+        description: "Change management log page"
+        template: "changes.html"
+        data: "Schedule changes with impact analysis"
+      
+      - route: "POST /export"
+        description: "Export dashboard to PowerPoint"
+        response: "File download (ZnNi_Report.pptx)"
+        process: |
+          1. Trigger screenshot capture of each page
+          2. Assemble screenshots into PowerPoint
+          3. Return file for download
+  
+  - component_id: "COMP-WEB-006"
+    name: "Jinja2 Template Engine"
+    responsibility: "Render HTML with dynamic data"
+    templates:
+      - "base.html - Base template with navigation, header, footer"
+      - "index.html - Project overview dashboard"
+      - "gantt.html - Gantt chart page"
+      - "milestones.html - Milestone tracking page"
+      - "risks.html - Risk analysis page"
+      - "changes.html - Change management page"
+    styling: "Tailwind CSS for responsive design"
+
+data_models:
+  - model: "Project"
+    file: "models/project.py"
+    fields:
+      - "project_id: str"
+      - "project_name: str"
+      - "project_code: str"
+      - "status: str"
+      - "start_date: str"
+      - "target_completion: str"
+      - "completion_percentage: int"
+      - "milestones: List[Milestone]"
+      - "risks: List[Risk]"
+      - "changes: List[Change]"
+  
+  - model: "Milestone"
+    file: "models/milestone.py"
+    fields:
+      - "name: str"
+      - "target_date: str"
+      - "status: str"  # COMPLETED, IN_PROGRESS, NOT_STARTED
+      - "completion_date: Optional[str]"
+      - "completion_percentage: Optional[int]"
+      - "notes: Optional[str]"
+  
+  - model: "Risk"
+    file: "models/risk.py"
+    fields:
+      - "risk_id: str"
+      - "description: str"
+      - "severity: str"  # HIGH, MEDIUM, LOW
+      - "probability: str"  # HIGH, MEDIUM, LOW
+      - "impact: str"
+      - "mitigation: str"
+      - "status: str"  # OPEN, MITIGATED, CLOSED
+  
+  - model: "Change"
+    file: "models/change.py"
+    fields:
+      - "change_id: str"
+      - "date: str"
+      - "old_date: str"
+      - "new_date: str"
+      - "reason: str"
+      - "impact: str"
+
+  - model: "GanttChartData"
+    file: "models/chart_data.py"
+    fields:
+      - "tasks: List[GanttTask]"
+      - "projects: List[str]"
+      - "start_date: str"
+      - "end_date: str"
+  
+  - model: "MilestoneChartData"
+    file: "models/chart_data.py"
+    fields:
+      - "completed: List[Milestone]"
+      - "in_progress: List[Milestone]"
+      - "upcoming: List[Milestone]"
+      - "delayed: List[Milestone]"
+
+features:
+  - feature_id: "FEATURE-WEB-001"
+    name: "Dashboard Home Page"
+    description: "Overview showing summary metrics and project list"
+    user_story: |
+      As a project manager, I want to see an overview of all 3 projects
+      with completion percentages, risk counts, and milestone status at a glance.
+    components:
+      - "COMP-WEB-001 (Project Data Repository)"
+      - "COMP-WEB-005 (Dashboard Web Routes - GET /)"
+      - "COMP-WEB-006 (Jinja2 Template - index.html)"
+  
+  - feature_id: "FEATURE-WEB-002"
+    name: "Interactive Gantt Chart"
+    description: "Visual timeline showing all projects and milestones"
+    user_story: |
+      As a project manager, I want to see a Gantt chart with all project timelines
+      so I can identify dependencies and scheduling conflicts.
+    components:
+      - "COMP-WEB-001 (Project Data Repository)"
+      - "COMP-WEB-002 (Chart Data Formatter - format_gantt_data)"
+      - "COMP-WEB-005 (Dashboard Web Routes - GET /gantt)"
+      - "COMP-WEB-006 (Jinja2 Template - gantt.html with Plotly.js)"
+  
+  - feature_id: "FEATURE-WEB-003"
+    name: "Milestone Quadrant Tracker"
+    description: "Categorize milestones by status and timing"
+    user_story: |
+      As a project manager, I want to see milestones categorized into
+      quadrants (completed past, current in-progress, upcoming future, delayed)
+      so I can focus on what needs attention.
+    components:
+      - "COMP-WEB-001 (Project Data Repository)"
+      - "COMP-WEB-002 (Chart Data Formatter - calculate_milestone_quadrants)"
+      - "COMP-WEB-005 (Dashboard Web Routes - GET /milestones)"
+      - "COMP-WEB-006 (Jinja2 Template - milestones.html)"
+  
+  - feature_id: "FEATURE-WEB-004"
+    name: "Risk Analysis Dashboard"
+    description: "Visualize risks grouped by severity"
+    user_story: |
+      As a project manager, I want to see all risks grouped by severity
+      (HIGH/MEDIUM/LOW) with charts showing distribution so I can prioritize
+      risk mitigation efforts.
+    components:
+      - "COMP-WEB-001 (Project Data Repository)"
+      - "COMP-WEB-002 (Chart Data Formatter - format_risk_data)"
+      - "COMP-WEB-005 (Dashboard Web Routes - GET /risks)"
+      - "COMP-WEB-006 (Jinja2 Template - risks.html with Chart.js)"
+  
+  - feature_id: "FEATURE-WEB-005"
+    name: "Change Management Log"
+    description: "Display schedule changes with reasons and impact"
+    user_story: |
+      As a project manager, I want to see a log of all schedule changes
+      with dates, reasons, and impact so I can track project volatility.
+    components:
+      - "COMP-WEB-001 (Project Data Repository)"
+      - "COMP-WEB-005 (Dashboard Web Routes - GET /changes)"
+      - "COMP-WEB-006 (Jinja2 Template - changes.html)"
+  
+  - feature_id: "FEATURE-WEB-006"
+    name: "PowerPoint Export"
+    description: "Capture dashboard screenshots and assemble into PowerPoint"
+    user_story: |
+      As a project manager, I want to export the dashboard to PowerPoint
+      so I can present the status in meetings without rebuilding slides manually.
+    components:
+      - "COMP-WEB-003 (Screenshot Capture Service)"
+      - "COMP-WEB-004 (PowerPoint Assembly Service)"
+      - "COMP-WEB-005 (Dashboard Web Routes - POST /export)"
+    export_flow: |
+      1. User clicks "Export to PowerPoint" button
+      2. Backend triggers Playwright to capture screenshots:
+         - Screenshot 1: Home page overview
+         - Screenshot 2: Gantt chart page
+         - Screenshot 3: Milestone tracker page
+         - Screenshot 4: Risk analysis page
+         - Screenshot 5: Change management page
+      3. PowerPoint Assembly Service creates presentation:
+         - Title slide (generated text)
+         - Insert 5 screenshot images as slides
+         - Add captions/titles to each slide
+      4. Return PPTX file for download
+
+technology_stack:
+  backend:
+    framework: "FastAPI 0.104+"
+    python_version: "3.12+"
+    async: "Yes (async def routes)"
+  
+  frontend:
+    templates: "Jinja2 3.1+"
+    css: "Tailwind CSS 3.x"
+    charts: "Plotly.js 2.x (Gantt, bar charts)"
+    interactivity: "HTMX 1.9+ (optional, for dynamic updates)"
+  
+  data:
+    format: "YAML (existing mock_data/ files)"
+    validation: "Pydantic 2.x"
+    storage: "File system (no database needed for MVP)"
+  
+  export:
+    screenshot: "Playwright 1.40+"
+    powerpoint: "python-pptx 0.6+"
+  
+  development:
+    hot_reload: "uvicorn --reload"
+    testing: "pytest + httpx (FastAPI test client)"
+    linting: "ruff"
+
+deployment:
+  local_dev: |
+    # Terminal 1: Start FastAPI server
+    uvicorn main:app --reload --port 8000
+    
+    # Terminal 2: Open browser
+    http://localhost:8000
+  
+  production: |
+    # Docker container or direct deployment
+    # Environment: Python 3.12, Playwright browser binaries
+    # Port: 8000
+    # No external dependencies (file-based data)
+
+file_structure: |
+  SYSTEM-003_ZnNi_Report_Generation/
+  ├── main.py                          # FastAPI app entry point
+  ├── requirements.txt                 # Dependencies
+  ├── config.py                        # Configuration (paths, settings)
+  │
+  ├── models/                          # Pydantic data models
+  │   ├── __init__.py
+  │   ├── project.py
+  │   ├── milestone.py
+  │   ├── risk.py
+  │   ├── change.py
+  │   └── chart_data.py
+  │
+  ├── repositories/                    # Data access layer
+  │   ├── __init__.py
+  │   └── project_repository.py       # YAML file reading
+  │
+  ├── services/                        # Business logic
+  │   ├── __init__.py
+  │   ├── chart_formatter.py          # Format data for charts
+  │   ├── screenshot_service.py       # Playwright screenshot capture
+  │   └── powerpoint_service.py       # Assemble PPTX from images
+  │
+  ├── routers/                         # FastAPI routes
+  │   ├── __init__.py
+  │   ├── dashboard.py                # GET / (home), /gantt, /milestones, etc.
+  │   └── export.py                   # POST /export (PowerPoint download)
+  │
+  ├── templates/                       # Jinja2 HTML templates
+  │   ├── base.html                   # Base template with nav/footer
+  │   ├── index.html                  # Home page
+  │   ├── gantt.html                  # Gantt chart page
+  │   ├── milestones.html             # Milestone tracker
+  │   ├── risks.html                  # Risk analysis
+  │   └── changes.html                # Change management log
+  │
+  ├── static/                          # Static assets
+  │   ├── css/
+  │   │   └── styles.css              # Tailwind build output
+  │   ├── js/
+  │   │   └── charts.js               # Chart initialization
+  │   └── images/
+  │       └── logo.png
+  │
+  ├── mock_data/                       # (Existing) YAML test data
+  │   ├── PROJECT-001_ZnNi_Line_Phase1/
+  │   ├── PROJECT-002_Quality_System/
+  │   └── PROJECT-003_Infrastructure/
+  │
+  ├── output/                          # Generated PowerPoint files
+  │   └── ZnNi_Report_*.pptx
+  │
+  ├── tests/                           # Pytest tests
+  │   ├── test_routes.py
+  │   ├── test_repository.py
+  │   └── test_services.py
+  │
+  └── archive/                         # Archived CLI implementation
+      └── cli_implementation_20251021/
+
+migration_notes:
+  reusable_from_cli:
+    - "mock_data/ - All YAML files work as-is"
+    - "Data models structure (just convert to Pydantic)"
+    - "Business logic concepts (milestone calculation, risk aggregation)"
+    - "Requirements specifications"
+  
+  not_needed:
+    - "6 feature folders (replaced by services/)"
+    - "24 layers (replaced by 3-tier web architecture)"
+    - "Complex orchestration (FastAPI handles routing)"
+    - "Terminal UI (replaced by HTML templates)"
+  
+  new_additions:
+    - "FastAPI routes and routers"
+    - "Jinja2 HTML templates"
+    - "Interactive browser charts (Plotly.js)"
+    - "Screenshot capture service (Playwright)"
+    - "Tailwind CSS styling"
+
+success_criteria:
+  mvp_complete_when:
+    - "✅ Dashboard loads at http://localhost:8000"
+    - "✅ All 3 projects visible on home page"
+    - "✅ Gantt chart displays all milestones"
+    - "✅ Milestone tracker shows quadrants (completed/in-progress/upcoming)"
+    - "✅ Risk page shows severity breakdown (HIGH/MEDIUM/LOW)"
+    - "✅ Change management log displays all changes"
+    - "✅ Export button generates PowerPoint with 6 slides"
+    - "✅ PowerPoint contains screenshots of all dashboard pages"
+  
+  quality_metrics:
+    - "Page load time < 1 second"
+    - "Charts render in < 500ms"
+    - "PowerPoint export completes in < 10 seconds"
+    - "Responsive design (works on mobile browsers)"
+    - "No JavaScript errors in browser console"
+    - "All routes return 200 OK for valid requests"
+
+next_steps:
+  phase_1_foundation:
+    - "1. Set up FastAPI project structure"
+    - "2. Create Pydantic models (Project, Milestone, Risk, Change)"
+    - "3. Build Project Repository (read YAML files)"
+    - "4. Create base.html template with navigation"
+  
+  phase_2_pages:
+    - "5. Build home page (GET / route + index.html)"
+    - "6. Build Gantt chart page (GET /gantt + gantt.html)"
+    - "7. Build milestone tracker page (GET /milestones)"
+    - "8. Build risk analysis page (GET /risks)"
+    - "9. Build change log page (GET /changes)"
+  
+  phase_3_export:
+    - "10. Integrate Playwright for screenshots"
+    - "11. Build PowerPoint assembly service"
+    - "12. Wire up export button (POST /export)"
+  
+  phase_4_polish:
+    - "13. Add Tailwind CSS styling"
+    - "14. Add error handling"
+    - "15. Write tests"
+    - "16. Documentation"
+
+estimated_effort:
+  total_hours: "8-12 hours (vs 2 weeks for CLI)"
+  breakdown:
+    - "FastAPI setup + models: 1 hour"
+    - "Repository + data loading: 1 hour"
+    - "5 dashboard pages: 3-4 hours"
+    - "Chart integration: 1-2 hours"
+    - "Screenshot + PowerPoint: 2 hours"
+    - "Styling + polish: 1-2 hours"
+    - "Testing: 1 hour"

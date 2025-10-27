@@ -1,0 +1,188 @@
+matrix_metadata:
+  timestamp: '20251020_211328'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_002_Risk_Filter_Logic/src/implementation.py
+  lines: 411
+  methods:
+  - name: __init__
+    lines: 64-76
+  - name: _validate_config
+    lines: 77-87
+  - name: filter_trades
+    lines: 88-137
+  - name: _validate_trade
+    lines: 138-162
+  - name: _evaluate_trade
+    lines: 163-197
+  - name: _update_positions
+    lines: 198-209
+  - name: get_risk_metrics
+    lines: 210-241
+  - name: reset_daily_metrics
+    lines: 242-247
+  - name: update_pnl
+    lines: 248-261
+  - name: __init__
+    lines: 265-278
+  - name: process_trade_batch
+    lines: 279-323
+  - name: get_service_status
+    lines: 324-341
+  - name: create_trade
+    lines: 342-372
+  - name: calculate_risk_score
+    lines: 373-383
+  classes:
+  - name: RiskLevel
+    type: class
+    lines: 15-22
+  - name: RiskFilterError
+    type: class
+    lines: 23-27
+  - name: InvalidInputError
+    type: class
+    lines: 28-32
+  - name: ConfigurationError
+    type: class
+    lines: 33-38
+  - name: Trade
+    type: class
+    lines: 39-51
+  - name: RiskFilterConfig
+    type: class
+    lines: 52-60
+  - name: RiskFilter
+    type: class
+    lines: 61-261
+  - name: RiskFilterService
+    type: class
+    lines: 262-411
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  test_count: 0
+  implementation_files:
+  - LAYER_002_Risk_Filter_Logic/src/implementation.py
+  methods_tested:
+  - __init__
+  - _validate_config
+  - filter_trades
+  - _validate_trade
+  - _evaluate_trade
+  - _update_positions
+  - get_risk_metrics
+  - reset_daily_metrics
+  - update_pnl
+  - __init__
+  - process_trade_batch
+  - get_service_status
+  - create_trade
+  - calculate_risk_score
+  classes_tested:
+  - RiskLevel
+  - RiskFilterError
+  - InvalidInputError
+  - ConfigurationError
+  - Trade
+  - RiskFilterConfig
+  - RiskFilter
+  - RiskFilterService
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_002_Risk_Filter_Logic/src/implementation.py:64-76
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  verified: true
+- implementation_location: LAYER_002_Risk_Filter_Logic/src/implementation.py:77-87
+  method_name: _validate_config
+  requirement: AC-001
+  test: test__validate_config
+  test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  verified: true
+- implementation_location: LAYER_002_Risk_Filter_Logic/src/implementation.py:88-137
+  method_name: filter_trades
+  requirement: AC-001
+  test: test_filter_trades
+  test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  verified: true
+- implementation_location: LAYER_002_Risk_Filter_Logic/src/implementation.py:138-162
+  method_name: _validate_trade
+  requirement: AC-001
+  test: test__validate_trade
+  test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  verified: true
+- implementation_location: LAYER_002_Risk_Filter_Logic/src/implementation.py:163-197
+  method_name: _evaluate_trade
+  requirement: AC-001
+  test: test__evaluate_trade
+  test_file: LAYER_002_Risk_Filter_Logic/tests/test_generated_20251020_211228.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

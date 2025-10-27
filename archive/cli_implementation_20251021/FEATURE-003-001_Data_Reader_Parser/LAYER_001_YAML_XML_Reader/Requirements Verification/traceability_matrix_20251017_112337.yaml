@@ -1,0 +1,205 @@
+matrix_metadata:
+  timestamp: '20251017_112337'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Reads valid YAML files without errors
+  description: Reads valid YAML files without errors
+  test_files: &id001
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Reads valid XML files and converts to dict structure
+  description: Reads valid XML files and converts to dict structure
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Handles UTF-8 and UTF-16 encoded files correctly
+  description: Handles UTF-8 and UTF-16 encoded files correctly
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Raises FileNotFoundError for non-existent files with clear message
+  description: Raises FileNotFoundError for non-existent files with clear message
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: Raises FileParseError for malformed YAML with line number
+  description: Raises FileParseError for malformed YAML with line number
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: Factory returns correct reader type based on file extension
+  description: Factory returns correct reader type based on file extension
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: Processes 100 files in under 2 seconds
+  description: Processes 100 files in under 2 seconds
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT
+    GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py
+  lines: 237
+  methods:
+  - name: read
+    lines: 18-33
+  - name: read
+    lines: 37-90
+  - name: read
+    lines: 94-132
+  - name: _xml_to_dict
+    lines: 133-183
+  - name: get_reader
+    lines: 194-214
+  - name: process_files
+    lines: 215-225
+  classes:
+  - name: FileParseError
+    type: class
+    lines: 10-14
+  - name: BaseReader
+    type: class
+    lines: 15-33
+  - name: YAMLReader
+    type: class
+    lines: 34-90
+  - name: XMLReader
+    type: class
+    lines: 91-183
+  - name: ReaderFactory
+    type: class
+    lines: 184-237
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py
+  methods_tested:
+  - read
+  - read
+  - read
+  - _xml_to_dict
+  - get_reader
+  - process_files
+  classes_tested:
+  - FileParseError
+  - BaseReader
+  - YAMLReader
+  - XMLReader
+  - ReaderFactory
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py:18-33
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py:37-90
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py:94-132
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py:133-183
+  method_name: _xml_to_dict
+  requirement: AC-001
+  test: test__xml_to_dict
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/src/implementation.py:194-214
+  method_name: get_reader
+  requirement: AC-001
+  test: test_get_reader
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-001
+    YAML XML Reader/tests/test_generated_20251017_112309.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 7
+  requirements_traced: 7
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

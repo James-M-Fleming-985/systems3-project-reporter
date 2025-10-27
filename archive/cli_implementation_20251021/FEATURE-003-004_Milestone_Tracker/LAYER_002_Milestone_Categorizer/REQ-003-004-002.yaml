@@ -1,0 +1,278 @@
+# ================================================================================
+# LAYER REQUIREMENT: Milestone Categorizer
+# ================================================================================
+# REQUIREMENT ID: REQ-003-004-002
+# FEATURE: FEATURE-003-004 (Milestone Tracker)
+# LAYER: LAYER-003-004-002 (Milestone_Categorizer)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-004-002"
+  requirement_title: "Milestone Categorizer"
+  layer: "002_Milestone_Categorizer"
+  feature: "FEATURE-003-004_Milestone_Tracker"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Milestone Categorizer"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Milestone Categorizer"
+  
+  description: |
+    Categorize milestones into four quadrants: due this month, due next month, completed last month, active risks (delayed milestones). Use date ranges from LAYER-003-004-001, filter milestones from all projects.
+  
+  rationale: |
+    Implements four-quadrant milestone view business logic. Clear separation allows easy modification of categorization rules.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/milestone_categorizer/milestone_categorizer.py"
+    modules:
+      - "milestone_categorizer.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "MilestoneCategorizer"
+      purpose: "Categorize milestones by date and status"
+      methods:
+        - name: "categorize_milestones"
+          signature: "categorize_milestones(projects: List[ProjectPlan]) -> MilestoneQuadrants"
+          purpose: "Implement categorize_milestones logic" 
+        - name: "get_due_this_month"
+          signature: "get_due_this_month(milestones: List[Milestone]) -> List[Milestone]"
+          purpose: "Implement get_due_this_month logic" 
+        - name: "get_delayed_milestones"
+          signature: "get_delayed_milestones(milestones: List[Milestone]) -> List[Milestone]"
+          purpose: "Implement get_delayed_milestones logic" 
+
+  implementation_details:
+    libraries: []
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "List of ProjectPlan objects, date ranges from LAYER-003-004-001" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "MilestoneQuadrants object with categorized milestones" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_milestone_categorizer.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_milestone_categorizer_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Milestone Categorizer (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_milestone_categorizer.py"
+      tests:
+        - "test_categorize_milestones_success"
+        - "test_categorize_milestones_failure" 
+        - "test_get_due_this_month_success"
+        - "test_get_due_this_month_failure" 
+        - "test_get_delayed_milestones_success"
+        - "test_get_delayed_milestones_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_milestone_categorizer.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement MilestoneCategorizer class (GREEN phase)"
+      file: "src/milestone_categorizer/milestone_categorizer.py"
+      methods:
+        - "categorize_milestones(projects: List[ProjectPlan]) -> MilestoneQuadrants" 
+        - "get_due_this_month(milestones: List[Milestone]) -> List[Milestone]" 
+        - "get_delayed_milestones(milestones: List[Milestone]) -> List[Milestone]" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_milestone_categorizer.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_milestone_categorizer_integration.py"
+      duration: "15 min"
+  
+  total_time: "2 hours"
+  
+  deliverable: |
+    Milestone Categorizer implementation ready for integration with 
+    LAYER-003-004-003.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-002: Three-section report structure" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-004: Business Logic Layer" 
+    - "SYS-REQ-007: Report generation < 10 seconds" 
+  
+  implements_system_components:
+    - "COMP-003: Milestone Calculator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-004: Milestone Tracker"
+  
+  depends_on_layers:
+    - "LAYER-003-004-001" 
+    - "LAYER-003-001-003" 
+  
+  consumed_by_layers:
+    - "LAYER-003-004-003" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-004-001"
+      data_type: "Various"
+      interface: "Method calls" 
+    - layer: "LAYER-003-001-003"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "LAYER-003-004-003"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_milestone_categorizer.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_milestone_categorizer_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/milestone_categorizer/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.milestone_categorizer import MilestoneCategorizer
+    
+    instance = MilestoneCategorizer()
+    result = instance.categorize_milestones(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-004: Milestone Tracker
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

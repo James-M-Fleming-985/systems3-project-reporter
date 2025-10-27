@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+    <Name>ZnNi Customer Portal Development</Name>
+    <StartDate>2025-01-01T00:00:00</StartDate>
+    <FinishDate>2025-12-31T00:00:00</FinishDate>
+    
+    <!-- Extended Attributes Definitions -->
+    <ExtendedAttributes>
+        <ExtendedAttribute>
+            <FieldID>188743731</FieldID>
+            <FieldName>Text1</FieldName>
+            <Alias>Project Code</Alias>
+        </ExtendedAttribute>
+        <ExtendedAttribute>
+            <FieldID>188743732</FieldID>
+            <FieldName>Text2</FieldName>
+            <Alias>Project Status</Alias>
+        </ExtendedAttribute>
+        <ExtendedAttribute>
+            <FieldID>188743945</FieldID>
+            <FieldName>Text3</FieldName>
+            <Alias>Milestone Status</Alias>
+        </ExtendedAttribute>
+    </ExtendedAttributes>
+    
+    <!-- Project Level Custom Fields -->
+    <ExtendedAttribute>
+        <FieldID>188743731</FieldID>
+        <Value>PROJ-001</Value>
+    </ExtendedAttribute>
+    <ExtendedAttribute>
+        <FieldID>188743732</FieldID>
+        <Value>IN_PROGRESS</Value>
+    </ExtendedAttribute>
+    
+    <!-- Tasks/Milestones -->
+    <Tasks>
+        <Task>
+            <UID>1</UID>
+            <ID>1</ID>
+            <Name>Requirements Finalization</Name>
+            <Start>2025-01-01T00:00:00</Start>
+            <Finish>2025-02-05T00:00:00</Finish>
+            <PercentComplete>100</PercentComplete>
+            <Summary>0</Summary>
+            <ExtendedAttribute>
+                <FieldID>188743945</FieldID>
+                <Value>COMPLETED</Value>
+            </ExtendedAttribute>
+        </Task>
+        
+        <Task>
+            <UID>2</UID>
+            <ID>2</ID>
+            <Name>Backend API Development</Name>
+            <Start>2025-02-01T00:00:00</Start>
+            <Finish>2025-04-20T00:00:00</Finish>
+            <PercentComplete>60</PercentComplete>
+            <Summary>0</Summary>
+            <ExtendedAttribute>
+                <FieldID>188743945</FieldID>
+                <Value>IN_PROGRESS</Value>
+            </ExtendedAttribute>
+        </Task>
+        
+        <Task>
+            <UID>3</UID>
+            <ID>3</ID>
+            <Name>Frontend Development</Name>
+            <Start>2025-03-01T00:00:00</Start>
+            <Finish>2025-05-25T00:00:00</Finish>
+            <PercentComplete>40</PercentComplete>
+            <Summary>0</Summary>
+            <ExtendedAttribute>
+                <FieldID>188743945</FieldID>
+                <Value>IN_PROGRESS</Value>
+            </ExtendedAttribute>
+        </Task>
+        
+        <Task>
+            <UID>4</UID>
+            <ID>4</ID>
+            <Name>Integration Testing</Name>
+            <Start>2025-05-15T00:00:00</Start>
+            <Finish>2025-06-25T00:00:00</Finish>
+            <PercentComplete>0</PercentComplete>
+            <Summary>0</Summary>
+            <ExtendedAttribute>
+                <FieldID>188743945</FieldID>
+                <Value>NOT_STARTED</Value>
+            </ExtendedAttribute>
+        </Task>
+        
+        <Task>
+            <UID>5</UID>
+            <ID>5</ID>
+            <Name>UAT and Go-Live</Name>
+            <Start>2025-06-15T00:00:00</Start>
+            <Finish>2025-07-25T00:00:00</Finish>
+            <PercentComplete>0</PercentComplete>
+            <Summary>0</Summary>
+            <ExtendedAttribute>
+                <FieldID>188743945</FieldID>
+                <Value>NOT_STARTED</Value>
+            </ExtendedAttribute>
+        </Task>
+    </Tasks>
+</Project>

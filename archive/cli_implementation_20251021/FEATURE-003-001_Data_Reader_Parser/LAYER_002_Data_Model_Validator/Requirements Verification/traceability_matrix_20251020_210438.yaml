@@ -1,0 +1,220 @@
+matrix_metadata:
+  timestamp: '20251020_210438'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_002_Data_Model_Validator/src/implementation.py
+  lines: 504
+  methods:
+  - name: __init__
+    lines: 13-17
+  - name: format_message
+    lines: 18-24
+  - name: __init__
+    lines: 28-44
+  - name: validate
+    lines: 45-68
+  - name: _validate_string
+    lines: 69-95
+  - name: _validate_integer
+    lines: 96-120
+  - name: _validate_float
+    lines: 121-142
+  - name: _validate_boolean
+    lines: 143-155
+  - name: _validate_date
+    lines: 156-174
+  - name: _validate_datetime
+    lines: 175-190
+  - name: _validate_email
+    lines: 191-201
+  - name: _validate_phone
+    lines: 202-215
+  - name: _validate_url
+    lines: 216-226
+  - name: _validate_uuid
+    lines: 227-237
+  - name: _validate_json
+    lines: 238-251
+  - name: _validate_array
+    lines: 252-280
+  - name: _validate_object
+    lines: 281-314
+  - name: _apply_constraints
+    lines: 315-335
+  - name: __init__
+    lines: 339-341
+  - name: validate
+    lines: 342-399
+  - name: __init__
+    lines: 403-412
+  - name: register_schema
+    lines: 413-418
+  - name: validate
+    lines: 419-453
+  - name: validate_batch
+    lines: 454-473
+  - name: get_performance_metrics
+    lines: 474-477
+  - name: reset_performance_metrics
+    lines: 478-485
+  - name: create_validator_function
+    lines: 486-493
+  - name: validator
+    lines: 488-493
+  - name: validate_data
+    lines: 494-499
+  - name: create_validator
+    lines: 500-510
+  classes:
+  - name: ValidationError
+    type: class
+    lines: 11-24
+  - name: FieldValidator
+    type: class
+    lines: 25-335
+  - name: SchemaValidator
+    type: class
+    lines: 336-399
+  - name: DataModelValidator
+    type: class
+    lines: 400-504
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  test_count: 0
+  implementation_files:
+  - LAYER_002_Data_Model_Validator/src/implementation.py
+  methods_tested:
+  - __init__
+  - format_message
+  - __init__
+  - validate
+  - _validate_string
+  - _validate_integer
+  - _validate_float
+  - _validate_boolean
+  - _validate_date
+  - _validate_datetime
+  - _validate_email
+  - _validate_phone
+  - _validate_url
+  - _validate_uuid
+  - _validate_json
+  - _validate_array
+  - _validate_object
+  - _apply_constraints
+  - __init__
+  - validate
+  - __init__
+  - register_schema
+  - validate
+  - validate_batch
+  - get_performance_metrics
+  - reset_performance_metrics
+  - create_validator_function
+  - validator
+  - validate_data
+  - create_validator
+  classes_tested:
+  - ValidationError
+  - FieldValidator
+  - SchemaValidator
+  - DataModelValidator
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_002_Data_Model_Validator/src/implementation.py:13-17
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  verified: true
+- implementation_location: LAYER_002_Data_Model_Validator/src/implementation.py:18-24
+  method_name: format_message
+  requirement: AC-001
+  test: test_format_message
+  test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  verified: true
+- implementation_location: LAYER_002_Data_Model_Validator/src/implementation.py:28-44
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  verified: true
+- implementation_location: LAYER_002_Data_Model_Validator/src/implementation.py:45-68
+  method_name: validate
+  requirement: AC-001
+  test: test_validate
+  test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  verified: true
+- implementation_location: LAYER_002_Data_Model_Validator/src/implementation.py:69-95
+  method_name: _validate_string
+  requirement: AC-001
+  test: test__validate_string
+  test_file: LAYER_002_Data_Model_Validator/tests/test_generated_20251020_210319.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

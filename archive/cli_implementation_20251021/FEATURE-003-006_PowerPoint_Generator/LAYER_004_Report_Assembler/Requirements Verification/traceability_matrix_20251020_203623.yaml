@@ -1,0 +1,176 @@
+matrix_metadata:
+  timestamp: '20251020_203623'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_004_Report_Assembler/src/implementation.py
+  lines: 207
+  methods:
+  - name: generate
+    lines: 16-20
+  - name: generate
+    lines: 24-28
+  - name: generate
+    lines: 32-63
+  - name: generate
+    lines: 67-103
+  - name: format_item
+    lines: 74-103
+  - name: __init__
+    lines: 107-116
+  - name: add_data_source
+    lines: 117-122
+  - name: generate_report
+    lines: 123-161
+  - name: clear_data_sources
+    lines: 162-165
+  - name: get_supported_formats
+    lines: 166-169
+  - name: validate_data
+    lines: 170-178
+  - name: generate_batch_reports
+    lines: 179-196
+  - name: create_report_assembler
+    lines: 197-201
+  - name: generate_quick_report
+    lines: 202-212
+  classes:
+  - name: ReportFormat
+    type: class
+    lines: 12-20
+  - name: JSONReportFormat
+    type: class
+    lines: 21-28
+  - name: CSVReportFormat
+    type: class
+    lines: 29-63
+  - name: TextReportFormat
+    type: class
+    lines: 64-103
+  - name: ReportAssembler
+    type: class
+    lines: 104-207
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  test_count: 0
+  implementation_files:
+  - LAYER_004_Report_Assembler/src/implementation.py
+  methods_tested:
+  - generate
+  - generate
+  - generate
+  - generate
+  - format_item
+  - __init__
+  - add_data_source
+  - generate_report
+  - clear_data_sources
+  - get_supported_formats
+  - validate_data
+  - generate_batch_reports
+  - create_report_assembler
+  - generate_quick_report
+  classes_tested:
+  - ReportFormat
+  - JSONReportFormat
+  - CSVReportFormat
+  - TextReportFormat
+  - ReportAssembler
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_004_Report_Assembler/src/implementation.py:16-20
+  method_name: generate
+  requirement: AC-001
+  test: test_generate
+  test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  verified: true
+- implementation_location: LAYER_004_Report_Assembler/src/implementation.py:24-28
+  method_name: generate
+  requirement: AC-001
+  test: test_generate
+  test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  verified: true
+- implementation_location: LAYER_004_Report_Assembler/src/implementation.py:32-63
+  method_name: generate
+  requirement: AC-001
+  test: test_generate
+  test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  verified: true
+- implementation_location: LAYER_004_Report_Assembler/src/implementation.py:67-103
+  method_name: generate
+  requirement: AC-001
+  test: test_generate
+  test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  verified: true
+- implementation_location: LAYER_004_Report_Assembler/src/implementation.py:74-103
+  method_name: format_item
+  requirement: AC-001
+  test: test_format_item
+  test_file: LAYER_004_Report_Assembler/tests/test_generated_20251020_203551.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

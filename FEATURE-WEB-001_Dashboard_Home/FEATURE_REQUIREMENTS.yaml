@@ -1,0 +1,117 @@
+metadata:
+  requirement_id: "FEATURE-WEB-001"
+  requirement_name: "Dashboard Home Page"
+  feature_id: "FEATURE-WEB-001"
+  feature_name: "Dashboard Home Page"
+  feature_code: "HOME"
+  version: "1.0.0"
+  status: "Active"
+  created_date: "2025-10-23"
+  last_modified: "2025-10-23"
+  owner: "Project Team"
+  priority: "MUST HAVE"
+  target_date: "2025-10-24"
+  
+  traceability:
+    parent_system: "SYSTEM-003-WEB"
+    parent_system_file: "../SYSTEM_REQUIREMENTS_WEB.yaml"
+    parent_system_requirements:
+      - "FEATURE-WEB-001: Dashboard home page with project overview"
+    
+    derivation_rationale: |
+      This feature implements the landing page that provides an at-a-glance view
+      of all 3 projects with key metrics (completion %, risk count, milestone status).
+      Users need immediate visibility into overall project health without drilling down.
+
+overview:
+  description: |
+    Web dashboard home page displaying summary cards for all projects, showing
+    completion percentages, active risks, milestone counts, and overall status.
+    Built with FastAPI route serving Jinja2 HTML template with Tailwind CSS.
+  
+  business_value:
+    - "Instant project health visibility for stakeholders"
+    - "Single source of truth for multi-project status"
+    - "Reduces time spent gathering status information"
+  
+  user_story: |
+    As a project manager,
+    I want to see an overview of all 3 ZnNi projects on one page,
+    So that I can quickly assess overall program health and identify issues.
+  
+  acceptance_criteria:
+    - "Home page loads at http://localhost:8000/"
+    - "Displays cards for all 3 projects from mock_data/"
+    - "Shows: project name, status, completion %, milestone count, risk count"
+    - "Navigation links to detailed pages (Gantt, Milestones, Risks, Changes)"
+    - "Responsive design works on desktop and mobile"
+    - "Page load time < 1 second"
+
+layers:
+  - layer_id: "LAYER-WEB-001-01"
+    layer_name: "FastAPI Route Handler"
+    layer_type: "Controller"
+    description: "HTTP endpoint serving home page"
+    responsibilities:
+      - "Handle GET / request"
+      - "Load all projects from repository"
+      - "Calculate summary metrics"
+      - "Render index.html template"
+    
+    interfaces:
+      inputs:
+        - "HTTP GET request to /"
+      outputs:
+        - "HTMLResponse with rendered template"
+      dependencies:
+        - "ProjectRepository (data access)"
+        - "Jinja2Templates (rendering)"
+    
+    implementation_file: "routers/dashboard.py"
+    scaffolding_source: "templates/mvp/backend/tpl-fastapi-crud/router.py.jinja (adapted)"
+  
+  - layer_id: "LAYER-WEB-001-02"
+    layer_name: "Jinja2 HTML Template"
+    layer_type: "View"
+    description: "Home page HTML template"
+    responsibilities:
+      - "Display project summary cards"
+      - "Show key metrics"
+      - "Provide navigation to other pages"
+      - "Responsive layout with Tailwind CSS"
+    
+    interfaces:
+      inputs:
+        - "projects: List[Project]"
+        - "summary_stats: dict"
+      outputs:
+        - "Rendered HTML page"
+    
+    implementation_file: "templates/index.html"
+    scaffolding_source: "Custom (Jinja2 template with Tailwind CSS)"
+
+technology_stack:
+  backend: "FastAPI 0.104+"
+  templates: "Jinja2 3.1+"
+  styling: "Tailwind CSS 3.x"
+  
+dependencies:
+  data_layer:
+    - "ProjectRepository (load_all_projects)"
+  shared:
+    - "Project model (Pydantic)"
+
+testing_strategy:
+  unit_tests:
+    - "Test route handler with mock repository"
+    - "Test template rendering with sample data"
+  
+  integration_tests:
+    - "Test GET / returns 200 OK"
+    - "Test page contains all project names"
+    - "Test navigation links present"
+  
+  e2e_tests:
+    - "Load page in browser, verify all elements visible"
+
+estimated_effort: "1 hour (route + template)"

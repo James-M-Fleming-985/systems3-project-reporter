@@ -1,0 +1,198 @@
+matrix_metadata:
+  timestamp: '20251020_075905'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py
+  lines: 334
+  methods:
+  - name: __init__
+    lines: 29-39
+  - name: _validate_config
+    lines: 40-44
+  - name: process_data
+    lines: 45-73
+  - name: _process_dict_data
+    lines: 74-84
+  - name: _process_list_data
+    lines: 85-96
+  - name: _process_string_data
+    lines: 97-106
+  - name: validate_input
+    lines: 107-134
+  - name: integrate_with_layer
+    lines: 135-164
+  - name: check_performance
+    lines: 165-176
+  - name: assemble_report
+    lines: 177-208
+  - name: sanitize_data
+    lines: 213-231
+  - name: transform_data
+    lines: 232-254
+  - name: format_error_message
+    lines: 259-275
+  - name: log_error
+    lines: 276-281
+  - name: __init__
+    lines: 285-288
+  - name: record_metric
+    lines: 289-300
+  - name: get_average_duration
+    lines: 301-314
+  - name: meets_requirements
+    lines: 315-325
+  classes:
+  - name: ReportAssembler
+    type: class
+    lines: 21-208
+  - name: DataProcessor
+    type: class
+    lines: 209-254
+  - name: ErrorHandler
+    type: class
+    lines: 255-281
+  - name: PerformanceMonitor
+    type: class
+    lines: 282-334
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py
+  methods_tested:
+  - __init__
+  - _validate_config
+  - process_data
+  - _process_dict_data
+  - _process_list_data
+  - _process_string_data
+  - validate_input
+  - integrate_with_layer
+  - check_performance
+  - assemble_report
+  - sanitize_data
+  - transform_data
+  - format_error_message
+  - log_error
+  - __init__
+  - record_metric
+  - get_average_duration
+  - meets_requirements
+  classes_tested:
+  - ReportAssembler
+  - DataProcessor
+  - ErrorHandler
+  - PerformanceMonitor
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py:29-39
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py:40-44
+  method_name: _validate_config
+  requirement: AC-001
+  test: test__validate_config
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py:45-73
+  method_name: process_data
+  requirement: AC-001
+  test: test_process_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py:74-84
+  method_name: _process_dict_data
+  requirement: AC-001
+  test: test__process_dict_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/src/implementation.py:85-96
+  method_name: _process_list_data
+  requirement: AC-001
+  test: test__process_list_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-004
+    Report Assembler/tests/test_generated_20251020_075823.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

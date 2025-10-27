@@ -1,0 +1,167 @@
+matrix_metadata:
+  timestamp: '20251020_202437'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_002_Change_Data_Collector/src/implementation.py
+  lines: 348
+  methods:
+  - name: __init__
+    lines: 20-32
+  - name: _initialize_validator
+    lines: 33-38
+  - name: collect
+    lines: 39-89
+  - name: _validate_record
+    lines: 90-122
+  - name: _transform_record
+    lines: 123-152
+  - name: process
+    lines: 153-193
+  - name: _process_batch
+    lines: 194-210
+  - name: _integrate_with_layers
+    lines: 211-220
+  - name: _flush_buffer
+    lines: 221-225
+  - name: get_stats
+    lines: 226-239
+  - name: reset
+    lines: 240-246
+  - name: validate_input
+    lines: 247-287
+  - name: __init__
+    lines: 293-301
+  - name: aggregate_changes
+    lines: 302-323
+  - name: filter_changes
+    lines: 324-334
+  classes:
+  - name: ChangeDataCollector
+    type: class
+    lines: 12-287
+  - name: ChangeDataProcessor
+    type: class
+    lines: 288-348
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  test_count: 0
+  implementation_files:
+  - LAYER_002_Change_Data_Collector/src/implementation.py
+  methods_tested:
+  - __init__
+  - _initialize_validator
+  - collect
+  - _validate_record
+  - _transform_record
+  - process
+  - _process_batch
+  - _integrate_with_layers
+  - _flush_buffer
+  - get_stats
+  - reset
+  - validate_input
+  - __init__
+  - aggregate_changes
+  - filter_changes
+  classes_tested:
+  - ChangeDataCollector
+  - ChangeDataProcessor
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_002_Change_Data_Collector/src/implementation.py:20-32
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  verified: true
+- implementation_location: LAYER_002_Change_Data_Collector/src/implementation.py:33-38
+  method_name: _initialize_validator
+  requirement: AC-001
+  test: test__initialize_validator
+  test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  verified: true
+- implementation_location: LAYER_002_Change_Data_Collector/src/implementation.py:39-89
+  method_name: collect
+  requirement: AC-001
+  test: test_collect
+  test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  verified: true
+- implementation_location: LAYER_002_Change_Data_Collector/src/implementation.py:90-122
+  method_name: _validate_record
+  requirement: AC-001
+  test: test__validate_record
+  test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  verified: true
+- implementation_location: LAYER_002_Change_Data_Collector/src/implementation.py:123-152
+  method_name: _transform_record
+  requirement: AC-001
+  test: test__transform_record
+  test_file: LAYER_002_Change_Data_Collector/tests/test_generated_20251020_202352.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

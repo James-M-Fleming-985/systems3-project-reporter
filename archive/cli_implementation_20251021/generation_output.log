@@ -1,0 +1,30 @@
+2025-10-20 20:59:30,527 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:59:30,527 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:59:30,533 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:59:30,977 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:59:30,977 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:59:30,980 - FEATURE-003-004_Milestone_Tracker.integration - INFO - Milestone Tracker initialized successfully
+2025-10-20 20:59:30,980 - ZnNiReportGenerator - INFO - Loaded feature: milestone_tracker
+2025-10-20 20:59:30,984 - FEATURE-003-005_Change_Management_Logger.integration - INFO - Feature orchestrator initialized successfully
+2025-10-20 20:59:30,984 - ZnNiReportGenerator - INFO - Loaded feature: change_logger
+2025-10-20 20:59:30,989 - FEATURE-003-006_PowerPoint_Generator.integration - INFO - FeatureOrchestrator initialized successfully
+2025-10-20 20:59:30,989 - ZnNiReportGenerator - INFO - Loaded feature: powerpoint
+2025-10-20 20:59:30,989 - ZnNiReportGenerator - INFO - Starting report generation for: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:59:30,997 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - Successfully read EXCEL file: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:59:30,997 - ZnNiReportGenerator - ERROR - Report generation failed: Failed to read data: success
+2025-10-20 20:59:30,997 - main - ERROR - Fatal error: Failed to read data: success
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 351, in main
+    generator.generate_report(args.input_file)
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 85, in generate_report
+    data = self._read_data(input_file)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 117, in _read_data
+    raise ValueError(f"Failed to read data: {response.status.value}")
+ValueError: Failed to read data: success

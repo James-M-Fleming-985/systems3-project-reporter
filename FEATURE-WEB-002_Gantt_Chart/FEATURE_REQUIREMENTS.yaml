@@ -1,0 +1,112 @@
+metadata:
+  requirement_id: "FEATURE-WEB-002"
+  requirement_name: "Interactive Gantt Chart"
+  feature_id: "FEATURE-WEB-002"
+  feature_name: "Interactive Gantt Chart"
+  feature_code: "GANTT"
+  version: "1.0.0"
+  status: "Active"
+  created_date: "2025-10-23"
+  last_modified: "2025-10-23"
+  owner: "Project Team"
+  priority: "MUST HAVE"
+  target_date: "2025-10-24"
+  
+  traceability:
+    parent_system: "SYSTEM-003-WEB"
+    parent_system_file: "../SYSTEM_REQUIREMENTS_WEB.yaml"
+    parent_system_requirements:
+      - "FEATURE-WEB-002: Interactive Gantt chart visualization"
+      - "User specified: Gantt charts are the only thing specifically requested"
+    
+    derivation_rationale: |
+      This is THE CRITICAL FEATURE - the user explicitly stated "Gantt charts is really
+      the only thing I actually specified to be in the slides". This must work perfectly.
+      Visual timeline showing all milestones across all 3 projects with start/end dates.
+
+overview:
+  description: |
+    Interactive Gantt chart page showing project timelines with milestones.
+    Uses Plotly.js for browser-based chart rendering (no matplotlib needed).
+    Shows all 3 projects with color-coded milestones and completion status.
+  
+  business_value:
+    - "Visual timeline of all project activities"
+    - "Easy identification of scheduling conflicts"
+    - "Clear view of project dependencies"
+    - "THIS IS WHAT THE USER ASKED FOR"
+  
+  user_story: |
+    As a project manager,
+    I want to see a Gantt chart with all project timelines and milestones,
+    So that I can visualize the schedule and identify potential conflicts.
+  
+  acceptance_criteria:
+    - "Page loads at /gantt"
+    - "Shows Gantt chart with all 23 milestones from 3 projects"
+    - "X-axis: timeline from earliest start to latest end date"
+    - "Y-axis: grouped by project"
+    - "Color-coded by status (COMPLETED=green, IN_PROGRESS=yellow, NOT_STARTED=gray)"
+    - "Interactive: hover shows milestone details"
+    - "Chart renders in < 500ms"
+
+layers:
+  - layer_id: "LAYER-WEB-002-01"
+    layer_name: "Gantt Route Handler"
+    layer_type: "Controller"
+    responsibilities:
+      - "Handle GET /gantt request"
+      - "Load all projects"
+      - "Format data for Gantt chart"
+      - "Render gantt.html template"
+    implementation_file: "routers/dashboard.py"
+    scaffolding_source: "templates/mvp/backend/tpl-fastapi-crud/router.py.jinja (adapted)"
+  
+  - layer_id: "LAYER-WEB-002-02"
+    layer_name: "Chart Data Formatter"
+    layer_type: "Service"
+    responsibilities:
+      - "Transform Project list into Plotly.js format"
+      - "Calculate timeline bounds (min start, max end)"
+      - "Assign colors by status"
+      - "Group by project"
+    implementation_file: "services/chart_formatter.py"
+    scaffolding_source: "Custom (new business logic)"
+  
+  - layer_id: "LAYER-WEB-002-03"
+    layer_name: "Gantt Chart Template"
+    layer_type: "View"
+    responsibilities:
+      - "Display Gantt chart using Plotly.js"
+      - "Inject chart data as JSON"
+      - "Configure chart options (tooltips, zoom, etc.)"
+    implementation_file: "templates/gantt.html"
+    scaffolding_source: "Custom (Jinja2 + Plotly.js CDN)"
+
+chart_configuration:
+  library: "Plotly.js 2.x"
+  chart_type: "timeline (Gantt)"
+  data_format: |
+    [
+      {
+        "Task": "Milestone Name",
+        "Start": "2025-03-31",
+        "Finish": "2025-03-31",  # Single-day for milestones
+        "Resource": "Project Name",
+        "Status": "COMPLETED"
+      },
+      ...
+    ]
+  
+  styling:
+    colors:
+      COMPLETED: "#22c55e"      # green-500
+      IN_PROGRESS: "#eab308"    # yellow-500
+      NOT_STARTED: "#9ca3af"    # gray-400
+    
+    layout:
+      height: "600px"
+      showlegend: true
+      hovermode: "closest"
+
+estimated_effort: "2 hours (formatter service + template + Plotly.js integration)"

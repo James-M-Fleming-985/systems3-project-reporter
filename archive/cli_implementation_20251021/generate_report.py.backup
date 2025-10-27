@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""
+ZnNi Line Report Generator CLI Application
+
+Generates comprehensive project reports by chaining multiple feature orchestrators.
+"""
+
+import argparse
+import logging
+import sys
+from pathlib import Path
+from datetime import datetime
+import importlib.util
+import json
+import yaml
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class FeatureLoader:
+    """Dynamically loads feature orchestrators"""
+    
+    def __init__(self, base_path: Path):
+        self.base_path = base_path
+        self.features = {}
+        
+    def load_feature(self, feature_name: str):
+        """Load a feature orchestrator dynamically"""
+        try:
+            feature_path = self.base_path / feature_name / "src" / "feature_integration.py"
+            feature_dir = self.base_path / feature_name
+            
+            if not feature_path.exists():
+                raise FileNotFoundError(f"Feature integration not found: {feature_path}")
+            
+            # Add feature directory to sys.path so layer imports work
+            if str(feature_dir) not in sys.path:
+                sys.path.insert(0, str(feature_dir))
+            
+            spec = importlib.util.spec_from_file_location(
+                f"{feature_name}.integration", 
+                feature_path
+            )
+            
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Failed to create spec for {feature_name}")
+                
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            if not hasattr(module, 'FeatureOrchestrator'):
+                raise AttributeError(f"FeatureOrchestrator not found in {feature_name}")
+                
+            self.features[feature_name] = module.FeatureOrchestrator
+            logger.info(f"Successfully loaded feature: {feature_name}")
+            
+            return module.FeatureOrchestrator
+            
+        except Exception as e:
+            logger.error(f"Failed to load feature {feature_name}: {str(e)}")
+            raise
+
+
+class ReportGenerator:
+    """Main report generation orchestrator"""
+    
+    def __init__(self, config: dict):
+        self.config = config
+        self.output_dir = Path(config.get('output_dir', './output'))
+        self.output_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Initialize feature loader
+        self.feature_loader = FeatureLoader(Path(__file__).parent)
+        
+        # Load all features
+        self.data_reader = None
+        self.risk_aggregator = None
+        self.gantt_generator = None
+        self.milestone_tracker = None
+        self.change_logger = None
+        self.ppt_generator = None
+        
+    def load_features(self):
+        """Load all required features"""
+        logger.info("Loading features...")
+        
+        try:
+            # Load each feature orchestrator (using full folder names)
+            DataReaderOrchestrator = self.feature_loader.load_feature('FEATURE-003-001_Data_Reader_Parser')
+            RiskAggregatorOrchestrator = self.feature_loader.load_feature('FEATURE-003-002_Risk_Aggregator')
+            GanttChartOrchestrator = self.feature_loader.load_feature('FEATURE-003-003_Gantt_Chart_Generator')
+            MilestoneTrackerOrchestrator = self.feature_loader.load_feature('FEATURE-003-004_Milestone_Tracker')
+            ChangeManagementOrchestrator = self.feature_loader.load_feature('FEATURE-003-005_Change_Management_Logger')
+            PowerPointOrchestrator = self.feature_loader.load_feature('FEATURE-003-006_PowerPoint_Generator')
+            
+            # Initialize orchestrators
+            self.data_reader = DataReaderOrchestrator()
+            self.risk_aggregator = RiskAggregatorOrchestrator()
+            self.gantt_generator = GanttChartOrchestrator()
+            self.milestone_tracker = MilestoneTrackerOrchestrator()
+            self.change_logger = ChangeManagementOrchestrator()
+            self.ppt_generator = PowerPointOrchestrator()
+            
+            logger.info("All features loaded successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to load features: {str(e)}")
+            raise
+            
+    def generate_report(self, input_file: str):
+        """Generate comprehensive report by chaining features"""
+        try:
+            logger.info(f"Starting report generation for: {input_file}")
+            
+            # Step 1: Parse input data
+            logger.info("Step 1: Parsing input data...")
+            parsed_data = self.data_reader.process({
+                'input_file': input_file,
+                'config': self.config.get('data_reader', {})
+            })
+            
+            # Step 2: Aggregate risks
+            logger.info("Step 2: Aggregating risks...")
+            risk_data = self.risk_aggregator.process({
+                'project_data': parsed_data,
+                'config': self.config.get('risk_aggregator', {})
+            })
+            
+            # Step 3: Generate Gantt chart
+            logger.info("Step 3: Generating Gantt chart...")
+            gantt_path = self.output_dir / "gantt_chart.png"
+            gantt_data = self.gantt_generator.process({
+                'project_data': parsed_data,
+                'output_path': str(gantt_path),
+                'config': self.config.get('gantt_generator', {})
+            })
+            
+            # Step 4: Track milestones
+            logger.info("Step 4: Tracking milestones...")
+            milestone_data = self.milestone_tracker.process({
+                'project_data': parsed_data,
+                'config': self.config.get('milestone_tracker', {})
+            })
+            
+            # Step 5: Process change logs
+            logger.info("Step 5: Processing change logs...")
+            change_data = self.change_logger.process({
+                'project_data': parsed_data,
+                'config': self.config.get('change_logger', {})
+            })
+            
+            # Step 6: Generate PowerPoint presentation
+            logger.info("Step 6: Generating PowerPoint presentation...")
+            ppt_path = self.output_dir / f"ZnNi_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pptx"
+            
+            report_data = {
+                'project_info': parsed_data,
+                'risk_analysis': risk_data,
+                'gantt_chart': str(gantt_path),
+                'milestones': milestone_data,
+                'changes': change_data,
+                'metadata': {
+                    'generated_at': datetime.now().isoformat(),
+                    'input_file': input_file
+                }
+            }
+            
+            self.ppt_generator.process({
+                'report_data': report_data,
+                'output_path': str(ppt_path),
+                'config': self.config.get('ppt_generator', {})
+            })
+            
+            # Save JSON summary
+            summary_path = self.output_dir / "report_summary.json"
+            with open(summary_path, 'w') as f:
+                json.dump(report_data, f, indent=2, default=str)
+            
+            logger.info(f"Report generation completed successfully!")
+            logger.info(f"Output files saved to: {self.output_dir}")
+            logger.info(f"  - PowerPoint: {ppt_path.name}")
+            logger.info(f"  - Gantt Chart: {gantt_path.name}")
+            logger.info(f"  - Summary: {summary_path.name}")
+            
+            return {
+                'success': True,
+                'output_dir': str(self.output_dir),
+                'files': {
+                    'powerpoint': str(ppt_path),
+                    'gantt_chart': str(gantt_path),
+                    'summary': str(summary_path)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Report generation failed: {str(e)}")
+            raise
+
+
+def main():
+    """Main CLI entry point"""
+    parser = argparse.ArgumentParser(
+        description='ZnNi Line Report Generator - Generate comprehensive project reports',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s input.csv
+  %(prog)s input.json --config custom_config.yaml
+  %(prog)s project_data.xlsx --output ./reports --verbose
+        """
+    )
+    
+    parser.add_argument(
+        'input_file',
+        help='Input data file (CSV, JSON, or Excel)'
+    )
+    
+    parser.add_argument(
+        '--config', '-c',
+        default='config/settings.yaml',
+        help='Configuration file path (default: config/settings.yaml)'
+    )
+    
+    parser.add_argument(
+        '--output', '-o',
+        help='Output directory (overrides config file)'
+    )
+    
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+    
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Validate configuration without generating reports'
+    )
+    
+    args = parser.parse_args()
+    
+    # Set logging level
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    try:
+        # Load configuration
+        config_path = Path(args.config)
+        if config_path.exists():
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f) or {}
+            logger.info(f"Loaded configuration from: {config_path}")
+        else:
+            logger.warning(f"Config file not found: {config_path}, using defaults")
+            config = {}
+        
+        # Override output directory if specified
+        if args.output:
+            config['output_dir'] = args.output
+        
+        # Validate input file
+        input_path = Path(args.input_file)
+        if not input_path.exists():
+            logger.error(f"Input file not found: {input_path}")
+            sys.exit(1)
+        
+        # Initialize report generator
+        generator = ReportGenerator(config)
+        generator.load_features()
+        
+        if args.dry_run:
+            logger.info("Dry run completed successfully. Configuration is valid.")
+            sys.exit(0)
+        
+        # Generate report
+        result = generator.generate_report(str(input_path))
+        
+        if result['success']:
+            print(f"\nReport generated successfully!")
+            print(f"Output directory: {result['output_dir']}")
+            print("\nGenerated files:")
+            for file_type, file_path in result['files'].items():
+                print(f"  - {file_type}: {Path(file_path).name}")
+        
+    except KeyboardInterrupt:
+        logger.info("Report generation cancelled by user")
+        sys.exit(130)
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}")
+        if args.verbose:
+            logger.exception("Detailed error traceback:")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

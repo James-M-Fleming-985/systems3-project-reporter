@@ -1,0 +1,386 @@
+metadata:
+  system_id: SYSTEM-003
+  system_name: "ZnNi Line Report Generator System"
+  version: "1.0.0"
+  architecture_pattern: "Modular Python Application with Data-Driven Report Generation"
+
+system_overview:
+  description: |
+    Automated PowerPoint report generation system that reads project status data from
+    YAML files across the professional_excellence repository and generates professional,
+    branded presentations with Gantt charts, milestone tracking, risk aggregation, and
+    change management documentation.
+  
+  deployment_model: "Desktop Application (Python CLI)"
+  execution_mode: "On-demand execution via command line"
+  data_persistence: "File-based (YAML files for project data, change logs)"
+
+architecture:
+  layers:
+    - layer: "Presentation Layer"
+      components:
+        - "Terminal UI (Rich library for interactive prompts)"
+        - "PowerPoint Output (python-pptx for slide generation)"
+        - "Gantt Chart Visualization (matplotlib for charts)"
+      
+    - layer: "Business Logic Layer"
+      components:
+        - "Project Data Aggregator"
+        - "Milestone Calculator"
+        - "Risk Aggregator"
+        - "Change Management Tracker"
+        - "Gantt Chart Builder"
+        - "Report Orchestrator"
+      
+    - layer: "Data Access Layer"
+      components:
+        - "YAML File Reader/Writer"
+        - "Schema Validator (Pydantic models)"
+        - "File System Scanner"
+  
+  patterns:
+    - pattern: "Repository Pattern"
+      usage: "ProjectRepository for reading/writing project data"
+    
+    - pattern: "Factory Pattern"
+      usage: "SlideFactory for creating different slide types (Gantt, Status, Change)"
+    
+    - pattern: "Strategy Pattern"
+      usage: "Different data formats (YAML/JSON/XML) with unified interface"
+    
+    - pattern: "Template Method"
+      usage: "Base ReportGenerator with section-specific implementations"
+
+system_components:
+  - component_id: "COMP-001"
+    name: "Project Data Scanner"
+    responsibility: "Scan professional_excellence/projects folder for project_plan.yaml files"
+    interfaces:
+      - "scan_projects() -> List[ProjectPlan]"
+      - "get_project_by_id(project_id: str) -> ProjectPlan"
+      - "get_projects_by_section(section: str) -> List[ProjectPlan]"
+  
+  - component_id: "COMP-002"
+    name: "YAML Parser and Validator"
+    responsibility: "Parse YAML files and validate against Pydantic schemas"
+    interfaces:
+      - "parse_project_plan(file_path: Path) -> ProjectPlan"
+      - "parse_risk_file(file_path: Path) -> List[Risk]"
+      - "parse_change_log(file_path: Path) -> List[ChangeEntry]"
+      - "validate_schema(data: dict, schema: Type[BaseModel]) -> bool"
+  
+  - component_id: "COMP-003"
+    name: "Milestone Calculator"
+    responsibility: "Calculate milestone categories based on current date"
+    interfaces:
+      - "get_milestones_due_this_month(projects: List[ProjectPlan]) -> List[Milestone]"
+      - "get_milestones_due_next_month(projects: List[ProjectPlan]) -> List[Milestone]"
+      - "get_milestones_completed_last_month(projects: List[ProjectPlan]) -> List[Milestone]"
+      - "calculate_days_until_due(milestone: Milestone) -> int"
+  
+  - component_id: "COMP-004"
+    name: "Risk Aggregator"
+    responsibility: "Aggregate and filter risks from multiple projects"
+    interfaces:
+      - "get_active_risks(projects: List[ProjectPlan]) -> List[Risk]"
+      - "group_risks_by_severity() -> Dict[str, List[Risk]]"
+      - "get_critical_risks() -> List[Risk]"
+  
+  - component_id: "COMP-005"
+    name: "Gantt Chart Generator"
+    responsibility: "Generate Gantt chart images using matplotlib"
+    interfaces:
+      - "create_gantt_chart(projects: List[ProjectPlan], section_name: str) -> Path"
+      - "save_chart_as_image(chart: Figure, output_path: Path) -> Path"
+      - "apply_styling(chart: Figure) -> Figure"
+  
+  - component_id: "COMP-006"
+    name: "PowerPoint Builder"
+    responsibility: "Generate PowerPoint presentation with all slides"
+    interfaces:
+      - "create_presentation() -> Presentation"
+      - "add_title_slide(title: str, subtitle: str) -> Slide"
+      - "add_gantt_slide(section_name: str, chart_image: Path) -> Slide"
+      - "add_status_slide(section_name: str, milestones: MilestoneData, risks: List[Risk]) -> Slide"
+      - "add_change_management_slide(section_name: str, changes: List[ChangeEntry]) -> Slide"
+      - "apply_theme(template_path: Path) -> None"
+      - "save_presentation(output_path: Path) -> None"
+  
+  - component_id: "COMP-007"
+    name: "Change Management UI"
+    responsibility: "Terminal UI for capturing schedule changes"
+    interfaces:
+      - "display_project_list(projects: List[ProjectPlan]) -> None"
+      - "select_milestone() -> Milestone"
+      - "prompt_for_new_date() -> date"
+      - "prompt_for_reason() -> str"
+      - "prompt_for_contingency() -> str"
+      - "confirm_change(change: ChangeEntry) -> bool"
+      - "update_project_plan(project_id: str, milestone_id: str, new_date: date) -> None"
+      - "append_to_change_log(change: ChangeEntry) -> None"
+  
+  - component_id: "COMP-008"
+    name: "Report Orchestrator"
+    responsibility: "Coordinate all components to generate complete report"
+    interfaces:
+      - "generate_report(output_path: Path) -> None"
+      - "validate_data_files() -> ValidationResult"
+      - "prepare_section_data(section: str) -> SectionData"
+      - "generate_all_sections() -> None"
+
+data_models:
+  - model: "ProjectPlan"
+    fields:
+      - "project_id: str"
+      - "project_name: str"
+      - "section: Literal['Critical Documentation', 'Critical Maintenance', 'Post-Stabilization Optimization']"
+      - "start_date: date"
+      - "planned_finish_date: date"
+      - "actual_finish_date: Optional[date]"
+      - "status: Literal['Not Started', 'In Progress', 'Completed', 'On Hold']"
+      - "milestones: List[Milestone]"
+      - "dependencies: List[str]"
+      - "owner: Optional[str]"
+      - "description: Optional[str]"
+      - "priority: Optional[Literal['High', 'Medium', 'Low']]"
+      - "percentage_complete: Optional[int]"
+  
+  - model: "Milestone"
+    fields:
+      - "milestone_id: str"
+      - "name: str"
+      - "planned_date: date"
+      - "actual_date: Optional[date]"
+      - "status: Literal['Not Started', 'In Progress', 'Completed', 'Delayed']"
+  
+  - model: "Risk"
+    fields:
+      - "risk_id: str"
+      - "description: str"
+      - "probability: Literal['Low', 'Medium', 'High']"
+      - "impact: Literal['Low', 'Medium', 'High']"
+      - "status: Literal['Open', 'Mitigated', 'Closed']"
+      - "mitigation: str"
+      - "owner: str"
+      - "identified_date: Optional[date]"
+      - "target_closure_date: Optional[date]"
+      - "category: Optional[Literal['Technical', 'Resource', 'Schedule', 'Scope', 'External']]"
+  
+  - model: "ChangeEntry"
+    fields:
+      - "change_id: str"
+      - "timestamp: datetime"
+      - "project_id: str"
+      - "milestone_id: str"
+      - "field_changed: str"
+      - "old_value: str"
+      - "new_value: str"
+      - "reason: str"
+      - "contingency: str"
+      - "entered_by: str"
+  
+  - model: "MilestoneData"
+    fields:
+      - "due_this_month: List[Milestone]"
+      - "due_next_month: List[Milestone]"
+      - "completed_last_month: List[Milestone]"
+  
+  - model: "SectionData"
+    fields:
+      - "section_name: str"
+      - "projects: List[ProjectPlan]"
+      - "gantt_chart_path: Path"
+      - "milestone_data: MilestoneData"
+      - "active_risks: List[Risk]"
+      - "recent_changes: List[ChangeEntry]"
+
+code_generation:
+  folder_structure:
+    root: "/workspaces/control_tower/cloned_repos/professional_excellence/projects/PROJECT-003 REPORT GENERATOR"
+    structure:
+      - "src/"
+      - "src/models/           # Pydantic data models"
+      - "src/repositories/     # Data access layer"
+      - "src/services/         # Business logic"
+      - "src/generators/       # Report generation"
+      - "src/ui/               # Terminal UI"
+      - "src/utils/            # Helper functions"
+      - "tests/"
+      - "tests/unit/           # Unit tests"
+      - "tests/integration/    # Integration tests"
+      - "templates/            # PowerPoint templates"
+      - "powerpoint_reports/   # Generated reports output"
+      - "config/               # Configuration files"
+      - "requirements.txt      # Python dependencies"
+      - "README.md             # Project documentation"
+      - "generate_report.py    # Main entry point"
+      - "update_schedule.py    # Change management UI"
+
+  dependencies:
+    python_version: ">=3.10"
+    libraries:
+      - "python-pptx>=0.6.21"
+      - "pyyaml>=6.0"
+      - "matplotlib>=3.5.0"
+      - "pandas>=1.5.0"
+      - "pydantic>=2.0.0"
+      - "rich>=13.0.0"
+      - "pytest>=7.0.0"
+      - "pytest-cov>=4.0.0"
+
+testing_strategy:
+  unit_tests:
+    - "Test YAML parsing with valid and invalid schemas"
+    - "Test milestone calculation for various date scenarios"
+    - "Test risk aggregation and filtering"
+    - "Test Gantt chart generation with mock data"
+    - "Test date edge cases (month boundaries, year boundaries)"
+  
+  integration_tests:
+    - "Test full report generation with sample project data"
+    - "Test change management workflow end-to-end"
+    - "Test multi-project scanning and aggregation"
+    - "Test PowerPoint generation with theme application"
+  
+  test_data:
+    - "Create sample project_plan.yaml files for 5 projects across 3 sections"
+    - "Create sample risks.yaml files with various risk levels"
+    - "Create sample change_log.yaml with historical changes"
+    - "Create sample organization theme PowerPoint template"
+
+quality_metrics:
+  code_coverage: ">= 80%"
+  linting: "Passes flake8 and mypy type checking"
+  documentation: "All public methods have docstrings"
+  performance: "Report generation completes in < 10 seconds for 20 projects"
+
+deployment:
+  installation:
+    - "Clone professional_excellence repository"
+    - "Navigate to PROJECT-003 folder"
+    - "Create virtual environment: python -m venv venv"
+    - "Activate: source venv/bin/activate"
+    - "Install: pip install -r requirements.txt"
+  
+  usage:
+    - command: "python generate_report.py"
+      description: "Generate full PowerPoint report"
+      options:
+        - "--output OUTPUT_PATH: Specify output file location"
+        - "--template TEMPLATE_PATH: Use custom PowerPoint template"
+        - "--sections SECTIONS: Generate specific sections only (comma-separated)"
+    
+    - command: "python update_schedule.py"
+      description: "Update milestone schedule via terminal UI"
+      options:
+        - "--project PROJECT_ID: Go directly to specific project"
+        - "--milestone MILESTONE_ID: Go directly to specific milestone"
+  
+  configuration:
+    - file: "config/settings.yaml"
+      settings:
+        - "projects_folder: Path to scan for project folders"
+        - "template_path: Path to organization PowerPoint template"
+        - "output_folder: Where to save generated reports"
+        - "gantt_chart_style: Color scheme for Gantt charts"
+        - "date_format: Display format for dates in report"
+
+maintenance:
+  adding_new_project:
+    steps:
+      - "Create new project folder: PROJECT-XXX [NAME]"
+      - "Create project_plan.yaml from template"
+      - "Create risks.yaml (empty or with initial risks)"
+      - "Create change_log.yaml (empty initially)"
+      - "Run generate_report.py (new project auto-discovered)"
+  
+  updating_schedule:
+    steps:
+      - "Run update_schedule.py"
+      - "Select project and milestone"
+      - "Enter new dates and reasons"
+      - "Changes automatically reflected in next report"
+  
+  customizing_theme:
+    steps:
+      - "Edit templates/organization_theme.pptx in PowerPoint"
+      - "Update master slides, colors, fonts, logos"
+      - "Save template"
+      - "Next report generation uses updated theme"
+
+acceptance_criteria:
+  functional:
+    - "Scans all project folders and reads YAML files without errors"
+    - "Generates 9 slides organized into 3 sections"
+    - "Gantt charts show all projects with correct timelines"
+    - "Milestone quadrants accurately categorize by month relative to current date"
+    - "Active risks displayed with severity indicators"
+    - "Change management slides show recent schedule updates with reasons"
+    - "Organization theme applied consistently"
+    - "Terminal UI accepts and validates schedule change inputs"
+  
+  non_functional:
+    - "Report generation completes in under 10 seconds"
+    - "Generated PowerPoint opens in MS PowerPoint 2016+ without errors"
+    - "Gantt charts are readable when projected at 1920x1080"
+    - "All text in slides is spell-checked and professional"
+    - "Report is presentation-ready with no manual editing required"
+    - "Code is well-documented and maintainable"
+    - "Test coverage >= 80%"
+
+features:
+  - feature_id: FEATURE-003-001
+    feature_name: "Data Reader Parser"
+    feature_directory: "FEATURE-003-001_Data_Reader_Parser"
+    
+  - feature_id: FEATURE-003-002
+    feature_name: "Risk Aggregator"
+    feature_directory: "FEATURE-003-002_Risk_Aggregator"
+    
+  - feature_id: FEATURE-003-003
+    feature_name: "Gantt Chart Generator"
+    feature_directory: "FEATURE-003-003_Gantt_Chart_Generator"
+    
+  - feature_id: FEATURE-003-004
+    feature_name: "Milestone Tracker"
+    feature_directory: "FEATURE-003-004_Milestone_Tracker"
+    
+  - feature_id: FEATURE-003-005
+    feature_name: "Change Management Logger"
+    feature_directory: "FEATURE-003-005_Change_Management_Logger"
+    
+  - feature_id: FEATURE-003-006
+    feature_name: "PowerPoint Generator"
+    feature_directory: "FEATURE-003-006_PowerPoint_Generator"
+
+# ====================================================================================
+# SYSTEM INTEGRATION CODE CONSTRAINTS - Added for CLI code quality
+# ====================================================================================
+system_integration_constraints:
+  
+  output_format:
+    - "Return ONLY raw Python code - NO markdown code fences (```python)"
+    - "generate_report.py must be directly executable"
+    - "settings.yaml must be valid YAML"
+  
+  feature_loading:
+    - "Use importlib.util.spec_from_file_location for feature loading"
+    - "Feature folder names: FEATURE-003-001_Data_Reader_Parser, etc."
+    - "Handle import errors with try/except and logging"
+  
+  config_instantiation:
+    - "This is CLI Desktop architecture using @dataclass"
+    - "Config instantiation: FeatureConfig(**config_dict)"
+    - "settings.yaml field names MUST match FeatureConfig dataclass fields EXACTLY"
+    - "DO NOT invent config field names"
+  
+  response_handling:
+    - "ResponseStatus is an Enum: SUCCESS, ERROR, WARNING, PARTIAL_SUCCESS"
+    - "Check status: response.status == ResponseStatus.SUCCESS"
+    - "DO NOT call response.status.is_success() - doesn't exist"
+    - "Access enum value: response.status.value (not .message)"
+  
+  naming_conventions:
+    - "Feature orchestrator class MUST be: FeatureOrchestrator"
+    - "Feature config class MUST be: FeatureConfig"
+    - "Feature response class MUST be: FeatureResponse"

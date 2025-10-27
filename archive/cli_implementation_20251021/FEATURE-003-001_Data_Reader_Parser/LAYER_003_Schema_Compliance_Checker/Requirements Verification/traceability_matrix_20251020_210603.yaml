@@ -1,0 +1,194 @@
+matrix_metadata:
+  timestamp: '20251020_210603'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_003_Schema_Compliance_Checker/src/implementation.py
+  lines: 294
+  methods:
+  - name: __init__
+    lines: 18-30
+  - name: register_schema
+    lines: 31-52
+  - name: validate
+    lines: 53-73
+  - name: _validate_against_schema
+    lines: 74-104
+  - name: _check_type
+    lines: 105-115
+  - name: _validate_string
+    lines: 116-119
+  - name: _validate_integer
+    lines: 120-123
+  - name: _validate_number
+    lines: 124-127
+  - name: _validate_boolean
+    lines: 128-131
+  - name: _validate_array
+    lines: 132-135
+  - name: _validate_object
+    lines: 136-139
+  - name: _validate_null
+    lines: 140-143
+  - name: _validate_object_properties
+    lines: 144-164
+  - name: _validate_array_items
+    lines: 165-172
+  - name: _validate_constraints
+    lines: 173-231
+  - name: _validate_format
+    lines: 232-248
+  - name: _is_valid_email
+    lines: 249-253
+  - name: _is_valid_date
+    lines: 254-261
+  - name: _is_valid_datetime
+    lines: 262-270
+  - name: _is_valid_uri
+    lines: 271-275
+  - name: _is_valid_ipv4
+    lines: 276-280
+  - name: _is_valid_uuid
+    lines: 281-285
+  - name: get_registered_schemas
+    lines: 286-289
+  - name: remove_schema
+    lines: 290-300
+  classes:
+  - name: SchemaValidationError
+    type: class
+    lines: 10-14
+  - name: SchemaComplianceChecker
+    type: class
+    lines: 15-294
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  test_count: 0
+  implementation_files:
+  - LAYER_003_Schema_Compliance_Checker/src/implementation.py
+  methods_tested:
+  - __init__
+  - register_schema
+  - validate
+  - _validate_against_schema
+  - _check_type
+  - _validate_string
+  - _validate_integer
+  - _validate_number
+  - _validate_boolean
+  - _validate_array
+  - _validate_object
+  - _validate_null
+  - _validate_object_properties
+  - _validate_array_items
+  - _validate_constraints
+  - _validate_format
+  - _is_valid_email
+  - _is_valid_date
+  - _is_valid_datetime
+  - _is_valid_uri
+  - _is_valid_ipv4
+  - _is_valid_uuid
+  - get_registered_schemas
+  - remove_schema
+  classes_tested:
+  - SchemaValidationError
+  - SchemaComplianceChecker
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_003_Schema_Compliance_Checker/src/implementation.py:18-30
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  verified: true
+- implementation_location: LAYER_003_Schema_Compliance_Checker/src/implementation.py:31-52
+  method_name: register_schema
+  requirement: AC-001
+  test: test_register_schema
+  test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  verified: true
+- implementation_location: LAYER_003_Schema_Compliance_Checker/src/implementation.py:53-73
+  method_name: validate
+  requirement: AC-001
+  test: test_validate
+  test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  verified: true
+- implementation_location: LAYER_003_Schema_Compliance_Checker/src/implementation.py:74-104
+  method_name: _validate_against_schema
+  requirement: AC-001
+  test: test__validate_against_schema
+  test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  verified: true
+- implementation_location: LAYER_003_Schema_Compliance_Checker/src/implementation.py:105-115
+  method_name: _check_type
+  requirement: AC-001
+  test: test__check_type
+  test_file: LAYER_003_Schema_Compliance_Checker/tests/test_generated_20251020_210518.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

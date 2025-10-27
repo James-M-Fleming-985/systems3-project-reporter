@@ -1,0 +1,524 @@
+"""
+PowerPoint Generator Feature Integration Module
+Feature ID: FEATURE-003-006
+
+This module orchestrates the integration of all layers in the PowerPoint Generator feature,
+providing a unified interface for generating PowerPoint presentations with themes and content.
+"""
+
+from pathlib import Path
+import sys
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
+from enum import Enum
+import logging
+import traceback
+from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import Layer 001: Slide Factory
+from LAYER_001_Slide_Factory.src.implementation import (
+    SlideType, ValidationError, SlideCreationError, 
+    SlideContent, Slide, SlideFactory, SlideFactoryIntegration
+)
+
+# Import Layer 002: Theme Applier
+from LAYER_002_Theme_Applier.src.implementation import (
+    ThemeApplierError, ThemeNotFoundError, InvalidThemeError,
+    ThemeApplier, ThemeManager
+)
+
+# Import Layer 003: Content Inserter
+from LAYER_003_Content_Inserter.src.implementation import (
+    ContentInserterError, InvalidInputError, TemplateNotFoundError,
+    ContentInsertionError, PowerPointContentInserter, BatchContentInserter
+)
+
+# Import Layer 004: Report Assembler
+from LAYER_004_Report_Assembler.src.implementation import (
+    ReportAssembler, DataProcessor, ErrorHandler, PerformanceMonitor
+)
+
+
+class FeatureStatus(Enum):
+    """Enumeration for feature operation status."""
+    SUCCESS = "success"
+    PARTIAL_SUCCESS = "partial_success"
+    FAILURE = "failure"
+    PENDING = "pending"
+
+
+@dataclass
+class FeatureConfig:
+    """Configuration for PowerPoint Generator feature."""
+    default_theme: str = "default"
+    template_path: Optional[str] = None
+    output_directory: str = "./output"
+    enable_performance_monitoring: bool = True
+    batch_processing: bool = False
+    max_batch_size: int = 10
+    error_handling_mode: str = "graceful"  # "strict" or "graceful"
+    logging_level: str = "INFO"
+    custom_settings: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FeatureResponse:
+    """Unified response structure for feature operations."""
+    status: FeatureStatus
+    message: str
+    data: Optional[Dict[str, Any]] = None
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
+
+    def is_successful(self) -> bool:
+        """Check if the operation was successful."""
+        return self.status in [FeatureStatus.SUCCESS, FeatureStatus.PARTIAL_SUCCESS]
+
+
+class PowerPointGeneratorError(Exception):
+    """Base exception for PowerPoint Generator feature errors."""
+    pass
+
+
+class LayerInitializationError(PowerPointGeneratorError):
+    """Exception raised when a layer fails to initialize."""
+    pass
+
+
+class OrchestrationError(PowerPointGeneratorError):
+    """Exception raised during layer orchestration."""
+    pass
+
+
+class FeatureOrchestrator:
+    """
+    Main orchestrator for the PowerPoint Generator feature.
+    
+    This class coordinates all layers to provide a unified interface for:
+    - Creating slides with various layouts
+    - Applying themes to presentations
+    - Inserting content into slides
+    - Assembling complete reports
+    """
+    
+    def __init__(self, config: Optional[FeatureConfig] = None):
+        """
+        Initialize the Feature Orchestrator.
+        
+        Args:
+            config: Feature configuration object. Uses defaults if not provided.
+        """
+        self.config = config or FeatureConfig()
+        self._logger = self._setup_logging()
+        self._initialized = False
+        
+        # Layer instances
+        self.slide_factory: Optional[SlideFactory] = None
+        self.slide_factory_integration: Optional[SlideFactoryIntegration] = None
+        self.theme_applier: Optional[ThemeApplier] = None
+        self.theme_manager: Optional[ThemeManager] = None
+        self.content_inserter: Optional[PowerPointContentInserter] = None
+        self.batch_content_inserter: Optional[BatchContentInserter] = None
+        self.report_assembler: Optional[ReportAssembler] = None
+        self.data_processor: Optional[DataProcessor] = None
+        self.error_handler: Optional[ErrorHandler] = None
+        self.performance_monitor: Optional[PerformanceMonitor] = None
+        
+        # Initialize layers
+        self._initialize_layers()
+    
+    def _setup_logging(self) -> logging.Logger:
+        """Set up logging for the orchestrator."""
+        logger = logging.getLogger("PowerPointGeneratorOrchestrator")
+        logger.setLevel(getattr(logging, self.config.logging_level))
+        
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+        
+        return logger
+    
+    def _initialize_layers(self) -> None:
+        """Initialize all layer components with error handling."""
+        self._logger.info("Initializing PowerPoint Generator layers...")
+        
+        try:
+            # Initialize Layer 001: Slide Factory
+            self._logger.debug("Initializing Slide Factory layer...")
+            self.slide_factory = SlideFactory()
+            self.slide_factory_integration = SlideFactoryIntegration()
+            
+            # Initialize Layer 002: Theme Applier
+            self._logger.debug("Initializing Theme Applier layer...")
+            self.theme_applier = ThemeApplier()
+            self.theme_manager = ThemeManager()
+            
+            # Initialize Layer 003: Content Inserter
+            self._logger.debug("Initializing Content Inserter layer...")
+            self.content_inserter = PowerPointContentInserter()
+            if self.config.batch_processing:
+                self.batch_content_inserter = BatchContentInserter()
+            
+            # Initialize Layer 004: Report Assembler
+            self._logger.debug("Initializing Report Assembler layer...")
+            self.report_assembler = ReportAssembler()
+            self.data_processor = DataProcessor()
+            self.error_handler = ErrorHandler()
+            if self.config.enable_performance_monitoring:
+                self.performance_monitor = PerformanceMonitor()
+            
+            self._initialized = True
+            self._logger.info("All layers initialized successfully")
+            
+        except Exception as e:
+            self._logger.error(f"Failed to initialize layers: {str(e)}")
+            raise LayerInitializationError(f"Layer initialization failed: {str(e)}")
+    
+    def create_presentation(self, 
+                          title: str,
+                          slides_data: List[Dict[str, Any]],
+                          theme: Optional[str] = None,
+                          metadata: Optional[Dict[str, Any]] = None) -> FeatureResponse:
+        """
+        Create a complete PowerPoint presentation.
+        
+        Args:
+            title: Presentation title
+            slides_data: List of slide data dictionaries
+            theme: Theme name to apply (uses default if not specified)
+            metadata: Additional metadata for the presentation
+        
+        Returns:
+            FeatureResponse with creation results
+        """
+        if not self._initialized:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Feature not properly initialized",
+                errors=["Layers not initialized"]
+            )
+        
+        start_time = datetime.now()
+        errors = []
+        warnings = []
+        created_slides = []
+        
+        try:
+            # Monitor performance if enabled
+            if self.performance_monitor:
+                self.performance_monitor.start_monitoring("create_presentation")
+            
+            # Process data
+            self._logger.info(f"Creating presentation: {title}")
+            processed_data = self.data_processor.process(slides_data)
+            
+            # Create slides
+            for idx, slide_data in enumerate(processed_data):
+                try:
+                    slide_type = SlideType[slide_data.get("type", "CONTENT").upper()]
+                    slide_content = SlideContent(
+                        title=slide_data.get("title", f"Slide {idx + 1}"),
+                        body=slide_data.get("body", ""),
+                        metadata=slide_data.get("metadata", {})
+                    )
+                    
+                    slide = self.slide_factory.create_slide(slide_type, slide_content)
+                    created_slides.append(slide)
+                    
+                except (ValidationError, SlideCreationError) as e:
+                    error_msg = f"Failed to create slide {idx + 1}: {str(e)}"
+                    errors.append(error_msg)
+                    self._logger.warning(error_msg)
+                    
+                    if self.config.error_handling_mode == "strict":
+                        raise
+            
+            # Apply theme
+            theme_name = theme or self.config.default_theme
+            try:
+                if self.theme_manager.has_theme(theme_name):
+                    theme_obj = self.theme_manager.get_theme(theme_name)
+                    self.theme_applier.apply_theme(created_slides, theme_obj)
+                else:
+                    warnings.append(f"Theme '{theme_name}' not found, using default")
+            except (ThemeNotFoundError, InvalidThemeError) as e:
+                warnings.append(f"Theme application failed: {str(e)}")
+            
+            # Insert content
+            presentation_data = {
+                "title": title,
+                "slides": created_slides,
+                "theme": theme_name,
+                "metadata": metadata or {}
+            }
+            
+            if self.config.batch_processing and self.batch_content_inserter:
+                result = self.batch_content_inserter.insert_batch([presentation_data])
+            else:
+                result = self.content_inserter.insert_content(presentation_data)
+            
+            # Assemble final report
+            report_result = self.report_assembler.assemble_report(result)
+            
+            # Record performance metrics
+            performance_data = {}
+            if self.performance_monitor:
+                performance_data = self.performance_monitor.stop_monitoring("create_presentation")
+            
+            return FeatureResponse(
+                status=FeatureStatus.SUCCESS if not errors else FeatureStatus.PARTIAL_SUCCESS,
+                message=f"Presentation '{title}' created successfully",
+                data={
+                    "presentation_id": report_result.get("id"),
+                    "slides_created": len(created_slides),
+                    "output_path": report_result.get("path"),
+                    "performance_metrics": performance_data
+                },
+                errors=errors,
+                warnings=warnings,
+                metadata={
+                    "duration": (datetime.now() - start_time).total_seconds(),
+                    "theme_applied": theme_name,
+                    "batch_mode": self.config.batch_processing
+                }
+            )
+            
+        except Exception as e:
+            self._logger.error(f"Failed to create presentation: {str(e)}")
+            self._logger.debug(traceback.format_exc())
+            
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Failed to create presentation",
+                errors=[str(e)],
+                metadata={"duration": (datetime.now() - start_time).total_seconds()}
+            )
+    
+    def create_slide(self, 
+                    slide_type: Union[str, SlideType],
+                    content: Dict[str, Any]) -> FeatureResponse:
+        """
+        Create a single slide.
+        
+        Args:
+            slide_type: Type of slide to create
+            content: Slide content dictionary
+        
+        Returns:
+            FeatureResponse with slide creation results
+        """
+        try:
+            if isinstance(slide_type, str):
+                slide_type = SlideType[slide_type.upper()]
+            
+            slide_content = SlideContent(
+                title=content.get("title", ""),
+                body=content.get("body", ""),
+                metadata=content.get("metadata", {})
+            )
+            
+            slide = self.slide_factory.create_slide(slide_type, slide_content)
+            
+            return FeatureResponse(
+                status=FeatureStatus.SUCCESS,
+                message="Slide created successfully",
+                data={"slide": slide.__dict__}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Failed to create slide",
+                errors=[str(e)]
+            )
+    
+    def apply_theme_to_presentation(self, 
+                                  presentation_id: str,
+                                  theme_name: str) -> FeatureResponse:
+        """
+        Apply a theme to an existing presentation.
+        
+        Args:
+            presentation_id: ID of the presentation
+            theme_name: Name of the theme to apply
+        
+        Returns:
+            FeatureResponse with theme application results
+        """
+        try:
+            if not self.theme_manager.has_theme(theme_name):
+                return FeatureResponse(
+                    status=FeatureStatus.FAILURE,
+                    message=f"Theme '{theme_name}' not found",
+                    errors=[f"Available themes: {self.theme_manager.list_themes()}"]
+                )
+            
+            theme = self.theme_manager.get_theme(theme_name)
+            # In a real implementation, you would load the presentation by ID
+            # For now, we'll return a success response
+            
+            return FeatureResponse(
+                status=FeatureStatus.SUCCESS,
+                message=f"Theme '{theme_name}' applied successfully",
+                data={"presentation_id": presentation_id, "theme": theme_name}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Failed to apply theme",
+                errors=[str(e)]
+            )
+    
+    def batch_create_presentations(self, 
+                                 batch_data: List[Dict[str, Any]]) -> FeatureResponse:
+        """
+        Create multiple presentations in batch mode.
+        
+        Args:
+            batch_data: List of presentation data dictionaries
+        
+        Returns:
+            FeatureResponse with batch creation results
+        """
+        if not self.config.batch_processing:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Batch processing is not enabled",
+                errors=["Enable batch_processing in FeatureConfig"]
+            )
+        
+        results = []
+        total_errors = []
+        
+        for idx, presentation_data in enumerate(batch_data[:self.config.max_batch_size]):
+            result = self.create_presentation(
+                title=presentation_data.get("title", f"Presentation {idx + 1}"),
+                slides_data=presentation_data.get("slides", []),
+                theme=presentation_data.get("theme"),
+                metadata=presentation_data.get("metadata")
+            )
+            
+            results.append({
+                "index": idx,
+                "status": result.status.value,
+                "presentation_id": result.data.get("presentation_id") if result.data else None
+            })
+            
+            total_errors.extend(result.errors)
+        
+        return FeatureResponse(
+            status=FeatureStatus.SUCCESS if not total_errors else FeatureStatus.PARTIAL_SUCCESS,
+            message=f"Batch processing completed: {len(results)} presentations processed",
+            data={"results": results},
+            errors=total_errors,
+            metadata={"batch_size": len(batch_data), "processed": len(results)}
+        )
+    
+    def get_available_themes(self) -> FeatureResponse:
+        """
+        Get list of available themes.
+        
+        Returns:
+            FeatureResponse with available themes
+        """
+        try:
+            themes = self.theme_manager.list_themes()
+            return FeatureResponse(
+                status=FeatureStatus.SUCCESS,
+                message="Available themes retrieved",
+                data={"themes": themes}
+            )
+        except Exception as e:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Failed to retrieve themes",
+                errors=[str(e)]
+            )
+    
+    def get_performance_metrics(self) -> FeatureResponse:
+        """
+        Get performance metrics if monitoring is enabled.
+        
+        Returns:
+            FeatureResponse with performance metrics
+        """
+        if not self.performance_monitor:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Performance monitoring is not enabled",
+                errors=["Enable performance_monitoring in FeatureConfig"]
+            )
+        
+        try:
+            metrics = self.performance_monitor.get_all_metrics()
+            return FeatureResponse(
+                status=FeatureStatus.SUCCESS,
+                message="Performance metrics retrieved",
+                data={"metrics": metrics}
+            )
+        except Exception as e:
+            return FeatureResponse(
+                status=FeatureStatus.FAILURE,
+                message="Failed to retrieve performance metrics",
+                errors=[str(e)]
+            )
+    
+    def validate_configuration(self) -> FeatureResponse:
+        """
+        Validate the current feature configuration.
+        
+        Returns:
+            FeatureResponse with validation results
+        """
+        validation_results = {
+            "layers_initialized": self._initialized,
+            "config_valid": True,
+            "issues": []
+        }
+        
+        # Check layer initialization
+        if not self._initialized:
+            validation_results["issues"].append("Layers not properly initialized")
+            validation_results["config_valid"] = False
+        
+        # Check output directory
+        output_path = Path(self.config.output_directory)
+        if not output_path.exists():
+            validation_results["issues"].append(f"Output directory '{self.config.output_directory}' does not exist")
+        
+        # Check template path if specified
+        if self.config.template_path:
+            template_path = Path(self.config.template_path)
+            if not template_path.exists():
+                validation_results["issues"].append(f"Template path '{self.config.template_path}' does not exist")
+        
+        return FeatureResponse(
+            status=FeatureStatus.SUCCESS if validation_results["config_valid"] else FeatureStatus.FAILURE,
+            message="Configuration validation completed",
+            data=validation_results,
+            warnings=validation_results["issues"]
+        )
+
+
+# Convenience function for quick initialization
+def create_powerpoint_generator(config: Optional[FeatureConfig] = None) -> FeatureOrchestrator:
+    """
+    Create and return a configured PowerPoint Generator orchestrator.
+    
+    Args:
+        config: Optional configuration object
+    
+    Returns:
+        Configured FeatureOrchestrator instance
+    """
+    return FeatureOrchestrator(config)

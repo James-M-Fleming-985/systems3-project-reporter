@@ -1,0 +1,19 @@
+2025-10-20 14:06:58 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 14:06:58 - __main__ - INFO - Loaded feature: data_reader
+2025-10-20 14:06:58 - __main__ - ERROR - Failed to load risk_aggregator: 'dict' object has no attribute 'log_level'
+2025-10-20 14:06:58 - __main__ - ERROR - Unexpected error occurred
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 256, in main
+    generator = ReportGenerator(args.config)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 53, in __init__
+    self._load_features()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 61, in _load_features
+    self.features[feature_key] = orchestrator_class(feature_config)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/src/feature_integration.py", line 99, in __init__
+    self._setup_logging()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/src/feature_integration.py", line 104, in _setup_logging
+    log_level = getattr(logging, self.config.log_level.upper(), logging.INFO)
+                                 ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'log_level'

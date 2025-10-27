@@ -1,0 +1,32 @@
+feature_id: FEATURE-003-001
+feature_name: Data Reader Parser
+test_date: '2025-10-17T17:11:20.919028'
+test_levels:
+  unit_tests:
+    count: 5
+    passed: 0
+    coverage: 0%
+    layers:
+    - layer_id: LAYER-001
+      layer_name: YAML XML Reader
+      test_files: 2
+      status: PASSED
+    - layer_id: LAYER-002
+      layer_name: Data Model Validator
+      test_files: 2
+      status: PASSED
+    - layer_id: LAYER-003
+      layer_name: Schema Compliance Checker
+      test_files: 1
+      status: PASSED
+  integration_tests:
+    count: 0
+    passed: 0
+    description: Feature integration tests
+    status: PENDING
+  e2e_tests:
+    count: 0
+    passed: 0
+    description: End-to-end feature tests
+    status: PENDING
+overall_status: LAYERS_TESTED

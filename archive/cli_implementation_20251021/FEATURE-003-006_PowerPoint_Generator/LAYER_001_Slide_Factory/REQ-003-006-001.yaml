@@ -1,0 +1,285 @@
+# ================================================================================
+# LAYER REQUIREMENT: Slide Factory
+# ================================================================================
+# REQUIREMENT ID: REQ-003-006-001
+# FEATURE: FEATURE-003-006 (PowerPoint Generator)
+# LAYER: LAYER-003-006-001 (Slide_Factory)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-006-001"
+  requirement_title: "Slide Factory"
+  layer: "001_Slide_Factory"
+  feature: "FEATURE-003-006_PowerPoint_Generator"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Slide Factory"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Slide Factory"
+  
+  description: |
+    Factory to create different slide types (title, Gantt, status, change management). Implement Factory Pattern, return appropriate SlideBuilder based on slide type, encapsulate slide creation logic.
+  
+  rationale: |
+    Factory Pattern allows easy addition of new slide types. Centralizes slide creation, making it easy to maintain consistent styling.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/slide_factory/slide_factory.py"
+    modules:
+      - "slide_factory.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "SlideFactory"
+      purpose: "Create different types of slides"
+      methods:
+        - name: "create_title_slide"
+          signature: "create_title_slide(prs: Presentation, title: str) -> Slide"
+          purpose: "Implement create_title_slide logic" 
+        - name: "create_gantt_slide"
+          signature: "create_gantt_slide(prs: Presentation, section: str, chart_path: Path) -> Slide"
+          purpose: "Implement create_gantt_slide logic" 
+        - name: "create_status_slide"
+          signature: "create_status_slide(prs: Presentation, section: str, quadrants: QuadrantData, risks: TableData) -> Slide"
+          purpose: "Implement create_status_slide logic" 
+        - name: "create_change_slide"
+          signature: "create_change_slide(prs: Presentation, section: str, changes: List[ChangeEntry]) -> Slide"
+          purpose: "Implement create_change_slide logic" 
+
+  implementation_details:
+    libraries: ['python-pptx>=0.6.21']
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "Presentation object, slide-specific data" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "Slide object with content" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_slide_factory.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_slide_factory_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Slide Factory (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_slide_factory.py"
+      tests:
+        - "test_create_title_slide_success"
+        - "test_create_title_slide_failure" 
+        - "test_create_gantt_slide_success"
+        - "test_create_gantt_slide_failure" 
+        - "test_create_status_slide_success"
+        - "test_create_status_slide_failure" 
+        - "test_create_change_slide_success"
+        - "test_create_change_slide_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_slide_factory.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement SlideFactory class (GREEN phase)"
+      file: "src/slide_factory/slide_factory.py"
+      methods:
+        - "create_title_slide(prs: Presentation, title: str) -> Slide" 
+        - "create_gantt_slide(prs: Presentation, section: str, chart_path: Path) -> Slide" 
+        - "create_status_slide(prs: Presentation, section: str, quadrants: QuadrantData, risks: TableData) -> Slide" 
+        - "create_change_slide(prs: Presentation, section: str, changes: List[ChangeEntry]) -> Slide" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_slide_factory.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_slide_factory_integration.py"
+      duration: "15 min"
+  
+  total_time: "3 hours"
+  
+  deliverable: |
+    Slide Factory implementation ready for integration with 
+    LAYER-003-006-003.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-001: Automated PowerPoint report generation" 
+    - "PRJ-REQ-002: Three-section report structure" 
+    - "PRJ-REQ-005: Professional presentation with org branding" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-004: Presentation Layer" 
+    - "SYS-REQ-006: Factory Pattern for slide generation" 
+    - "SYS-REQ-007: Report generation < 10 seconds" 
+  
+  implements_system_components:
+    - "COMP-006: PowerPoint Builder" 
+    - "COMP-008: Report Orchestrator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-006: PowerPoint Generator"
+  
+  depends_on_layers:
+    []  # Foundation layer or independent 
+  
+  consumed_by_layers:
+    - "LAYER-003-006-003" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    []  # Foundation layer, reads from filesystem 
+  
+  output_to:
+    - layer: "LAYER-003-006-003"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_slide_factory.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_slide_factory_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/slide_factory/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+    - package: "python-pptx"
+      version: "0.6.21"
+      purpose: "Slide Factory implementation" 
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.slide_factory import SlideFactory
+    
+    instance = SlideFactory()
+    result = instance.create_title_slide(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-006: PowerPoint Generator
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

@@ -1,0 +1,151 @@
+matrix_metadata:
+  timestamp: '20251020_200824'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_003_Quadrant_Formatter/src/implementation.py
+  lines: 232
+  methods:
+  - name: __init__
+    lines: 11-15
+  - name: format_quadrant_data
+    lines: 16-54
+  - name: _format_quadrants
+    lines: 55-86
+  - name: _format_metadata
+    lines: 87-103
+  - name: _generate_summary
+    lines: 104-121
+  - name: validate_quadrant_structure
+    lines: 122-157
+  - name: get_formatted_output
+    lines: 158-172
+  - name: clear
+    lines: 173-177
+  - name: get_quadrant_by_id
+    lines: 178-197
+  - name: add_quadrant
+    lines: 198-228
+  - name: create_formatter
+    lines: 229-239
+  classes:
+  - name: QuadrantFormatter
+    type: class
+    lines: 8-232
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  test_count: 0
+  implementation_files:
+  - LAYER_003_Quadrant_Formatter/src/implementation.py
+  methods_tested:
+  - __init__
+  - format_quadrant_data
+  - _format_quadrants
+  - _format_metadata
+  - _generate_summary
+  - validate_quadrant_structure
+  - get_formatted_output
+  - clear
+  - get_quadrant_by_id
+  - add_quadrant
+  - create_formatter
+  classes_tested:
+  - QuadrantFormatter
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_003_Quadrant_Formatter/src/implementation.py:11-15
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  verified: true
+- implementation_location: LAYER_003_Quadrant_Formatter/src/implementation.py:16-54
+  method_name: format_quadrant_data
+  requirement: AC-001
+  test: test_format_quadrant_data
+  test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  verified: true
+- implementation_location: LAYER_003_Quadrant_Formatter/src/implementation.py:55-86
+  method_name: _format_quadrants
+  requirement: AC-001
+  test: test__format_quadrants
+  test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  verified: true
+- implementation_location: LAYER_003_Quadrant_Formatter/src/implementation.py:87-103
+  method_name: _format_metadata
+  requirement: AC-001
+  test: test__format_metadata
+  test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  verified: true
+- implementation_location: LAYER_003_Quadrant_Formatter/src/implementation.py:104-121
+  method_name: _generate_summary
+  requirement: AC-001
+  test: test__generate_summary
+  test_file: LAYER_003_Quadrant_Formatter/tests/test_generated_20251020_200752.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

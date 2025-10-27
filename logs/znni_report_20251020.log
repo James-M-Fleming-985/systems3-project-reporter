@@ -1,0 +1,2 @@
+2025-10-20 13:56:13,564 - __main__ - ERROR - Failed to load data_reader: Feature not found: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001/src/feature_integration.py
+2025-10-20 13:56:13,564 - root - ERROR - Fatal error: Feature not found: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001/src/feature_integration.py

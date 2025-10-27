@@ -1,0 +1,52 @@
+# ZnNi Line Report Generator Configuration
+
+# FEATURE-003-001: Data Reader Parser
+data_reader:
+  enable_validation: true
+  enable_schema_compliance: true
+  batch_processing: true
+  log_level: "INFO"
+  supported_formats: ["csv", "json", "xlsx"]
+
+# FEATURE-003-002: Risk Aggregator
+risk_aggregator:
+  filter_enabled: true
+  format_output: true
+  max_batch_size: 1000
+  enable_caching: true
+
+# FEATURE-003-003: Gantt Chart Generator
+gantt_chart:
+  chart_width: 12
+  chart_height: 8
+  dpi: 300
+  export_format: "png"
+  optimize_image: true
+  show_grid: true
+  color_scheme: "default"
+  bar_height: 0.8
+  date_format: "%Y-%m-%d"
+
+# FEATURE-003-004: Milestone Tracker
+milestone_tracker:
+  enable_logging: true
+  max_batch_size: 500
+
+# FEATURE-003-005: Change Management Logger
+change_logger:
+  log_file_path: "output/change_management.log"
+  rotation_enabled: true
+  batch_size: 100
+  auto_flush: true
+
+# FEATURE-003-006: PowerPoint Generator
+powerpoint_generator:
+  enable_validation: true
+  max_slides_per_presentation: 50
+  enable_auto_save: true
+
+# Output configuration
+output:
+  base_dir: "output"
+  report_name_prefix: "ZnNi_Report"
+  timestamp_format: "%Y%m%d_%H%M%S"

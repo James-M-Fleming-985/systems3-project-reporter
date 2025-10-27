@@ -1,0 +1,194 @@
+matrix_metadata:
+  timestamp: '20251017_134107'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py
+  lines: 343
+  methods:
+  - name: __init__
+    lines: 34-43
+  - name: _validate_config
+    lines: 44-48
+  - name: format_risk_table
+    lines: 49-97
+  - name: _validate_risk_data
+    lines: 98-116
+  - name: _prepare_dataframe
+    lines: 117-138
+  - name: _format_html
+    lines: 139-157
+  - name: _add_html_styling
+    lines: 158-182
+  - name: _format_markdown
+    lines: 183-198
+  - name: _format_csv
+    lines: 199-209
+  - name: _format_json
+    lines: 210-221
+  - name: _format_latex
+    lines: 222-234
+  - name: batch_format
+    lines: 235-262
+  - name: format_summary_table
+    lines: 263-306
+  - name: create_formatter
+    lines: 307-320
+  - name: __init__
+    lines: 324-327
+  - name: get
+    lines: 328-331
+  - name: set
+    lines: 332-339
+  - name: clear
+    lines: 340-350
+  classes:
+  - name: OutputFormat
+    type: class
+    lines: 17-25
+  - name: RiskTableFormatter
+    type: class
+    lines: 26-320
+  - name: FormatterCache
+    type: class
+    lines: 321-343
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py
+  methods_tested:
+  - __init__
+  - _validate_config
+  - format_risk_table
+  - _validate_risk_data
+  - _prepare_dataframe
+  - _format_html
+  - _add_html_styling
+  - _format_markdown
+  - _format_csv
+  - _format_json
+  - _format_latex
+  - batch_format
+  - format_summary_table
+  - create_formatter
+  - __init__
+  - get
+  - set
+  - clear
+  classes_tested:
+  - OutputFormat
+  - RiskTableFormatter
+  - FormatterCache
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py:34-43
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py:44-48
+  method_name: _validate_config
+  requirement: AC-001
+  test: test__validate_config
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py:49-97
+  method_name: format_risk_table
+  requirement: AC-001
+  test: test_format_risk_table
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py:98-116
+  method_name: _validate_risk_data
+  requirement: AC-001
+  test: test__validate_risk_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/src/implementation.py:117-138
+  method_name: _prepare_dataframe
+  requirement: AC-001
+  test: test__prepare_dataframe
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-002_Risk_Aggregator/LAYER-003
+    Risk Table Formatter/tests/test_generated_20251017_134020.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

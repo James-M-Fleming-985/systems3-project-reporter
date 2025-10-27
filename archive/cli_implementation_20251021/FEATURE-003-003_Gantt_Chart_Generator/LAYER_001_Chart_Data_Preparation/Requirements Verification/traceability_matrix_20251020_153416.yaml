@@ -1,0 +1,184 @@
+matrix_metadata:
+  timestamp: '20251020_153416'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_001_Chart_Data_Preparation/src/implementation.py
+  lines: 578
+  methods:
+  - name: __init__
+    lines: 17-33
+  - name: prepare_data
+    lines: 34-44
+  - name: _validate_inputs
+    lines: 149-156
+  - name: _convert_to_dataframe
+    lines: 157-167
+  - name: _apply_filters
+    lines: 168-187
+  - name: _handle_missing_values
+    lines: 188-203
+  - name: _prepare_standard_data
+    lines: 204-239
+  - name: _prepare_pie_data
+    lines: 240-262
+  - name: _prepare_scatter_data
+    lines: 263-275
+  - name: _prepare_histogram_data
+    lines: 276-292
+  - name: _prepare_box_data
+    lines: 293-324
+  - name: _prepare_heatmap_data
+    lines: 325-345
+  - name: _prepare_bubble_data
+    lines: 346-362
+  - name: _prepare_radar_data
+    lines: 363-375
+  - name: _apply_sorting
+    lines: 376-386
+  - name: _apply_top_n
+    lines: 387-396
+  - name: _normalize_data
+    lines: 397-406
+  - name: _format_dates
+    lines: 407-411
+  - name: _apply_custom_labels
+    lines: 412-419
+  - name: validate_data
+    lines: 420-466
+  - name: get_chart_recommendations
+    lines: 467-537
+  - name: export_prepared_data
+    lines: 538-548
+  classes:
+  - name: ChartDataPreparation
+    type: class
+    lines: 10-578
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  test_count: 0
+  implementation_files:
+  - LAYER_001_Chart_Data_Preparation/src/implementation.py
+  methods_tested:
+  - __init__
+  - prepare_data
+  - _validate_inputs
+  - _convert_to_dataframe
+  - _apply_filters
+  - _handle_missing_values
+  - _prepare_standard_data
+  - _prepare_pie_data
+  - _prepare_scatter_data
+  - _prepare_histogram_data
+  - _prepare_box_data
+  - _prepare_heatmap_data
+  - _prepare_bubble_data
+  - _prepare_radar_data
+  - _apply_sorting
+  - _apply_top_n
+  - _normalize_data
+  - _format_dates
+  - _apply_custom_labels
+  - validate_data
+  - get_chart_recommendations
+  - export_prepared_data
+  classes_tested:
+  - ChartDataPreparation
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_001_Chart_Data_Preparation/src/implementation.py:17-33
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  verified: true
+- implementation_location: LAYER_001_Chart_Data_Preparation/src/implementation.py:34-44
+  method_name: prepare_data
+  requirement: AC-001
+  test: test_prepare_data
+  test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  verified: true
+- implementation_location: LAYER_001_Chart_Data_Preparation/src/implementation.py:149-156
+  method_name: _validate_inputs
+  requirement: AC-001
+  test: test__validate_inputs
+  test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  verified: true
+- implementation_location: LAYER_001_Chart_Data_Preparation/src/implementation.py:157-167
+  method_name: _convert_to_dataframe
+  requirement: AC-001
+  test: test__convert_to_dataframe
+  test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  verified: true
+- implementation_location: LAYER_001_Chart_Data_Preparation/src/implementation.py:168-187
+  method_name: _apply_filters
+  requirement: AC-001
+  test: test__apply_filters
+  test_file: LAYER_001_Chart_Data_Preparation/tests/test_generated_20251020_153249.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

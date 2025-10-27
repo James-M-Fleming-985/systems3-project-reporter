@@ -1,0 +1,415 @@
+"""
+Feature Integration Module for Gantt Chart Generator
+FEATURE ID: FEATURE-003-003
+
+This module orchestrates the integration of all layers to provide
+a complete Gantt Chart generation capability.
+"""
+
+from pathlib import Path
+import sys
+from dataclasses import dataclass
+from typing import Optional, Dict, Any, List, Union
+import logging
+from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import layer implementations
+from LAYER_001_Chart_Data_Preparation.src.implementation import GanttChartDataPreparation
+from LAYER_002_Matplotlib_Chart_Builder.src.implementation import GanttChartBuilder
+from LAYER_003_Image_Export.src.implementation import GanttChartImageExporter
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class FeatureConfig:
+    """Configuration for Gantt Chart Generator feature."""
+    chart_width: int = 12
+    chart_height: int = 8
+    dpi: int = 300
+    export_format: str = 'png'
+    color_scheme: Optional[List[str]] = None
+    font_size: int = 10
+    grid_enabled: bool = True
+    legend_enabled: bool = True
+    date_format: str = '%Y-%m-%d'
+    
+    def __post_init__(self):
+        """Set default color scheme if not provided."""
+        if self.color_scheme is None:
+            self.color_scheme = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6']
+
+
+@dataclass
+class FeatureResponse:
+    """Unified response structure for feature operations."""
+    success: bool
+    data: Optional[Any] = None
+    error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        """Set timestamp if not provided."""
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+
+class FeatureOrchestrator:
+    """
+    Main orchestrator class for Gantt Chart Generator feature.
+    
+    This class coordinates the interaction between all layers:
+    - Chart Data Preparation
+    - Matplotlib Chart Builder
+    - Image Export
+    """
+    
+    def __init__(self, config: Optional[FeatureConfig] = None):
+        """
+        Initialize the feature orchestrator.
+        
+        Args:
+            config: Feature configuration. Uses default if not provided.
+        """
+        self.config = config or FeatureConfig()
+        self._layers_initialized = False
+        
+        # Layer instances
+        self.data_preparation: Optional[GanttChartDataPreparation] = None
+        self.chart_builder: Optional[GanttChartBuilder] = None
+        self.image_exporter: Optional[GanttChartImageExporter] = None
+        
+        # Initialize layers
+        self._initialize_layers()
+    
+    def _initialize_layers(self) -> None:
+        """Initialize all layer instances with error handling."""
+        try:
+            logger.info("Initializing Gantt Chart Generator layers...")
+            
+            # Initialize data preparation layer
+            self.data_preparation = GanttChartDataPreparation()
+            logger.info("Chart Data Preparation layer initialized")
+            
+            # Initialize chart builder layer
+            self.chart_builder = GanttChartBuilder()
+            logger.info("Matplotlib Chart Builder layer initialized")
+            
+            # Initialize image export layer
+            self.image_exporter = GanttChartImageExporter()
+            logger.info("Image Export layer initialized")
+            
+            self._layers_initialized = True
+            logger.info("All layers initialized successfully")
+            
+        except Exception as e:
+            error_msg = f"Failed to initialize layers: {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+    
+    def generate_gantt_chart(
+        self,
+        project_data: Dict[str, Any],
+        output_path: str
+    ) -> FeatureResponse:
+        """
+        Generate a Gantt chart from project data.
+        
+        Args:
+            project_data: Dictionary containing project tasks and timeline data
+            output_path: Path where the chart image will be saved
+            
+        Returns:
+            FeatureResponse with generation result
+        """
+        if not self._layers_initialized:
+            return FeatureResponse(
+                success=False,
+                error="Layers not properly initialized"
+            )
+        
+        try:
+            # Step 1: Prepare chart data
+            logger.info("Preparing chart data...")
+            prepared_data = self.data_preparation.prepare_data(project_data)
+            
+            if not prepared_data:
+                return FeatureResponse(
+                    success=False,
+                    error="Data preparation failed: No valid data returned"
+                )
+            
+            # Step 2: Build the chart
+            logger.info("Building Gantt chart...")
+            chart_figure = self.chart_builder.build_chart(
+                prepared_data,
+                width=self.config.chart_width,
+                height=self.config.chart_height,
+                color_scheme=self.config.color_scheme,
+                font_size=self.config.font_size,
+                grid_enabled=self.config.grid_enabled,
+                legend_enabled=self.config.legend_enabled
+            )
+            
+            if not chart_figure:
+                return FeatureResponse(
+                    success=False,
+                    error="Chart building failed: No figure generated"
+                )
+            
+            # Step 3: Export the chart
+            logger.info(f"Exporting chart to {output_path}...")
+            export_result = self.image_exporter.export_chart(
+                chart_figure,
+                output_path,
+                format=self.config.export_format,
+                dpi=self.config.dpi
+            )
+            
+            if not export_result:
+                return FeatureResponse(
+                    success=False,
+                    error="Image export failed"
+                )
+            
+            # Success response
+            return FeatureResponse(
+                success=True,
+                data={'output_path': output_path},
+                metadata={
+                    'tasks_count': len(prepared_data.get('tasks', [])),
+                    'chart_dimensions': f"{self.config.chart_width}x{self.config.chart_height}",
+                    'export_format': self.config.export_format,
+                    'dpi': self.config.dpi
+                }
+            )
+            
+        except Exception as e:
+            error_msg = f"Error generating Gantt chart: {str(e)}"
+            logger.error(error_msg)
+            return FeatureResponse(
+                success=False,
+                error=error_msg
+            )
+    
+    def validate_project_data(self, project_data: Dict[str, Any]) -> FeatureResponse:
+        """
+        Validate project data before processing.
+        
+        Args:
+            project_data: Project data to validate
+            
+        Returns:
+            FeatureResponse with validation result
+        """
+        try:
+            if not isinstance(project_data, dict):
+                return FeatureResponse(
+                    success=False,
+                    error="Project data must be a dictionary"
+                )
+            
+            # Use data preparation layer's validation if available
+            if hasattr(self.data_preparation, 'validate_data'):
+                validation_result = self.data_preparation.validate_data(project_data)
+                return FeatureResponse(
+                    success=validation_result.get('valid', False),
+                    data=validation_result,
+                    error=validation_result.get('error')
+                )
+            
+            # Basic validation if layer doesn't provide validation
+            required_fields = ['tasks', 'project_name']
+            missing_fields = [field for field in required_fields if field not in project_data]
+            
+            if missing_fields:
+                return FeatureResponse(
+                    success=False,
+                    error=f"Missing required fields: {', '.join(missing_fields)}"
+                )
+            
+            return FeatureResponse(
+                success=True,
+                data={'validation': 'passed'}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                success=False,
+                error=f"Validation error: {str(e)}"
+            )
+    
+    def get_chart_preview(
+        self,
+        project_data: Dict[str, Any]
+    ) -> FeatureResponse:
+        """
+        Generate a preview of the Gantt chart without saving to file.
+        
+        Args:
+            project_data: Project data for chart generation
+            
+        Returns:
+            FeatureResponse with chart figure object
+        """
+        try:
+            # Prepare data
+            prepared_data = self.data_preparation.prepare_data(project_data)
+            
+            if not prepared_data:
+                return FeatureResponse(
+                    success=False,
+                    error="Data preparation failed"
+                )
+            
+            # Build chart
+            chart_figure = self.chart_builder.build_chart(
+                prepared_data,
+                width=self.config.chart_width,
+                height=self.config.chart_height,
+                color_scheme=self.config.color_scheme,
+                font_size=self.config.font_size,
+                grid_enabled=self.config.grid_enabled,
+                legend_enabled=self.config.legend_enabled
+            )
+            
+            return FeatureResponse(
+                success=True,
+                data={'figure': chart_figure},
+                metadata={'preview_mode': True}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                success=False,
+                error=f"Preview generation error: {str(e)}"
+            )
+    
+    def update_configuration(self, new_config: FeatureConfig) -> FeatureResponse:
+        """
+        Update feature configuration.
+        
+        Args:
+            new_config: New configuration to apply
+            
+        Returns:
+            FeatureResponse indicating update success
+        """
+        try:
+            self.config = new_config
+            logger.info("Configuration updated successfully")
+            
+            return FeatureResponse(
+                success=True,
+                data={'config': self.config},
+                metadata={'action': 'configuration_updated'}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                success=False,
+                error=f"Configuration update failed: {str(e)}"
+            )
+    
+    def get_supported_formats(self) -> FeatureResponse:
+        """
+        Get list of supported export formats.
+        
+        Returns:
+            FeatureResponse with supported formats
+        """
+        try:
+            # Get formats from image exporter if available
+            if hasattr(self.image_exporter, 'get_supported_formats'):
+                formats = self.image_exporter.get_supported_formats()
+            else:
+                # Default formats
+                formats = ['png', 'jpg', 'jpeg', 'svg', 'pdf']
+            
+            return FeatureResponse(
+                success=True,
+                data={'formats': formats}
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                success=False,
+                error=f"Error retrieving formats: {str(e)}"
+            )
+    
+    def batch_generate_charts(
+        self,
+        projects_data: List[Dict[str, Any]],
+        output_directory: str
+    ) -> FeatureResponse:
+        """
+        Generate multiple Gantt charts in batch.
+        
+        Args:
+            projects_data: List of project data dictionaries
+            output_directory: Directory to save all charts
+            
+        Returns:
+            FeatureResponse with batch generation results
+        """
+        try:
+            results = []
+            output_dir = Path(output_directory)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            for idx, project_data in enumerate(projects_data):
+                project_name = project_data.get('project_name', f'project_{idx}')
+                output_path = output_dir / f"{project_name}_gantt.{self.config.export_format}"
+                
+                result = self.generate_gantt_chart(project_data, str(output_path))
+                results.append({
+                    'project': project_name,
+                    'success': result.success,
+                    'output_path': str(output_path) if result.success else None,
+                    'error': result.error
+                })
+            
+            successful = sum(1 for r in results if r['success'])
+            
+            return FeatureResponse(
+                success=successful > 0,
+                data={'results': results},
+                metadata={
+                    'total_projects': len(projects_data),
+                    'successful': successful,
+                    'failed': len(projects_data) - successful
+                }
+            )
+            
+        except Exception as e:
+            return FeatureResponse(
+                success=False,
+                error=f"Batch generation error: {str(e)}"
+            )
+
+
+# Convenience function for quick chart generation
+def generate_gantt_chart(
+    project_data: Dict[str, Any],
+    output_path: str,
+    config: Optional[FeatureConfig] = None
+) -> FeatureResponse:
+    """
+    Convenience function to generate a Gantt chart with minimal setup.
+    
+    Args:
+        project_data: Project data dictionary
+        output_path: Output file path
+        config: Optional configuration
+        
+    Returns:
+        FeatureResponse with generation result
+    """
+    orchestrator = FeatureOrchestrator(config)
+    return orchestrator.generate_gantt_chart(project_data, output_path)

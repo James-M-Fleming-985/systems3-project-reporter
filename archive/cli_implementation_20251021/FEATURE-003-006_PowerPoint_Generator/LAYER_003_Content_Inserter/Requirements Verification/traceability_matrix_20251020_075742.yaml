@@ -1,0 +1,236 @@
+matrix_metadata:
+  timestamp: '20251020_075742'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py
+  lines: 593
+  methods:
+  - name: __init__
+    lines: 57-67
+  - name: load_template
+    lines: 68-92
+  - name: insert_content
+    lines: 93-136
+  - name: save_presentation
+    lines: 137-159
+  - name: _validate_input_data
+    lines: 160-190
+  - name: _insert_title_slide
+    lines: 191-208
+  - name: _insert_summary_slide
+    lines: 209-227
+  - name: _insert_charts
+    lines: 228-246
+  - name: _insert_tables
+    lines: 247-257
+  - name: _insert_images
+    lines: 258-274
+  - name: _add_slide
+    lines: 275-279
+  - name: _get_or_create_slide
+    lines: 280-285
+  - name: _add_column_chart
+    lines: 286-304
+  - name: _add_line_chart
+    lines: 305-323
+  - name: _add_pie_chart
+    lines: 324-342
+  - name: _add_table
+    lines: 343-372
+  - name: process_report_data
+    lines: 373-409
+  - name: validate_template
+    lines: 410-435
+  - name: get_available_layouts
+    lines: 436-456
+  - name: clear_presentation
+    lines: 457-461
+  - name: get_slide_count
+    lines: 462-467
+  - name: update_slide_content
+    lines: 468-498
+  - name: create_sample_template
+    lines: 499-520
+  - name: load_report_configuration
+    lines: 521-537
+  - name: generate_report_from_config
+    lines: 538-555
+  - name: __init__
+    lines: 564-575
+  - name: add_to_buffer
+    lines: 576-582
+  - name: flush_buffer
+    lines: 583-593
+  classes:
+  - name: ContentInserterError
+    type: class
+    lines: 29-33
+  - name: InvalidInputError
+    type: class
+    lines: 34-38
+  - name: TemplateNotFoundError
+    type: class
+    lines: 39-43
+  - name: ContentInsertionError
+    type: class
+    lines: 44-48
+  - name: PowerPointContentInserter
+    type: class
+    lines: 49-555
+  - name: BatchContentInserter
+    type: class
+    lines: 556-593
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py
+  methods_tested:
+  - __init__
+  - load_template
+  - insert_content
+  - save_presentation
+  - _validate_input_data
+  - _insert_title_slide
+  - _insert_summary_slide
+  - _insert_charts
+  - _insert_tables
+  - _insert_images
+  - _add_slide
+  - _get_or_create_slide
+  - _add_column_chart
+  - _add_line_chart
+  - _add_pie_chart
+  - _add_table
+  - process_report_data
+  - validate_template
+  - get_available_layouts
+  - clear_presentation
+  - get_slide_count
+  - update_slide_content
+  - create_sample_template
+  - load_report_configuration
+  - generate_report_from_config
+  - __init__
+  - add_to_buffer
+  - flush_buffer
+  classes_tested:
+  - ContentInserterError
+  - InvalidInputError
+  - TemplateNotFoundError
+  - ContentInsertionError
+  - PowerPointContentInserter
+  - BatchContentInserter
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py:57-67
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py:68-92
+  method_name: load_template
+  requirement: AC-001
+  test: test_load_template
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py:93-136
+  method_name: insert_content
+  requirement: AC-001
+  test: test_insert_content
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py:137-159
+  method_name: save_presentation
+  requirement: AC-001
+  test: test_save_presentation
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/src/implementation.py:160-190
+  method_name: _validate_input_data
+  requirement: AC-001
+  test: test__validate_input_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-003
+    Content Inserter/tests/test_generated_20251020_075618.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

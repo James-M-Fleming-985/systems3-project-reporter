@@ -1,0 +1,193 @@
+matrix_metadata:
+  timestamp: '20251020_074325'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py
+  lines: 354
+  methods:
+  - name: validate_entry
+    lines: 32-66
+  - name: __init__
+    lines: 70-87
+  - name: _load_existing_entries
+    lines: 88-101
+  - name: add_entry
+    lines: 102-121
+  - name: _save_entries
+    lines: 122-130
+  - name: get_entries
+    lines: 131-166
+  - name: __init__
+    lines: 170-179
+  - name: display_menu
+    lines: 180-191
+  - name: get_user_input
+    lines: 192-206
+  - name: add_entry_interactive
+    lines: 207-239
+  - name: view_entries
+    lines: 240-259
+  - name: view_filtered_interactive
+    lines: 260-292
+  - name: export_entries
+    lines: 293-313
+  - name: run
+    lines: 314-339
+  - name: main
+    lines: 340-350
+  classes:
+  - name: ValidationError
+    type: class
+    lines: 15-19
+  - name: ChangeManagementError
+    type: class
+    lines: 20-24
+  - name: ChangeValidator
+    type: class
+    lines: 25-66
+  - name: ChangeLogger
+    type: class
+    lines: 67-166
+  - name: TerminalUI
+    type: class
+    lines: 167-354
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py
+  methods_tested:
+  - validate_entry
+  - __init__
+  - _load_existing_entries
+  - add_entry
+  - _save_entries
+  - get_entries
+  - __init__
+  - display_menu
+  - get_user_input
+  - add_entry_interactive
+  - view_entries
+  - view_filtered_interactive
+  - export_entries
+  - run
+  - main
+  classes_tested:
+  - ValidationError
+  - ChangeManagementError
+  - ChangeValidator
+  - ChangeLogger
+  - TerminalUI
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py:32-66
+  method_name: validate_entry
+  requirement: AC-001
+  test: test_validate_entry
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py:70-87
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py:88-101
+  method_name: _load_existing_entries
+  requirement: AC-001
+  test: test__load_existing_entries
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py:102-121
+  method_name: add_entry
+  requirement: AC-001
+  test: test_add_entry
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/src/implementation.py:122-130
+  method_name: _save_entries
+  requirement: AC-001
+  test: test__save_entries
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-001
+    Terminal UI/tests/test_generated_20251020_074223.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

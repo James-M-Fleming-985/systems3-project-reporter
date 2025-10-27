@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Home - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Project Dashboard</h2>
+    <p class="text-gray-600">Overview of all active projects</p>
+</div>
+
+<!-- Summary Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Total Milestones</p>
+                <p class="text-3xl font-bold text-blue-600">{{ total_milestones }}</p>
+            </div>
+            <div class="bg-blue-100 rounded-full p-3">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Active Risks</p>
+                <p class="text-3xl font-bold text-red-600">{{ total_risks }}</p>
+            </div>
+            <div class="bg-red-100 rounded-full p-3">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Schedule Changes</p>
+                <p class="text-3xl font-bold text-yellow-600">{{ total_changes }}</p>
+            </div>
+            <div class="bg-yellow-100 rounded-full p-3">
+                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% for project in projects %}
+    <div class="bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
+        <div class="p-6 flex-1 flex flex-col">
+            <div class="flex items-start justify-between mb-2 min-h-[3.5rem]">
+                <h3 class="text-xl font-bold text-gray-800 leading-tight">{{ project.project_name }}</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold whitespace-nowrap ml-2">
+                    {{ project.status }}
+                </span>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4">Code: {{ project.project_code }}</p>
+            
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700">Progress</span>
+                    <span class="text-sm font-medium text-gray-700">{{ project.completion_percentage }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ project.completion_percentage }}%"></div>
+                </div>
+            </div>
+            
+            <!-- Metrics -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-blue-600">{{ project.milestones|length }}</p>
+                    <p class="text-xs text-gray-500">Milestones</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-red-600">{{ project.risks|length }}</p>
+                    <p class="text-xs text-gray-500">Risks</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-yellow-600">{{ project.changes|length }}</p>
+                    <p class="text-xs text-gray-500">Changes</p>
+                </div>
+            </div>
+            
+            <!-- Dates -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-xs text-gray-500">Start: {{ project.start_date }}</p>
+                <p class="text-xs text-gray-500">Target: {{ project.target_completion }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Export Button -->
+<div class="mt-8 text-center">
+    <button onclick="exportToPowerPoint()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition">
+        📊 Export to PowerPoint
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function exportToPowerPoint() {
+    try {
+        // Show loading state
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Generating...';
+        btn.disabled = true;
+        
+        // Call export endpoint
+        const response = await fetch('/export/powerpoint');
+        
+        if (!response.ok) {
+            const error = await response.json();
+            alert('Export failed: ' + (error.error || 'Unknown error'));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+        
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Systems3_Project_Report_${new Date().toISOString().slice(0,10)}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Reset button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        // Success message
+        alert('✅ PowerPoint presentation downloaded successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Export failed: ' + error.message);
+        event.target.disabled = false;
+        event.target.innerHTML = '📊 Export to PowerPoint';
+    }
+}
+</script>
+{% endblock %}

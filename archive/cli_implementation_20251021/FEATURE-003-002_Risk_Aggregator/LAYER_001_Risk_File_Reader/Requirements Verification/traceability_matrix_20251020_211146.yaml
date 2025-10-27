@@ -1,0 +1,186 @@
+matrix_metadata:
+  timestamp: '20251020_211146'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_001_Risk_File_Reader/src/implementation.py
+  lines: 395
+  methods:
+  - name: __post_init__
+    lines: 23-28
+  - name: to_dict
+    lines: 29-39
+  - name: __init__
+    lines: 46-74
+  - name: read
+    lines: 75-98
+  - name: _read_csv
+    lines: 99-117
+  - name: _read_json
+    lines: 118-141
+  - name: _read_txt
+    lines: 142-166
+  - name: _process_txt_risk
+    lines: 167-180
+  - name: _create_risk_data
+    lines: 181-214
+  - name: validate
+    lines: 215-241
+  - name: get_risks_by_level
+    lines: 242-257
+  - name: get_risk_by_id
+    lines: 258-275
+  - name: get_all_risks
+    lines: 276-287
+  - name: get_risk_summary
+    lines: 288-309
+  - name: export_to_json
+    lines: 310-328
+  - name: __repr__
+    lines: 329-335
+  - name: __init__
+    lines: 339-343
+  - name: add_file
+    lines: 344-353
+  - name: process_all
+    lines: 354-374
+  - name: get_aggregated_summary
+    lines: 375-385
+  classes:
+  - name: RiskData
+    type: class
+    lines: 15-39
+  - name: RiskFileReader
+    type: class
+    lines: 40-335
+  - name: RiskFileProcessor
+    type: class
+    lines: 336-395
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  test_count: 0
+  implementation_files:
+  - LAYER_001_Risk_File_Reader/src/implementation.py
+  methods_tested:
+  - __post_init__
+  - to_dict
+  - __init__
+  - read
+  - _read_csv
+  - _read_json
+  - _read_txt
+  - _process_txt_risk
+  - _create_risk_data
+  - validate
+  - get_risks_by_level
+  - get_risk_by_id
+  - get_all_risks
+  - get_risk_summary
+  - export_to_json
+  - __repr__
+  - __init__
+  - add_file
+  - process_all
+  - get_aggregated_summary
+  classes_tested:
+  - RiskData
+  - RiskFileReader
+  - RiskFileProcessor
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_001_Risk_File_Reader/src/implementation.py:23-28
+  method_name: __post_init__
+  requirement: AC-001
+  test: test___post_init__
+  test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  verified: true
+- implementation_location: LAYER_001_Risk_File_Reader/src/implementation.py:29-39
+  method_name: to_dict
+  requirement: AC-001
+  test: test_to_dict
+  test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  verified: true
+- implementation_location: LAYER_001_Risk_File_Reader/src/implementation.py:46-74
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  verified: true
+- implementation_location: LAYER_001_Risk_File_Reader/src/implementation.py:75-98
+  method_name: read
+  requirement: AC-001
+  test: test_read
+  test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  verified: true
+- implementation_location: LAYER_001_Risk_File_Reader/src/implementation.py:99-117
+  method_name: _read_csv
+  requirement: AC-001
+  test: test__read_csv
+  test_file: LAYER_001_Risk_File_Reader/tests/test_generated_20251020_211053.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

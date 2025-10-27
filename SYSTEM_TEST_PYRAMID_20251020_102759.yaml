@@ -1,0 +1,147 @@
+metadata:
+  system_id: SYSTEM-003
+  system_name: ZnNi Line Report Generator System
+  generated_at: '2025-10-20T10:27:59.189427'
+  total_layers: 19
+  total_features: 6
+  generator: SystemVerificationGenerator
+pyramid_summary:
+  total_tests: 0
+  unit_tests: 0
+  integration_tests: 0
+  system_tests: 0
+  unit_percentage: 0
+  integration_percentage: 0
+  system_percentage: 0
+coverage:
+  average_coverage: 0.0
+  layers_above_80_percent: 0
+  layers_above_90_percent: 0
+  coverage_status: NEEDS_IMPROVEMENT
+feature_breakdown:
+  FEATURE-003-001_Data_Reader_Parser:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 YAML XML Reader
+    - LAYER-002 Data Model Validator
+    - LAYER-003 Schema Compliance Checker
+  FEATURE-003-002_Risk_Aggregator:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 Risk File Reader
+    - LAYER-002 Risk Filter Logic
+    - LAYER-003 Risk Table Formatter
+  FEATURE-003-003_Gantt_Chart_Generator:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 Chart Data Preparation
+    - LAYER-002 Matplotlib Chart Builder
+    - LAYER-003 Image Export
+  FEATURE-003-004_Milestone_Tracker:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 Date Calculator
+    - LAYER-002 Milestone Categorizer
+    - LAYER-003 Quadrant Formatter
+  FEATURE-003-005_Change_Management_Logger:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 Terminal UI
+    - LAYER-002 Change Data Collector
+    - LAYER-003 Log File Writer
+  FEATURE-003-006_PowerPoint_Generator:
+    unit_tests: 0
+    integration_tests: 0
+    system_tests: 0
+    layers:
+    - LAYER-001 Slide Factory
+    - LAYER-002 Theme Applier
+    - LAYER-003 Content Inserter
+    - LAYER-004 Report Assembler
+layer_details:
+- layer_id: LAYER-001 YAML XML Reader
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Data Model Validator
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Schema Compliance Checker
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-001 Risk File Reader
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Risk Filter Logic
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Risk Table Formatter
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-001 Chart Data Preparation
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Matplotlib Chart Builder
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Image Export
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-001 Date Calculator
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Milestone Categorizer
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Quadrant Formatter
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-001 Terminal UI
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Change Data Collector
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Log File Writer
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-001 Slide Factory
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-002 Theme Applier
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-003 Content Inserter
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+- layer_id: LAYER-004 Report Assembler
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0

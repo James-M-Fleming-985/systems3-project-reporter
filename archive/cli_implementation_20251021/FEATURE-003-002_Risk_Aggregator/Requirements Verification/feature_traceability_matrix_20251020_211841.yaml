@@ -1,0 +1,36 @@
+feature_id: FEATURE-003-002
+feature_name: Risk Aggregator
+traceability_timestamp: '20251020_211841'
+feature_to_layers:
+  LAYER-001:
+    layer_name: Risk File Reader
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_211053.py
+    - test_generated_20251017_133650.py
+    traceability_status: VERIFIED
+  LAYER-002:
+    layer_name: Risk Filter Logic
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251017_133836.py
+    - test_generated_20251020_211228.py
+    traceability_status: VERIFIED
+  LAYER-003:
+    layer_name: Risk Table Formatter
+    implementation: implementation.py
+    test_files:
+    - test_generated_20251020_211409.py
+    - test_generated_20251017_134020.py
+    traceability_status: VERIFIED
+feature_integration:
+  integration_file: src/feature_integration.py
+  orchestrates_layers:
+  - LAYER-001
+  - LAYER-002
+  - LAYER-003
+  status: IMPLEMENTED
+requirements_coverage:
+  layer_requirements: 100%
+  feature_requirements: PENDING_FEATURE_TESTS
+  acceptance_criteria: 0

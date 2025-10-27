@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Analysis - ZnNi Report Generator{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">⚠️ Risk Analysis</h2>
+    <p class="text-gray-600">Active risks grouped by severity</p>
+</div>
+
+<!-- Risk Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <p class="text-gray-500 text-sm mb-2">Total Risks</p>
+        <p class="text-4xl font-bold text-gray-800">{{ risk_data.total }}</p>
+    </div>
+    <div class="bg-red-50 rounded-lg shadow p-6">
+        <p class="text-red-600 text-sm mb-2">HIGH Severity</p>
+        <p class="text-4xl font-bold text-red-600">{{ risk_data.counts.HIGH }}</p>
+    </div>
+    <div class="bg-yellow-50 rounded-lg shadow p-6">
+        <p class="text-yellow-600 text-sm mb-2">MEDIUM Severity</p>
+        <p class="text-4xl font-bold text-yellow-600">{{ risk_data.counts.MEDIUM }}</p>
+    </div>
+    <div class="bg-gray-50 rounded-lg shadow p-6">
+        <p class="text-gray-600 text-sm mb-2">LOW Severity</p>
+        <p class="text-4xl font-bold text-gray-600">{{ risk_data.counts.LOW }}</p>
+    </div>
+</div>
+
+<!-- HIGH Severity Risks -->
+{% if risk_data.by_severity.HIGH %}
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-xl font-bold text-red-600 mb-4">🔴 HIGH Severity Risks</h3>
+    <div class="space-y-4">
+        {% for risk in risk_data.by_severity.HIGH %}
+        <div class="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-gray-800">{{ risk.risk_id }}</h4>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                    {{ risk.status }}
+                </span>
+            </div>
+            <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-500">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                    <p class="text-gray-500">Probability: <span class="font-semibold">{{ risk.probability }}</span></p>
+                </div>
+                <div>
+                    <p class="text-gray-500">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                </div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-red-200">
+                <p class="text-sm text-gray-600"><strong>Mitigation:</strong> {{ risk.mitigation }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- MEDIUM Severity Risks -->
+{% if risk_data.by_severity.MEDIUM %}
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-xl font-bold text-yellow-600 mb-4">🟡 MEDIUM Severity Risks</h3>
+    <div class="space-y-4">
+        {% for risk in risk_data.by_severity.MEDIUM %}
+        <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-gray-800">{{ risk.risk_id }}</h4>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                    {{ risk.status }}
+                </span>
+            </div>
+            <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-500">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                    <p class="text-gray-500">Probability: <span class="font-semibold">{{ risk.probability }}</span></p>
+                </div>
+                <div>
+                    <p class="text-gray-500">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                </div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-yellow-200">
+                <p class="text-sm text-gray-600"><strong>Mitigation:</strong> {{ risk.mitigation }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- LOW Severity Risks -->
+{% if risk_data.by_severity.LOW %}
+<div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-xl font-bold text-gray-600 mb-4">⚪ LOW Severity Risks</h3>
+    <div class="space-y-4">
+        {% for risk in risk_data.by_severity.LOW %}
+        <div class="border-l-4 border-gray-400 bg-gray-50 p-4 rounded">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-gray-800">{{ risk.risk_id }}</h4>
+                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">
+                    {{ risk.status }}
+                </span>
+            </div>
+            <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-500">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                    <p class="text-gray-500">Probability: <span class="font-semibold">{{ risk.probability }}</span></p>
+                </div>
+                <div>
+                    <p class="text-gray-500">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                </div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-200">
+                <p class="text-sm text-gray-600"><strong>Mitigation:</strong> {{ risk.mitigation }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

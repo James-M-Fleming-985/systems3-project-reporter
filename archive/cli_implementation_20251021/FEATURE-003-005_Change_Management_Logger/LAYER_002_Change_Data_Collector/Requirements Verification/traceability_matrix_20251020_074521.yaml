@@ -1,0 +1,180 @@
+matrix_metadata:
+  timestamp: '20251020_074521'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py
+  lines: 356
+  methods:
+  - name: __init__
+    lines: 14-22
+  - name: collect_change
+    lines: 23-78
+  - name: collect_bulk_changes
+    lines: 79-123
+  - name: get_changes_for_entity
+    lines: 124-141
+  - name: get_all_changes
+    lines: 142-150
+  - name: get_change_summary
+    lines: 151-175
+  - name: clear_changes
+    lines: 176-183
+  - name: get_current_state
+    lines: 184-195
+  - name: set_initial_state
+    lines: 196-212
+  - name: get_entity_diff
+    lines: 213-237
+  - name: export_changes
+    lines: 238-257
+  - name: import_changes
+    lines: 258-303
+  - name: _generate_change_id
+    lines: 304-308
+  - name: _update_current_state
+    lines: 309-316
+  - name: _serialize_changes
+    lines: 317-329
+  - name: validate_change_data
+    lines: 330-340
+  classes:
+  - name: ChangeDataCollector
+    type: class
+    lines: 11-356
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py
+  methods_tested:
+  - __init__
+  - collect_change
+  - collect_bulk_changes
+  - get_changes_for_entity
+  - get_all_changes
+  - get_change_summary
+  - clear_changes
+  - get_current_state
+  - set_initial_state
+  - get_entity_diff
+  - export_changes
+  - import_changes
+  - _generate_change_id
+  - _update_current_state
+  - _serialize_changes
+  - validate_change_data
+  classes_tested:
+  - ChangeDataCollector
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py:14-22
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py:23-78
+  method_name: collect_change
+  requirement: AC-001
+  test: test_collect_change
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py:79-123
+  method_name: collect_bulk_changes
+  requirement: AC-001
+  test: test_collect_bulk_changes
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py:124-141
+  method_name: get_changes_for_entity
+  requirement: AC-001
+  test: test_get_changes_for_entity
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/src/implementation.py:142-150
+  method_name: get_all_changes
+  requirement: AC-001
+  test: test_get_all_changes
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-005_Change_Management_Logger/LAYER-002
+    Change Data Collector/tests/test_generated_20251020_074433.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

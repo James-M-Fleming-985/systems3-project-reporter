@@ -1,0 +1,24 @@
+feature_id: FEATURE-003-002
+feature_name: Risk Aggregator
+created_date: '2025-10-17T17:12:14.548439'
+layer_traceability:
+- layer_id: LAYER-001
+  layer_name: Risk File Reader
+  requirement_file: REQ-003-002-001.yaml
+  implementation_status: COMPLETE
+  test_status: PASSED
+  verification_status: PASSED
+- layer_id: LAYER-002
+  layer_name: Risk Filter Logic
+  requirement_file: REQ-003-002-002.yaml
+  implementation_status: COMPLETE
+  test_status: PASSED
+  verification_status: PASSED
+- layer_id: LAYER-003
+  layer_name: Risk Table Formatter
+  requirement_file: REQ-003-002-003.yaml
+  implementation_status: COMPLETE
+  test_status: PASSED
+  verification_status: PASSED
+integration_status: COMPLETE
+deployment_readiness: PENDING

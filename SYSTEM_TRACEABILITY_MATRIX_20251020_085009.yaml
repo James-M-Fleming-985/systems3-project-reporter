@@ -1,0 +1,216 @@
+metadata:
+  system_id: SYSTEM-003
+  system_name: ZnNi Line Report Generator System
+  generated_at: '2025-10-20T08:50:09.020130'
+  total_layers: 19
+  total_features: 6
+  generator: SystemVerificationGenerator
+verification_summary:
+  total_requirements: 0
+  verified_requirements: 0
+  verification_rate: 0
+  total_tests: 0
+  status: IN_PROGRESS
+feature_traceability:
+  FEATURE-003-001_Data_Reader_Parser:
+    layers:
+    - layer_id: LAYER-001 YAML XML Reader
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Data Model Validator
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Schema Compliance Checker
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+  FEATURE-003-002_Risk_Aggregator:
+    layers:
+    - layer_id: LAYER-001 Risk File Reader
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Risk Filter Logic
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Risk Table Formatter
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+  FEATURE-003-003_Gantt_Chart_Generator:
+    layers:
+    - layer_id: LAYER-001 Chart Data Preparation
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Matplotlib Chart Builder
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Image Export
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+  FEATURE-003-004_Milestone_Tracker:
+    layers:
+    - layer_id: LAYER-001 Date Calculator
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Milestone Categorizer
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Quadrant Formatter
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+  FEATURE-003-005_Change_Management_Logger:
+    layers:
+    - layer_id: LAYER-001 Terminal UI
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Change Data Collector
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Log File Writer
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+  FEATURE-003-006_PowerPoint_Generator:
+    layers:
+    - layer_id: LAYER-001 Slide Factory
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-002 Theme Applier
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-003 Content Inserter
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    - layer_id: LAYER-004 Report Assembler
+      requirements: 0
+      tests: 0
+      coverage: 0.0
+    total_requirements: 0
+    verified_requirements: 0
+    total_tests: 0
+layer_summary:
+- layer_id: LAYER-001 YAML XML Reader
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Data Model Validator
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Schema Compliance Checker
+  feature_id: FEATURE-003-001_Data_Reader_Parser
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-001 Risk File Reader
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Risk Filter Logic
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Risk Table Formatter
+  feature_id: FEATURE-003-002_Risk_Aggregator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-001 Chart Data Preparation
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Matplotlib Chart Builder
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Image Export
+  feature_id: FEATURE-003-003_Gantt_Chart_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-001 Date Calculator
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Milestone Categorizer
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Quadrant Formatter
+  feature_id: FEATURE-003-004_Milestone_Tracker
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-001 Terminal UI
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Change Data Collector
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Log File Writer
+  feature_id: FEATURE-003-005_Change_Management_Logger
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-001 Slide Factory
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-002 Theme Applier
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-003 Content Inserter
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK
+- layer_id: LAYER-004 Report Assembler
+  feature_id: FEATURE-003-006_PowerPoint_Generator
+  test_count: 0
+  coverage: 0.0
+  status: NEEDS_WORK

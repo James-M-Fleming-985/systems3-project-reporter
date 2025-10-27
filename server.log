@@ -1,0 +1,14 @@
+nohup: ignoring input
+INFO:     Will watch for changes in these directories: ['/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation']
+INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
+INFO:     Started reloader process [3948] using WatchFiles
+INFO:     Started server process [3973]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:39770 - "GET /health HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET / HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET / HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET /gantt HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET /gantt HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET /risks HTTP/1.1" 200 OK
+INFO:     194.73.84.139:0 - "GET /changes HTTP/1.1" 200 OK

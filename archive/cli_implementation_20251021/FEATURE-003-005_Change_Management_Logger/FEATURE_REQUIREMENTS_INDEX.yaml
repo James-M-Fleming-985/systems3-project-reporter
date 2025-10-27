@@ -1,0 +1,163 @@
+metadata:
+  feature_id: FEATURE-003-005
+  feature_name: Change Management Logger
+  feature_code: CHANGE_LOG
+  version: 1.0.0
+  status: Active
+  created_date: '2025-10-17'
+  last_modified: '2025-10-17'
+  owner: James Fleming
+  priority: MUST HAVE
+  target_date: '2025-10-31'
+  requirement_id: FEATURE-003-005
+  requirement_name: Change Management Logger
+overview:
+  description: 'Interactive terminal UI for capturing and logging significant project
+    changes
+
+    '
+  business_value:
+  - Provides audit trail of key decisions
+  - Enables change management documentation
+  - Structured change capture process
+  user_story: 'As a Project Manager, I want to log significant changes interactively,
+    So that we maintain a clear change history.
+
+    '
+  acceptance_criteria:
+  - All layers build successfully with TDD
+  - Integration tests pass across all layers
+  - Performance meets system requirements
+  - Code coverage > 90%
+layers:
+- layer_id: LAYER-001
+  layer_name: Terminal UI
+  responsibility: See REQ-003-005-001.yaml for detailed requirements
+  requirements:
+  - REQ-003-005-001
+  name: Terminal UI
+  technology: rich, questionary, colorama
+  requirement_file: REQ-003-005-001.yaml
+- layer_id: LAYER-002
+  layer_name: Change Data Collector
+  responsibility: See REQ-003-005-002.yaml for detailed requirements
+  requirements:
+  - REQ-003-005-002
+  name: Change Data Collector
+  technology: pydantic, dataclasses
+  requirement_file: REQ-003-005-002.yaml
+- layer_id: LAYER-003
+  layer_name: Log File Writer
+  responsibility: See REQ-003-005-003.yaml for detailed requirements
+  requirements:
+  - REQ-003-005-003
+  name: Log File Writer
+  technology: pyyaml, json, file I/O
+  requirement_file: REQ-003-005-003.yaml
+requirements:
+- id: FEAT-REQ-001
+  title: Change Management Logger Core Functionality
+  description: Implements complete Change Management Logger feature with all layers
+    integrated
+  priority: MUST HAVE
+  status: Active
+  traces_to:
+    project_requirements:
+    - PRJ-REQ-004
+    system_requirements:
+    - SYS-REQ-003
+- id: FEAT-REQ-002
+  title: Layer Integration
+  description: All layers work together seamlessly with proper error handling and
+    data flow
+  priority: MUST HAVE
+  status: Active
+  traces_to:
+    project_requirements:
+    - PRJ-REQ-004
+    system_requirements:
+    - SYS-REQ-004
+integration:
+  upstream_features: []
+  downstream_features: []
+  shared_components:
+  - src/shared/models
+  - src/shared/exceptions
+  - src/shared/utils
+testing:
+  unit_tests:
+    location: tests/unit/
+    coverage_target: 90%
+  integration_tests:
+    location: tests/integration/
+    scenarios:
+    - Layer-to-layer integration
+    - Error propagation
+    - Data transformation pipeline
+  e2e_tests:
+    location: tests/e2e/
+    scenarios:
+    - Complete feature workflow
+feature_level_verification:
+  required: true
+  description: "After all layers complete, generate feature-level test pyramid and\
+    \ \nrequirements verification artifacts that validate the integrated feature.\n"
+  artifacts:
+    location: Requirements Verification/
+    required_files:
+    - name: feature_requirements_verification_{timestamp}.yaml
+      description: Validates all feature requirements are satisfied
+      contents:
+      - Feature requirement traceability
+      - Cross-layer integration validation
+      - Feature acceptance criteria status
+      - Feature-level quality metrics
+    - name: feature_test_pyramid_{timestamp}.yaml
+      description: Feature-level test pyramid report
+      contents:
+      - Feature integration test count
+      - Feature E2E test count
+      - Feature test coverage percentage
+      - Cross-layer test statistics
+    - name: feature_traceability_matrix_{timestamp}.yaml
+      description: Complete feature traceability
+      contents:
+      - Feature → Layer mapping
+      - Feature → System requirements mapping
+      - Feature → Project requirements mapping
+      - Feature acceptance test results
+    - name: feature_quality_gates_{timestamp}.yaml
+      description: Feature-level quality gate results
+      contents:
+      - All layers quality gate status
+      - Feature integration quality gate
+      - Feature E2E quality gate
+      - Overall feature readiness score
+  test_execution:
+    integration_tests:
+      description: Run feature-level integration tests across all layers
+      test_directory: tests/integration/
+      required: true
+    e2e_tests:
+      description: Run feature-level end-to-end tests
+      test_directory: tests/e2e/
+      required: true
+  quality_gates:
+  - gate: All layers passed individual quality gates
+    required: true
+  - gate: Feature integration tests pass
+    required: true
+  - gate: Feature E2E tests pass
+    required: true
+  - gate: Feature test coverage >= 85%
+    required: true
+  - gate: No critical integration issues
+    required: true
+deployment:
+  dependencies: []
+  configuration_required: []
+  deployment_steps:
+  - Run layer unit tests
+  - Run integration tests
+  - Deploy feature module
+  - Verify E2E tests

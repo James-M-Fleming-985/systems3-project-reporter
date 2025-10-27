@@ -1,0 +1,19 @@
+feature_id: FEATURE-003-003
+feature_name: Gantt Chart Generator
+test_pyramid_timestamp: '20251017_173644'
+layer_tests:
+  unit_tests: 7
+  layer_count: 3
+feature_tests:
+  integration_tests:
+    location: tests/integration/
+    count: 0
+    status: REQUIRED
+  e2e_tests:
+    location: tests/e2e/
+    count: 0
+    status: REQUIRED
+integration_scenarios: []
+e2e_scenarios: []
+test_coverage_goal: 90%
+status: PYRAMID_STRUCTURE_DEFINED

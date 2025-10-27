@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Gantt Chart - ZnNi Report Generator{% endblock %}
+
+{% block extra_head %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.tailwindcss.min.css">
+<!-- jQuery (required for DataTables) -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.tailwindcss.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Gantt Chart</h2>
+    <p class="text-gray-600">Timeline view of all project milestones</p>
+    <p class="text-sm text-blue-600 mt-2">★ USER'S PRIMARY REQUIREMENT: "Gantt charts is really the only thing I actually specified"</p>
+</div>
+
+<!-- View Controls -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- View Mode Toggle -->
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-semibold text-gray-700">View Mode:</label>
+            <div class="flex space-x-2">
+                <button id="detailViewBtn" onclick="switchView('detail')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    Detail View
+                </button>
+                <button id="roadmapViewBtn" onclick="switchView('roadmap')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    Roadmap View
+                </button>
+            </div>
+        </div>
+        
+        <!-- Project Filters -->
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-semibold text-gray-700">Projects:</label>
+            <div class="flex flex-wrap gap-3" id="projectFilters">
+                {% for project in projects %}
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" 
+                           class="project-filter w-4 h-4 text-blue-600 rounded focus:ring-blue-500" 
+                           data-project="{{ project.project_name }}"
+                           checked>
+                    <span class="text-sm text-gray-700">{{ project.project_name }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <button onclick="toggleAllProjects()" class="px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-gray-200 transition">
+                Toggle All
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Gantt Chart Container -->
+<div class="bg-white rounded-lg shadow p-6">
+    <div id="ganttChart" style="width:100%; height:600px;"></div>
+</div>
+
+<!-- Legend -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Status Legend</h3>
+    <div class="flex space-x-6">
+        <div class="flex items-center">
+            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+            <span class="text-sm">Completed</span>
+        </div>
+        <div class="flex items-center">
+            <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+            <span class="text-sm">In Progress</span>
+        </div>
+        <div class="flex items-center">
+            <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
+            <span class="text-sm">Not Started</span>
+        </div>
+    </div>
+</div>
+
+<!-- Milestone Details -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Milestone Details</h3>
+    <div class="overflow-x-auto">
+        <table id="milestoneTable" class="min-w-full divide-y divide-gray-200 display">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Milestone</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Date</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for project in projects %}
+                    {% for milestone in project.milestones %}
+                    <tr>
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ milestone.name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ project.project_name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ milestone.target_date }}</td>
+                        <td class="px-4 py-3">
+                            {% if milestone.status == "COMPLETED" %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Completed</span>
+                            {% elif milestone.status == "IN_PROGRESS" %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">⏳ In Progress</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">○ Not Started</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Gantt chart data from backend
+const ganttData = {{ gantt_data | tojson }};
+
+// Global state
+let currentView = 'detail';
+let enabledProjects = new Set();
+let chartDiv = document.getElementById('ganttChart');
+
+// Initialize enabled projects (all checked by default)
+document.querySelectorAll('.project-filter').forEach(checkbox => {
+    if (checkbox.checked) {
+        enabledProjects.add(checkbox.dataset.project);
+    }
+});
+
+// Color mapping for status
+const statusColors = {
+    'COMPLETED': '#22c55e',      // green-500
+    'IN_PROGRESS': '#eab308',    // yellow-500
+    'NOT_STARTED': '#9ca3af'     // gray-400
+};
+
+// Color mapping for projects (roadmap view)
+const projectColors = {
+    'ZnNi Line Phase 1 - Equipment Installation': '#3b82f6',  // blue-500
+    'Quality System Upgrade': '#8b5cf6',                      // violet-500
+    'Infrastructure Development': '#ec4899'                   // pink-500
+};
+
+// Group by project
+const projectData = {};
+ganttData.forEach(task => {
+    if (!projectData[task.Resource]) {
+        projectData[task.Resource] = [];
+    }
+    projectData[task.Resource].push(task);
+});
+
+// Function to create detail view traces
+function createDetailViewTraces() {
+    const traces = [];
+    const filteredData = ganttData.filter(task => enabledProjects.has(task.Resource));
+    
+    filteredData.forEach(task => {
+        traces.push({
+            x: [new Date(task.Start), new Date(task.Finish)],
+            y: [task.Task],
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: statusColors[task.Status],
+                line: {
+                    color: 'rgba(0,0,0,0.2)',
+                    width: 1
+                }
+            },
+            name: task.Resource,
+            text: task.Status,
+            customdata: [[task.Resource, task.Status]],
+            hovertemplate: '<b>%{y}</b><br>' +
+                          'Project: %{customdata[0]}<br>' +
+                          'Status: %{customdata[1]}<br>' +
+                          'Start: %{x[0]|%Y-%m-%d}<br>' +
+                          'End: %{x[1]|%Y-%m-%d}' +
+                          '<extra></extra>',
+            showlegend: true,
+            legendgroup: task.Resource
+        });
+    });
+    
+    return traces;
+}
+
+// Function to create roadmap view traces (grouped by project)
+function createRoadmapViewTraces() {
+    const traces = [];
+    
+    Object.keys(projectData).forEach(projectName => {
+        if (!enabledProjects.has(projectName)) return;
+        
+        const projectTasks = projectData[projectName];
+        const color = projectColors[projectName] || '#6b7280';
+        
+        projectTasks.forEach(task => {
+            traces.push({
+                x: [new Date(task.Start), new Date(task.Finish)],
+                y: [projectName],  // Group by project name instead of milestone
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: color,
+                    opacity: task.Status === 'COMPLETED' ? 1.0 : 
+                            task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
+                    line: {
+                        color: 'rgba(0,0,0,0.3)',
+                        width: 1
+                    }
+                },
+                name: task.Task,
+                text: task.Task,
+                customdata: [[projectName, task.Task, task.Status]],
+                hovertemplate: '<b>%{customdata[1]}</b><br>' +
+                              'Project: %{customdata[0]}<br>' +
+                              'Status: %{customdata[2]}<br>' +
+                              'Start: %{x[0]|%Y-%m-%d}<br>' +
+                              'End: %{x[1]|%Y-%m-%d}' +
+                              '<extra></extra>',
+                showlegend: false
+            });
+        });
+    });
+    
+    return traces;
+}
+
+// Function to get layout configuration
+function getLayout() {
+    const title = currentView === 'detail' 
+        ? 'Project Timeline - Milestone Detail View' 
+        : 'Program Roadmap - Project Overview';
+    
+    return {
+        title: {
+            text: title,
+            font: { size: 20 }
+        },
+        xaxis: {
+            title: 'Date',
+            type: 'date',
+            tickformat: '%Y-%m-%d'
+        },
+        yaxis: {
+            title: currentView === 'detail' ? 'Milestones' : 'Projects',
+            automargin: true
+        },
+        barmode: 'overlay',
+        bargap: 0.2,
+        height: 600,
+        margin: {
+            l: 250,
+            r: 80,
+            t: 80,
+            b: 80
+        },
+        hovermode: 'closest',
+        plot_bgcolor: '#f9fafb',
+        paper_bgcolor: 'white',
+        modebar: {
+            orientation: 'v',
+            bgcolor: 'rgba(255,255,255,0.9)',
+            color: '#444',
+            activecolor: '#1976d2'
+        }
+    };
+}
+
+// Plotly configuration
+const config = {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+    modeBarPosition: 'top'
+};
+
+// Function to render the chart
+function renderChart() {
+    const traces = currentView === 'detail' ? createDetailViewTraces() : createRoadmapViewTraces();
+    const layout = getLayout();
+    Plotly.newPlot(chartDiv, traces, layout, config);
+}
+
+// Function to switch view mode
+function switchView(view) {
+    currentView = view;
+    
+    // Update button styles
+    const detailBtn = document.getElementById('detailViewBtn');
+    const roadmapBtn = document.getElementById('roadmapViewBtn');
+    
+    if (view === 'detail') {
+        detailBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+        roadmapBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+    } else {
+        detailBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+        roadmapBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+    }
+    
+    renderChart();
+}
+
+// Function to toggle all projects
+function toggleAllProjects() {
+    const checkboxes = document.querySelectorAll('.project-filter');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        if (checkbox.checked) {
+            enabledProjects.add(checkbox.dataset.project);
+        } else {
+            enabledProjects.delete(checkbox.dataset.project);
+        }
+    });
+    
+    renderChart();
+}
+
+// Event listeners for project filters
+document.querySelectorAll('.project-filter').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            enabledProjects.add(this.dataset.project);
+        } else {
+            enabledProjects.delete(this.dataset.project);
+        }
+        renderChart();
+    });
+});
+
+// Initial render
+renderChart();
+
+// Initialize DataTable with sorting and filtering
+$(document).ready(function() {
+    $('#milestoneTable').DataTable({
+        pageLength: 25,
+        order: [[2, 'asc']],  // Sort by target date by default
+        language: {
+            search: "Search milestones:",
+            lengthMenu: "Show _MENU_ milestones per page"
+        },
+        columnDefs: [
+            {
+                targets: 3,  // Status column
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        if (data === 'COMPLETED') {
+                            return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Completed</span>';
+                        } else if (data === 'IN_PROGRESS') {
+                            return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">⏳ In Progress</span>';
+                        } else {
+                            return '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">○ Not Started</span>';
+                        }
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+});
+</script>
+{% endblock %}

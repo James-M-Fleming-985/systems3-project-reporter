@@ -1,0 +1,186 @@
+matrix_metadata:
+  timestamp: '20251017_112652'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT
+    GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py
+  lines: 314
+  methods:
+  - name: __init__
+    lines: 12-25
+  - name: load_schema
+    lines: 26-49
+  - name: set_schema
+    lines: 50-61
+  - name: validate_data
+    lines: 62-92
+  - name: _validate_dataframe
+    lines: 93-121
+  - name: _validate_dict
+    lines: 122-135
+  - name: _validate_list
+    lines: 136-148
+  - name: _validate_column_type
+    lines: 149-170
+  - name: _validate_value_type
+    lines: 171-193
+  - name: _validate_dict_item
+    lines: 194-202
+  - name: _validate_simple_item
+    lines: 203-207
+  - name: _check_dtype
+    lines: 208-224
+  - name: _create_validation_result
+    lines: 225-241
+  - name: get_validation_report
+    lines: 242-273
+  - name: check_compliance
+    lines: 274-286
+  - name: get_schema_info
+    lines: 287-297
+  classes:
+  - name: SchemaComplianceChecker
+    type: class
+    lines: 9-314
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py
+  methods_tested:
+  - __init__
+  - load_schema
+  - set_schema
+  - validate_data
+  - _validate_dataframe
+  - _validate_dict
+  - _validate_list
+  - _validate_column_type
+  - _validate_value_type
+  - _validate_dict_item
+  - _validate_simple_item
+  - _check_dtype
+  - _create_validation_result
+  - get_validation_report
+  - check_compliance
+  - get_schema_info
+  classes_tested:
+  - SchemaComplianceChecker
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py:12-25
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py:26-49
+  method_name: load_schema
+  requirement: AC-001
+  test: test_load_schema
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py:50-61
+  method_name: set_schema
+  requirement: AC-001
+  test: test_set_schema
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py:62-92
+  method_name: validate_data
+  requirement: AC-001
+  test: test_validate_data
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/src/implementation.py:93-121
+  method_name: _validate_dataframe
+  requirement: AC-001
+  test: test__validate_dataframe
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-003
+    Schema Compliance Checker/tests/test_generated_20251017_112605.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

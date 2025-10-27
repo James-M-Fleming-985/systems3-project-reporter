@@ -1,0 +1,20 @@
+metadata:
+  requirement_id: "FEATURE-WEB-004"
+  feature_name: "Risk Analysis Dashboard"
+  feature_code: "RISKS"
+  version: "1.0.0"
+  priority: "MUST HAVE"
+  
+overview:
+  description: "Visualize risks grouped by severity (HIGH/MEDIUM/LOW) with charts"
+  user_story: "As a PM, I want to see risk distribution so I can prioritize mitigation"
+  
+layers:
+  - layer_id: "LAYER-WEB-004-01"
+    layer_name: "Risk Route Handler"
+    implementation_file: "routers/dashboard.py"
+  - layer_id: "LAYER-WEB-004-02"
+    layer_name: "Risk Template with Charts"
+    implementation_file: "templates/risks.html"
+
+estimated_effort: "1 hour"

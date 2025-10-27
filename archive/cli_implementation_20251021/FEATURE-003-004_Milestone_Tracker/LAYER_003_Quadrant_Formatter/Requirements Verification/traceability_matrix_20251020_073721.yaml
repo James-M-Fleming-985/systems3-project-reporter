@@ -1,0 +1,211 @@
+matrix_metadata:
+  timestamp: '20251020_073721'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py
+  lines: 440
+  methods:
+  - name: __init__
+    lines: 67-80
+  - name: format_milestone_data
+    lines: 81-110
+  - name: format_single_quadrant
+    lines: 111-148
+  - name: batch_format
+    lines: 149-181
+  - name: get_quadrant_summary
+    lines: 182-209
+  - name: validate_format
+    lines: 210-239
+  - name: _validate_milestone_data
+    lines: 240-252
+  - name: _resolve_style
+    lines: 253-268
+  - name: _resolve_quadrant_type
+    lines: 269-281
+  - name: _distribute_to_quadrants
+    lines: 282-334
+  - name: _format_quadrants
+    lines: 335-352
+  - name: _generate_content
+    lines: 353-365
+  - name: _format_standard
+    lines: 366-380
+  - name: _format_compact
+    lines: 381-387
+  - name: _format_detailed
+    lines: 388-414
+  - name: create_formatter
+    lines: 415-419
+  - name: format_milestone_report
+    lines: 420-430
+  classes:
+  - name: QuadrantType
+    type: class
+    lines: 13-20
+  - name: FormatStyle
+    type: class
+    lines: 21-28
+  - name: QuadrantData
+    type: class
+    lines: 29-36
+  - name: FormattedQuadrant
+    type: class
+    lines: 37-43
+  - name: QuadrantFormatterError
+    type: class
+    lines: 44-48
+  - name: InvalidDataError
+    type: class
+    lines: 49-53
+  - name: FormattingError
+    type: class
+    lines: 54-58
+  - name: QuadrantFormatter
+    type: class
+    lines: 59-440
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py
+  methods_tested:
+  - __init__
+  - format_milestone_data
+  - format_single_quadrant
+  - batch_format
+  - get_quadrant_summary
+  - validate_format
+  - _validate_milestone_data
+  - _resolve_style
+  - _resolve_quadrant_type
+  - _distribute_to_quadrants
+  - _format_quadrants
+  - _generate_content
+  - _format_standard
+  - _format_compact
+  - _format_detailed
+  - create_formatter
+  - format_milestone_report
+  classes_tested:
+  - QuadrantType
+  - FormatStyle
+  - QuadrantData
+  - FormattedQuadrant
+  - QuadrantFormatterError
+  - InvalidDataError
+  - FormattingError
+  - QuadrantFormatter
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py:67-80
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py:81-110
+  method_name: format_milestone_data
+  requirement: AC-001
+  test: test_format_milestone_data
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py:111-148
+  method_name: format_single_quadrant
+  requirement: AC-001
+  test: test_format_single_quadrant
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py:149-181
+  method_name: batch_format
+  requirement: AC-001
+  test: test_batch_format
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/src/implementation.py:182-209
+  method_name: get_quadrant_summary
+  requirement: AC-001
+  test: test_get_quadrant_summary
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/LAYER-003
+    Quadrant Formatter/tests/test_generated_20251020_073624.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

@@ -1,0 +1,148 @@
+matrix_metadata:
+  timestamp: '20251020_203446'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: LAYER_003_Content_Inserter/src/implementation.py
+  lines: 216
+  methods:
+  - name: __init__
+    lines: 5-9
+  - name: insert_content
+    lines: 10-42
+  - name: get_content
+    lines: 43-64
+  - name: update_content
+    lines: 65-101
+  - name: delete_content
+    lines: 102-124
+  - name: list_content_ids
+    lines: 125-133
+  - name: search_content
+    lines: 134-161
+  - name: clear_all_content
+    lines: 162-172
+  - name: get_content_count
+    lines: 173-181
+  - name: bulk_insert
+    lines: 182-192
+  classes:
+  - name: ContentInserter
+    type: class
+    lines: 2-216
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  test_count: 0
+  implementation_files:
+  - LAYER_003_Content_Inserter/src/implementation.py
+  methods_tested:
+  - __init__
+  - insert_content
+  - get_content
+  - update_content
+  - delete_content
+  - list_content_ids
+  - search_content
+  - clear_all_content
+  - get_content_count
+  - bulk_insert
+  classes_tested:
+  - ContentInserter
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: LAYER_003_Content_Inserter/src/implementation.py:5-9
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  verified: true
+- implementation_location: LAYER_003_Content_Inserter/src/implementation.py:10-42
+  method_name: insert_content
+  requirement: AC-001
+  test: test_insert_content
+  test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  verified: true
+- implementation_location: LAYER_003_Content_Inserter/src/implementation.py:43-64
+  method_name: get_content
+  requirement: AC-001
+  test: test_get_content
+  test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  verified: true
+- implementation_location: LAYER_003_Content_Inserter/src/implementation.py:65-101
+  method_name: update_content
+  requirement: AC-001
+  test: test_update_content
+  test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  verified: true
+- implementation_location: LAYER_003_Content_Inserter/src/implementation.py:102-124
+  method_name: delete_content
+  requirement: AC-001
+  test: test_delete_content
+  test_file: LAYER_003_Content_Inserter/tests/test_generated_20251020_203420.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

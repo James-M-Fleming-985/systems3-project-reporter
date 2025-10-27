@@ -1,0 +1,213 @@
+matrix_metadata:
+  timestamp: '20251017_112527'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT
+    GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py
+  lines: 364
+  methods:
+  - name: __init__
+    lines: 12-17
+  - name: validate
+    lines: 18-40
+  - name: _validate_against_schema
+    lines: 41-89
+  - name: _check_type
+    lines: 90-105
+  - name: _validate_data_structure
+    lines: 106-120
+  - name: _validate_dict_structure
+    lines: 121-130
+  - name: _validate_list_structure
+    lines: 131-136
+  - name: get_errors
+    lines: 137-140
+  - name: get_warnings
+    lines: 141-144
+  - name: validate_report_data
+    lines: 145-182
+  - name: validate_measurement_data
+    lines: 183-215
+  - name: validate_batch
+    lines: 216-238
+  - name: load_schema
+    lines: 239-257
+  - name: set_validation_rules
+    lines: 258-266
+  - name: clear_errors
+    lines: 267-272
+  - name: __init__
+    lines: 281-284
+  - name: validate_schema
+    lines: 285-306
+  - name: get_errors
+    lines: 307-311
+  - name: __init__
+    lines: 315-326
+  - name: validate_data
+    lines: 327-347
+  - name: create_validator
+    lines: 348-358
+  classes:
+  - name: DataModelValidator
+    type: class
+    lines: 9-272
+  - name: DataValidator
+    type: class
+    lines: 273-277
+  - name: SchemaValidator
+    type: class
+    lines: 278-311
+  - name: ValidationError
+    type: class
+    lines: 312-364
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py
+  methods_tested:
+  - __init__
+  - validate
+  - _validate_against_schema
+  - _check_type
+  - _validate_data_structure
+  - _validate_dict_structure
+  - _validate_list_structure
+  - get_errors
+  - get_warnings
+  - validate_report_data
+  - validate_measurement_data
+  - validate_batch
+  - load_schema
+  - set_validation_rules
+  - clear_errors
+  - __init__
+  - validate_schema
+  - get_errors
+  - __init__
+  - validate_data
+  - create_validator
+  classes_tested:
+  - DataModelValidator
+  - DataValidator
+  - SchemaValidator
+  - ValidationError
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py:12-17
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py:18-40
+  method_name: validate
+  requirement: AC-001
+  test: test_validate
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py:41-89
+  method_name: _validate_against_schema
+  requirement: AC-001
+  test: test__validate_against_schema
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py:90-105
+  method_name: _check_type
+  requirement: AC-001
+  test: test__check_type
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  verified: true
+- implementation_location: /workspaces/professional_excellence/projects/PROJECT-003
+    REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/src/implementation.py:106-120
+  method_name: _validate_data_structure
+  requirement: AC-001
+  test: test__validate_data_structure
+  test_file: /workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/LAYER-002
+    Data Model Validator/tests/test_generated_20251017_112440.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

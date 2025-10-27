@@ -1,0 +1,275 @@
+# ================================================================================
+# LAYER REQUIREMENT: Change Data Collector
+# ================================================================================
+# REQUIREMENT ID: REQ-003-005-002
+# FEATURE: FEATURE-003-005 (Change Management Logger)
+# LAYER: LAYER-003-005-002 (Change_Data_Collector)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-005-002"
+  requirement_title: "Change Data Collector"
+  layer: "002_Change_Data_Collector"
+  feature: "FEATURE-003-005_Change_Management_Logger"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Change Data Collector"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Change Data Collector"
+  
+  description: |
+    Collect and structure change data from UI inputs. Create ChangeEntry object with timestamp, old/new values, reason, contingency. Validate data completeness and business rules (new date > current date).
+  
+  rationale: |
+    Separates UI layer from data logic. Ensures change data structure is consistent regardless of UI implementation (terminal, web, API).
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/change_data_collector/change_data_collector.py"
+    modules:
+      - "change_data_collector.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "ChangeDataCollector"
+      purpose: "Structure and validate change data"
+      methods:
+        - name: "create_change_entry"
+          signature: "create_change_entry(milestone: Milestone, new_date: date, reason: str, contingency: str) -> ChangeEntry"
+          purpose: "Implement create_change_entry logic" 
+        - name: "validate_change_data"
+          signature: "validate_change_data(entry: ChangeEntry) -> ValidationResult"
+          purpose: "Implement validate_change_data logic" 
+        - name: "generate_change_id"
+          signature: "generate_change_id() -> str"
+          purpose: "Implement generate_change_id logic" 
+
+  implementation_details:
+    libraries: []
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "User inputs from LAYER-003-005-001" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "Validated ChangeEntry object" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_change_data_collector.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_change_data_collector_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Change Data Collector (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_change_data_collector.py"
+      tests:
+        - "test_create_change_entry_success"
+        - "test_create_change_entry_failure" 
+        - "test_validate_change_data_success"
+        - "test_validate_change_data_failure" 
+        - "test_generate_change_id_success"
+        - "test_generate_change_id_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_change_data_collector.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement ChangeDataCollector class (GREEN phase)"
+      file: "src/change_data_collector/change_data_collector.py"
+      methods:
+        - "create_change_entry(milestone: Milestone, new_date: date, reason: str, contingency: str) -> ChangeEntry" 
+        - "validate_change_data(entry: ChangeEntry) -> ValidationResult" 
+        - "generate_change_id() -> str" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_change_data_collector.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_change_data_collector_integration.py"
+      duration: "15 min"
+  
+  total_time: "1.5 hours"
+  
+  deliverable: |
+    Change Data Collector implementation ready for integration with 
+    LAYER-003-005-003.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-001: Automated PowerPoint report generation" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-001: File-based data persistence" 
+    - "SYS-REQ-003: On-demand execution" 
+    - "SYS-REQ-004: Presentation Layer" 
+  
+  implements_system_components:
+    - "COMP-007: Change Management UI" 
+  
+  maps_to_feature:
+    - "FEATURE-003-005: Change Management Logger"
+  
+  depends_on_layers:
+    - "LAYER-003-005-001" 
+  
+  consumed_by_layers:
+    - "LAYER-003-005-003" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-005-001"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "LAYER-003-005-003"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_change_data_collector.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_change_data_collector_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/change_data_collector/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.change_data_collector import ChangeDataCollector
+    
+    instance = ChangeDataCollector()
+    result = instance.create_change_entry(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-005: Change Management Logger
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Milestone Tracker - ZnNi Report Generator{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📍 Milestone Tracker</h2>
+    <p class="text-gray-600">Milestones organized by status and timeline</p>
+</div>
+
+<!-- View Controls -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <label class="text-sm font-semibold text-gray-700">View:</label>
+        <div class="flex space-x-2">
+            <button onclick="switchView('status')" id="statusViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                Status View
+            </button>
+            <button onclick="switchView('week')" id="weekViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                Week View
+            </button>
+            <button onclick="switchView('month')" id="monthViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                Month View
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Status View (Quadrant) - Default -->
+<div id="statusView" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Completed Past -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center mb-4">
+            <div class="bg-green-100 rounded-full p-2 mr-3">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Completed ({{ quadrants.completed_past|length }})</h3>
+        </div>
+        <div class="space-y-3">
+            {% for milestone in quadrants.completed_past %}
+            <div class="border-l-4 border-green-500 bg-green-50 p-3 rounded">
+                <p class="font-semibold text-gray-800">{{ milestone.name }}</p>
+                <p class="text-sm text-gray-600">{{ milestone.project }}</p>
+                <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Current In Progress -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center mb-4">
+            <div class="bg-yellow-100 rounded-full p-2 mr-3">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">In Progress ({{ quadrants.current_in_progress|length }})</h3>
+        </div>
+        <div class="space-y-3">
+            {% for milestone in quadrants.current_in_progress %}
+            <div class="border-l-4 border-yellow-500 bg-yellow-50 p-3 rounded">
+                <p class="font-semibold text-gray-800">{{ milestone.name }}</p>
+                <p class="text-sm text-gray-600">{{ milestone.project }}</p>
+                <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+                {% if milestone.completion_percentage %}
+                <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-yellow-500 h-1.5 rounded-full" style="width: {{ milestone.completion_percentage }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Upcoming Future -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center mb-4">
+            <div class="bg-blue-100 rounded-full p-2 mr-3">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Upcoming ({{ quadrants.upcoming_future|length }})</h3>
+        </div>
+        <div class="space-y-3">
+            {% for milestone in quadrants.upcoming_future %}
+            <div class="border-l-4 border-blue-500 bg-blue-50 p-3 rounded">
+                <p class="font-semibold text-gray-800">{{ milestone.name }}</p>
+                <p class="text-sm text-gray-600">{{ milestone.project }}</p>
+                <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Delayed -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center mb-4">
+            <div class="bg-red-100 rounded-full p-2 mr-3">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Delayed ({{ quadrants.delayed|length }})</h3>
+        </div>
+        <div class="space-y-3">
+            {% for milestone in quadrants.delayed %}
+            <div class="border-l-4 border-red-500 bg-red-50 p-3 rounded">
+                <p class="font-semibold text-gray-800">{{ milestone.name }}</p>
+                <p class="text-sm text-gray-600">{{ milestone.project }}</p>
+                <p class="text-xs text-red-600">⚠️ Was due: {{ milestone.target_date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Week View (Hidden by default) -->
+<div id="weekView" class="hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Last Week -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Week</h3>
+            <p class="text-sm text-gray-500 mb-4" id="lastWeekRange"></p>
+            <div id="lastWeekCompleted" class="space-y-3"></div>
+        </div>
+        
+        <!-- This Week -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Week</h3>
+            <p class="text-sm text-gray-500 mb-4" id="thisWeekRange"></p>
+            <div id="thisWeekMilestones" class="space-y-3"></div>
+        </div>
+        
+        <!-- Next Week -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Week</h3>
+            <p class="text-sm text-gray-500 mb-4" id="nextWeekRange"></p>
+            <div id="nextWeekMilestones" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Month View (Hidden by default) -->
+<div id="monthView" class="hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Last Month -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Month</h3>
+            <p class="text-sm text-gray-500 mb-4" id="lastMonthRange"></p>
+            <div id="lastMonthCompleted" class="space-y-3"></div>
+        </div>
+        
+        <!-- This Month -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Month</h3>
+            <p class="text-sm text-gray-500 mb-4" id="thisMonthRange"></p>
+            <div id="thisMonthMilestones" class="space-y-3"></div>
+        </div>
+        
+        <!-- Next Month -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Month</h3>
+            <p class="text-sm text-gray-500 mb-4" id="nextMonthRange"></p>
+            <div id="nextMonthMilestones" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// All milestones data from server
+const allMilestones = {{ quadrants | tojson }};
+
+// Date helper functions
+function getWeekRange(date) {
+    const start = new Date(date);
+    start.setDate(start.getDate() - start.getDay()); // Start of week (Sunday)
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6); // End of week (Saturday)
+    return { start, end };
+}
+
+function getMonthRange(date) {
+    const start = new Date(date.getFullYear(), date.getMonth(), 1);
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return { start, end };
+}
+
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function formatDateRange(start, end) {
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+}
+
+function isDateInRange(dateStr, start, end) {
+    const date = new Date(dateStr);
+    return date >= start && date <= end;
+}
+
+// Milestone rendering function
+function renderMilestone(milestone, showStatus = true) {
+    const statusColors = {
+        'COMPLETED': 'green',
+        'IN_PROGRESS': 'yellow',
+        'NOT_STARTED': 'gray'
+    };
+    
+    const statusIcons = {
+        'COMPLETED': '✓',
+        'IN_PROGRESS': '⏳',
+        'NOT_STARTED': '○'
+    };
+    
+    const color = statusColors[milestone.status] || 'gray';
+    const icon = statusIcons[milestone.status] || '○';
+    
+    let html = `
+        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded">
+            <p class="font-semibold text-gray-800">${milestone.name}</p>
+            <p class="text-sm text-gray-600">${milestone.project}</p>
+            <p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
+    
+    if (showStatus) {
+        html += `<p class="text-xs text-${color}-600 mt-1">${icon} ${milestone.status.replace('_', ' ')}</p>`;
+    }
+    
+    if (milestone.completion_percentage) {
+        html += `
+            <div class="mt-2">
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                    <div class="bg-${color}-500 h-1.5 rounded-full" style="width: ${milestone.completion_percentage}%"></div>
+                </div>
+            </div>`;
+    }
+    
+    html += `</div>`;
+    return html;
+}
+
+// Populate week view
+function populateWeekView() {
+    const today = new Date();
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    const lastWeekRange = getWeekRange(lastWeek);
+    const thisWeekRange = getWeekRange(today);
+    const nextWeekRange = getWeekRange(nextWeek);
+    
+    document.getElementById('lastWeekRange').textContent = formatDateRange(lastWeekRange.start, lastWeekRange.end);
+    document.getElementById('thisWeekRange').textContent = formatDateRange(thisWeekRange.start, thisWeekRange.end);
+    document.getElementById('nextWeekRange').textContent = formatDateRange(nextWeekRange.start, nextWeekRange.end);
+    
+    const allMilestonesList = [
+        ...allMilestones.completed_past,
+        ...allMilestones.current_in_progress,
+        ...allMilestones.upcoming_future,
+        ...allMilestones.delayed
+    ];
+    
+    const lastWeekCompleted = allMilestonesList.filter(m => 
+        m.status === 'COMPLETED' && isDateInRange(m.target_date, lastWeekRange.start, lastWeekRange.end)
+    );
+    
+    const thisWeekMilestones = allMilestonesList.filter(m => 
+        isDateInRange(m.target_date, thisWeekRange.start, thisWeekRange.end)
+    );
+    
+    const nextWeekMilestones = allMilestonesList.filter(m => 
+        isDateInRange(m.target_date, nextWeekRange.start, nextWeekRange.end)
+    );
+    
+    document.getElementById('lastWeekCompleted').innerHTML = lastWeekCompleted.length > 0
+        ? lastWeekCompleted.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones completed</p>';
+    
+    document.getElementById('thisWeekMilestones').innerHTML = thisWeekMilestones.length > 0
+        ? thisWeekMilestones.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+    
+    document.getElementById('nextWeekMilestones').innerHTML = nextWeekMilestones.length > 0
+        ? nextWeekMilestones.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+}
+
+// Populate month view
+function populateMonthView() {
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    
+    const lastMonthRange = getMonthRange(lastMonth);
+    const thisMonthRange = getMonthRange(today);
+    const nextMonthRange = getMonthRange(nextMonth);
+    
+    document.getElementById('lastMonthRange').textContent = formatDateRange(lastMonthRange.start, lastMonthRange.end);
+    document.getElementById('thisMonthRange').textContent = formatDateRange(thisMonthRange.start, thisMonthRange.end);
+    document.getElementById('nextMonthRange').textContent = formatDateRange(nextMonthRange.start, nextMonthRange.end);
+    
+    const allMilestonesList = [
+        ...allMilestones.completed_past,
+        ...allMilestones.current_in_progress,
+        ...allMilestones.upcoming_future,
+        ...allMilestones.delayed
+    ];
+    
+    const lastMonthCompleted = allMilestonesList.filter(m => 
+        m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
+    );
+    
+    const thisMonthMilestones = allMilestonesList.filter(m => 
+        isDateInRange(m.target_date, thisMonthRange.start, thisMonthRange.end)
+    );
+    
+    const nextMonthMilestones = allMilestonesList.filter(m => 
+        isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
+    );
+    
+    document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
+        ? lastMonthCompleted.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones completed</p>';
+    
+    document.getElementById('thisMonthMilestones').innerHTML = thisMonthMilestones.length > 0
+        ? thisMonthMilestones.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+    
+    document.getElementById('nextMonthMilestones').innerHTML = nextMonthMilestones.length > 0
+        ? nextMonthMilestones.map(m => renderMilestone(m)).join('')
+        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+}
+
+// Switch view function
+function switchView(view) {
+    const statusView = document.getElementById('statusView');
+    const weekView = document.getElementById('weekView');
+    const monthView = document.getElementById('monthView');
+    
+    const statusBtn = document.getElementById('statusViewBtn');
+    const weekBtn = document.getElementById('weekViewBtn');
+    const monthBtn = document.getElementById('monthViewBtn');
+    
+    // Hide all views
+    statusView.classList.add('hidden');
+    weekView.classList.add('hidden');
+    monthView.classList.add('hidden');
+    
+    // Reset button styles
+    const inactiveClass = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+    const activeClass = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+    
+    statusBtn.className = inactiveClass;
+    weekBtn.className = inactiveClass;
+    monthBtn.className = inactiveClass;
+    
+    // Show selected view
+    if (view === 'status') {
+        statusView.classList.remove('hidden');
+        statusBtn.className = activeClass;
+    } else if (view === 'week') {
+        populateWeekView();
+        weekView.classList.remove('hidden');
+        weekBtn.className = activeClass;
+    } else if (view === 'month') {
+        populateMonthView();
+        monthView.classList.remove('hidden');
+        monthBtn.className = activeClass;
+    }
+}
+</script>
+{% endblock %}

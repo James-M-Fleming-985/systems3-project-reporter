@@ -1,0 +1,525 @@
+"""
+Feature Integration Module for Risk Aggregator (FEATURE-003-002)
+
+This module orchestrates the Risk File Reader, Risk Filter Logic, and Risk Table Formatter
+layers to provide a unified risk aggregation and reporting capability.
+"""
+
+from pathlib import Path
+import sys
+from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass, field
+from datetime import datetime
+import logging
+from enum import Enum
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import layer implementations
+from LAYER_001_Risk_File_Reader.src.implementation import RiskFileReader
+from LAYER_002_Risk_Filter_Logic.src.implementation import (
+    RiskLevel, FilterType, RiskFilterCriteria, RiskItem, 
+    ValidationError, FilterError, RiskFilterLogic
+)
+from LAYER_003_Risk_Table_Formatter.src.implementation import (
+    OutputFormat, RiskTableFormatter, FormatterCache
+)
+
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+
+class FeatureStatus(Enum):
+    """Status enumeration for feature operations"""
+    SUCCESS = "success"
+    ERROR = "error"
+    WARNING = "warning"
+    PARTIAL = "partial"
+
+
+@dataclass
+class FeatureConfig:
+    """Configuration for Risk Aggregator feature"""
+    risk_file_path: Optional[str] = None
+    output_format: OutputFormat = OutputFormat.HTML
+    enable_caching: bool = True
+    cache_ttl: int = 3600  # seconds
+    max_risk_items: int = 1000
+    default_filter_criteria: Optional[RiskFilterCriteria] = None
+    log_level: str = "INFO"
+
+
+@dataclass
+class FeatureResponse:
+    """Unified response structure for feature operations"""
+    status: FeatureStatus
+    data: Optional[Any] = None
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
+
+    def is_success(self) -> bool:
+        """Check if the operation was successful"""
+        return self.status in [FeatureStatus.SUCCESS, FeatureStatus.WARNING]
+
+    def add_error(self, error: str) -> None:
+        """Add an error message to the response"""
+        self.errors.append(error)
+        if self.status == FeatureStatus.SUCCESS:
+            self.status = FeatureStatus.ERROR
+
+    def add_warning(self, warning: str) -> None:
+        """Add a warning message to the response"""
+        self.warnings.append(warning)
+        if self.status == FeatureStatus.SUCCESS:
+            self.status = FeatureStatus.WARNING
+
+
+class FeatureOrchestrator:
+    """
+    Main orchestrator for the Risk Aggregator feature.
+    
+    This class coordinates the interaction between:
+    - Risk File Reader (LAYER-001)
+    - Risk Filter Logic (LAYER-002)
+    - Risk Table Formatter (LAYER-003)
+    """
+
+    def __init__(self, config: Optional[FeatureConfig] = None):
+        """
+        Initialize the Feature Orchestrator with configuration.
+
+        Args:
+            config: Feature configuration. If None, uses default configuration.
+        """
+        self.config = config or FeatureConfig()
+        self._setup_logging()
+        self._initialize_layers()
+
+    def _setup_logging(self) -> None:
+        """Configure logging based on feature configuration"""
+        log_level = getattr(logging, self.config.log_level.upper(), logging.INFO)
+        logger.setLevel(log_level)
+        
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+
+    def _initialize_layers(self) -> None:
+        """Initialize all layer instances with error handling"""
+        try:
+            # Initialize Risk File Reader
+            self.risk_reader = RiskFileReader()
+            logger.info("Risk File Reader initialized successfully")
+
+            # Initialize Risk Filter Logic
+            self.risk_filter = RiskFilterLogic()
+            logger.info("Risk Filter Logic initialized successfully")
+
+            # Initialize Risk Table Formatter
+            self.table_formatter = RiskTableFormatter()
+            if self.config.enable_caching:
+                self.formatter_cache = FormatterCache(max_size=100)
+            else:
+                self.formatter_cache = None
+            logger.info("Risk Table Formatter initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize layers: {str(e)}")
+            raise RuntimeError(f"Layer initialization failed: {str(e)}")
+
+    def process_risk_file(
+        self,
+        file_path: Optional[str] = None,
+        filter_criteria: Optional[RiskFilterCriteria] = None,
+        output_format: Optional[OutputFormat] = None
+    ) -> FeatureResponse:
+        """
+        Process a risk file through the complete pipeline.
+
+        Args:
+            file_path: Path to the risk file. Uses config default if not provided.
+            filter_criteria: Filtering criteria for risks. Uses config default if not provided.
+            output_format: Output format for the table. Uses config default if not provided.
+
+        Returns:
+            FeatureResponse with processed risk data
+        """
+        response = FeatureResponse(status=FeatureStatus.SUCCESS)
+        
+        # Use provided values or fall back to config
+        file_path = file_path or self.config.risk_file_path
+        filter_criteria = filter_criteria or self.config.default_filter_criteria
+        output_format = output_format or self.config.output_format
+
+        # Validate inputs
+        if not file_path:
+            response.add_error("No risk file path provided")
+            return response
+
+        try:
+            # Step 1: Read risk file
+            logger.info(f"Reading risk file: {file_path}")
+            risk_data = self._read_risks(file_path, response)
+            if not response.is_success():
+                return response
+
+            # Step 2: Filter risks (if criteria provided)
+            if filter_criteria:
+                logger.info("Applying risk filters")
+                risk_data = self._filter_risks(risk_data, filter_criteria, response)
+                if not response.is_success():
+                    return response
+
+            # Step 3: Format risks as table
+            logger.info(f"Formatting risks as {output_format.value}")
+            formatted_output = self._format_risks(risk_data, output_format, response)
+            if not response.is_success():
+                return response
+
+            # Set response data and metadata
+            response.data = formatted_output
+            response.metadata = {
+                "total_risks": len(risk_data),
+                "file_path": file_path,
+                "output_format": output_format.value,
+                "filtered": filter_criteria is not None
+            }
+
+            logger.info(f"Successfully processed {len(risk_data)} risks")
+
+        except Exception as e:
+            logger.error(f"Unexpected error during risk processing: {str(e)}")
+            response.add_error(f"Processing failed: {str(e)}")
+
+        return response
+
+    def _read_risks(self, file_path: str, response: FeatureResponse) -> List[RiskItem]:
+        """
+        Read risks from file using Risk File Reader layer.
+
+        Args:
+            file_path: Path to the risk file
+            response: Feature response object to update
+
+        Returns:
+            List of RiskItem objects
+        """
+        try:
+            # Attempt to read the risk file
+            risk_data = self.risk_reader.read_risks(file_path)
+            
+            # Validate risk data
+            if not risk_data:
+                response.add_warning("Risk file is empty")
+                return []
+            
+            if len(risk_data) > self.config.max_risk_items:
+                response.add_warning(
+                    f"Risk file contains {len(risk_data)} items, "
+                    f"truncating to {self.config.max_risk_items}"
+                )
+                risk_data = risk_data[:self.config.max_risk_items]
+            
+            return risk_data
+
+        except FileNotFoundError:
+            response.add_error(f"Risk file not found: {file_path}")
+            return []
+        except Exception as e:
+            response.add_error(f"Failed to read risk file: {str(e)}")
+            return []
+
+    def _filter_risks(
+        self,
+        risks: List[RiskItem],
+        criteria: RiskFilterCriteria,
+        response: FeatureResponse
+    ) -> List[RiskItem]:
+        """
+        Filter risks using Risk Filter Logic layer.
+
+        Args:
+            risks: List of risk items to filter
+            criteria: Filter criteria to apply
+            response: Feature response object to update
+
+        Returns:
+            Filtered list of RiskItem objects
+        """
+        try:
+            # Validate filter criteria
+            self.risk_filter.validate_criteria(criteria)
+            
+            # Apply filters
+            filtered_risks = self.risk_filter.filter_risks(risks, criteria)
+            
+            # Add metadata about filtering
+            response.metadata["filter_criteria"] = {
+                "risk_levels": [level.value for level in criteria.risk_levels] if criteria.risk_levels else [],
+                "categories": criteria.categories or [],
+                "date_range": {
+                    "start": criteria.date_from.isoformat() if criteria.date_from else None,
+                    "end": criteria.date_to.isoformat() if criteria.date_to else None
+                } if criteria.date_from or criteria.date_to else None
+            }
+            response.metadata["filtered_count"] = len(filtered_risks)
+            
+            if len(filtered_risks) == 0:
+                response.add_warning("No risks match the filter criteria")
+            
+            return filtered_risks
+
+        except ValidationError as e:
+            response.add_error(f"Invalid filter criteria: {str(e)}")
+            return risks
+        except FilterError as e:
+            response.add_error(f"Filter operation failed: {str(e)}")
+            return risks
+        except Exception as e:
+            response.add_error(f"Unexpected error during filtering: {str(e)}")
+            return risks
+
+    def _format_risks(
+        self,
+        risks: List[RiskItem],
+        output_format: OutputFormat,
+        response: FeatureResponse
+    ) -> Union[str, Dict[str, Any]]:
+        """
+        Format risks as table using Risk Table Formatter layer.
+
+        Args:
+            risks: List of risk items to format
+            output_format: Desired output format
+            response: Feature response object to update
+
+        Returns:
+            Formatted output (string or dictionary depending on format)
+        """
+        try:
+            # Check cache if enabled
+            if self.formatter_cache and output_format in [OutputFormat.HTML, OutputFormat.MARKDOWN]:
+                cache_key = f"{len(risks)}_{output_format.value}_{hash(tuple(risks))}"
+                cached_result = self.formatter_cache.get(cache_key)
+                if cached_result:
+                    response.metadata["cache_hit"] = True
+                    return cached_result
+
+            # Format the risks
+            formatted_output = self.table_formatter.format_risks(risks, output_format)
+            
+            # Cache the result if applicable
+            if self.formatter_cache and output_format in [OutputFormat.HTML, OutputFormat.MARKDOWN]:
+                self.formatter_cache.set(cache_key, formatted_output)
+                response.metadata["cache_hit"] = False
+            
+            return formatted_output
+
+        except ValueError as e:
+            response.add_error(f"Invalid formatting parameters: {str(e)}")
+            return "" if output_format != OutputFormat.JSON else {}
+        except Exception as e:
+            response.add_error(f"Formatting failed: {str(e)}")
+            return "" if output_format != OutputFormat.JSON else {}
+
+    def aggregate_risks_by_level(self, file_path: Optional[str] = None) -> FeatureResponse:
+        """
+        Aggregate risks by risk level.
+
+        Args:
+            file_path: Path to the risk file. Uses config default if not provided.
+
+        Returns:
+            FeatureResponse with aggregation data
+        """
+        response = FeatureResponse(status=FeatureStatus.SUCCESS)
+        file_path = file_path or self.config.risk_file_path
+
+        if not file_path:
+            response.add_error("No risk file path provided")
+            return response
+
+        try:
+            # Read risks
+            risks = self._read_risks(file_path, response)
+            if not response.is_success():
+                return response
+
+            # Aggregate by level
+            aggregation = {}
+            for risk in risks:
+                level = risk.risk_level.value
+                if level not in aggregation:
+                    aggregation[level] = {"count": 0, "items": []}
+                aggregation[level]["count"] += 1
+                aggregation[level]["items"].append({
+                    "id": risk.id,
+                    "title": risk.title,
+                    "category": risk.category
+                })
+
+            response.data = aggregation
+            response.metadata["total_risks"] = len(risks)
+
+        except Exception as e:
+            logger.error(f"Failed to aggregate risks: {str(e)}")
+            response.add_error(f"Aggregation failed: {str(e)}")
+
+        return response
+
+    def generate_summary_report(
+        self,
+        file_path: Optional[str] = None,
+        include_details: bool = True
+    ) -> FeatureResponse:
+        """
+        Generate a comprehensive summary report of risks.
+
+        Args:
+            file_path: Path to the risk file. Uses config default if not provided.
+            include_details: Whether to include detailed risk information
+
+        Returns:
+            FeatureResponse with summary report data
+        """
+        response = FeatureResponse(status=FeatureStatus.SUCCESS)
+        file_path = file_path or self.config.risk_file_path
+
+        if not file_path:
+            response.add_error("No risk file path provided")
+            return response
+
+        try:
+            # Read all risks
+            risks = self._read_risks(file_path, response)
+            if not response.is_success():
+                return response
+
+            # Generate summary
+            summary = {
+                "total_risks": len(risks),
+                "by_level": {},
+                "by_category": {},
+                "high_priority_count": 0
+            }
+
+            # Count by level and category
+            for risk in risks:
+                # By level
+                level = risk.risk_level.value
+                summary["by_level"][level] = summary["by_level"].get(level, 0) + 1
+                
+                # By category
+                category = risk.category
+                summary["by_category"][category] = summary["by_category"].get(category, 0) + 1
+                
+                # High priority count
+                if risk.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
+                    summary["high_priority_count"] += 1
+
+            # Add details if requested
+            if include_details:
+                summary["risk_details"] = [
+                    {
+                        "id": risk.id,
+                        "title": risk.title,
+                        "level": risk.risk_level.value,
+                        "category": risk.category,
+                        "description": risk.description[:100] + "..." if len(risk.description) > 100 else risk.description
+                    }
+                    for risk in risks
+                ]
+
+            response.data = summary
+            response.metadata["report_generated_at"] = datetime.now().isoformat()
+
+        except Exception as e:
+            logger.error(f"Failed to generate summary report: {str(e)}")
+            response.add_error(f"Summary generation failed: {str(e)}")
+
+        return response
+
+    def validate_configuration(self) -> FeatureResponse:
+        """
+        Validate the current feature configuration.
+
+        Returns:
+            FeatureResponse with validation results
+        """
+        response = FeatureResponse(status=FeatureStatus.SUCCESS)
+        
+        try:
+            # Validate file path if provided
+            if self.config.risk_file_path:
+                if not Path(self.config.risk_file_path).exists():
+                    response.add_warning(f"Risk file does not exist: {self.config.risk_file_path}")
+            
+            # Validate cache TTL
+            if self.config.cache_ttl <= 0:
+                response.add_warning("Cache TTL should be positive")
+            
+            # Validate max risk items
+            if self.config.max_risk_items <= 0:
+                response.add_error("Max risk items must be positive")
+            
+            # Test layer connectivity
+            try:
+                test_criteria = RiskFilterCriteria(risk_levels=[RiskLevel.HIGH])
+                self.risk_filter.validate_criteria(test_criteria)
+            except Exception as e:
+                response.add_error(f"Risk filter validation failed: {str(e)}")
+            
+            response.data = {
+                "configuration_valid": response.is_success(),
+                "layers_initialized": all([
+                    hasattr(self, 'risk_reader'),
+                    hasattr(self, 'risk_filter'),
+                    hasattr(self, 'table_formatter')
+                ])
+            }
+            
+        except Exception as e:
+            logger.error(f"Configuration validation failed: {str(e)}")
+            response.add_error(f"Validation failed: {str(e)}")
+        
+        return response
+
+
+# Example usage function for testing
+def example_usage():
+    """Example usage of the Risk Aggregator feature"""
+    # Create configuration
+    config = FeatureConfig(
+        risk_file_path="/path/to/risks.json",
+        output_format=OutputFormat.HTML,
+        enable_caching=True
+    )
+    
+    # Initialize orchestrator
+    orchestrator = FeatureOrchestrator(config)
+    
+    # Process risk file with filtering
+    filter_criteria = RiskFilterCriteria(
+        risk_levels=[RiskLevel.HIGH, RiskLevel.CRITICAL],
+        categories=["Security", "Compliance"]
+    )
+    
+    response = orchestrator.process_risk_file(
+        filter_criteria=filter_criteria,
+        output_format=OutputFormat.MARKDOWN
+    )
+    
+    if response.is_success():
+        print(f"Success! Processed {response.metadata.get('total_risks', 0)} risks")
+        print(f"Formatted output:\n{response.data}")
+    else:
+        print(f"Errors: {response.errors}")
+        print(f"Warnings: {response.warnings}")

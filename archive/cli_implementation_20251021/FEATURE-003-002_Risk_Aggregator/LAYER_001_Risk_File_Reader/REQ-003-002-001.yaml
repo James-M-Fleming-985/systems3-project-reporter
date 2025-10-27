@@ -1,0 +1,271 @@
+# ================================================================================
+# LAYER REQUIREMENT: Risk File Reader
+# ================================================================================
+# REQUIREMENT ID: REQ-003-002-001
+# FEATURE: FEATURE-003-002 (Risk Aggregator)
+# LAYER: LAYER-003-002-001 (Risk_File_Reader)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-002-001"
+  requirement_title: "Risk File Reader"
+  layer: "001_Risk_File_Reader"
+  feature: "FEATURE-003-002_Risk_Aggregator"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Risk File Reader"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Risk File Reader"
+  
+  description: |
+    Read risks.yaml files from all project folders using FileReaderFactory. Scan professional_excellence/projects/ directory, identify risk files, parse content, return list of Risk models.
+  
+  rationale: |
+    Centralized risk file discovery and reading. Reuses LAYER-003-001-001 file reading infrastructure for consistency.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/risk_file_reader/risk_file_reader.py"
+    modules:
+      - "risk_file_reader.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "RiskFileScanner"
+      purpose: "Scan project folders for risk files"
+      methods:
+        - name: "scan_all_projects"
+          signature: "scan_all_projects() -> List[Path]"
+          purpose: "Implement scan_all_projects logic" 
+        - name: "read_risk_file"
+          signature: "read_risk_file(path: Path) -> List[Risk]"
+          purpose: "Implement read_risk_file logic" 
+
+  implementation_details:
+    libraries: ['pyyaml>=6.0']
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "Project folder paths" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "List of Risk objects from all projects" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_risk_file_reader.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_risk_file_reader_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Risk File Reader (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_risk_file_reader.py"
+      tests:
+        - "test_scan_all_projects_success"
+        - "test_scan_all_projects_failure" 
+        - "test_read_risk_file_success"
+        - "test_read_risk_file_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_risk_file_reader.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement RiskFileScanner class (GREEN phase)"
+      file: "src/risk_file_reader/risk_file_reader.py"
+      methods:
+        - "scan_all_projects() -> List[Path]" 
+        - "read_risk_file(path: Path) -> List[Risk]" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_risk_file_reader.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_risk_file_reader_integration.py"
+      duration: "15 min"
+  
+  total_time: "1.5 hours"
+  
+  deliverable: |
+    Risk File Reader implementation ready for integration with 
+    LAYER-003-002-002.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-002: Three-section report structure" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-001: File-based data persistence" 
+    - "SYS-REQ-004: Business Logic Layer" 
+  
+  implements_system_components:
+    - "COMP-004: Risk Aggregator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-002: Risk Aggregator"
+  
+  depends_on_layers:
+    - "LAYER-003-001-001" 
+  
+  consumed_by_layers:
+    - "LAYER-003-002-002" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-001-001"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "LAYER-003-002-002"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_risk_file_reader.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_risk_file_reader_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/risk_file_reader/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+    - package: "pyyaml"
+      version: "6.0"
+      purpose: "Risk File Reader implementation" 
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.risk_file_reader import RiskFileScanner
+    
+    instance = RiskFileScanner()
+    result = instance.scan_all_projects(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-002: Risk Aggregator
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

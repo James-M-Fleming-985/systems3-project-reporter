@@ -1,0 +1,290 @@
+# ================================================================================
+# LAYER REQUIREMENT: Terminal UI
+# ================================================================================
+# REQUIREMENT ID: REQ-003-005-001
+# FEATURE: FEATURE-003-005 (Change Management Logger)
+# LAYER: LAYER-003-005-001 (Terminal_UI)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-005-001"
+  requirement_title: "Terminal UI"
+  layer: "001_Terminal_UI"
+  feature: "FEATURE-003-005_Change_Management_Logger"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Terminal UI"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Terminal UI"
+  
+  description: |
+    Interactive terminal UI using Rich library. Display project and milestone lists in tables, prompt for milestone selection, collect new dates with validation, prompt for reason and contingency, confirm changes before saving.
+  
+  rationale: |
+    Rich library provides professional terminal UI with tables, colors, and prompts. User-friendly interface for non-technical users.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/terminal_ui/terminal_ui.py"
+    modules:
+      - "terminal_ui.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "ChangeManagementUI"
+      purpose: "Interactive terminal interface for schedule changes"
+      methods:
+        - name: "display_projects"
+          signature: "display_projects(projects: List[ProjectPlan]) -> None"
+          purpose: "Implement display_projects logic" 
+        - name: "select_milestone"
+          signature: "select_milestone(project: ProjectPlan) -> Milestone"
+          purpose: "Implement select_milestone logic" 
+        - name: "prompt_for_new_date"
+          signature: "prompt_for_new_date() -> date"
+          purpose: "Implement prompt_for_new_date logic" 
+        - name: "prompt_for_reason"
+          signature: "prompt_for_reason() -> str"
+          purpose: "Implement prompt_for_reason logic" 
+        - name: "confirm_change"
+          signature: "confirm_change(change: ChangeEntry) -> bool"
+          purpose: "Implement confirm_change logic" 
+
+  implementation_details:
+    libraries: ['rich>=13.0.0']
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "User keyboard input" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "ChangeEntry object with user inputs" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_terminal_ui.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_terminal_ui_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Terminal UI (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_terminal_ui.py"
+      tests:
+        - "test_display_projects_success"
+        - "test_display_projects_failure" 
+        - "test_select_milestone_success"
+        - "test_select_milestone_failure" 
+        - "test_prompt_for_new_date_success"
+        - "test_prompt_for_new_date_failure" 
+        - "test_prompt_for_reason_success"
+        - "test_prompt_for_reason_failure" 
+        - "test_confirm_change_success"
+        - "test_confirm_change_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_terminal_ui.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement ChangeManagementUI class (GREEN phase)"
+      file: "src/terminal_ui/terminal_ui.py"
+      methods:
+        - "display_projects(projects: List[ProjectPlan]) -> None" 
+        - "select_milestone(project: ProjectPlan) -> Milestone" 
+        - "prompt_for_new_date() -> date" 
+        - "prompt_for_reason() -> str" 
+        - "confirm_change(change: ChangeEntry) -> bool" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_terminal_ui.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_terminal_ui_integration.py"
+      duration: "15 min"
+  
+  total_time: "2.5 hours"
+  
+  deliverable: |
+    Terminal UI implementation ready for integration with 
+    LAYER-003-005-002.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-001: Automated PowerPoint report generation" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-001: File-based data persistence" 
+    - "SYS-REQ-003: On-demand execution" 
+    - "SYS-REQ-004: Presentation Layer" 
+  
+  implements_system_components:
+    - "COMP-007: Change Management UI" 
+  
+  maps_to_feature:
+    - "FEATURE-003-005: Change Management Logger"
+  
+  depends_on_layers:
+    - "LAYER-003-001-003" 
+  
+  consumed_by_layers:
+    - "LAYER-003-005-002" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-001-003"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "LAYER-003-005-002"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_terminal_ui.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_terminal_ui_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/terminal_ui/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+    - package: "rich"
+      version: "13.0.0"
+      purpose: "Terminal UI implementation" 
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.terminal_ui import ChangeManagementUI
+    
+    instance = ChangeManagementUI()
+    result = instance.display_projects(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-005: Change Management Logger
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

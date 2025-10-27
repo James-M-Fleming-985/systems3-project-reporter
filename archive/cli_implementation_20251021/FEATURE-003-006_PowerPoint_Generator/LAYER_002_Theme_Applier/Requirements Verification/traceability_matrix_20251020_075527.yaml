@@ -1,0 +1,205 @@
+matrix_metadata:
+  timestamp: '20251020_075527'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Processes valid input data without errors
+  description: Processes valid input data without errors
+  test_files: &id001
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Handles invalid input with appropriate error messages
+  description: Handles invalid input with appropriate error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Integrates correctly with dependent layers
+  description: Integrates correctly with dependent layers
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Performance meets requirements
+  description: Performance meets requirements
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py
+  lines: 444
+  methods:
+  - name: __init__
+    lines: 42-53
+  - name: apply_theme
+    lines: 54-90
+  - name: apply_custom_theme
+    lines: 91-118
+  - name: get_available_themes
+    lines: 119-139
+  - name: validate_theme
+    lines: 140-156
+  - name: _load_theme
+    lines: 157-197
+  - name: _get_default_theme
+    lines: 198-230
+  - name: _validate_theme_config
+    lines: 231-253
+  - name: _apply_slide_theme
+    lines: 254-270
+  - name: _apply_master_theme
+    lines: 271-287
+  - name: _apply_text_theme
+    lines: 288-314
+  - name: _set_slide_background
+    lines: 315-329
+  - name: _set_font_color
+    lines: 330-342
+  - name: _hex_to_rgb
+    lines: 343-363
+  - name: __init__
+    lines: 367-376
+  - name: save_theme
+    lines: 377-396
+  - name: load_theme
+    lines: 397-416
+  - name: delete_theme
+    lines: 417-432
+  - name: list_themes
+    lines: 433-443
+  classes:
+  - name: ThemeApplierError
+    type: class
+    lines: 24-28
+  - name: ThemeNotFoundError
+    type: class
+    lines: 29-33
+  - name: InvalidThemeError
+    type: class
+    lines: 34-38
+  - name: ThemeApplier
+    type: class
+    lines: 39-363
+  - name: ThemeManager
+    type: class
+    lines: 364-444
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  test_count: 0
+  implementation_files:
+  - projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py
+  methods_tested:
+  - __init__
+  - apply_theme
+  - apply_custom_theme
+  - get_available_themes
+  - validate_theme
+  - _load_theme
+  - _get_default_theme
+  - _validate_theme_config
+  - _apply_slide_theme
+  - _apply_master_theme
+  - _apply_text_theme
+  - _set_slide_background
+  - _set_font_color
+  - _hex_to_rgb
+  - __init__
+  - save_theme
+  - load_theme
+  - delete_theme
+  - list_themes
+  classes_tested:
+  - ThemeApplierError
+  - ThemeNotFoundError
+  - InvalidThemeError
+  - ThemeApplier
+  - ThemeManager
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py:42-53
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py:54-90
+  method_name: apply_theme
+  requirement: AC-001
+  test: test_apply_theme
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py:91-118
+  method_name: apply_custom_theme
+  requirement: AC-001
+  test: test_apply_custom_theme
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py:119-139
+  method_name: get_available_themes
+  requirement: AC-001
+  test: test_get_available_themes
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  verified: true
+- implementation_location: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/src/implementation.py:140-156
+  method_name: validate_theme
+  requirement: AC-001
+  test: test_validate_theme
+  test_file: projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-006_PowerPoint_Generator/LAYER-002
+    Theme Applier/tests/test_generated_20251020_075433.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

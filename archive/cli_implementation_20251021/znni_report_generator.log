@@ -1,0 +1,151 @@
+2025-10-20 15:14:14,048 - __main__ - INFO - Processing SYSTEM_REQUIREMENTS.yaml with output to output
+2025-10-20 15:14:14,049 - __main__ - INFO - Step 1: Reading and parsing data...
+2025-10-20 15:14:18,987 - __main__ - ERROR - Error during processing: FeatureConfig.__init__() got an unexpected keyword argument 'supported_formats'
+2025-10-20 15:14:18,987 - __main__ - ERROR - Failed to generate report: FeatureConfig.__init__() got an unexpected keyword argument 'supported_formats'
+2025-10-20 20:55:40,316 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:55:40,316 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:55:40,322 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:55:40,322 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:55:40,322 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:55:40,322 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:55:40,384 - matplotlib - DEBUG - matplotlib data path: /home/vscode/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2025-10-20 20:55:40,389 - matplotlib - DEBUG - CONFIGDIR=/home/vscode/.config/matplotlib
+2025-10-20 20:55:40,390 - matplotlib - DEBUG - interactive is False
+2025-10-20 20:55:40,390 - matplotlib - DEBUG - platform is linux
+2025-10-20 20:55:40,414 - matplotlib - DEBUG - CACHEDIR=/home/vscode/.cache/matplotlib
+2025-10-20 20:55:40,415 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/vscode/.cache/matplotlib/fontlist-v390.json
+2025-10-20 20:55:40,791 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:55:40,791 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:55:40,797 - ZnNiReportGenerator - ERROR - Failed to load feature milestone_tracker: module 'FEATURE-003-004_Milestone_Tracker.integration' has no attribute 'FeatureOrchestrator'
+2025-10-20 20:55:40,797 - main - ERROR - Fatal error: module 'FEATURE-003-004_Milestone_Tracker.integration' has no attribute 'FeatureOrchestrator'
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 338, in main
+    generator = ZnNiReportGenerator(config_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 37, in __init__
+    self._load_features()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 49, in _load_features
+    orchestrator = module.FeatureOrchestrator(feature_config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'FEATURE-003-004_Milestone_Tracker.integration' has no attribute 'FeatureOrchestrator'
+2025-10-20 20:56:28,236 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:56:28,236 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:56:28,242 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:56:28,242 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:56:28,242 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:56:28,242 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:56:28,688 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:56:28,688 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:56:28,694 - ZnNiReportGenerator - ERROR - Failed to load feature milestone_tracker: name 'MilestoneTracker' is not defined
+2025-10-20 20:56:28,694 - main - ERROR - Fatal error: name 'MilestoneTracker' is not defined
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 338, in main
+    generator = ZnNiReportGenerator(config_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 37, in __init__
+    self._load_features()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 43, in _load_features
+    module = self._load_feature_module(folder_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 64, in _load_feature_module
+    spec.loader.exec_module(module)
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-004_Milestone_Tracker/src/feature_integration.py", line 498, in <module>
+    def create_milestone_tracker(config: Optional[FeatureConfig] = None) -> MilestoneTracker:
+                                                                            ^^^^^^^^^^^^^^^^
+NameError: name 'MilestoneTracker' is not defined
+2025-10-20 20:56:51,931 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:56:51,931 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:56:51,937 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:56:51,937 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:56:51,937 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:56:51,937 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:56:52,366 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:56:52,366 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:56:52,372 - FEATURE-003-004_Milestone_Tracker.integration - INFO - Milestone Tracker initialized successfully
+2025-10-20 20:56:52,372 - ZnNiReportGenerator - INFO - Loaded feature: milestone_tracker
+2025-10-20 20:56:52,377 - FEATURE-003-005_Change_Management_Logger.integration - INFO - Feature orchestrator initialized successfully
+2025-10-20 20:56:52,377 - ZnNiReportGenerator - INFO - Loaded feature: change_logger
+2025-10-20 20:56:52,383 - FEATURE-003-006_PowerPoint_Generator.integration - INFO - FeatureOrchestrator initialized successfully
+2025-10-20 20:56:52,383 - ZnNiReportGenerator - INFO - Loaded feature: powerpoint
+2025-10-20 20:56:52,383 - ZnNiReportGenerator - INFO - Starting report generation for: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:56:52,392 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - Successfully read EXCEL file: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:56:52,392 - ZnNiReportGenerator - ERROR - Report generation failed: 'ResponseStatus' object has no attribute 'is_success'
+2025-10-20 20:56:52,392 - main - ERROR - Fatal error: 'ResponseStatus' object has no attribute 'is_success'
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 339, in main
+    generator.generate_report(args.input_file)
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 73, in generate_report
+    data = self._read_data(input_file)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 104, in _read_data
+    if not response.status.is_success():
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ResponseStatus' object has no attribute 'is_success'
+2025-10-20 20:58:58,260 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:58:58,260 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:58:58,265 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:58:58,266 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:58:58,266 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:58:58,266 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:58:58,710 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:58:58,711 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:58:58,714 - FEATURE-003-004_Milestone_Tracker.integration - INFO - Milestone Tracker initialized successfully
+2025-10-20 20:58:58,714 - ZnNiReportGenerator - INFO - Loaded feature: milestone_tracker
+2025-10-20 20:58:58,718 - FEATURE-003-005_Change_Management_Logger.integration - INFO - Feature orchestrator initialized successfully
+2025-10-20 20:58:58,718 - ZnNiReportGenerator - INFO - Loaded feature: change_logger
+2025-10-20 20:58:58,722 - FEATURE-003-006_PowerPoint_Generator.integration - INFO - FeatureOrchestrator initialized successfully
+2025-10-20 20:58:58,722 - ZnNiReportGenerator - INFO - Loaded feature: powerpoint
+2025-10-20 20:58:58,722 - ZnNiReportGenerator - INFO - Starting report generation for: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:58:58,731 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - Successfully read EXCEL file: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:58:58,731 - ZnNiReportGenerator - ERROR - Report generation failed: Failed to read data: success
+2025-10-20 20:58:58,732 - main - ERROR - Fatal error: Failed to read data: success
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 351, in main
+    generator.generate_report(args.input_file)
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 85, in generate_report
+    data = self._read_data(input_file)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 117, in _read_data
+    raise ValueError(f"Failed to read data: {response.status.value}")
+ValueError: Failed to read data: success
+2025-10-20 20:59:30,527 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - All layers initialized successfully
+2025-10-20 20:59:30,527 - ZnNiReportGenerator - INFO - Loaded feature: data_reader
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk File Reader initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Filter Logic initialized successfully
+2025-10-20 20:59:30,533 - FEATURE-003-002_Risk_Aggregator.integration - INFO - Risk Table Formatter initialized successfully
+2025-10-20 20:59:30,533 - ZnNiReportGenerator - INFO - Loaded feature: risk_aggregator
+2025-10-20 20:59:30,977 - FEATURE-003-003_Gantt_Chart_Generator.integration - INFO - All layers initialized successfully
+2025-10-20 20:59:30,977 - ZnNiReportGenerator - INFO - Loaded feature: gantt_chart
+2025-10-20 20:59:30,980 - FEATURE-003-004_Milestone_Tracker.integration - INFO - Milestone Tracker initialized successfully
+2025-10-20 20:59:30,980 - ZnNiReportGenerator - INFO - Loaded feature: milestone_tracker
+2025-10-20 20:59:30,984 - FEATURE-003-005_Change_Management_Logger.integration - INFO - Feature orchestrator initialized successfully
+2025-10-20 20:59:30,984 - ZnNiReportGenerator - INFO - Loaded feature: change_logger
+2025-10-20 20:59:30,989 - FEATURE-003-006_PowerPoint_Generator.integration - INFO - FeatureOrchestrator initialized successfully
+2025-10-20 20:59:30,989 - ZnNiReportGenerator - INFO - Loaded feature: powerpoint
+2025-10-20 20:59:30,989 - ZnNiReportGenerator - INFO - Starting report generation for: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:59:30,997 - FEATURE-003-001_Data_Reader_Parser.integration - INFO - Successfully read EXCEL file: mock_data/PROJECT-001_ZnNi_Line_Phase1/project_status.yaml
+2025-10-20 20:59:30,997 - ZnNiReportGenerator - ERROR - Report generation failed: Failed to read data: success
+2025-10-20 20:59:30,997 - main - ERROR - Fatal error: Failed to read data: success
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 351, in main
+    generator.generate_report(args.input_file)
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 85, in generate_report
+    data = self._read_data(input_file)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 117, in _read_data
+    raise ValueError(f"Failed to read data: {response.status.value}")
+ValueError: Failed to read data: success
+2025-10-20 21:20:24,393 - ZnNiReportGenerator - ERROR - Failed to load feature data_reader: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'
+2025-10-20 21:20:24,394 - main - ERROR - Fatal error: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 350, in main
+    generator = ZnNiReportGenerator(config_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 49, in __init__
+    self._load_features()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 60, in _load_features
+    feature_config = module.FeatureConfig(**feature_config_dict)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'

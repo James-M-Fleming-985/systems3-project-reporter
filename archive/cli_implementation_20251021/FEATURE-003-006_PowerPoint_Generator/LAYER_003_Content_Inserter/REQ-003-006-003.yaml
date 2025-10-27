@@ -1,0 +1,287 @@
+# ================================================================================
+# LAYER REQUIREMENT: Content Inserter
+# ================================================================================
+# REQUIREMENT ID: REQ-003-006-003
+# FEATURE: FEATURE-003-006 (PowerPoint Generator)
+# LAYER: LAYER-003-006-003 (Content_Inserter)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-006-003"
+  requirement_title: "Content Inserter"
+  layer: "003_Content_Inserter"
+  feature: "FEATURE-003-006_PowerPoint_Generator"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Content Inserter"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Content Inserter"
+  
+  description: |
+    Insert content into slide placeholders. Add Gantt chart images, populate milestone tables, insert risk tables, format change management entries. Handle text sizing, alignment, and overflow.
+  
+  rationale: |
+    Abstracts python-pptx API complexity. Provides simple methods for common content insertion operations.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/content_inserter/content_inserter.py"
+    modules:
+      - "content_inserter.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "ContentInserter"
+      purpose: "Insert various content types into slides"
+      methods:
+        - name: "insert_image"
+          signature: "insert_image(slide: Slide, image_path: Path, position: Position) -> None"
+          purpose: "Implement insert_image logic" 
+        - name: "insert_table"
+          signature: "insert_table(slide: Slide, table_data: TableData, position: Position) -> None"
+          purpose: "Implement insert_table logic" 
+        - name: "insert_text"
+          signature: "insert_text(slide: Slide, text: str, placeholder_id: int) -> None"
+          purpose: "Implement insert_text logic" 
+        - name: "format_table_cell"
+          signature: "format_table_cell(cell: Cell, color: str, bold: bool) -> None"
+          purpose: "Implement format_table_cell logic" 
+
+  implementation_details:
+    libraries: ['python-pptx>=0.6.21']
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "Slide objects, content data (images, tables, text)" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "Slides with content inserted" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_content_inserter.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_content_inserter_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Content Inserter (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_content_inserter.py"
+      tests:
+        - "test_insert_image_success"
+        - "test_insert_image_failure" 
+        - "test_insert_table_success"
+        - "test_insert_table_failure" 
+        - "test_insert_text_success"
+        - "test_insert_text_failure" 
+        - "test_format_table_cell_success"
+        - "test_format_table_cell_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_content_inserter.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement ContentInserter class (GREEN phase)"
+      file: "src/content_inserter/content_inserter.py"
+      methods:
+        - "insert_image(slide: Slide, image_path: Path, position: Position) -> None" 
+        - "insert_table(slide: Slide, table_data: TableData, position: Position) -> None" 
+        - "insert_text(slide: Slide, text: str, placeholder_id: int) -> None" 
+        - "format_table_cell(cell: Cell, color: str, bold: bool) -> None" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_content_inserter.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_content_inserter_integration.py"
+      duration: "15 min"
+  
+  total_time: "3.5 hours"
+  
+  deliverable: |
+    Content Inserter implementation ready for integration with 
+    LAYER-003-006-004.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-001: Automated PowerPoint report generation" 
+    - "PRJ-REQ-002: Three-section report structure" 
+    - "PRJ-REQ-005: Professional presentation with org branding" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-004: Presentation Layer" 
+    - "SYS-REQ-006: Factory Pattern for slide generation" 
+    - "SYS-REQ-007: Report generation < 10 seconds" 
+  
+  implements_system_components:
+    - "COMP-006: PowerPoint Builder" 
+    - "COMP-008: Report Orchestrator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-006: PowerPoint Generator"
+  
+  depends_on_layers:
+    - "LAYER-003-006-001" 
+  
+  consumed_by_layers:
+    - "LAYER-003-006-004" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    - layer: "LAYER-003-006-001"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  output_to:
+    - layer: "LAYER-003-006-004"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_content_inserter.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_content_inserter_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/content_inserter/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+    - package: "python-pptx"
+      version: "0.6.21"
+      purpose: "Content Inserter implementation" 
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.content_inserter import ContentInserter
+    
+    instance = ContentInserter()
+    result = instance.insert_image(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-006: PowerPoint Generator
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

@@ -1,0 +1,278 @@
+# ================================================================================
+# LAYER REQUIREMENT: Date Calculator
+# ================================================================================
+# REQUIREMENT ID: REQ-003-004-001
+# FEATURE: FEATURE-003-004 (Milestone Tracker)
+# LAYER: LAYER-003-004-001 (Date_Calculator)
+# VERSION: 1.0.0
+# STATUS: Active
+# ================================================================================
+
+metadata:
+  requirement_id: "REQ-003-004-001"
+  requirement_title: "Date Calculator"
+  layer: "001_Date_Calculator"
+  feature: "FEATURE-003-004_Milestone_Tracker"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-10-16"
+  updated_date: "2025-10-16"
+  owner: "James Fleming"
+  target_date: "2025-10-31"
+  change_log:
+    - version: "1.0.0"
+      date: "2025-10-16"
+      changes: "Initial version - Date Calculator"
+
+# ================================================================================
+# REQUIREMENT DEFINITION
+# ================================================================================
+
+requirement:
+  title: "Date Calculator"
+  
+  description: |
+    Calculate date ranges for milestone categorization. Determine 'this month' (current month start to end), 'next month', 'last month' date ranges. Handle edge cases (year boundaries, leap years).
+  
+  rationale: |
+    Centralized date logic prevents inconsistencies. Using Python datetime ensures correct handling of complex date scenarios.
+
+# ================================================================================
+# SPECIFICATION
+# ================================================================================
+
+specification:
+  structure:
+    entry_point: "src/date_calculator/date_calculator.py"
+    modules:
+      - "date_calculator.py"
+      - "models.py"
+      - "exceptions.py"
+  
+  classes:
+    - name: "DateCalculator"
+      purpose: "Calculate date ranges for milestone filtering"
+      methods:
+        - name: "get_this_month_range"
+          signature: "get_this_month_range() -> Tuple[date, date]"
+          purpose: "Implement get_this_month_range logic" 
+        - name: "get_next_month_range"
+          signature: "get_next_month_range() -> Tuple[date, date]"
+          purpose: "Implement get_next_month_range logic" 
+        - name: "get_last_month_range"
+          signature: "get_last_month_range() -> Tuple[date, date]"
+          purpose: "Implement get_last_month_range logic" 
+        - name: "is_date_in_range"
+          signature: "is_date_in_range(target: date, start: date, end: date) -> bool"
+          purpose: "Implement is_date_in_range logic" 
+
+  implementation_details:
+    libraries: []
+    patterns: ["Repository Pattern", "Factory Pattern"]
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Raise with clear error message"
+      - error_type: "DataError"
+        handling: "Log and raise custom exception"
+  
+  inputs:
+    - name: "input_data"
+      type: "Various"
+      description: "Current date (datetime.now())" 
+
+  outputs:
+    - name: "output_data"
+      type: "Various"
+      description: "Date ranges for milestone filtering" 
+
+# ================================================================================
+# ACCEPTANCE CRITERIA
+# ================================================================================
+
+acceptance_criteria:
+  - criterion: "Processes valid input data without errors"
+    test: "pytest tests/unit/test_date_calculator.py -v"
+  
+  - criterion: "Handles invalid input with appropriate error messages"
+    test: "Pass invalid data, verify exception with clear message"
+  
+  - criterion: "Integrates correctly with dependent layers"
+    test: "pytest tests/integration/test_date_calculator_integration.py -v"
+  
+  - criterion: "Performance meets requirements"
+    test: "Benchmark test with realistic data volume"
+
+# ================================================================================
+# TDD IMPLEMENTATION PLAN
+# ================================================================================
+
+week_1_task:
+  title: "Build Date Calculator (TDD Approach)"
+  
+  steps:
+    - step: 1
+      action: "Write failing unit tests (RED phase)"
+      file: "tests/unit/test_date_calculator.py"
+      tests:
+        - "test_get_this_month_range_success"
+        - "test_get_this_month_range_failure" 
+        - "test_get_next_month_range_success"
+        - "test_get_next_month_range_failure" 
+        - "test_get_last_month_range_success"
+        - "test_get_last_month_range_failure" 
+        - "test_is_date_in_range_success"
+        - "test_is_date_in_range_failure" 
+      duration: "30 min"
+    
+    - step: 2
+      action: "Run pytest to confirm RED phase"
+      command: "pytest tests/unit/test_date_calculator.py -v"
+      expected: "All tests FAIL (as expected)"
+      duration: "2 min"
+    
+    - step: 3
+      action: "Implement DateCalculator class (GREEN phase)"
+      file: "src/date_calculator/date_calculator.py"
+      methods:
+        - "get_this_month_range() -> Tuple[date, date]" 
+        - "get_next_month_range() -> Tuple[date, date]" 
+        - "get_last_month_range() -> Tuple[date, date]" 
+        - "is_date_in_range(target: date, start: date, end: date) -> bool" 
+      duration: "45 min"
+    
+    - step: 4
+      action: "Run pytest to confirm GREEN phase"
+      command: "pytest tests/unit/test_date_calculator.py -v"
+      expected: "All tests PASS"
+      duration: "5 min"
+    
+    - step: 5
+      action: "Refactor for code quality (REFACTOR phase)"
+      improvements:
+        - "Add comprehensive docstrings"
+        - "Extract common logic to helper methods"
+        - "Add type hints to all methods"
+      duration: "20 min"
+    
+    - step: 6
+      action: "Integration test with dependent layers"
+      file: "tests/integration/test_date_calculator_integration.py"
+      duration: "15 min"
+  
+  total_time: "1.5 hours"
+  
+  deliverable: |
+    Date Calculator implementation ready for integration with 
+    LAYER-003-004-002.
+
+# ================================================================================
+# TRACEABILITY
+# ================================================================================
+
+traceability:
+  implements_project_requirements:
+    - "PRJ-REQ-002: Three-section report structure" 
+  
+  implements_system_requirements:
+    - "SYS-REQ-004: Business Logic Layer" 
+    - "SYS-REQ-007: Report generation < 10 seconds" 
+  
+  implements_system_components:
+    - "COMP-003: Milestone Calculator" 
+  
+  maps_to_feature:
+    - "FEATURE-003-004: Milestone Tracker"
+  
+  depends_on_layers:
+    []  # Foundation layer or independent 
+  
+  consumed_by_layers:
+    - "LAYER-003-004-002" 
+
+# ================================================================================
+# INTEGRATION POINTS
+# ================================================================================
+
+integration:
+  input_from:
+    []  # Foundation layer, reads from filesystem 
+  
+  output_to:
+    - layer: "LAYER-003-004-002"
+      data_type: "Various"
+      interface: "Method calls" 
+  
+  shared_dependencies:
+    - "src/models/ - Shared data models"
+    - "src/exceptions/ - Shared exceptions"
+
+# ================================================================================
+# TESTING STRATEGY
+# ================================================================================
+
+testing_strategy:
+  unit_tests:
+    location: "tests/unit/test_date_calculator.py"
+    coverage_target: "90%"
+    key_scenarios:
+      - "Valid input processing"
+      - "Invalid input error handling"
+      - "Edge cases and boundary conditions"
+  
+  integration_tests:
+    location: "tests/integration/test_date_calculator_integration.py"
+    scenarios:
+      - "Integration with dependent layers"
+      - "End-to-end data flow"
+  
+  fixtures:
+    location: "tests/fixtures/date_calculator/"
+    files:
+      - "sample_valid_data.yaml"
+      - "sample_invalid_data.yaml"
+      - "edge_case_data.yaml"
+
+# ================================================================================
+# DEPLOYMENT NOTES
+# ================================================================================
+
+deployment:
+  dependencies:
+  
+  configuration:
+    - setting: "config_key"
+      value: "default_value"
+      location: "config/settings.yaml"
+  
+  usage_example: |
+    # Example of how to use this layer
+    from src.date_calculator import DateCalculator
+    
+    instance = DateCalculator()
+    result = instance.get_this_month_range(data)
+    print(result)
+
+# ================================================================================
+# NOTES
+# ================================================================================
+
+notes: |
+  IMPORTANT CONSIDERATIONS:
+  - This layer is part of FEATURE-003-004: Milestone Tracker
+  - Proper error handling is critical for downstream layers
+  - Performance should be monitored with realistic data volumes
+  
+  DESIGN DECISIONS:
+  - Chosen architecture supports extensibility
+  - Error messages include actionable context
+  - Separates data transformation from business logic
+  
+  FUTURE ENHANCEMENTS:
+  - Consider async processing for performance
+  - Add caching for frequently accessed data
+  - Implement monitoring and metrics
+
+# ================================================================================
+# END OF LAYER REQUIREMENT
+# ================================================================================

@@ -1,0 +1,32 @@
+feature_id: FEATURE-003-006
+feature_name: PowerPoint Generator
+verification_timestamp: '20251020_204045'
+total_layers: 4
+layers_completed: 4
+feature_level_tests:
+  integration_tests: REQUIRED
+  e2e_tests: REQUIRED
+  status: PENDING_EXECUTION
+layer_summary:
+- layer_id: LAYER-001
+  layer_name: Slide Factory
+  implementation: LAYER_001_Slide_Factory/src/implementation.py
+  tests: 2
+  status: COMPLETED
+- layer_id: LAYER-002
+  layer_name: Theme Applier
+  implementation: LAYER_002_Theme_Applier/src/implementation.py
+  tests: 2
+  status: COMPLETED
+- layer_id: LAYER-003
+  layer_name: Content Inserter
+  implementation: LAYER_003_Content_Inserter/src/implementation.py
+  tests: 2
+  status: COMPLETED
+- layer_id: LAYER-004
+  layer_name: Report Assembler
+  implementation: LAYER_004_Report_Assembler/src/implementation.py
+  tests: 2
+  status: COMPLETED
+acceptance_criteria: []
+acceptance_status: PENDING_FEATURE_TESTS

@@ -1,0 +1,12 @@
+2025-10-20 21:20:24,393 - ZnNiReportGenerator - ERROR - Failed to load feature data_reader: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'
+2025-10-20 21:20:24,394 - main - ERROR - Fatal error: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'
+Traceback (most recent call last):
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 350, in main
+    generator = ZnNiReportGenerator(config_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 49, in __init__
+    self._load_features()
+  File "/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation/generate_report.py", line 60, in _load_features
+    feature_config = module.FeatureConfig(**feature_config_dict)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: FeatureConfig.__init__() got an unexpected keyword argument 'schema_path'

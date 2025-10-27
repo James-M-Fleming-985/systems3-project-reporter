@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload MS Project XML - Systems³ Project Reporter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Upload MS Project XML</h1>
+                <p class="text-gray-600 mt-2">Upload weekly project updates and track changes</p>
+            </div>
+            <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Upload XML File</h2>
+            
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-4 cursor-pointer hover:border-blue-500 transition-colors">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="mt-4 text-lg text-gray-600">Drag and drop your MS Project XML file here</p>
+                <p class="text-sm text-gray-500 mt-2">or click to browse</p>
+                <input type="file" id="fileInput" accept=".xml" class="hidden">
+            </div>
+            
+            <div id="fileInfo" class="hidden bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                <p class="text-sm text-blue-800"><strong>Selected file:</strong> <span id="fileName"></span></p>
+                <p class="text-sm text-blue-600 mt-1" id="fileSize"></p>
+            </div>
+            
+            <button id="uploadBtn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled>
+                Upload and Detect Changes
+            </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progress" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-700">Processing XML file...</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden">
+            <!-- Project Info -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">Project Information</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Project Name</p>
+                        <p class="font-semibold" id="projectName"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Project Code</p>
+                        <p class="font-semibold" id="projectCode"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Milestones</p>
+                        <p class="font-semibold" id="milestoneCount"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Status</p>
+                        <p class="font-semibold" id="projectStatus"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Changes Detected -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">Detected Changes</h3>
+                <div id="noChanges" class="hidden text-center py-8">
+                    <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="mt-4 text-gray-600">No changes detected from previous upload</p>
+                </div>
+                
+                <div id="changesTable" class="hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Milestone</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Old Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">New Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody id="changesBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+                <button id="confirmBtn" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                    Save Changes
+                </button>
+                <button id="cancelBtn" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let uploadedData = null;
+        let changesData = [];
+
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInfo = document.getElementById('fileInfo');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-500');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.xml')) {
+                handleFileSelect(files[0]);
+            } else {
+                alert('Please select a valid XML file');
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+            fileInfo.classList.remove('hidden');
+            uploadBtn.disabled = false;
+        }
+
+        // Upload functionality
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // Show progress
+            document.getElementById('progress').classList.remove('hidden');
+            uploadBtn.disabled = true;
+
+            try {
+                const response = await fetch('/upload/xml', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    uploadedData = data;
+                    changesData = data.detected_changes || [];
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            } finally {
+                document.getElementById('progress').classList.add('hidden');
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            // Show results section
+            document.getElementById('results').classList.remove('hidden');
+
+            // Populate project info
+            document.getElementById('projectName').textContent = data.project_name;
+            document.getElementById('projectCode').textContent = data.project_code;
+            document.getElementById('milestoneCount').textContent = data.milestone_count;
+            document.getElementById('projectStatus').textContent = data.is_new ? 'NEW PROJECT' : 'UPDATE';
+
+            // Show changes
+            const changesBody = document.getElementById('changesBody');
+            changesBody.innerHTML = '';
+
+            if (data.detected_changes.length === 0) {
+                document.getElementById('noChanges').classList.remove('hidden');
+                document.getElementById('changesTable').classList.add('hidden');
+            } else {
+                document.getElementById('noChanges').classList.add('hidden');
+                document.getElementById('changesTable').classList.remove('hidden');
+
+                data.detected_changes.forEach((change, index) => {
+                    const row = document.createElement('tr');
+                    row.className = change.type === 'DELAY' ? 'bg-red-50' : 'bg-green-50';
+                    
+                    const badge = change.type === 'DELAY' 
+                        ? `<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">${change.days_diff} days delayed</span>`
+                        : `<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">${Math.abs(change.days_diff)} days earlier</span>`;
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-sm">${change.milestone_name}</td>
+                        <td class="px-4 py-3 text-sm">${change.old_date}</td>
+                        <td class="px-4 py-3 text-sm">${change.new_date}</td>
+                        <td class="px-4 py-3 text-sm">${badge}</td>
+                        <td class="px-4 py-3">
+                            <input type="text" 
+                                   data-index="${index}"
+                                   class="reason-input w-full border border-gray-300 rounded px-2 py-1 text-sm" 
+                                   placeholder="Enter reason for change"
+                                   value="${change.existing_reason || ''}">
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="text" 
+                                   data-index="${index}"
+                                   class="impact-input w-full border border-gray-300 rounded px-2 py-1 text-sm" 
+                                   placeholder="Impact description"
+                                   value="${change.existing_impact || change.suggested_impact}">
+                        </td>
+                    `;
+                    changesBody.appendChild(row);
+                });
+
+                // Add event listeners for inline editing
+                document.querySelectorAll('.reason-input, .impact-input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const index = parseInt(e.target.dataset.index);
+                        const isReason = e.target.classList.contains('reason-input');
+                        
+                        if (isReason) {
+                            changesData[index].reason = e.target.value;
+                        } else {
+                            changesData[index].impact = e.target.value;
+                        }
+                    });
+                });
+            }
+        }
+
+        // Save changes
+        document.getElementById('confirmBtn').addEventListener('click', async () => {
+            // Validate that all changes have reasons
+            const missingReasons = changesData.filter(c => !c.reason || c.reason.trim() === '');
+            if (missingReasons.length > 0) {
+                alert('Please provide a reason for all changes before saving');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('project_code', uploadedData.project_code);
+            formData.append('upload_path', uploadedData.upload_path);
+            formData.append('changes_json', JSON.stringify(changesData));
+
+            try {
+                const response = await fetch('/upload/confirm', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Project updated successfully!');
+                    window.location.href = '/';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Save failed: ' + error.message);
+            }
+        });
+
+        // Cancel
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>
