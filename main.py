@@ -76,8 +76,9 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    """Root endpoint - simple health check"""
-    return {"status": "ok", "app": "Systems³ Project Reporter", "version": "2.0.0"}
+    """Root endpoint - redirect to dashboard"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/health")
@@ -93,9 +94,12 @@ async def health_check():
 from routers import dashboard, upload, export
 
 # Include routers
-app.include_router(dashboard.router)
-app.include_router(upload.router)
-app.include_router(export.router)
+# Dashboard router has: /, /gantt, /milestones, /risks, /changes
+app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+# Upload router has: /upload, /upload/xml, /upload/confirm, /changes/{project_code}/update
+app.include_router(upload.router, tags=["upload"])
+# Export router has: /export/powerpoint
+app.include_router(export.router, tags=["export"])
 
 
 if __name__ == "__main__":
