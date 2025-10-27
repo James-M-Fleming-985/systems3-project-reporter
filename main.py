@@ -33,6 +33,14 @@ logger.info(f"Static directory: {STATIC_DIR}")
 logger.info(f"Templates directory: {TEMPLATES_DIR}")
 logger.info(f"Mock data directory: {MOCK_DATA_DIR}")
 
+# Ensure required directories exist
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+(STATIC_DIR / "css").mkdir(exist_ok=True)
+(STATIC_DIR / "js").mkdir(exist_ok=True)
+(STATIC_DIR / "images").mkdir(exist_ok=True)
+TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+MOCK_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
