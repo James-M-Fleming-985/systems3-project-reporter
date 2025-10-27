@@ -3,6 +3,7 @@ Upload Router - Handles XML file uploads and change management
 """
 from fastapi import APIRouter, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import yaml
 from datetime import datetime
@@ -18,18 +19,18 @@ router = APIRouter(tags=["upload"])
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "mock_data"
 UPLOAD_DIR = BASE_DIR / "uploads"
+TEMPLATES_DIR = BASE_DIR / "templates"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 project_repo = ProjectRepository(data_dir=DATA_DIR)
 xml_parser = MSProjectXMLParser()
 change_detector = ChangeDetectionService()
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
     """Upload page for XML files"""
-    from main import templates
-    
     # Get existing projects
     projects = project_repo.load_all_projects()
     
