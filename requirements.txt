@@ -1,4 +1,4 @@
-# ZnNi Report Generator - Web Application Dependencies
+# Systems³ Project Reporter - Web Application Dependencies
 
 # FastAPI Framework
 fastapi==0.104.1
@@ -10,10 +10,9 @@ python-multipart==0.0.6
 pydantic>=2.0.0
 pyyaml>=6.0
 
-# PowerPoint Export (Phase 2)
+# PowerPoint Export
 python-pptx>=0.6.21
-playwright==1.40.0
 
-# Development & Testing
+# Development & Testing (optional)
 pytest>=7.4.3
 httpx>=0.25.2
