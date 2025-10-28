@@ -45,8 +45,24 @@ class ChartFormatterService:
                     finish_dt = start_dt + timedelta(days=14)
                     finish_date = finish_dt.strftime('%Y-%m-%d')
                 
-                # Use Level 3 parent project for roadmap grouping, fallback to main project name
-                resource_name = milestone.parent_project if milestone.parent_project else project.project_name
+                # Extract project grouping from milestone name (simple approach)
+                # Look for common patterns like "ZnNi Line XXX" or "SF XXX"
+                milestone_name = milestone.name
+                if milestone.parent_project:
+                    resource_name = milestone.parent_project
+                elif "ZnNi Line" in milestone_name:
+                    # Extract ZnNi Line project type
+                    parts = milestone_name.split()
+                    if len(parts) >= 3:
+                        resource_name = f"ZnNi Line {parts[2]}"
+                    else:
+                        resource_name = "ZnNi Line Projects"
+                elif "SF " in milestone_name or "Surface Finish" in milestone_name:
+                    resource_name = "Surface Finish Projects"
+                elif "ICP Analysis" in milestone_name:
+                    resource_name = "ICP Analysis Projects"  
+                else:
+                    resource_name = project.project_name
                 
                 tasks.append({
                     'Task': milestone.name,
