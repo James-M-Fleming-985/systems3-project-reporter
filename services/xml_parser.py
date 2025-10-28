@@ -17,6 +17,12 @@ class MSProjectXMLParser:
         self.namespace = {
             'ms': 'http://schemas.microsoft.com/project'
         }
+        # Common namespace patterns for MS Project XML
+        self.ns_patterns = [
+            '',  # No namespace
+            '{http://schemas.microsoft.com/project}',  # Default MS Project namespace
+            'ms:'  # Prefixed namespace
+        ]
     
     def parse_file(self, xml_path: Path) -> Project:
         """Parse MS Project XML file and return Project object"""
@@ -55,8 +61,9 @@ class MSProjectXMLParser:
         """Extract project-level information"""
         data = {}
         
-        # Project name (required)
-        name_elem = root.find('.//Name') or root.find('.//Title')
+        # Project name (required) - try multiple fields
+        name_elem = (self._find_element(root, 'Title') or 
+                    self._find_element(root, 'Name'))
         data['project_name'] = (
             name_elem.text if name_elem is not None 
             else "Untitled Project"
@@ -114,7 +121,20 @@ class MSProjectXMLParser:
         - Milestone detection: Milestone flag=1 OR Duration=0
         """
         milestones = []
-        tasks = root.findall('.//Task')
+        
+        # Try different namespace patterns to find tasks
+        tasks = []
+        for ns in self.ns_patterns:
+            task_xpath = f'.//{ns}Task' if ns else './/Task'
+            found_tasks = root.findall(task_xpath)
+            if found_tasks:
+                tasks = found_tasks
+                break
+        
+        if not tasks:
+            # Try with explicit namespace
+            ns_xpath = './/{http://schemas.microsoft.com/project}Task'
+            tasks = root.findall(ns_xpath)
         
         for task in tasks:
             # Skip summary tasks (these are projects/phases)
@@ -136,7 +156,7 @@ class MSProjectXMLParser:
             
             # Check if this is a milestone
             # Method 1: MS Project Milestone flag
-            is_milestone_flag = task.find('Milestone')
+            is_milestone_flag = self._find_element(task, 'Milestone')
             is_milestone = (
                 is_milestone_flag is not None
                 and is_milestone_flag.text == '1'
@@ -144,7 +164,7 @@ class MSProjectXMLParser:
             
             # Method 2: Duration = 0 (milestone convention)
             if not is_milestone:
-                duration_elem = task.find('Duration')
+                duration_elem = self._find_element(task, 'Duration')
                 if duration_elem is not None:
                     duration_text = duration_elem.text
                     # Duration format: PT0H0M0S or similar
@@ -160,13 +180,13 @@ class MSProjectXMLParser:
             milestone_data = {}
             
             # Name (required)
-            name_elem = task.find('Name')
+            name_elem = self._find_element(task, 'Name')
             if name_elem is None or not name_elem.text:
                 continue
             milestone_data['name'] = name_elem.text
             
             # Target date
-            finish_elem = task.find('Finish')
+            finish_elem = self._find_element(task, 'Finish')
             if finish_elem is not None:
                 milestone_data['target_date'] = self._parse_date(
                     finish_elem.text
@@ -175,7 +195,7 @@ class MSProjectXMLParser:
                 continue  # Skip if no target date
             
             # Status based on percent complete
-            percent_elem = task.find('PercentComplete')
+            percent_elem = self._find_element(task, 'PercentComplete')
             percent = 0
             if percent_elem is not None:
                 percent = int(float(percent_elem.text) * 100)
@@ -293,7 +313,19 @@ class MSProjectXMLParser:
         # If all fails, return today
         return datetime.now().strftime('%Y-%m-%d')
     
+    def _find_element(self, parent: ET.Element, tag: str) -> ET.Element:
+        """Find element with namespace support"""
+        # Try without namespace first
+        elem = parent.find(tag)
+        if elem is not None:
+            return elem
+        
+        # Try with MS Project namespace
+        ns_tag = f'{{http://schemas.microsoft.com/project}}{tag}'
+        elem = parent.find(ns_tag)
+        return elem
+
     def _get_text(self, elem: ET.Element, tag: str, default: str = '') -> str:
-        """Safely get text from XML element"""
-        child = elem.find(tag)
+        """Safely get text from XML element with namespace support"""
+        child = self._find_element(elem, tag)
         return child.text if child is not None and child.text else default
