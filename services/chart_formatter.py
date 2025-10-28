@@ -45,11 +45,14 @@ class ChartFormatterService:
                     finish_dt = start_dt + timedelta(days=14)
                     finish_date = finish_dt.strftime('%Y-%m-%d')
                 
+                # Use Level 3 parent project for roadmap grouping, fallback to main project name
+                resource_name = milestone.parent_project if milestone.parent_project else project.project_name
+                
                 tasks.append({
                     'Task': milestone.name,
                     'Start': start_date,
                     'Finish': finish_date,
-                    'Resource': project.project_name,
+                    'Resource': resource_name,
                     'Status': milestone.status
                 })
         

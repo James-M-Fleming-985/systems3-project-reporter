@@ -205,42 +205,40 @@ function createDetailViewTraces() {
 function createRoadmapViewTraces() {
     const traces = [];
     
-    Object.keys(projectData).forEach(projectName => {
-        if (!enabledProjects.has(projectName)) return;
-        
-        const projectTasks = projectData[projectName];
-        const color = projectColors[projectName] || '#6b7280';
-        
-        projectTasks.forEach(task => {
-            traces.push({
-                x: [parseDate(task.Start), parseDate(task.Finish)],
-                y: [projectName],  // Group by project name instead of milestone
-                type: 'bar',
-                orientation: 'h',
-                marker: {
-                    color: color,
-                    opacity: task.Status === 'COMPLETED' ? 1.0 : 
-                            task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
-                    line: {
-                        color: 'rgba(0,0,0,0.3)',
-                        width: 1
-                    }
-                },
-                name: task.Task,
-                text: task.Task,
-                customdata: [[projectName, task.Task, task.Status]],
-                hovertemplate: '<b>%{customdata[1]}</b><br>' +
-                              'Project: %{customdata[0]}<br>' +
-                              'Status: %{customdata[2]}<br>' +
-                              'Start: %{x[0]|%Y-%m-%d}<br>' +
-                              'End: %{x[1]|%Y-%m-%d}' +
-                              '<extra></extra>',
-                showlegend: false
+        Object.keys(projectData).forEach(level3Project => {
+            if (!enabledProjects.has(level3Project)) return;
+            
+            const projectTasks = projectData[level3Project];
+            const color = projectColors[level3Project] || '#6b7280';
+            
+            projectTasks.forEach(task => {
+                traces.push({
+                    x: [parseDate(task.Start), parseDate(task.Finish)],
+                    y: [level3Project],  // Group by Level 3 project name
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: color,
+                        opacity: task.Status === 'COMPLETED' ? 1.0 : 
+                                task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
+                        line: {
+                            color: 'rgba(0,0,0,0.3)',
+                            width: 1
+                        }
+                    },
+                    name: task.Task,
+                    text: task.Task,
+                    customdata: [[level3Project, task.Task, task.Status]],
+                    hovertemplate: '<b>%{customdata[1]}</b><br>' +
+                                  'Project: %{customdata[0]}<br>' +
+                                  'Status: %{customdata[2]}<br>' +
+                                  'Start: %{x[0]|%Y-%m-%d}<br>' +
+                                  'End: %{x[1]|%Y-%m-%d}' +
+                                  '<extra></extra>',
+                    showlegend: false
+                });
             });
-        });
-    });
-    
-    return traces;
+        });    return traces;
 }
 
 // Function to get layout configuration

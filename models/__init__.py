@@ -14,6 +14,7 @@ class Milestone(BaseModel):
     completion_date: Optional[str] = None
     completion_percentage: Optional[int] = None
     notes: Optional[str] = None
+    parent_project: Optional[str] = None  # Level 3 project name for roadmap grouping
 
 
 class Risk(BaseModel):

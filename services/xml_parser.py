@@ -46,6 +46,26 @@ class MSProjectXMLParser:
         
         return Project(**project_data)
     
+    def extract_level3_projects(self, xml_path: Path) -> Dict[str, str]:
+        """Extract Level 3 project names mapped to their UIDs for roadmap grouping"""
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        
+        level3_projects = {}
+        tasks = root.findall('.//{http://schemas.microsoft.com/project}Task')
+        
+        for task in tasks:
+            outline_elem = self._find_element(task, 'OutlineLevel')
+            name_elem = self._find_element(task, 'Name')
+            uid_elem = self._find_element(task, 'UID')
+            
+            if outline_elem and name_elem and uid_elem:
+                level = int(outline_elem.text) if outline_elem.text else 0
+                if level == 3:  # Level 3 = Project level
+                    level3_projects[uid_elem.text] = name_elem.text
+        
+        return level3_projects
+    
     def parse_string(self, xml_content: str) -> Project:
         """Parse MS Project XML from string"""
         root = ET.fromstring(xml_content)
@@ -122,6 +142,9 @@ class MSProjectXMLParser:
         """
         milestones = []
         
+        # First, build a map of Level 3 projects for roadmap grouping
+        level3_projects = {}
+        
         # Try different namespace patterns to find tasks
         tasks = []
         for ns in self.ns_patterns:
@@ -135,6 +158,39 @@ class MSProjectXMLParser:
             # Try with explicit namespace
             ns_xpath = './/{http://schemas.microsoft.com/project}Task'
             tasks = root.findall(ns_xpath)
+            
+        # Build complete task hierarchy for parent-child relationships
+        task_hierarchy = {}  # uid -> {'name', 'level', 'parent_uid'}
+        
+        for task in tasks:
+            outline_level_elem = self._find_element(task, 'OutlineLevel')
+            name_elem = self._find_element(task, 'Name')
+            uid_elem = self._find_element(task, 'UID')
+            
+            if outline_level_elem and name_elem and uid_elem:
+                level = int(outline_level_elem.text) if outline_level_elem.text else 999
+                task_hierarchy[uid_elem.text] = {
+                    'name': name_elem.text,
+                    'level': level,
+                    'uid': uid_elem.text
+                }
+                
+                if level == 3:
+                    level3_projects[uid_elem.text] = name_elem.text
+        
+        # Build parent relationships by finding the nearest higher-level task before each task
+        task_list = list(task_hierarchy.values())
+        for i, task_info in enumerate(task_list):
+            if task_info['level'] > 3:  # Only for tasks below Level 3
+                # Look backwards for the Level 3 parent
+                for j in range(i-1, -1, -1):
+                    parent_candidate = task_list[j]
+                    if parent_candidate['level'] == 3:
+                        task_info['parent_level3'] = parent_candidate['name']
+                        break
+                    elif parent_candidate['level'] < task_info['level']:
+                        # Found a higher level, but keep looking for Level 3
+                        continue
         
         for task in tasks:
             # Skip summary tasks (these are projects/phases)
@@ -143,10 +199,10 @@ class MSProjectXMLParser:
                 continue
             
             # Get outline level
-            outline_level_elem = task.find('OutlineLevel')
+            outline_level_elem = self._find_element(task, 'OutlineLevel')
             outline_level = (
                 int(outline_level_elem.text)
-                if outline_level_elem is not None
+                if outline_level_elem is not None and outline_level_elem.text
                 else 999
             )
             
@@ -205,7 +261,7 @@ class MSProjectXMLParser:
             if percent == 100:
                 milestone_data['status'] = 'COMPLETED'
                 # Check for actual finish date
-                actual_finish = task.find('ActualFinish')
+                actual_finish = self._find_element(task, 'ActualFinish')
                 if actual_finish is not None:
                     milestone_data['completion_date'] = self._parse_date(
                         actual_finish.text
@@ -215,8 +271,18 @@ class MSProjectXMLParser:
             else:
                 milestone_data['status'] = 'NOT_STARTED'
             
+            # Find parent Level 3 project using the hierarchy
+            current_task_uid = self._find_element(task, 'UID')
+            parent_project = None
+            
+            if current_task_uid and current_task_uid.text in task_hierarchy:
+                task_info = task_hierarchy[current_task_uid.text]
+                parent_project = task_info.get('parent_level3')
+            
+            milestone_data['parent_project'] = parent_project
+            
             # Notes
-            notes_elem = task.find('Notes')
+            notes_elem = self._find_element(task, 'Notes')
             if notes_elem is not None and notes_elem.text:
                 milestone_data['notes'] = notes_elem.text
             
