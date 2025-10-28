@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -78,6 +79,13 @@ async def startup_event():
 async def root(request: Request):
     """Landing page with hero section"""
     return templates.TemplateResponse("landing.html", {"request": request})
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon.ico from static directory"""
+    favicon_path = STATIC_DIR / "favicon.ico"
+    return FileResponse(favicon_path)
 
 
 @app.get("/health")
