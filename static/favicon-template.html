@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+<canvas id="canvas" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Create gradient
+const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+gradient.addColorStop(0, '#667eea');
+gradient.addColorStop(1, '#764ba2');
+
+// Draw rounded rectangle
+const radius = 100;
+ctx.fillStyle = gradient;
+ctx.beginPath();
+ctx.moveTo(radius, 0);
+ctx.lineTo(512 - radius, 0);
+ctx.quadraticCurveTo(512, 0, 512, radius);
+ctx.lineTo(512, 512 - radius);
+ctx.quadraticCurveTo(512, 512, 512 - radius, 512);
+ctx.lineTo(radius, 512);
+ctx.quadraticCurveTo(0, 512, 0, 512 - radius);
+ctx.lineTo(0, radius);
+ctx.quadraticCurveTo(0, 0, radius, 0);
+ctx.closePath();
+ctx.fill();
+
+// Draw S³ text
+ctx.fillStyle = 'white';
+ctx.font = 'bold 280px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('S³', 256, 276);
+
+// Export to PNG
+const dataUrl = canvas.toDataURL('image/png');
+console.log('PNG created - copy the data URL and save as favicon.png');
+</script>
+</body>
+</html>
