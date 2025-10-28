@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Management - ZnNi Report Generator{% endblock %}
+
+{% block extra_head %}
+<style>
+.usage-bar {
+    background: #e5e7eb;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.usage-fill {
+    height: 1rem;
+    transition: width 0.3s ease;
+    border-radius: 0.5rem;
+}
+.tier-card {
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.tier-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.tier-card.current {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+.tier-card.recommended {
+    border-color: #10b981;
+    position: relative;
+}
+.recommended-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">💳 Subscription Management</h2>
+    <p class="text-gray-600">Manage your project upload limits and subscription tier</p>
+</div>
+
+<!-- Current Usage Stats -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-800">Current Usage - {{ user.subscription_tier.title() }} Plan</h3>
+        <div class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            {{ user.full_name }}
+        </div>
+    </div>
+    
+    {% if usage_stats %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Monthly Usage -->
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">This Month</span>
+                <span class="text-sm text-gray-500">{{ usage_stats.projects_this_month }} / {{ usage_stats.max_projects_this_month }} projects</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-fill bg-blue-500" style="width: {{ usage_stats.usage_percentage_monthly }}%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Resets in {{ usage_stats.days_until_reset }} days</p>
+        </div>
+        
+        <!-- Total Usage -->
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Total Projects</span>
+                <span class="text-sm text-gray-500">{{ usage_stats.total_projects }} / {{ usage_stats.max_total_projects }} projects</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-fill bg-green-500" style="width: {{ usage_stats.usage_percentage_total }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center">
+            {% if usage_stats.can_upload_more %}
+            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+            <span class="text-green-700 font-medium">Ready to upload</span>
+            {% else %}
+            <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+            <span class="text-red-700 font-medium">Upload limit reached</span>
+            {% endif %}
+        </div>
+        
+        {% if not usage_stats.can_upload_more %}
+        <a href="#upgrade-options" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+            Upgrade Plan
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Subscription Tiers -->
+<div class="mb-8" id="upgrade-options">
+    <h3 class="text-2xl font-bold text-gray-800 mb-6">Subscription Plans</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for tier_key, tier_info in all_tiers.items() %}
+        <div class="tier-card bg-white rounded-lg shadow p-6 {% if tier_key == user.subscription_tier %}current{% elif tier_key == 'starter' and user.subscription_tier == 'free' %}recommended{% endif %}">
+            
+            {% if tier_key == 'starter' and user.subscription_tier == 'free' %}
+            <div class="recommended-badge">Recommended</div>
+            {% endif %}
+            
+            <div class="text-center mb-4">
+                <h4 class="text-xl font-bold text-gray-800 mb-2">{{ tier_key.title() }}</h4>
+                <div class="text-3xl font-bold text-blue-600 mb-1">
+                    {% if tier_info.price_monthly_usd == 0 %}
+                    Free
+                    {% else %}
+                    ${{ "%.0f"|format(tier_info.price_monthly_usd) }}
+                    {% endif %}
+                </div>
+                {% if tier_info.price_monthly_usd > 0 %}
+                <div class="text-sm text-gray-500">per month</div>
+                {% endif %}
+            </div>
+            
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center text-sm">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    {% if tier_info.max_projects_per_month >= 9999 %}
+                    Unlimited projects/month
+                    {% else %}
+                    {{ tier_info.max_projects_per_month }} projects per month
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    {% if tier_info.max_total_projects >= 9999 %}
+                    Unlimited total projects
+                    {% else %}
+                    {{ tier_info.max_total_projects }} total projects
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    {{ tier_info.max_file_size_mb }}MB max file size
+                </div>
+                
+                {% for feature in tier_info.features[:3] %}
+                <div class="flex items-center text-sm text-gray-600">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                    {{ feature }}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center">
+                {% if tier_key == user.subscription_tier %}
+                <button class="w-full px-4 py-2 bg-gray-200 text-gray-500 rounded-lg font-medium cursor-not-allowed" disabled>
+                    Current Plan
+                </button>
+                {% else %}
+                {% if tier_info.price_monthly_usd == 0 %}
+                <button onclick="selectFreePlan()" class="block w-full px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+                    Current Plan
+                </button>
+                {% else %}
+                <button onclick="upgradeToStripe('{{ tier_key }}')" class="block w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition stripe-upgrade-btn" data-tier="{{ tier_key }}">
+                    <span class="button-text">Upgrade - ${{ "%.0f"|format(tier_info.price_monthly_usd) }}/mo</span>
+                    <span class="loading-text hidden">Processing...</span>
+                </button>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Uploads</h3>
+    
+    {% if recent_uploads %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">File Size</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Upload Date</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for upload in recent_uploads %}
+                <tr>
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ upload.project_name }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ "%.1f"|format(upload.file_size_mb) }} MB</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ upload.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="px-4 py-3">
+                        {% if upload.processed %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Processed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">⏳ Processing</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">📄</span>
+        </div>
+        <p class="text-gray-500 mb-4">No projects uploaded yet</p>
+        <a href="/upload" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+            Upload Your First Project
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Demo Section -->
+<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+    <div class="flex items-start">
+        <div class="flex-shrink-0">
+            <span class="text-yellow-600 text-xl">⚠️</span>
+        </div>
+        <div class="ml-3">
+            <h4 class="text-yellow-800 font-medium mb-2">Demo Environment</h4>
+            <p class="text-yellow-700 text-sm mb-3">
+                This is a demonstration of the subscription system. In production, payments would be processed through Stripe or similar payment providers.
+            </p>
+            <div class="flex space-x-3">
+                <button onclick="simulateUsage(3)" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition">
+                    Simulate 3 Uploads
+                </button>
+                <button onclick="simulateUsage(5)" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition">
+                    Simulate 5 Uploads
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function simulateUsage(count) {
+    try {
+        const response = await fetch('/subscription/demo-usage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ projects_count: count })
+        });
+        
+        if (response.ok) {
+            // Reload page to show updated usage
+            window.location.reload();
+        } else {
+            alert('Failed to simulate usage');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error simulating usage');
+    }
+}
+
+// Stripe Integration Functions
+async function upgradeToStripe(tier) {
+    const button = document.querySelector(`[data-tier="${tier}"]`);
+    const buttonText = button.querySelector('.button-text');
+    const loadingText = button.querySelector('.loading-text');
+    
+    // Show loading state
+    buttonText.classList.add('hidden');
+    loadingText.classList.remove('hidden');
+    button.disabled = true;
+    
+    try {
+        const response = await fetch('/api/stripe/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tier: tier,
+                customer_email: '{{ user.email if user else "" }}'
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            // Redirect to Stripe Checkout
+            window.location.href = data.checkout_url;
+        } else {
+            const error = await response.json();
+            alert(`Error: ${error.detail}`);
+            
+            // Reset button state
+            buttonText.classList.remove('hidden');
+            loadingText.classList.add('hidden');
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Stripe checkout error:', error);
+        alert('Error creating checkout session. Please try again.');
+        
+        // Reset button state
+        buttonText.classList.remove('hidden');
+        loadingText.classList.add('hidden');
+        button.disabled = false;
+    }
+}
+
+function selectFreePlan() {
+    alert('You are already on the Free plan! Upload your first project to get started.');
+}
+
+// Update usage bars with animation
+document.addEventListener('DOMContentLoaded', function() {
+    const usageBars = document.querySelectorAll('.usage-fill');
+    usageBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

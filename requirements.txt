@@ -13,6 +13,9 @@ pyyaml>=6.0
 # PowerPoint Export
 python-pptx>=0.6.21
 
+# Payment Processing
+stripe>=5.0.0
+
 # Development & Testing (optional)
 pytest>=7.4.3
 httpx>=0.25.2

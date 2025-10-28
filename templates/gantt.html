@@ -285,6 +285,15 @@ function createRoadmapViewTraces() {
             opacity = 0.7;
         }
         
+        // Format dates for display (convert back to strings)
+        const startStr = projectStart.toISOString().split('T')[0];
+        const finishStr = projectFinish.toISOString().split('T')[0];
+        
+        // Debug logging
+        console.log(`Project: ${projectGroup}`);
+        console.log(`  Date range: ${startStr} to ${finishStr}`);
+        console.log(`  Task dates: ${projectTasks.map(t => t.Start).join(', ')}`);
+        
         // Create single consolidated bar per project
         traces.push({
             x: [projectStart, projectFinish],
@@ -301,13 +310,13 @@ function createRoadmapViewTraces() {
             },
             name: projectGroup,
             text: `${completionPercent}% Complete`,
-            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus]],
+            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr]],
             hovertemplate: '<b>%{y}</b><br>' +
                           'Tasks: %{customdata[1]} total<br>' +
                           'Completed: %{customdata[2]}<br>' +
                           'In Progress: %{customdata[3]}<br>' +
                           'Status: %{customdata[4]}<br>' +
-                          'Timeline: %{x[0]|%Y-%m-%d} to %{x[1]|%Y-%m-%d}' +
+                          'Timeline: %{customdata[5]} to %{customdata[6]}' +
                           '<extra></extra>',
             showlegend: false
         });

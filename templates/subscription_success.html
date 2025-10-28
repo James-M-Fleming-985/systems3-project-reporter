@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Upgrade Successful - ZnNi Report Generator{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12">
+    <div class="max-w-2xl mx-auto px-4">
+        
+        <!-- Success Hero -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">🎉 Welcome to Your New Plan!</h1>
+            <p class="text-xl text-gray-600">Your subscription upgrade was successful</p>
+        </div>
+        
+        <!-- Success Details -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Subscription Activated</h2>
+                <p class="text-gray-600">You can now upload more projects and access premium features</p>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="border-t pt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">What's Next?</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="/upload" class="block p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition group">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium text-gray-900">Upload Projects</p>
+                                <p class="text-sm text-gray-600">Start uploading your project files</p>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <a href="/subscription" class="block p-4 bg-green-50 rounded-lg hover:bg-green-100 transition group">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium text-gray-900">View Usage</p>
+                                <p class="text-sm text-gray-600">Check your new limits and usage</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Highlights -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">🚀 You Now Have Access To:</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium text-gray-900">Increased Project Limits</p>
+                        <p class="text-sm text-gray-600">Upload more projects per month</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium text-gray-900">Advanced Features</p>
+                        <p class="text-sm text-gray-600">Multi-project dashboards and reporting</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium text-gray-900">Priority Support</p>
+                        <p class="text-sm text-gray-600">Get help when you need it</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium text-gray-900">Enhanced Exports</p>
+                        <p class="text-sm text-gray-600">PowerPoint and custom reporting</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Support -->
+        <div class="text-center mt-8">
+            <p class="text-gray-600 mb-4">Have questions about your new plan?</p>
+            <a href="mailto:support@systems3.com" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Contact Support
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+// Parse URL parameters to get session info
+const urlParams = new URLSearchParams(window.location.search);
+const sessionId = urlParams.get('session_id');
+
+if (sessionId) {
+    // You could make an API call here to verify the session
+    // and get specific details about the subscription
+    console.log('Stripe session ID:', sessionId);
+}
+</script>
+{% endblock %}

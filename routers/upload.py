@@ -1,7 +1,7 @@
 """
 Upload Router - Handles XML file uploads and change management
 """
-from fastapi import APIRouter, Request, UploadFile, File, Form
+from fastapi import APIRouter, Request, UploadFile, File, Form, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
@@ -11,7 +11,12 @@ from typing import List
 
 from services.xml_parser import MSProjectXMLParser
 from services.change_detection import ChangeDetectionService
+from services.subscription_service import SubscriptionService
 from repositories.project_repository import ProjectRepository
+from middleware.subscription import (
+    get_user_or_create_anonymous, get_subscription_service, 
+    enforce_upload_limits, SubscriptionError
+)
 
 router = APIRouter(tags=["upload"])
 
@@ -43,11 +48,21 @@ async def upload_page(request: Request):
 
 
 @router.post("/upload/xml")
-async def upload_xml(file: UploadFile = File(...)):
+async def upload_xml(
+    file: UploadFile = File(...),
+    user=Depends(get_user_or_create_anonymous),
+    sub_service: SubscriptionService = Depends(get_subscription_service)
+):
     """
-    Upload MS Project XML file and detect changes
+    Upload MS Project XML file and detect changes (with subscription limits)
     """
     try:
+        # Check file size and subscription limits
+        file_size_mb = len(await file.read()) / (1024 * 1024)
+        await file.seek(0)  # Reset file position
+        
+        # Enforce upload limits
+        enforce_upload_limits(file_size_mb, user, sub_service)
         # Read and parse XML
         content = await file.read()
         xml_content = content.decode('utf-8')
@@ -95,8 +110,17 @@ async def upload_xml(file: UploadFile = File(...)):
         
         # Save uploaded file for reference
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        upload_path = UPLOAD_DIR / f"{new_project.project_code}_{timestamp}.xml"
+        filename = f"{new_project.project_code}_{timestamp}.xml"
+        upload_path = UPLOAD_DIR / filename
         upload_path.write_text(xml_content)
+        
+        # Record the upload for subscription tracking
+        sub_service.record_project_upload(
+            user_id=user.user_id,
+            project_name=new_project.project_name,
+            file_size_mb=file_size_mb,
+            xml_file_path=str(upload_path)
+        )
         
         return JSONResponse({
             'success': True,

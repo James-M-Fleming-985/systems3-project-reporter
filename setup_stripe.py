@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""
+Stripe Setup Helper for Systems3 Project Reporter
+Creates products and prices for project-based subscriptions in your Stripe account
+"""
+
+import stripe
+import os
+from dotenv import load_dotenv
+
+
+def setup_stripe_products():
+    """Create Stripe products and prices for project subscriptions"""
+    
+    # Load environment variables
+    load_dotenv()
+    api_key = os.getenv("STRIPE_SECRET_KEY")
+    
+    if not api_key:
+        print("❌ STRIPE_SECRET_KEY not found in .env file")
+        print("   1. Create a Stripe account at: https://dashboard.stripe.com")
+        print("   2. Get your test API key from: https://dashboard.stripe.com/test/apikeys")
+        print("   3. Add it to your .env file: STRIPE_SECRET_KEY=sk_test_...")
+        return False
+    
+    if api_key.startswith("sk_test_51QGjZdGt9vZpMqGgabcdef"):
+        print("❌ Please replace the placeholder API key with your actual Stripe key")
+        return False
+    
+    stripe.api_key = api_key
+    
+    try:
+        print("🚀 Setting up Systems3 Project Reporter products in Stripe...")
+        
+        # Create Starter Product ($19.99/month - 5 projects/month)
+        starter_product = stripe.Product.create(
+            name="Project Reporter Starter",
+            description=(
+                "Perfect for small teams managing multiple projects. "
+                "5 project uploads per month, advanced roadmap views, "
+                "risk tracking, and PowerPoint export."
+            ),
+            metadata={
+                "tier": "starter",
+                "max_projects_monthly": "5",
+                "max_total_projects": "15",
+                "max_file_size_mb": "25"
+            }
+        )
+        
+        # Create Starter Price ($19.99/month)
+        starter_price = stripe.Price.create(
+            product=starter_product.id,
+            unit_amount=1999,  # $19.99 in cents
+            currency="usd",
+            recurring={"interval": "month"},
+            metadata={
+                "tier": "starter",
+                "projects_per_month": "5"
+            }
+        )
+        
+        print(f"✅ Created Starter plan: {starter_product.name}")
+        print(f"   Product ID: {starter_product.id}")
+        print(f"   Price ID: {starter_price.id}")
+        
+        # Create Professional Product ($49.99/month - 25 projects/month)
+        professional_product = stripe.Product.create(
+            name="Project Reporter Professional",
+            description=(
+                "For growing organizations with complex project portfolios. "
+                "25 project uploads per month, multi-project dashboards, "
+                "custom reporting, team collaboration, and API access."
+            ),
+            metadata={
+                "tier": "professional",
+                "max_projects_monthly": "25",
+                "max_total_projects": "100",
+                "max_file_size_mb": "100"
+            }
+        )
+        
+        # Create Professional Price ($49.99/month)
+        professional_price = stripe.Price.create(
+            product=professional_product.id,
+            unit_amount=4999,  # $49.99 in cents
+            currency="usd",
+            recurring={"interval": "month"},
+            metadata={
+                "tier": "professional",
+                "projects_per_month": "25"
+            }
+        )
+        
+        print(f"✅ Created Professional plan: {professional_product.name}")
+        print(f"   Product ID: {professional_product.id}")
+        print(f"   Price ID: {professional_price.id}")
+        
+        # Create Enterprise Product ($199.99/month - unlimited projects)
+        enterprise_product = stripe.Product.create(
+            name="Project Reporter Enterprise",
+            description=(
+                "For large enterprises requiring unlimited project management. "
+                "Unlimited project uploads, white-label branding, "
+                "custom integrations, dedicated support, and on-premise options."
+            ),
+            metadata={
+                "tier": "enterprise",
+                "max_projects_monthly": "unlimited",
+                "max_total_projects": "unlimited",
+                "max_file_size_mb": "1000"
+            }
+        )
+        
+        # Create Enterprise Price ($199.99/month)
+        enterprise_price = stripe.Price.create(
+            product=enterprise_product.id,
+            unit_amount=19999,  # $199.99 in cents
+            currency="usd",
+            recurring={"interval": "month"},
+            metadata={
+                "tier": "enterprise",
+                "projects_per_month": "unlimited"
+            }
+        )
+        
+        print(f"✅ Created Enterprise plan: {enterprise_product.name}")
+        print(f"   Product ID: {enterprise_product.id}")
+        print(f"   Price ID: {enterprise_price.id}")
+        
+        # Generate updated .env configuration
+        env_config = f"""
+# Updated Stripe Configuration (Generated by setup_stripe.py)
+STRIPE_SECRET_KEY={api_key}
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# Stripe Price IDs (Generated automatically)
+STRIPE_PRICE_ID_STARTER={starter_price.id}
+STRIPE_PRICE_ID_PROFESSIONAL={professional_price.id}  
+STRIPE_PRICE_ID_ENTERPRISE={enterprise_price.id}
+
+# Success/Cancel URLs
+STRIPE_SUCCESS_URL=http://localhost:8000/subscription/success
+STRIPE_CANCEL_URL=http://localhost:8000/subscription
+"""
+        
+        print("\n🎉 Stripe setup complete!")
+        print("\n📝 Add these to your .env file:")
+        print(env_config)
+        
+        print("\n🔗 Next steps:")
+        print("1. Add the price IDs above to your .env file")
+        print("2. Create a webhook endpoint in Stripe Dashboard:")
+        print("   URL: https://your-domain.com/api/stripe/webhook")
+        print("   Events: checkout.session.completed, customer.subscription.*")
+        print("3. Add the webhook secret to STRIPE_WEBHOOK_SECRET in .env")
+        print("4. Test your subscription flow!")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error setting up Stripe products: {e}")
+        return False
+
+
+if __name__ == "__main__":
+    setup_stripe_products()
