@@ -3,7 +3,7 @@ Chart Data Formatter Service
 Transforms project data into formats suitable for Plotly.js and other visualizations
 """
 from typing import List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 from models import Project, Milestone
@@ -42,7 +42,7 @@ class ChartFormatterService:
                 else:
                     # Add 14 days to start date for visualization
                     start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-                    finish_dt = start_dt.replace(day=min(start_dt.day + 14, 28))
+                    finish_dt = start_dt + timedelta(days=14)
                     finish_date = finish_dt.strftime('%Y-%m-%d')
                 
                 tasks.append({
