@@ -256,36 +256,60 @@ function createRoadmapViewTraces() {
         'ZnNi Line Development Plan-08.xml': '#6b7280'  // fallback gray
     };
     
+    // Create aggregated project timeline bars
     Object.keys(resourceGroups).forEach(projectGroup => {
         const projectTasks = resourceGroups[projectGroup];
         const color = projectGroupColors[projectGroup] || '#6b7280';
         
-        projectTasks.forEach(task => {
-            traces.push({
-                x: [parseDate(task.Start), parseDate(task.Finish)],
-                y: [projectGroup],  // Use the project group name
-                type: 'bar',
-                orientation: 'h',
-                marker: {
-                    color: color,
-                    opacity: task.Status === 'COMPLETED' ? 1.0 : 
-                            task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
-                    line: {
-                        color: 'rgba(0,0,0,0.3)',
-                        width: 1
-                    }
-                },
-                name: task.Task,
-                text: task.Task,
-                customdata: [[projectGroup, task.Task, task.Status]],
-                hovertemplate: '<b>%{customdata[1]}</b><br>' +
-                              'Project: %{customdata[0]}<br>' +
-                              'Status: %{customdata[2]}<br>' +
-                              'Start: %{x[0]|%Y-%m-%d}<br>' +
-                              'End: %{x[1]|%Y-%m-%d}' +
-                              '<extra></extra>',
-                showlegend: false
-            });
+        // Calculate project timeline span (earliest start to latest finish)
+        const startDates = projectTasks.map(task => parseDate(task.Start));
+        const finishDates = projectTasks.map(task => parseDate(task.Finish));
+        
+        const projectStart = new Date(Math.min(...startDates));
+        const projectFinish = new Date(Math.max(...finishDates));
+        
+        // Calculate completion statistics
+        const completedTasks = projectTasks.filter(t => t.Status === 'COMPLETED').length;
+        const inProgressTasks = projectTasks.filter(t => t.Status === 'IN_PROGRESS').length;
+        const totalTasks = projectTasks.length;
+        const completionPercent = Math.round((completedTasks / totalTasks) * 100);
+        
+        // Determine overall project status
+        let projectStatus = 'NOT_STARTED';
+        let opacity = 0.4;
+        if (completedTasks === totalTasks) {
+            projectStatus = 'COMPLETED';
+            opacity = 1.0;
+        } else if (inProgressTasks > 0 || completedTasks > 0) {
+            projectStatus = 'IN_PROGRESS';
+            opacity = 0.7;
+        }
+        
+        // Create single consolidated bar per project
+        traces.push({
+            x: [projectStart, projectFinish],
+            y: [projectGroup],
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: color,
+                opacity: opacity,
+                line: {
+                    color: 'rgba(0,0,0,0.3)',
+                    width: 2
+                }
+            },
+            name: projectGroup,
+            text: `${completionPercent}% Complete`,
+            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus]],
+            hovertemplate: '<b>%{y}</b><br>' +
+                          'Tasks: %{customdata[1]} total<br>' +
+                          'Completed: %{customdata[2]}<br>' +
+                          'In Progress: %{customdata[3]}<br>' +
+                          'Status: %{customdata[4]}<br>' +
+                          'Timeline: %{x[0]|%Y-%m-%d} to %{x[1]|%Y-%m-%d}' +
+                          '<extra></extra>',
+            showlegend: false
         });
     });
     
