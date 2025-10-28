@@ -159,6 +159,13 @@ ganttData.forEach(task => {
     projectData[task.Resource].push(task);
 });
 
+// Helper function to parse dates correctly (avoid timezone issues)
+function parseDate(dateStr) {
+    // dateStr format: "YYYY-MM-DD"
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);  // month is 0-indexed
+}
+
 // Function to create detail view traces
 function createDetailViewTraces() {
     const traces = [];
@@ -166,7 +173,7 @@ function createDetailViewTraces() {
     
     filteredData.forEach(task => {
         traces.push({
-            x: [new Date(task.Start), new Date(task.Finish)],
+            x: [parseDate(task.Start), parseDate(task.Finish)],
             y: [task.Task],
             type: 'bar',
             orientation: 'h',
@@ -206,7 +213,7 @@ function createRoadmapViewTraces() {
         
         projectTasks.forEach(task => {
             traces.push({
-                x: [new Date(task.Start), new Date(task.Finish)],
+                x: [parseDate(task.Start), parseDate(task.Finish)],
                 y: [projectName],  // Group by project name instead of milestone
                 type: 'bar',
                 orientation: 'h',
