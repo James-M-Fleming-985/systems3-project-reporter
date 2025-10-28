@@ -40,15 +40,7 @@
         <div class="flex items-center space-x-4">
             <label class="text-sm font-semibold text-gray-700">Projects:</label>
             <div class="flex flex-wrap gap-3" id="projectFilters">
-                {% for project in projects %}
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" 
-                           class="project-filter w-4 h-4 text-blue-600 rounded focus:ring-blue-500" 
-                           data-project="{{ project.project_name }}"
-                           checked>
-                    <span class="text-sm text-gray-700">{{ project.project_name }}</span>
-                </label>
-                {% endfor %}
+                <!-- Project filter checkboxes are generated from ganttData Resource values by JS -->
             </div>
             <button onclick="toggleAllProjects()" class="px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-gray-200 transition">
                 Toggle All
@@ -129,12 +121,48 @@ let currentView = 'detail';
 let enabledProjects = new Set();
 let chartDiv = document.getElementById('ganttChart');
 
-// Initialize enabled projects (all checked by default)
-document.querySelectorAll('.project-filter').forEach(checkbox => {
-    if (checkbox.checked) {
-        enabledProjects.add(checkbox.dataset.project);
-    }
-});
+// Build project filter checkboxes from ganttData Resource values
+function buildProjectFiltersFromGanttData() {
+    const filtersDiv = document.getElementById('projectFilters');
+    filtersDiv.innerHTML = '';
+
+    const resources = Array.from(new Set(ganttData.map(t => t.Resource))).sort();
+
+    resources.forEach(res => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center space-x-2 cursor-pointer';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.className = 'project-filter w-4 h-4 text-blue-600 rounded focus:ring-blue-500';
+        input.dataset.project = res;
+        input.checked = true;
+
+        const span = document.createElement('span');
+        span.className = 'text-sm text-gray-700';
+        span.textContent = res;
+
+        label.appendChild(input);
+        label.appendChild(span);
+        filtersDiv.appendChild(label);
+
+        // default: enable all
+        enabledProjects.add(res);
+
+        // attach change listener
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                enabledProjects.add(this.dataset.project);
+            } else {
+                enabledProjects.delete(this.dataset.project);
+            }
+            renderChart();
+        });
+    });
+}
+
+// build filters now
+buildProjectFiltersFromGanttData();
 
 // Color mapping for status
 const statusColors = {
@@ -357,17 +385,7 @@ function toggleAllProjects() {
     renderChart();
 }
 
-// Event listeners for project filters
-document.querySelectorAll('.project-filter').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        if (this.checked) {
-            enabledProjects.add(this.dataset.project);
-        } else {
-            enabledProjects.delete(this.dataset.project);
-        }
-        renderChart();
-    });
-});
+// project filter listeners are attached when filters are generated
 
 // Initial render
 renderChart();
