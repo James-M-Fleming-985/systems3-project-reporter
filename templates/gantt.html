@@ -150,7 +150,7 @@ const projectColors = {
     'Infrastructure Development': '#ec4899'                   // pink-500
 };
 
-// Group by project
+// Group by project (Resource field contains the project groups)
 const projectData = {};
 ganttData.forEach(task => {
     if (!projectData[task.Resource]) {
@@ -205,40 +205,63 @@ function createDetailViewTraces() {
 function createRoadmapViewTraces() {
     const traces = [];
     
-        Object.keys(projectData).forEach(level3Project => {
-            if (!enabledProjects.has(level3Project)) return;
-            
-            const projectTasks = projectData[level3Project];
-            const color = projectColors[level3Project] || '#6b7280';
-            
-            projectTasks.forEach(task => {
-                traces.push({
-                    x: [parseDate(task.Start), parseDate(task.Finish)],
-                    y: [level3Project],  // Group by Level 3 project name
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: {
-                        color: color,
-                        opacity: task.Status === 'COMPLETED' ? 1.0 : 
-                                task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
-                        line: {
-                            color: 'rgba(0,0,0,0.3)',
-                            width: 1
-                        }
-                    },
-                    name: task.Task,
-                    text: task.Task,
-                    customdata: [[level3Project, task.Task, task.Status]],
-                    hovertemplate: '<b>%{customdata[1]}</b><br>' +
-                                  'Project: %{customdata[0]}<br>' +
-                                  'Status: %{customdata[2]}<br>' +
-                                  'Start: %{x[0]|%Y-%m-%d}<br>' +
-                                  'End: %{x[1]|%Y-%m-%d}' +
-                                  '<extra></extra>',
-                    showlegend: false
-                });
+    // Group tasks by Resource (which contains our project groups from backend)
+    const resourceGroups = {};
+    ganttData.forEach(task => {
+        if (!enabledProjects.has(task.Resource)) return;
+        
+        if (!resourceGroups[task.Resource]) {
+            resourceGroups[task.Resource] = [];
+        }
+        resourceGroups[task.Resource].push(task);
+    });
+    
+    // Enhanced color mapping for project groups
+    const projectGroupColors = {
+        'Surface Finish Projects': '#3b82f6',     // blue-500
+        'ZnNi Line Kardex': '#8b5cf6',           // violet-500
+        'ZnNi Line Chiller': '#ec4899',          // pink-500
+        'ZnNi Line Asset': '#10b981',            // emerald-500
+        'ZnNi Line Filter': '#f59e0b',           // amber-500
+        'ICP Analysis Projects': '#ef4444',      // red-500
+        'ZnNi Line Projects': '#6366f1',         // indigo-500
+        'ZnNi Line Development Plan-08.xml': '#6b7280'  // fallback gray
+    };
+    
+    Object.keys(resourceGroups).forEach(projectGroup => {
+        const projectTasks = resourceGroups[projectGroup];
+        const color = projectGroupColors[projectGroup] || '#6b7280';
+        
+        projectTasks.forEach(task => {
+            traces.push({
+                x: [parseDate(task.Start), parseDate(task.Finish)],
+                y: [projectGroup],  // Use the project group name
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: color,
+                    opacity: task.Status === 'COMPLETED' ? 1.0 : 
+                            task.Status === 'IN_PROGRESS' ? 0.7 : 0.4,
+                    line: {
+                        color: 'rgba(0,0,0,0.3)',
+                        width: 1
+                    }
+                },
+                name: task.Task,
+                text: task.Task,
+                customdata: [[projectGroup, task.Task, task.Status]],
+                hovertemplate: '<b>%{customdata[1]}</b><br>' +
+                              'Project: %{customdata[0]}<br>' +
+                              'Status: %{customdata[2]}<br>' +
+                              'Start: %{x[0]|%Y-%m-%d}<br>' +
+                              'End: %{x[1]|%Y-%m-%d}' +
+                              '<extra></extra>',
+                showlegend: false
             });
-        });    return traces;
+        });
+    });
+    
+    return traces;
 }
 
 // Function to get layout configuration
