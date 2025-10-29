@@ -159,9 +159,11 @@ class SubscriptionService:
         
         # Check file size limit
         if file_size_mb > limits.max_file_size_mb:
+            # Handle both string and enum types for tier name
+            tier_name = user.subscription_tier.value if hasattr(user.subscription_tier, 'value') else str(user.subscription_tier)
             return {
                 "allowed": False,
-                "reason": f"File too large (max {limits.max_file_size_mb}MB for {user.subscription_tier.value} tier)",
+                "reason": f"File too large (max {limits.max_file_size_mb}MB for {tier_name} tier)",
                 "code": "FILE_SIZE_EXCEEDED",
                 "limit": limits.max_file_size_mb,
                 "current": file_size_mb
