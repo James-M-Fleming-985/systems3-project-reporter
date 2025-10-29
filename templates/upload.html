@@ -147,7 +147,7 @@
             if (files.length > 0 && files[0].name.endsWith('.xml')) {
                 handleFileSelect(files[0]);
             } else {
-                alert('Please select a valid XML file');
+                showWarningModal('Invalid File Type', 'Please select a valid XML file from Microsoft Project.');
             }
         });
         
@@ -193,11 +193,11 @@
                     if (response.status === 402 || data.error_type === 'subscription_limit') {
                         showSubscriptionError(data.error);
                     } else {
-                        alert('Error: ' + data.error);
+                        showErrorModal('Upload Failed', data.error);
                     }
                 }
             } catch (error) {
-                alert('Upload failed: ' + error.message);
+                showErrorModal('Upload Error', error.message);
             } finally {
                 document.getElementById('progress').classList.add('hidden');
                 uploadBtn.disabled = false;
@@ -323,7 +323,7 @@
             // Validate that all changes have reasons
             const missingReasons = changesData.filter(c => !c.reason || c.reason.trim() === '');
             if (missingReasons.length > 0) {
-                alert('Please provide a reason for all changes before saving');
+                showWarningModal('Missing Information', 'Please provide a reason for all changes before saving.');
                 return;
             }
 
@@ -341,22 +341,151 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Project updated successfully!');
-                    window.location.href = '/';
+                    showSuccessModal(uploadedData.project_name, data.changes_saved || 0);
                 } else {
-                    alert('Error: ' + data.error);
+                    showErrorModal('Save Failed', data.error);
                 }
             } catch (error) {
-                alert('Save failed: ' + error.message);
+                showErrorModal('Upload Error', error.message);
             }
         });
 
         // Cancel
         document.getElementById('cancelBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                window.location.href = '/';
-            }
+            showConfirmModal(
+                'Cancel Upload?',
+                'Are you sure you want to cancel? All changes will be lost.',
+                () => { window.location.href = '/dashboard'; }
+            );
         });
+
+        // Modal Helper Functions
+        function showSuccessModal(projectName, changesSaved) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                    <div class="flex items-start mb-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Upload Successful!</h3>
+                            <p class="mt-2 text-sm text-gray-600">
+                                <strong>${projectName}</strong> has been updated successfully.
+                            </p>
+                            ${changesSaved > 0 ? `
+                                <p class="mt-1 text-sm text-gray-600">
+                                    Saved <strong>${changesSaved}</strong> change${changesSaved !== 1 ? 's' : ''} with reasons.
+                                </p>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                        <p class="text-sm text-green-700">
+                            <strong>✓</strong> Your project data has been saved and is ready to view in reports.
+                        </p>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="window.location.href='/dashboard'" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            View Dashboard
+                        </button>
+                        <button onclick="window.location.reload()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                            Upload Another
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showErrorModal(title, message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                    <div class="flex items-start mb-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                            <p class="mt-2 text-sm text-gray-600">${message}</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.closest('.fixed').remove()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                        Close
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showWarningModal(title, message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                    <div class="flex items-start mb-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                            <p class="mt-2 text-sm text-gray-600">${message}</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.closest('.fixed').remove()" class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                        Got It
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                    <div class="flex items-start mb-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                            <p class="mt-2 text-sm text-gray-600">${message}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                            No, Keep Editing
+                        </button>
+                        <button id="confirmYes" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Yes, Cancel Upload
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('#confirmYes').addEventListener('click', () => {
+                modal.remove();
+                if (onConfirm) onConfirm();
+            });
+        }
     </script>
 </body>
 </html>
