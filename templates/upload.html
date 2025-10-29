@@ -189,7 +189,12 @@
                     changesData = data.detected_changes || [];
                     displayResults(data);
                 } else {
-                    alert('Error: ' + data.error);
+                    // Check if it's a subscription limit error
+                    if (response.status === 402 || data.error_type === 'subscription_limit') {
+                        showSubscriptionError(data.error);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
                 }
             } catch (error) {
                 alert('Upload failed: ' + error.message);
@@ -198,6 +203,52 @@
                 uploadBtn.disabled = false;
             }
         });
+
+        function showSubscriptionError(errorMessage) {
+            // Parse the error message to extract file size and limit
+            const fileSizeMatch = errorMessage.match(/File size \(([0-9.]+)MB\)/);
+            const limitMatch = errorMessage.match(/exceeds your plan limit of ([0-9.]+)MB/);
+            
+            const fileSize = fileSizeMatch ? fileSizeMatch[1] : 'unknown';
+            const limit = limitMatch ? limitMatch[1] : 'unknown';
+            
+            // Create a friendly modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                    <div class="flex items-start mb-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">File Too Large</h3>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Your file is <strong>${fileSize}MB</strong>, but your current plan allows files up to <strong>${limit}MB</strong>.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <p class="text-sm text-blue-700">
+                            <strong>💡 Tip:</strong> Upgrade to Professional plan for 100MB file uploads and 25 projects per month.
+                        </p>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="window.location.href='/subscription'" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            View Plans & Upgrade
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
 
         function displayResults(data) {
             // Show results section
