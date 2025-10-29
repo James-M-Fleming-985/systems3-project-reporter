@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Subscription Management - ZnNi Report Generator{% endblock %}
+{% block title %}Subscription Management - Systems³ Project Reporter{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -232,52 +232,7 @@
     {% endif %}
 </div>
 
-<!-- Demo Section -->
-<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-    <div class="flex items-start">
-        <div class="flex-shrink-0">
-            <span class="text-yellow-600 text-xl">⚠️</span>
-        </div>
-        <div class="ml-3">
-            <h4 class="text-yellow-800 font-medium mb-2">Demo Environment</h4>
-            <p class="text-yellow-700 text-sm mb-3">
-                This is a demonstration of the subscription system. In production, payments would be processed through Stripe or similar payment providers.
-            </p>
-            <div class="flex space-x-3">
-                <button onclick="simulateUsage(3)" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition">
-                    Simulate 3 Uploads
-                </button>
-                <button onclick="simulateUsage(5)" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition">
-                    Simulate 5 Uploads
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-async function simulateUsage(count) {
-    try {
-        const response = await fetch('/subscription/demo-usage', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ projects_count: count })
-        });
-        
-        if (response.ok) {
-            // Reload page to show updated usage
-            window.location.reload();
-        } else {
-            alert('Failed to simulate usage');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error simulating usage');
-    }
-}
-
 // Stripe Integration Functions
 async function upgradeToStripe(tier) {
     const button = document.querySelector(`[data-tier="${tier}"]`);

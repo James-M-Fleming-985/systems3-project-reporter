@@ -186,47 +186,6 @@ async def upgrade_page(
     })
 
 
-@router.post("/api/subscription/demo-usage")
-async def simulate_usage(
-    projects_count: int,
-    user: User = Depends(get_user_or_create_anonymous),
-    sub_service: SubscriptionService = Depends(get_subscription_service)
-):
-    """
-    Demo endpoint to simulate project uploads for testing subscription limits
-    """
-    results = []
-    
-    for i in range(projects_count):
-        # Simulate uploading projects
-        try:
-            upload = sub_service.record_project_upload(
-                user_id=user.user_id,
-                project_name=f"Demo Project {i+1}",
-                file_size_mb=5.0
-            )
-            results.append({
-                "project": f"Demo Project {i+1}",
-                "status": "success",
-                "upload_id": upload.upload_id
-            })
-        except Exception as e:
-            results.append({
-                "project": f"Demo Project {i+1}",
-                "status": "failed",
-                "error": str(e)
-            })
-    
-    # Get updated usage stats
-    updated_stats = sub_service.get_usage_stats(user.user_id)
-    
-    return {
-        "message": f"Simulated uploading {projects_count} projects",
-        "results": results,
-        "updated_usage": updated_stats.dict() if updated_stats else None
-    }
-
-
 @router.post("/api/subscription/admin/set-tier")
 async def admin_set_tier(
     email: str,
