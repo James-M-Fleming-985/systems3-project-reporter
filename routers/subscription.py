@@ -186,7 +186,7 @@ async def upgrade_page(
     })
 
 
-@router.post("/subscription/demo-usage")
+@router.post("/api/subscription/demo-usage")
 async def simulate_usage(
     projects_count: int,
     user: User = Depends(get_user_or_create_anonymous),
@@ -224,4 +224,61 @@ async def simulate_usage(
         "message": f"Simulated uploading {projects_count} projects",
         "results": results,
         "updated_usage": updated_stats.dict() if updated_stats else None
+    }
+
+
+@router.post("/api/subscription/admin/set-tier")
+async def admin_set_tier(
+    email: str,
+    tier: str,
+    secret: str,
+    sub_service: SubscriptionService = Depends(get_subscription_service)
+):
+    """
+    Admin endpoint to set a user's subscription tier
+    SECRET: Set ADMIN_SECRET in environment variables
+    
+    Usage (as developer):
+    curl -X POST "http://localhost:8000/api/subscription/admin/set-tier" \
+         -H "Content-Type: application/json" \
+         -d '{"email": "demo@example.com", "tier": "professional", "secret": "dev_override_123"}'
+    """
+    import os
+    
+    # Simple secret check (in dev, use a simple secret; in prod, use proper auth)
+    admin_secret = os.getenv("ADMIN_SECRET", "dev_override_123")
+    
+    if secret != admin_secret:
+        raise HTTPException(status_code=403, detail="Invalid admin secret")
+    
+    # Get user by email
+    user = sub_service.get_user_by_email(email)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User not found with email: {email}")
+    
+    # Validate tier
+    try:
+        tier_enum = SubscriptionTier(tier.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid tier: {tier}. Must be one of: free, starter, professional, enterprise"
+        )
+    
+    # Upgrade user
+    success = sub_service.upgrade_subscription(user.user_id, tier_enum)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to upgrade subscription")
+    
+    # Get updated user
+    updated_user = sub_service.get_user(user.user_id)
+    
+    return {
+        "message": f"Successfully upgraded {email} to {tier_enum.value} tier",
+        "user_id": user.user_id,
+        "email": updated_user.email,
+        "new_tier": tier_enum.value,
+        "limits": SUBSCRIPTION_TIERS[tier_enum].dict()
     }
