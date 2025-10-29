@@ -56,19 +56,41 @@ async def upload_xml(
     """
     Upload MS Project XML file and detect changes (with subscription limits)
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"Starting XML upload for user {user.user_id}")
+        
         # Check file size and subscription limits
         file_size_mb = len(await file.read()) / (1024 * 1024)
         await file.seek(0)  # Reset file position
         
+        logger.info(f"File size: {file_size_mb:.2f}MB")
+        
         # Enforce upload limits
-        enforce_upload_limits(file_size_mb, user, sub_service)
+        try:
+            enforce_upload_limits(file_size_mb, user, sub_service)
+            logger.info("Upload limits check passed")
+        except SubscriptionError as se:
+            logger.warning(f"Subscription limit exceeded: {se.detail}")
+            return JSONResponse({
+                'success': False,
+                'error': se.detail,
+                'error_type': 'subscription_limit',
+                'limit_info': se.limit_info if hasattr(se, 'limit_info') else None
+            }, status_code=402)
+        
         # Read and parse XML
         content = await file.read()
         xml_content = content.decode('utf-8')
         
+        logger.info("XML file read successfully")
+        
         # Parse the XML
         new_project = xml_parser.parse_string(xml_content)
+        
+        logger.info(f"Parsed project: {new_project.project_name} ({new_project.project_code})")
         
         # Check if project already exists
         existing_project = project_repo.get_project_by_code(
@@ -114,13 +136,22 @@ async def upload_xml(
         upload_path = UPLOAD_DIR / filename
         upload_path.write_text(xml_content)
         
+        logger.info(f"Saved upload to {upload_path}")
+        
         # Record the upload for subscription tracking
-        sub_service.record_project_upload(
-            user_id=user.user_id,
-            project_name=new_project.project_name,
-            file_size_mb=file_size_mb,
-            xml_file_path=str(upload_path)
-        )
+        try:
+            sub_service.record_project_upload(
+                user_id=user.user_id,
+                project_name=new_project.project_name,
+                file_size_mb=file_size_mb,
+                xml_file_path=str(upload_path)
+            )
+            logger.info("Recorded upload in subscription tracking")
+        except Exception as track_error:
+            # Don't fail the upload if tracking fails
+            logger.error(f"Failed to record upload in subscription tracking: {track_error}")
+        
+        logger.info("Upload completed successfully")
         
         return JSONResponse({
             'success': True,
@@ -132,10 +163,19 @@ async def upload_xml(
             'upload_path': str(upload_path)
         })
         
-    except Exception as e:
+    except SubscriptionError as se:
+        logger.error(f"Subscription error: {se.detail}")
         return JSONResponse({
             'success': False,
-            'error': str(e)
+            'error': se.detail,
+            'error_type': 'subscription_limit'
+        }, status_code=402)
+    except Exception as e:
+        logger.error(f"Upload failed with error: {str(e)}", exc_info=True)
+        return JSONResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': 'general_error'
         }, status_code=400)
 
 
