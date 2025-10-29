@@ -31,7 +31,7 @@ SUBSCRIPTION_TIERS = {
         tier=SubscriptionTier.FREE,
         max_projects_per_month=1,
         max_total_projects=3,
-        max_file_size_mb=5,
+        max_file_size_mb=20,  # Temporarily increased to 20MB for development
         price_monthly_usd=0.00,
         features=[
             "Basic Gantt charts",
