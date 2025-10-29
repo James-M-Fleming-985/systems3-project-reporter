@@ -98,7 +98,7 @@ async def health_check():
 
 
 # Import routers
-from routers import dashboard, upload, export, subscription, stripe_router
+from routers import dashboard, upload, export
 
 # Include routers
 # Dashboard router has: /, /gantt, /milestones, /risks, /changes
@@ -107,10 +107,18 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(upload.router, tags=["upload"])
 # Export router has: /export/powerpoint
 app.include_router(export.router, tags=["export"])
-# Subscription router has: /subscription, /api/subscription/*
-app.include_router(subscription.router, tags=["subscription"])
-# Stripe router has: /api/stripe/*
-app.include_router(stripe_router.router, tags=["stripe"])
+
+# Optional: Subscription and Stripe routers (if dependencies available)
+try:
+    from routers import subscription, stripe_router
+    # Subscription router has: /subscription, /api/subscription/*
+    app.include_router(subscription.router, tags=["subscription"])
+    # Stripe router has: /api/stripe/*
+    app.include_router(stripe_router.router, tags=["stripe"])
+    logger.info("✅ Subscription and Stripe features enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Subscription features disabled: {e}")
+    logger.warning("   Install 'stripe' and 'python-dotenv' to enable subscription features")
 
 
 if __name__ == "__main__":

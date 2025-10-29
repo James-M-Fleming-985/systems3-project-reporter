@@ -120,7 +120,9 @@ async def subscription_limit_middleware(request: Request, call_next):
     # Add subscription info to response headers for client-side usage display
     if hasattr(request.state, 'user') and request.state.user:
         user = request.state.user
-        response.headers["X-Subscription-Tier"] = user.subscription_tier
+        # Handle both string and enum types
+        tier_value = user.subscription_tier.value if hasattr(user.subscription_tier, 'value') else str(user.subscription_tier)
+        response.headers["X-Subscription-Tier"] = tier_value
         response.headers["X-Projects-This-Month"] = str(user.projects_uploaded_this_month)
     
     return response
@@ -163,7 +165,12 @@ def get_upgrade_suggestions(user: User) -> dict:
     """
     from models.user import SUBSCRIPTION_TIERS, SubscriptionTier
     
-    current_tier = user.subscription_tier
+    # Handle both string and enum types for subscription_tier
+    if isinstance(user.subscription_tier, str):
+        current_tier = SubscriptionTier(user.subscription_tier)
+    else:
+        current_tier = user.subscription_tier
+    
     suggestions = []
     
     # Suggest next tier up
