@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import yaml
+import os
 from datetime import datetime
 from typing import List
 
@@ -20,12 +21,17 @@ from middleware.subscription import (
 
 router = APIRouter(tags=["upload"])
 
-# Initialize services
+# Initialize services with persistent storage support
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "mock_data"
-UPLOAD_DIR = BASE_DIR / "uploads"
+
+# Use environment variables for persistent storage paths (Railway Volumes)
+DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+UPLOAD_DIR = Path(os.getenv("UPLOAD_STORAGE_PATH", str(BASE_DIR / "uploads")))
 TEMPLATES_DIR = BASE_DIR / "templates"
-UPLOAD_DIR.mkdir(exist_ok=True)
+
+# Ensure directories exist
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 project_repo = ProjectRepository(data_dir=DATA_DIR)
 xml_parser = MSProjectXMLParser()

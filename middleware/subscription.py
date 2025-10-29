@@ -5,6 +5,8 @@ Enforces upload limits based on user subscription tiers
 from fastapi import Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
+from pathlib import Path
+import os
 import logging
 
 from services.subscription_service import SubscriptionService
@@ -20,11 +22,12 @@ security = HTTPBearer(auto_error=False)
 
 
 def get_subscription_service() -> SubscriptionService:
-    """Dependency to get subscription service"""
+    """Dependency to get subscription service with persistent storage support"""
     global subscription_service
     if not subscription_service:
-        from pathlib import Path
-        data_dir = Path(__file__).parent.parent / "user_data"
+        # Use environment variable for persistent storage (Railway Volume)
+        base_dir = Path(__file__).parent.parent
+        data_dir = Path(os.getenv("USER_DATA_PATH", str(base_dir / "user_data")))
         subscription_service = SubscriptionService(data_dir)
     return subscription_service
 
