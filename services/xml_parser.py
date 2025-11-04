@@ -193,12 +193,7 @@ class MSProjectXMLParser:
                         continue
         
         for task in tasks:
-            # Skip summary tasks (these are projects/phases)
-            summary = task.find('Summary')
-            if summary is not None and summary.text == '1':
-                continue
-            
-            # Get outline level
+            # Get outline level first
             outline_level_elem = self._find_element(task, 'OutlineLevel')
             outline_level = (
                 int(outline_level_elem.text)
@@ -210,41 +205,43 @@ class MSProjectXMLParser:
             if outline_level <= 1:
                 continue
             
-            # Check if this is a milestone
-            # Method 1: MS Project Milestone flag
-            is_milestone_flag = self._find_element(task, 'Milestone')
-            is_milestone = (
-                is_milestone_flag is not None
-                and is_milestone_flag.text == '1'
-            )
+            # Skip summary tasks EXCEPT if they might be milestones
+            # (Level 2 projects can be summary tasks but also milestones)
+            summary = task.find('Summary')
+            is_summary = summary is not None and summary.text == '1'
             
-            # Method 2: Duration = 0 (milestone convention)
-            if not is_milestone:
+            # If it's a summary task, only skip if it's NOT a milestone
+            if is_summary:
+                # Check milestone indicators before skipping
+                is_milestone_flag = self._find_element(task, 'Milestone')
+                has_milestone_flag = (
+                    is_milestone_flag is not None and
+                    is_milestone_flag.text == '1'
+                )
+                
                 duration_elem = self._find_element(task, 'Duration')
-                if duration_elem is not None:
-                    duration_text = duration_elem.text
-                    # Duration format: PT0H0M0S or similar
-                    is_milestone = (
-                        'PT0H0M0S' in duration_text
-                        or duration_text.startswith('PT0')
+                has_zero_duration = False
+                if duration_elem is not None and duration_elem.text:
+                    has_zero_duration = (
+                        'PT0H0M0S' in duration_elem.text or
+                        duration_elem.text.startswith('PT0')
                     )
-            
-            # Method 3: Work = 0 (your new convention)
-            if not is_milestone:
+                
                 work_elem = self._find_element(task, 'Work')
-                if work_elem is not None:
-                    work_text = work_elem.text
-                    # Work format: PT0H0M0S or similar
-                    is_milestone = (
-                        'PT0H0M0S' in work_text
-                        or work_text.startswith('PT0')
-                        or work_text == '0'
+                has_zero_work = False
+                if work_elem is not None and work_elem.text:
+                    has_zero_work = (
+                        'PT0H0M0S' in work_elem.text or
+                        work_elem.text.startswith('PT0') or
+                        work_elem.text == '0'
                     )
+                
+                # Skip summary task only if it's NOT a milestone
+                if not (has_milestone_flag or has_zero_duration or
+                        has_zero_work):
+                    continue
             
-            # Skip if not a milestone
-            if not is_milestone:
-                continue
-            
+            # At this point, we know it's a milestone (checked above)
             milestone_data = {}
             
             # Name (required)
