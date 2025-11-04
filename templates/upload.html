@@ -267,6 +267,12 @@
             if (data.detected_changes.length === 0) {
                 document.getElementById('noChanges').classList.remove('hidden');
                 document.getElementById('changesTable').classList.add('hidden');
+                
+                // Auto-save for new projects with no changes
+                if (data.is_new) {
+                    console.log('Auto-saving new project with no changes');
+                    setTimeout(() => confirmUpload(), 500);
+                }
             } else {
                 document.getElementById('noChanges').classList.add('hidden');
                 document.getElementById('changesTable').classList.remove('hidden');
@@ -318,8 +324,8 @@
             }
         }
 
-        // Save changes
-        document.getElementById('confirmBtn').addEventListener('click', async () => {
+        // Confirm upload function (extracted for reuse)
+        async function confirmUpload() {
             // Validate that all changes have reasons
             const missingReasons = changesData.filter(c => !c.reason || c.reason.trim() === '');
             if (missingReasons.length > 0) {
@@ -348,7 +354,10 @@
             } catch (error) {
                 showErrorModal('Upload Error', error.message);
             }
-        });
+        }
+
+        // Save changes button
+        document.getElementById('confirmBtn').addEventListener('click', confirmUpload);
 
         // Cancel
         document.getElementById('cancelBtn').addEventListener('click', () => {
