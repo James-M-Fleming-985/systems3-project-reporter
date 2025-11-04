@@ -186,7 +186,12 @@
 
                 if (data.success) {
                     uploadedData = data;
-                    changesData = data.detected_changes || [];
+                    // Initialize changesData with impact field
+                    changesData = (data.detected_changes || []).map(change => ({
+                        ...change,
+                        reason: change.existing_reason || '',
+                        impact: change.existing_impact || change.suggested_impact || ''
+                    }));
                     displayResults(data);
                 } else {
                     // Check if it's a subscription limit error

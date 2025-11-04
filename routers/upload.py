@@ -246,7 +246,7 @@ async def confirm_upload(
                         'days_diff': change_data['days_diff']
                     },
                     reason=change_data['reason'],
-                    impact=change_data['impact'],
+                    impact=change_data.get('impact', 'Not specified'),
                     project_code=project_code
                 )
                 new_changes.append(change)
