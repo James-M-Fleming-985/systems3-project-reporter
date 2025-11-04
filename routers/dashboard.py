@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+import os
 
 from repositories.project_repository import ProjectRepository
 from services.chart_formatter import ChartFormatterService
@@ -15,7 +16,9 @@ router = APIRouter(tags=["dashboard"])
 # Initialize repository and services
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-project_repo = ProjectRepository(data_dir=BASE_DIR / "mock_data")
+# Use persistent storage path (same as upload.py and main.py)
+DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+project_repo = ProjectRepository(data_dir=DATA_DIR)
 chart_service = ChartFormatterService()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 

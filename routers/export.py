@@ -4,6 +4,7 @@ Export Router - Handle PowerPoint export requests
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from datetime import datetime
+import os
 
 from repositories.project_repository import ProjectRepository
 from services.powerpoint_exporter import PowerPointExporter
@@ -13,7 +14,8 @@ router = APIRouter(tags=["export"])
 
 # Initialize services
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "mock_data"
+# Use persistent storage path (same as upload.py, main.py, and dashboard.py)
+DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 project_repo = ProjectRepository(data_dir=DATA_DIR)
 
 
