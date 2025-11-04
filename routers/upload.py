@@ -97,6 +97,16 @@ async def upload_xml(
         new_project = xml_parser.parse_string(xml_content)
         
         logger.info(f"Parsed project: {new_project.project_name} ({new_project.project_code})")
+        logger.info(f"Milestones found: {len(new_project.milestones)}")
+        logger.info(f"Risks found: {len(new_project.risks)}")
+        logger.info(f"Changes found: {len(new_project.changes)}")
+        
+        # Debug: Log first few milestones if any exist
+        if new_project.milestones:
+            for i, milestone in enumerate(new_project.milestones[:3]):
+                logger.info(f"Milestone {i+1}: {milestone.name} - {milestone.target_date} - Parent: {milestone.parent_project}")
+        else:
+            logger.warning("No milestones extracted from XML!")
         
         # Check if project already exists
         existing_project = project_repo.get_project_by_code(
