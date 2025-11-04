@@ -33,6 +33,14 @@ class ProjectRepository:
                     data = yaml.safe_load(f)
                     
                     # Fix field name mismatches and add defaults
+                    if 'milestones' in data:
+                        for milestone in data['milestones']:
+                            # Ensure parent_project and resources exist
+                            if 'parent_project' not in milestone:
+                                milestone['parent_project'] = None
+                            if 'resources' not in milestone:
+                                milestone['resources'] = None
+                    
                     if 'risks' in data:
                         for risk in data['risks']:
                             if 'id' in risk and 'risk_id' not in risk:

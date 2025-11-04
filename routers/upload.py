@@ -321,6 +321,13 @@ async def confirm_upload(
         with open(yaml_path, 'w') as f:
             yaml.dump(project_dict, f, default_flow_style=False, sort_keys=False)
         
+        # Log first milestone to verify data
+        if new_project.milestones:
+            first_m = new_project.milestones[0]
+            logger.info(f"First milestone data - Name: {first_m.name}, "
+                       f"Parent: {first_m.parent_project}, "
+                       f"Resources: {first_m.resources}")
+        
         logger.info(f"Project {project_code} saved successfully")
         
         return JSONResponse({
