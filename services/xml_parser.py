@@ -170,8 +170,11 @@ class MSProjectXMLParser:
             name_elem = self._find_element(task, 'Name')
             uid_elem = self._find_element(task, 'UID')
             
-            if outline_level_elem and name_elem and uid_elem:
-                level = int(outline_level_elem.text) if outline_level_elem.text else 999
+            # Check both element existence AND text content
+            if (outline_level_elem is not None and outline_level_elem.text and
+                name_elem is not None and name_elem.text and
+                uid_elem is not None and uid_elem.text):
+                level = int(outline_level_elem.text)
                 task_hierarchy[uid_elem.text] = {
                     'name': name_elem.text,
                     'level': level,
@@ -186,6 +189,24 @@ class MSProjectXMLParser:
         print(f"DEBUG: Found {len(level2_projects)} Level 2 projects")
         if level2_projects:
             print(f"DEBUG: Level 2 projects: {list(level2_projects.values())[:3]}")
+        
+        # Debug: Check first task to see what's wrong
+        if tasks and len(tasks) > 0:
+            first_task = tasks[0]
+            uid_elem = self._find_element(first_task, 'UID')
+            name_elem = self._find_element(first_task, 'Name')
+            level_elem = self._find_element(first_task, 'OutlineLevel')
+            print(f"DEBUG: First task inspection:")
+            print(f"  UID: elem={uid_elem is not None}, "
+                  f"text='{uid_elem.text if uid_elem is not None else 'N/A'}', "
+                  f"tail='{uid_elem.tail if uid_elem is not None else 'N/A'}'")
+            if uid_elem is not None:
+                print(f"  UID children: {list(uid_elem)}")
+                print(f"  UID attrib: {uid_elem.attrib}")
+            print(f"  Name: text='{name_elem.text if name_elem is not None else 'N/A'}'")
+            print(f"  Level: text='{level_elem.text if level_elem is not None else 'N/A'}'")
+
+
         
         # Build parent relationships by finding the nearest higher-level task before each task
         task_list = list(task_hierarchy.values())
