@@ -332,6 +332,10 @@ class MSProjectXMLParser:
             resources_elem = self._find_element(task, 'ResourceNames')
             if resources_elem is not None and resources_elem.text:
                 milestone_data['resources'] = resources_elem.text
+                # Debug: Log first few to verify
+                if len(milestones) < 3:
+                    print(f"DEBUG: Resource found - '{milestone_data['name']}': "
+                          f"{resources_elem.text}")
             
             # Notes
             notes_elem = self._find_element(task, 'Notes')

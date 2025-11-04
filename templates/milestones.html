@@ -42,7 +42,10 @@
             {% for milestone in quadrants.completed_past %}
             <div class="border-l-4 border-green-500 bg-green-50 p-3 rounded overflow-hidden">
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
-                <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                <p class="text-sm font-medium text-gray-700 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                {% if milestone.parent_project %}
+                <p class="text-xs text-gray-500 truncate" title="{{ milestone.parent_project }}">📂 {{ milestone.parent_project }}</p>
+                {% endif %}
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
                 {% if milestone.resources %}
                 <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
@@ -66,7 +69,10 @@
             {% for milestone in quadrants.open %}
             <div class="border-l-4 border-yellow-500 bg-yellow-50 p-3 rounded overflow-hidden">
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
-                <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                <p class="text-sm font-medium text-gray-700 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                {% if milestone.parent_project %}
+                <p class="text-xs text-gray-500 truncate" title="{{ milestone.parent_project }}">📂 {{ milestone.parent_project }}</p>
+                {% endif %}
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
                 {% if milestone.resources %}
                 <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
@@ -97,7 +103,10 @@
             {% for milestone in quadrants.upcoming_future %}
             <div class="border-l-4 border-blue-500 bg-blue-50 p-3 rounded overflow-hidden">
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
-                <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                <p class="text-sm font-medium text-gray-700 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                {% if milestone.parent_project %}
+                <p class="text-xs text-gray-500 truncate" title="{{ milestone.parent_project }}">📂 {{ milestone.parent_project }}</p>
+                {% endif %}
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
                 {% if milestone.resources %}
                 <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
@@ -121,7 +130,10 @@
             {% for milestone in quadrants.delayed %}
             <div class="border-l-4 border-red-500 bg-red-50 p-3 rounded overflow-hidden">
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
-                <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                <p class="text-sm font-medium text-gray-700 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
+                {% if milestone.parent_project %}
+                <p class="text-xs text-gray-500 truncate" title="{{ milestone.parent_project }}">📂 {{ milestone.parent_project }}</p>
+                {% endif %}
                 <p class="text-xs text-red-600">⚠️ Was due: {{ milestone.target_date }}</p>
                 {% if milestone.resources %}
                 <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
@@ -239,8 +251,13 @@ function renderMilestone(milestone, showStatus = true) {
     let html = `
         <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden">
             <p class="font-semibold text-gray-800">${milestone.name}</p>
-            <p class="text-sm text-gray-600">${milestone.project}</p>
-            <p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
+            <p class="text-sm font-medium text-gray-700">${milestone.project}</p>`;
+    
+    if (milestone.parent_project) {
+        html += `<p class="text-xs text-gray-500">📂 ${milestone.parent_project}</p>`;
+    }
+    
+    html += `<p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
     
     if (milestone.resources) {
         html += `<p class="text-xs text-gray-600 mt-1">👤 ${milestone.resources}</p>`;
