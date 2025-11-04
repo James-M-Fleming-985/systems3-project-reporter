@@ -44,6 +44,9 @@
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
                 <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+                {% if milestone.resources %}
+                <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -65,6 +68,9 @@
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
                 <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+                {% if milestone.resources %}
+                <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
+                {% endif %}
                 {% if milestone.completion_percentage %}
                 <div class="mt-2">
                     <div class="w-full bg-gray-200 rounded-full h-1.5">
@@ -93,6 +99,9 @@
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
                 <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
                 <p class="text-xs text-gray-500">Target: {{ milestone.target_date }}</p>
+                {% if milestone.resources %}
+                <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -114,6 +123,9 @@
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
                 <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
                 <p class="text-xs text-red-600">⚠️ Was due: {{ milestone.target_date }}</p>
+                {% if milestone.resources %}
+                <p class="text-xs text-gray-600 mt-1">👤 {{ milestone.resources }}</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -225,10 +237,14 @@ function renderMilestone(milestone, showStatus = true) {
     const icon = statusIcons[milestone.status] || '○';
     
     let html = `
-        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded">
+        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden">
             <p class="font-semibold text-gray-800">${milestone.name}</p>
             <p class="text-sm text-gray-600">${milestone.project}</p>
             <p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
+    
+    if (milestone.resources) {
+        html += `<p class="text-xs text-gray-600 mt-1">👤 ${milestone.resources}</p>`;
+    }
     
     if (showStatus) {
         html += `<p class="text-xs text-${color}-600 mt-1">${icon} ${milestone.status.replace('_', ' ')}</p>`;

@@ -328,6 +328,11 @@ class MSProjectXMLParser:
             
             milestone_data['parent_project'] = parent_project
             
+            # Resources (ResourceNames field)
+            resources_elem = self._find_element(task, 'ResourceNames')
+            if resources_elem is not None and resources_elem.text:
+                milestone_data['resources'] = resources_elem.text
+            
             # Notes
             notes_elem = self._find_element(task, 'Notes')
             if notes_elem is not None and notes_elem.text:

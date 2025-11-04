@@ -15,6 +15,7 @@ class Milestone(BaseModel):
     completion_percentage: Optional[int] = None
     notes: Optional[str] = None
     parent_project: Optional[str] = None  # Parent project for roadmap grouping
+    resources: Optional[str] = None  # Resource names assigned to milestone
 
 
 class Risk(BaseModel):
