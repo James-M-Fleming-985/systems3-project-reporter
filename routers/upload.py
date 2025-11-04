@@ -56,6 +56,7 @@ async def upload_page(request: Request):
 @router.post("/upload/xml")
 async def upload_xml(
     file: UploadFile = File(...),
+    is_baseline: str = Form("false"),
     user=Depends(get_user_or_create_anonymous),
     sub_service: SubscriptionService = Depends(get_subscription_service)
 ):
@@ -65,8 +66,12 @@ async def upload_xml(
     import logging
     logger = logging.getLogger(__name__)
     
+    # Convert baseline flag to boolean
+    is_baseline_upload = is_baseline.lower() == "true"
+    
     try:
         logger.info(f"Starting XML upload for user {user.user_id}")
+        logger.info(f"Baseline upload: {is_baseline_upload}")
         
         # Check file size and subscription limits
         file_size_mb = len(await file.read()) / (1024 * 1024)
@@ -115,7 +120,8 @@ async def upload_xml(
         
         detected_changes = []
         
-        if existing_project:
+        # Only detect changes if NOT a baseline upload
+        if existing_project and not is_baseline_upload:
             # Detect changes
             changes = change_detector.detect_milestone_changes(
                 existing_project,

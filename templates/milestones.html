@@ -52,7 +52,7 @@
         </div>
     </div>
     
-    <!-- Current In Progress -->
+    <!-- Open Milestones -->
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center mb-4">
             <div class="bg-yellow-100 rounded-full p-2 mr-3">
@@ -60,10 +60,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-800">In Progress ({{ quadrants.current_in_progress|length }})</h3>
+            <h3 class="text-xl font-bold text-gray-800">Open ({{ quadrants.open|length }})</h3>
         </div>
         <div class="space-y-3">
-            {% for milestone in quadrants.current_in_progress %}
+            {% for milestone in quadrants.open %}
             <div class="border-l-4 border-yellow-500 bg-yellow-50 p-3 rounded overflow-hidden">
                 <p class="font-semibold text-gray-800 truncate" title="{{ milestone.name }}">{{ milestone.name }}</p>
                 <p class="text-sm text-gray-600 truncate" title="{{ milestone.project }}">{{ milestone.project }}</p>
@@ -281,7 +281,7 @@ function populateWeekView() {
     
     const allMilestonesList = [
         ...allMilestones.completed_past,
-        ...allMilestones.current_in_progress,
+        ...allMilestones.open,
         ...allMilestones.upcoming_future,
         ...allMilestones.delayed
     ];
@@ -327,7 +327,7 @@ function populateMonthView() {
     
     const allMilestonesList = [
         ...allMilestones.completed_past,
-        ...allMilestones.current_in_progress,
+        ...allMilestones.open,
         ...allMilestones.upcoming_future,
         ...allMilestones.delayed
     ];

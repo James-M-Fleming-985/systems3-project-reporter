@@ -81,13 +81,13 @@ class ChartFormatterService:
         """
         Categorize milestones into quadrants:
         - completed_past: Completed milestones
-        - current_in_progress: Currently in progress
-        - upcoming_future: Not started, future milestones
+        - open: Not started milestones (available to work on)
+        - upcoming_future: Future milestones not yet started
         - delayed: Milestones past target date but not completed
         """
         quadrants = {
             'completed_past': [],
-            'current_in_progress': [],
+            'open': [],
             'upcoming_future': [],
             'delayed': []
         }
@@ -105,18 +105,20 @@ class ChartFormatterService:
                     'project': project.project_name,
                     'target_date': milestone.target_date,
                     'status': milestone.status,
-                    'completion_percentage': milestone.completion_percentage
+                    'completion_percentage': milestone.completion_percentage,
+                    'resources': milestone.resources
                 }
                 
                 if milestone.status == 'COMPLETED':
                     quadrants['completed_past'].append(milestone_data)
-                elif milestone.status == 'IN_PROGRESS':
-                    quadrants['current_in_progress'].append(milestone_data)
                 elif milestone.status == 'NOT_STARTED':
                     if target_date < today:
                         quadrants['delayed'].append(milestone_data)
                     else:
-                        quadrants['upcoming_future'].append(milestone_data)
+                        quadrants['open'].append(milestone_data)
+                elif milestone.status == 'IN_PROGRESS':
+                    # Treat in-progress as open since you don't update progress
+                    quadrants['open'].append(milestone_data)
         
         return quadrants
     

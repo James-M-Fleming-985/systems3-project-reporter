@@ -40,6 +40,14 @@
             <button id="uploadBtn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled>
                 Upload and Detect Changes
             </button>
+            
+            <!-- Baseline Checkbox -->
+            <div class="mt-4 flex items-center">
+                <input type="checkbox" id="baselineCheckbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="baselineCheckbox" class="ml-2 text-sm text-gray-700">
+                    <span class="font-semibold">Set as Baseline</span> - Skip change detection and establish new baseline
+                </label>
+            </div>
         </div>
 
         <!-- Progress -->
@@ -171,6 +179,10 @@
 
             const formData = new FormData();
             formData.append('file', selectedFile);
+            
+            // Add baseline flag
+            const isBaseline = document.getElementById('baselineCheckbox').checked;
+            formData.append('is_baseline', isBaseline);
 
             // Show progress
             document.getElementById('progress').classList.remove('hidden');
@@ -263,7 +275,14 @@
             document.getElementById('projectName').textContent = data.project_name;
             document.getElementById('projectCode').textContent = data.project_code;
             document.getElementById('milestoneCount').textContent = data.milestone_count;
-            document.getElementById('projectStatus').textContent = data.is_new ? 'NEW PROJECT' : 'UPDATE';
+            
+            // Check if this was a baseline upload
+            const isBaseline = document.getElementById('baselineCheckbox').checked;
+            if (isBaseline) {
+                document.getElementById('projectStatus').textContent = 'BASELINE ESTABLISHED';
+            } else {
+                document.getElementById('projectStatus').textContent = data.is_new ? 'NEW PROJECT' : 'UPDATE';
+            }
 
             // Show changes
             const changesBody = document.getElementById('changesBody');
