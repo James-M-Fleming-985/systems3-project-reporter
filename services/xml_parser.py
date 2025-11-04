@@ -187,6 +187,8 @@ class MSProjectXMLParser:
                     parent_candidate = task_list[j]
                     if parent_candidate['level'] == 2:  # Level 2 parent (updated)
                         task_info['parent_level2'] = parent_candidate['name']
+                        # CRITICAL FIX: Update the original dict, not just the copy
+                        task_hierarchy[task_info['uid']]['parent_level2'] = parent_candidate['name']
                         break
                     elif parent_candidate['level'] < task_info['level']:
                         # Found a higher level, but keep looking for Level 2
@@ -328,14 +330,24 @@ class MSProjectXMLParser:
             
             milestone_data['parent_project'] = parent_project
             
-            # Resources (ResourceNames field)
+            # Resources - try multiple possible field names
             resources_elem = self._find_element(task, 'ResourceNames')
+            if resources_elem is None:
+                # Try alternative field names
+                resources_elem = self._find_element(task, 'Resources')
+            
             if resources_elem is not None and resources_elem.text:
                 milestone_data['resources'] = resources_elem.text
                 # Debug: Log first few to verify
                 if len(milestones) < 3:
                     print(f"DEBUG: Resource found - '{milestone_data['name']}': "
                           f"{resources_elem.text}")
+            else:
+                # Debug: Log what elements ARE available for first 3 milestones
+                if len(milestones) < 3:
+                    print(f"DEBUG: No ResourceNames for '{milestone_data['name']}'")
+                    print(f"  Available elements: {[elem.tag.split('}')[-1] for elem in task]}")
+
             
             # Notes
             notes_elem = self._find_element(task, 'Notes')
