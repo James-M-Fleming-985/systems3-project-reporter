@@ -293,12 +293,19 @@ class MSProjectXMLParser:
             # Status based on percent complete
             percent_elem = self._find_element(task, 'PercentComplete')
             percent = 0
-            if percent_elem is not None:
-                percent = int(float(percent_elem.text) * 100)
+            if percent_elem is not None and percent_elem.text:
+                # MS Project stores as decimal (0-1), convert to 0-100
+                raw_value = float(percent_elem.text)
+                percent = int(raw_value * 100)
+                
+                # Debug: Log first few to understand the format
+                if len(milestones) < 3:
+                    print(f"DEBUG: Milestone '{milestone_data['name']}' - "
+                          f"Raw %: {raw_value}, Converted: {percent}")
             
             milestone_data['completion_percentage'] = percent
             
-            if percent == 100:
+            if percent >= 100:  # Use >= to catch rounding issues
                 milestone_data['status'] = 'COMPLETED'
                 # Check for actual finish date
                 actual_finish = self._find_element(task, 'ActualFinish')
