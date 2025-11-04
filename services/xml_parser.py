@@ -181,6 +181,12 @@ class MSProjectXMLParser:
                 if level == 2:  # Level 2 = Projects (updated from Level 3)
                     level2_projects[uid_elem.text] = name_elem.text
         
+        # Debug: Log hierarchy stats
+        print(f"DEBUG: Built task hierarchy with {len(task_hierarchy)} tasks")
+        print(f"DEBUG: Found {len(level2_projects)} Level 2 projects")
+        if level2_projects:
+            print(f"DEBUG: Level 2 projects: {list(level2_projects.values())[:3]}")
+        
         # Build parent relationships by finding the nearest higher-level task before each task
         task_list = list(task_hierarchy.values())
         for i, task_info in enumerate(task_list):
@@ -326,6 +332,13 @@ class MSProjectXMLParser:
             # Find parent Level 2 project using the hierarchy (updated)
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
+            
+            # Debug: Log lookup attempt for first 3
+            if len(milestones) < 3:
+                print(f"DEBUG: Looking up UID for '{milestone_data['name']}'")
+                print(f"  UID element: {current_task_uid}")
+                print(f"  UID text: {current_task_uid.text if current_task_uid else 'None'}")
+                print(f"  In hierarchy: {current_task_uid.text in task_hierarchy if current_task_uid else False}")
             
             if current_task_uid and current_task_uid.text in task_hierarchy:
                 task_info = task_hierarchy[current_task_uid.text]
