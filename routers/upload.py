@@ -204,12 +204,29 @@ async def confirm_upload(
     """
     Confirm upload and save project with change reasons
     """
+    import json
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
-        import json
+        logger.info(f"Confirm upload called for project: {project_code}")
+        logger.info(f"Upload path: {upload_path}")
+        logger.info(f"Changes JSON: {changes_json[:200]}...")
+        
+        # Verify upload path exists
+        upload_file = Path(upload_path)
+        if not upload_file.exists():
+            logger.error(f"Upload file not found: {upload_path}")
+            raise FileNotFoundError(f"Upload file not found: {upload_path}")
         
         # Read the uploaded XML again
-        xml_content = Path(upload_path).read_text()
+        xml_content = upload_file.read_text()
+        logger.info(
+            f"Read XML file successfully, size: {len(xml_content)} bytes"
+        )
+        
         new_project = xml_parser.parse_string(xml_content)
+        logger.info(f"Parsed project: {new_project.project_name}")
         
         # Parse changes from form
         changes_data = json.loads(changes_json)
@@ -297,6 +314,8 @@ async def confirm_upload(
         with open(yaml_path, 'w') as f:
             yaml.dump(project_dict, f, default_flow_style=False, sort_keys=False)
         
+        logger.info(f"Project {project_code} saved successfully")
+        
         return JSONResponse({
             'success': True,
             'message': f'Project {project_code} updated successfully',
@@ -304,6 +323,7 @@ async def confirm_upload(
         })
         
     except Exception as e:
+        logger.error(f"Confirm upload failed: {str(e)}", exc_info=True)
         return JSONResponse({
             'success': False,
             'error': str(e)
