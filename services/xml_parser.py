@@ -142,7 +142,10 @@ class MSProjectXMLParser:
         """
         milestones = []
         
-        # First, build a map of Level 2 projects for roadmap grouping
+        # First, build resource assignments map (TaskUID -> list of resource names)
+        resource_map = self._build_resource_map(root)
+        
+        # Then, build a map of Level 2 projects for roadmap grouping
         level2_projects = {}
         
         # Try different namespace patterns to find tasks
@@ -327,26 +330,33 @@ class MSProjectXMLParser:
             if current_task_uid and current_task_uid.text in task_hierarchy:
                 task_info = task_hierarchy[current_task_uid.text]
                 parent_project = task_info.get('parent_level2')  # Updated
+                
+                # Debug: Log first 3 milestones' hierarchy info
+                if len(milestones) < 3:
+                    print(f"DEBUG: Milestone '{milestone_data['name']}' - "
+                          f"Level: {task_info.get('level')}, "
+                          f"UID: {current_task_uid.text}, "
+                          f"Parent: {parent_project}")
             
             milestone_data['parent_project'] = parent_project
             
-            # Resources - try multiple possible field names
-            resources_elem = self._find_element(task, 'ResourceNames')
-            if resources_elem is None:
-                # Try alternative field names
-                resources_elem = self._find_element(task, 'Resources')
-            
-            if resources_elem is not None and resources_elem.text:
-                milestone_data['resources'] = resources_elem.text
-                # Debug: Log first few to verify
+            # Resources - check resource_map first, then fallback to XML field
+            task_uid = current_task_uid.text if current_task_uid else None
+            if task_uid and task_uid in resource_map:
+                milestone_data['resources'] = resource_map[task_uid]
                 if len(milestones) < 3:
-                    print(f"DEBUG: Resource found - '{milestone_data['name']}': "
-                          f"{resources_elem.text}")
+                    print(f"DEBUG: Resources from map for "
+                          f"'{milestone_data['name']}': "
+                          f"{resource_map[task_uid]}")
             else:
-                # Debug: Log what elements ARE available for first 3 milestones
-                if len(milestones) < 3:
-                    print(f"DEBUG: No ResourceNames for '{milestone_data['name']}'")
-                    print(f"  Available elements: {[elem.tag.split('}')[-1] for elem in task]}")
+                # Fallback: try ResourceNames field (older MS Project)
+                resources_elem = self._find_element(task, 'ResourceNames')
+                if resources_elem is not None and resources_elem.text:
+                    milestone_data['resources'] = resources_elem.text
+                elif len(milestones) < 3:
+                    print(f"DEBUG: No resources found for "
+                          f"'{milestone_data['name']}'")
+
 
             
             # Notes
@@ -446,6 +456,49 @@ class MSProjectXMLParser:
         
         # If all fails, return today
         return datetime.now().strftime('%Y-%m-%d')
+    
+    def _build_resource_map(self, root: ET.Element) -> Dict[str, str]:
+        """
+        Build map of TaskUID -> Resource Names from Assignments section
+        MS Project stores resources separately from tasks
+        """
+        resource_map = {}  # TaskUID -> comma-separated resource names
+        
+        # First, build a map of ResourceUID -> Resource Name
+        resources = {}
+        for ns in self.ns_patterns:
+            resource_xpath = f'.//{ns}Resource' if ns else './/Resource'
+            found_resources = root.findall(resource_xpath)
+            if found_resources:
+                for resource in found_resources:
+                    uid_elem = self._find_element(resource, 'UID')
+                    name_elem = self._find_element(resource, 'Name')
+                    if uid_elem is not None and name_elem is not None:
+                        resources[uid_elem.text] = name_elem.text
+                break
+        
+        # Then, build task -> resources map from Assignments
+        for ns in self.ns_patterns:
+            assign_xpath = f'.//{ns}Assignment' if ns else './/Assignment'
+            found_assignments = root.findall(assign_xpath)
+            if found_assignments:
+                for assignment in found_assignments:
+                    task_uid = self._find_element(assignment, 'TaskUID')
+                    res_uid = self._find_element(assignment, 'ResourceUID')
+                    
+                    if task_uid is not None and res_uid is not None:
+                        t_uid = task_uid.text
+                        r_uid = res_uid.text
+                        
+                        if r_uid in resources:
+                            resource_name = resources[r_uid]
+                            if t_uid in resource_map:
+                                resource_map[t_uid] += f", {resource_name}"
+                            else:
+                                resource_map[t_uid] = resource_name
+                break
+        
+        return resource_map
     
     def _find_element(self, parent: ET.Element, tag: str) -> ET.Element:
         """Find element with namespace support"""
