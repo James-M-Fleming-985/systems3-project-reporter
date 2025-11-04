@@ -46,12 +46,12 @@ class MSProjectXMLParser:
         
         return Project(**project_data)
     
-    def extract_level3_projects(self, xml_path: Path) -> Dict[str, str]:
-        """Extract Level 3 project names mapped to their UIDs for roadmap grouping"""
+    def extract_level2_projects(self, xml_path: Path) -> Dict[str, str]:
+        """Extract Level 2 project names mapped to their UIDs for roadmap grouping"""
         tree = ET.parse(xml_path)
         root = tree.getroot()
         
-        level3_projects = {}
+        level2_projects = {}
         tasks = root.findall('.//{http://schemas.microsoft.com/project}Task')
         
         for task in tasks:
@@ -61,10 +61,10 @@ class MSProjectXMLParser:
             
             if outline_elem and name_elem and uid_elem:
                 level = int(outline_elem.text) if outline_elem.text else 0
-                if level == 3:  # Level 3 = Project level
-                    level3_projects[uid_elem.text] = name_elem.text
+                if level == 2:  # Level 2 = Project level (updated from Level 3)
+                    level2_projects[uid_elem.text] = name_elem.text
         
-        return level3_projects
+        return level2_projects
     
     def parse_string(self, xml_content: str) -> Project:
         """Parse MS Project XML from string"""
@@ -134,16 +134,16 @@ class MSProjectXMLParser:
         """
         Extract milestones from MS Project XML
         
-        Strategy:
-        - Skip Level 1 (project/summary tasks)
-        - Skip Level 2 (phases/groupings)
-        - Extract Level 3+ ONLY if marked as Milestone
-        - Milestone detection: Milestone flag=1 OR Duration=0
+        Strategy (Updated for new hierarchy):
+        - Skip Level 1 (top-level summary)
+        - Level 2 = Projects
+        - Extract Level 2+ items ONLY if marked as Milestone
+        - Milestone detection: Milestone flag=1 OR Duration=0 OR Work=0
         """
         milestones = []
         
-        # First, build a map of Level 3 projects for roadmap grouping
-        level3_projects = {}
+        # First, build a map of Level 2 projects for roadmap grouping
+        level2_projects = {}
         
         # Try different namespace patterns to find tasks
         tasks = []
@@ -175,21 +175,21 @@ class MSProjectXMLParser:
                     'uid': uid_elem.text
                 }
                 
-                if level == 3:
-                    level3_projects[uid_elem.text] = name_elem.text
+                if level == 2:  # Level 2 = Projects (updated from Level 3)
+                    level2_projects[uid_elem.text] = name_elem.text
         
         # Build parent relationships by finding the nearest higher-level task before each task
         task_list = list(task_hierarchy.values())
         for i, task_info in enumerate(task_list):
-            if task_info['level'] > 3:  # Only for tasks below Level 3
-                # Look backwards for the Level 3 parent
+            if task_info['level'] > 2:  # Only for tasks below Level 2 (updated)
+                # Look backwards for the Level 2 parent
                 for j in range(i-1, -1, -1):
                     parent_candidate = task_list[j]
-                    if parent_candidate['level'] == 3:
-                        task_info['parent_level3'] = parent_candidate['name']
+                    if parent_candidate['level'] == 2:  # Level 2 parent (updated)
+                        task_info['parent_level2'] = parent_candidate['name']
                         break
                     elif parent_candidate['level'] < task_info['level']:
-                        # Found a higher level, but keep looking for Level 3
+                        # Found a higher level, but keep looking for Level 2
                         continue
         
         for task in tasks:
@@ -206,8 +206,8 @@ class MSProjectXMLParser:
                 else 999
             )
             
-            # Skip Level 1 and 2 (project and phase levels)
-            if outline_level <= 2:
+            # Skip Level 1 only (Level 2 is now project level)
+            if outline_level <= 1:
                 continue
             
             # Check if this is a milestone
@@ -227,6 +227,18 @@ class MSProjectXMLParser:
                     is_milestone = (
                         'PT0H0M0S' in duration_text
                         or duration_text.startswith('PT0')
+                    )
+            
+            # Method 3: Work = 0 (your new convention)
+            if not is_milestone:
+                work_elem = self._find_element(task, 'Work')
+                if work_elem is not None:
+                    work_text = work_elem.text
+                    # Work format: PT0H0M0S or similar
+                    is_milestone = (
+                        'PT0H0M0S' in work_text
+                        or work_text.startswith('PT0')
+                        or work_text == '0'
                     )
             
             # Skip if not a milestone
@@ -271,13 +283,13 @@ class MSProjectXMLParser:
             else:
                 milestone_data['status'] = 'NOT_STARTED'
             
-            # Find parent Level 3 project using the hierarchy
+            # Find parent Level 2 project using the hierarchy (updated)
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
             
             if current_task_uid and current_task_uid.text in task_hierarchy:
                 task_info = task_hierarchy[current_task_uid.text]
-                parent_project = task_info.get('parent_level3')
+                parent_project = task_info.get('parent_level2')  # Updated
             
             milestone_data['parent_project'] = parent_project
             
