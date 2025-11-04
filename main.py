@@ -29,10 +29,14 @@ STATIC_DIR = BASE_DIR / "static"
 TEMPLATES_DIR = BASE_DIR / "templates"
 MOCK_DATA_DIR = BASE_DIR / "mock_data"
 
+# Use persistent storage path for Railway volumes
+DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(MOCK_DATA_DIR)))
+
 logger.info(f"Base directory: {BASE_DIR}")
 logger.info(f"Static directory: {STATIC_DIR}")
 logger.info(f"Templates directory: {TEMPLATES_DIR}")
 logger.info(f"Mock data directory: {MOCK_DATA_DIR}")
+logger.info(f"Data directory: {DATA_DIR}")
 
 # Ensure required directories exist
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,6 +45,7 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 (STATIC_DIR / "images").mkdir(exist_ok=True)
 TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 MOCK_DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -61,16 +66,16 @@ async def startup_event():
     logger.info(f"Python version: {os.sys.version}")
     logger.info(f"PORT: {os.environ.get('PORT', 'not set')}")
     
-    # Ensure mock_data directory exists
-    MOCK_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure data directory exists
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     
     try:
-        project_repo = ProjectRepository(data_dir=MOCK_DATA_DIR)
+        project_repo = ProjectRepository(data_dir=DATA_DIR)
         projects = project_repo.load_all_projects()
         logger.info(f"Loaded {len(projects)} projects successfully")
     except Exception as e:
         logger.warning(f"Could not load projects: {e}")
-        project_repo = ProjectRepository(data_dir=MOCK_DATA_DIR)
+        project_repo = ProjectRepository(data_dir=DATA_DIR)
     
     logger.info("Systems³ Project Reporter started successfully!")
 
