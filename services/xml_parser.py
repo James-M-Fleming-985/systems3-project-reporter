@@ -241,7 +241,38 @@ class MSProjectXMLParser:
                         has_zero_work):
                     continue
             
-            # At this point, we know it's a milestone (checked above)
+            # Now check if this task is actually a milestone
+            # (For non-summary tasks, we need to verify milestone status)
+            if not is_summary:
+                is_milestone_flag = self._find_element(task, 'Milestone')
+                has_milestone_flag = (
+                    is_milestone_flag is not None and
+                    is_milestone_flag.text == '1'
+                )
+                
+                duration_elem = self._find_element(task, 'Duration')
+                has_zero_duration = False
+                if duration_elem is not None and duration_elem.text:
+                    has_zero_duration = (
+                        'PT0H0M0S' in duration_elem.text or
+                        duration_elem.text.startswith('PT0')
+                    )
+                
+                work_elem = self._find_element(task, 'Work')
+                has_zero_work = False
+                if work_elem is not None and work_elem.text:
+                    has_zero_work = (
+                        'PT0H0M0S' in work_elem.text or
+                        work_elem.text.startswith('PT0') or
+                        work_elem.text == '0'
+                    )
+                
+                # Skip if not a milestone
+                if not (has_milestone_flag or has_zero_duration or
+                        has_zero_work):
+                    continue
+            
+            # At this point, we know it's a milestone
             milestone_data = {}
             
             # Name (required)
