@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from io import BytesIO
 from calendar import monthrange
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from pptx import Presentation
@@ -54,39 +57,54 @@ class PowerPointExporter:
         
         for project in projects:
             for milestone in project.milestones:
-                milestone_data = {
-                    'name': milestone.name,
-                    'project': project.project_name,
-                    'parent_project': milestone.parent_project,
-                    'target_date': milestone.target_date,
-                    'status': milestone.status,
-                    'completion_percentage': milestone.completion_percentage,
-                    'resources': milestone.resources,
-                    'notes': milestone.notes
-                }
-                all_milestones.append(milestone_data)
+                try:
+                    milestone_data = {
+                        'name': milestone.name or 'Unnamed Milestone',
+                        'project': project.project_name or 'Unknown Project',
+                        'parent_project': milestone.parent_project,
+                        'target_date': milestone.target_date or '2025-01-01',
+                        'status': milestone.status or 'NOT_STARTED',
+                        'completion_percentage': milestone.completion_percentage,
+                        'resources': milestone.resources,
+                        'notes': milestone.notes
+                    }
+                    all_milestones.append(milestone_data)
+                except AttributeError:
+                    continue
             
             for risk in project.risks:
-                all_risks.append({
-                    'project': project.project_name,
-                    'description': risk.description,
-                    'severity': risk.severity,
-                    'status': risk.status,
-                    'mitigation': risk.mitigation
-                })
+                try:
+                    all_risks.append({
+                        'project': project.project_name or 'Unknown Project',
+                        'description': risk.description or 'No description',
+                        'severity': risk.severity or 'LOW',
+                        'status': risk.status or 'OPEN',
+                        'mitigation': risk.mitigation or 'No mitigation plan'
+                    })
+                except AttributeError:
+                    continue
             
             for change in project.changes:
-                all_changes.append({
-                    'project': project.project_name,
-                    'date': change.date,
-                    'old_date': change.old_date,
-                    'new_date': change.new_date,
-                    'reason': change.reason,
-                    'impact': change.impact
-                })
+                try:
+                    all_changes.append({
+                        'project': project.project_name or 'Unknown Project',
+                        'date': change.date or '2025-01-01',
+                        'old_date': change.old_date or '2025-01-01',
+                        'new_date': change.new_date or '2025-01-01',
+                        'reason': change.reason or 'No reason provided',
+                        'impact': change.impact
+                    })
+                except AttributeError:
+                    continue
         
         # Sort milestones by date (ascending) - matching app default
-        all_milestones.sort(key=lambda m: datetime.strptime(m['target_date'], '%Y-%m-%d'))
+        # Only sort if we have valid dates
+        if all_milestones:
+            try:
+                all_milestones.sort(key=lambda m: datetime.strptime(m['target_date'], '%Y-%m-%d'))
+            except (ValueError, KeyError, TypeError):
+                # If sorting fails, keep original order
+                pass
         
         # 1. Title slide
         self._add_title_slide(prs, projects, all_milestones)
@@ -94,8 +112,11 @@ class PowerPointExporter:
         # 2. Gantt/Roadmap page (visual snapshot of all projects)
         self._add_gantt_roadmap_slide(prs, projects)
         
+        logger.info(f"Collected {len(all_milestones)} milestones, {len(all_risks)} risks, {len(all_changes)} changes")
+        
         # 3. Milestones page (top 5-6, app format)
-        self._add_milestones_slide_app_format(prs, all_milestones[:6])
+        if all_milestones:
+            self._add_milestones_slide_app_format(prs, all_milestones[:6])
         
         # 4. Risks page (app format)
         if all_risks:
@@ -107,9 +128,14 @@ class PowerPointExporter:
         
         # Save to BytesIO
         buffer = BytesIO()
-        prs.save(buffer)
-        buffer.seek(0)
-        return buffer
+        try:
+            prs.save(buffer)
+            buffer.seek(0)
+            logger.info(f"PowerPoint created successfully: {buffer.getbuffer().nbytes} bytes")
+            return buffer
+        except Exception as e:
+            logger.error(f"Failed to save PowerPoint: {e}")
+            raise
     
     def _add_title_slide(self, prs, projects, all_milestones):
         """Add enhanced title slide"""
@@ -175,6 +201,11 @@ class PowerPointExporter:
         max_date = max(all_dates)
         date_range = (max_date - min_date).days
         
+        # If all projects have the same dates, extend the range
+        if date_range == 0:
+            date_range = 30  # Default to 30 days
+            max_date = min_date + timedelta(days=30)
+        
         # Timeline dimensions
         timeline_left = Inches(2)
         timeline_width = Inches(7)
@@ -227,8 +258,12 @@ class PowerPointExporter:
             days_to_start = (start - min_date).days
             bar_left = timeline_left + (days_to_start / date_range) * timeline_width
             
-            duration_days = (end - start).days
-            bar_width = (duration_days / date_range) * timeline_width
+            duration_days = max((end - start).days, 1)  # Ensure at least 1 day
+            bar_width = max((duration_days / date_range) * timeline_width, Inches(0.1))  # Minimum width
+            
+            # Ensure bar stays within bounds
+            if bar_left + bar_width > timeline_left + timeline_width:
+                bar_width = (timeline_left + timeline_width) - bar_left
             
             # Draw bar
             bar = slide.shapes.add_shape(
