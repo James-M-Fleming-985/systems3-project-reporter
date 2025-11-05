@@ -467,5 +467,10 @@ function switchView(view) {
         monthBtn.className = activeClass;
     }
 }
+
+// Initialize view on page load
+document.addEventListener('DOMContentLoaded', function() {
+    populateStatusView();
+});
 </script>
 {% endblock %}
