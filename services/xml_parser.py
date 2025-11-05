@@ -220,7 +220,9 @@ class MSProjectXMLParser:
 
         
         # Build parent relationships by finding the nearest higher-level task before each task
+        print(f"DEBUG: Building parent_level2 relationships...")
         task_list = list(task_hierarchy.values())
+        parent_assignments = 0
         for i, task_info in enumerate(task_list):
             if task_info['level'] > 2:  # Only for tasks below Level 2 (updated)
                 # Look backwards for the Level 2 parent
@@ -230,10 +232,15 @@ class MSProjectXMLParser:
                         task_info['parent_level2'] = parent_candidate['name']
                         # CRITICAL FIX: Update the original dict, not just the copy
                         task_hierarchy[task_info['uid']]['parent_level2'] = parent_candidate['name']
+                        parent_assignments += 1
+                        if task_info['uid'] == '8704':  # Debug specific milestone
+                            print(f"DEBUG: Assigned parent_level2 to UID 8704: '{parent_candidate['name']}'")
+                            print(f"DEBUG: Verifying task_hierarchy['8704']['parent_level2'] = {task_hierarchy['8704'].get('parent_level2')}")
                         break
                     elif parent_candidate['level'] < task_info['level']:
                         # Found a higher level, but keep looking for Level 2
                         continue
+        print(f"DEBUG: Assigned parent_level2 to {parent_assignments} tasks")
         
         for task in tasks:
             # Get outline level first
@@ -396,6 +403,8 @@ class MSProjectXMLParser:
                     print(f"DEBUG: Found in hierarchy - "
                           f"Level: {task_info.get('level')}, "
                           f"Parent: {parent_project}")
+                    print(f"DEBUG: task_info keys: {list(task_info.keys())}")
+                    print(f"DEBUG: task_info dict: {task_info}")
             
             milestone_data['parent_project'] = parent_project
             
