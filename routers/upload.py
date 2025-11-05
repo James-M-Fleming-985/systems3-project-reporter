@@ -289,6 +289,7 @@ async def confirm_upload(
                     'completion_date': m.completion_date,
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
+                    'parent_project': m.parent_project,
                     'resources': m.resources
                 }
                 for m in new_project.milestones

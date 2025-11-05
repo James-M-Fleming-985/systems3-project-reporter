@@ -10,7 +10,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
-BUILD_VERSION = "1.0.11"  # Last updated: 2025-11-05
+
+BUILD_VERSION = "1.0.14"
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
