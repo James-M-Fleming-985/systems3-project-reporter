@@ -17,25 +17,11 @@
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Gantt Chart</h2>
     <p class="text-gray-600">Timeline view of all project milestones</p>
-    <p class="text-sm text-blue-600 mt-2">★ USER'S PRIMARY REQUIREMENT: "Gantt charts is really the only thing I actually specified"</p>
 </div>
 
 <!-- View Controls -->
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-        <!-- View Mode Toggle -->
-        <div class="flex items-center space-x-4">
-            <label class="text-sm font-semibold text-gray-700">View Mode:</label>
-            <div class="flex space-x-2">
-                <button id="detailViewBtn" onclick="switchView('detail')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                    Detail View
-                </button>
-                <button id="roadmapViewBtn" onclick="switchView('roadmap')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                    Roadmap View
-                </button>
-            </div>
-        </div>
-        
         <!-- Project Filters -->
         <div class="flex items-center space-x-4">
             <label class="text-sm font-semibold text-gray-700">Projects:</label>
@@ -51,7 +37,7 @@
 
 <!-- Gantt Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%; height:600px;"></div>
+    <div id="ganttChart" style="width:100%; height:500px;"></div>
 </div>
 
 <!-- Legend -->
@@ -117,7 +103,7 @@
 const ganttData = {{ gantt_data | tojson }};
 
 // Global state
-let currentView = 'detail';
+let currentView = 'roadmap';  // Default to roadmap view
 let enabledProjects = new Set();
 let chartDiv = document.getElementById('ganttChart');
 
@@ -244,15 +230,18 @@ function createRoadmapViewTraces() {
         resourceGroups[task.Resource].push(task);
     });
     
-    // Enhanced color mapping for project groups
+    // Enhanced color mapping for project groups - matching app colors
     const projectGroupColors = {
-        'Surface Finish Projects': '#3b82f6',     // blue-500
-        'ZnNi Line Kardex': '#8b5cf6',           // violet-500
-        'ZnNi Line Chiller': '#ec4899',          // pink-500
-        'ZnNi Line Asset': '#10b981',            // emerald-500
-        'ZnNi Line Filter': '#f59e0b',           // amber-500
-        'ICP Analysis Projects': '#ef4444',      // red-500
-        'ZnNi Line Projects': '#6366f1',         // indigo-500
+        'Surface Finish Projects': '#22c55e',        // green-500
+        'ZnNi Line Kardex': '#3b82f6',              // blue-500
+        'ZnNi Line Chiller': '#8b5cf6',             // violet-500
+        'ZnNi Line Asset': '#ec4899',               // pink-500
+        'ZnNi Line Filter': '#f59e0b',              // amber-500
+        'ICP Analysis Projects': '#ef4444',          // red-500
+        'ZnNi Line Projects': '#6366f1',            // indigo-500
+        'ZnNi Extraction': '#14b8a6',               // teal-500
+        'Vat 8 Remove & Install': '#84cc16',        // lime-500
+        'SF Documentation': '#06b6d4',              // cyan-500
         'ZnNi Line Development Plan-08.xml': '#6b7280'  // fallback gray
     };
     
@@ -309,14 +298,15 @@ function createRoadmapViewTraces() {
                 }
             },
             name: projectGroup,
-            text: `${completionPercent}% Complete`,
-            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr]],
+            text: '',  // Remove % complete from bar
+            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr, completionPercent]],
             hovertemplate: '<b>%{y}</b><br>' +
                           'Tasks: %{customdata[1]} total<br>' +
                           'Completed: %{customdata[2]}<br>' +
                           'In Progress: %{customdata[3]}<br>' +
                           'Status: %{customdata[4]}<br>' +
-                          'Timeline: %{customdata[5]} to %{customdata[6]}' +
+                          'Timeline: %{customdata[5]} to %{customdata[6]}<br>' +
+                          'Progress: %{customdata[7]}%' +
                           '<extra></extra>',
             showlegend: false
         });
@@ -339,20 +329,25 @@ function getLayout() {
         xaxis: {
             title: 'Date',
             type: 'date',
-            tickformat: '%Y-%m-%d'
+            tickformat: '%Y-%m-%d',
+            tickangle: -45  // Rotate x-axis labels to 45 degrees
         },
         yaxis: {
-            title: currentView === 'detail' ? 'Milestones' : 'Projects',
-            automargin: true
+            title: {
+                text: currentView === 'detail' ? 'Milestones' : 'Projects',
+                standoff: 20  // Move y-axis title away from axis to avoid nested appearance
+            },
+            automargin: true,
+            autorange: true  // Allow proper alignment, not just left-justified
         },
         barmode: 'overlay',
         bargap: 0.2,
-        height: 600,
+        height: 500,  // Reduce size to fit better
         margin: {
-            l: 250,
+            l: 200,  // Adjusted left margin
             r: 80,
             t: 80,
-            b: 80
+            b: 100  // Increased bottom margin for rotated labels
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
@@ -377,28 +372,9 @@ const config = {
 
 // Function to render the chart
 function renderChart() {
-    const traces = currentView === 'detail' ? createDetailViewTraces() : createRoadmapViewTraces();
+    const traces = createRoadmapViewTraces();  // Always use roadmap view
     const layout = getLayout();
     Plotly.newPlot(chartDiv, traces, layout, config);
-}
-
-// Function to switch view mode
-function switchView(view) {
-    currentView = view;
-    
-    // Update button styles
-    const detailBtn = document.getElementById('detailViewBtn');
-    const roadmapBtn = document.getElementById('roadmapViewBtn');
-    
-    if (view === 'detail') {
-        detailBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
-        roadmapBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
-    } else {
-        detailBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
-        roadmapBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
-    }
-    
-    renderChart();
 }
 
 // Function to toggle all projects
