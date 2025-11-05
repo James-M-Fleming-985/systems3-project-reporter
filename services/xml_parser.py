@@ -384,6 +384,11 @@ class MSProjectXMLParser:
                             print(f"  Found UID via child: {child.text}")
                         break
             
+            # Debug: Check state after child iteration
+            if len(milestones) < 3:
+                print(f"  After iteration - current_task_uid: {current_task_uid}")
+                print(f"  After iteration - has text: {current_task_uid.text if current_task_uid else 'None'}")
+            
             # Convert UID to string for dictionary lookup
             uid_str = str(current_task_uid.text) if current_task_uid and current_task_uid.text else None
             
