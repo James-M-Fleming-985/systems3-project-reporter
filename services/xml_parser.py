@@ -365,13 +365,23 @@ class MSProjectXMLParser:
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
             
+            # Debug: Check initial state
+            if len(milestones) < 3:
+                print(f"DEBUG: Initial UID check for '{milestone_data['name']}'")
+                print(f"  _find_element returned: {current_task_uid}")
+                print(f"  Has text: {current_task_uid.text if current_task_uid else 'No element'}")
+            
             # Workaround: _find_element sometimes returns element with no text
             # Use direct child iteration to find UID with text
             if not current_task_uid or not current_task_uid.text:
+                if len(milestones) < 3:
+                    print(f"  Using direct child iteration...")
                 for child in task:
                     tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                     if tag_name == 'UID' and child.text:
                         current_task_uid = child
+                        if len(milestones) < 3:
+                            print(f"  Found UID via child: {child.text}")
                         break
             
             # Convert UID to string for dictionary lookup
