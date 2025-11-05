@@ -163,144 +163,111 @@ class PowerPointExporter:
         subtitle.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
     
     def _add_gantt_roadmap_slide(self, prs, projects):
-        """Add Gantt-style roadmap showing all projects as timeline bars"""
-        slide_layout = prs.slide_layouts[5]  # Blank layout
+        """Add Gantt roadmap - clean table with project bars"""
+        slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+            Inches(0.5), Inches(0.4), Inches(9), Inches(0.5)
         )
         title_frame = title_box.text_frame
-        title_frame.text = "Project Roadmap"
-        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.text = "📊 Program Roadmap - Project Overview"
+        title_frame.paragraphs[0].font.size = Pt(24)
         title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(37, 99, 235)
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
         if not projects:
             return
         
-        # Get date range across all projects
-        all_dates = []
+        # Filter projects with valid dates
+        valid_projects = []
         for project in projects:
             try:
-                all_dates.append(datetime.strptime(project.start_date, '%Y-%m-%d'))
+                start = datetime.strptime(str(project.start_date), '%Y-%m-%d')
+                end = datetime.strptime(str(project.target_completion), '%Y-%m-%d')
+                valid_projects.append({
+                    'name': str(getattr(project, 'project_name', 'Unknown'))[:40],
+                    'start': start,
+                    'end': end,
+                    'completion': int(getattr(project, 'completion_percentage', 0) or 0)
+                })
             except:
-                pass
-            try:
-                all_dates.append(datetime.strptime(project.target_completion, '%Y-%m-%d'))
-            except:
-                pass
+                continue
         
-        if not all_dates:
+        if not valid_projects:
             return
         
-        min_date = min(all_dates)
-        max_date = max(all_dates)
-        date_range = (max_date - min_date).days
+        # Create table: Project names + timeline visualization
+        rows = len(valid_projects) + 1
+        cols = 2  # Project name | Timeline bar
         
-        # If all projects have the same dates, extend the range
-        if date_range == 0:
-            date_range = 30  # Default to 30 days
-            max_date = min_date + timedelta(days=30)
+        table = slide.shapes.add_table(
+            rows, cols,
+            Inches(0.5), Inches(1.2),
+            Inches(9), Inches(5.5)
+        ).table
         
-        # Timeline dimensions
-        timeline_left = Inches(2)
-        timeline_width = Inches(7)
-        timeline_top = Inches(1.3)
-        row_height = Inches(0.45)
+        # Set column widths
+        table.columns[0].width = Inches(3.5)  # Project names
+        table.columns[1].width = Inches(5.5)  # Timeline
         
-        # Draw timeline axis (months)
-        current_month = min_date.replace(day=1)
-        month_x = timeline_left
+        # Header row
+        header_cells = ['Project', 'Timeline & Completion']
+        for col_idx, header in enumerate(header_cells):
+            cell = table.cell(0, col_idx)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(249, 250, 251)
+            cell.text_frame.paragraphs[0].font.size = Pt(11)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
         
-        while current_month <= max_date:
-            days_from_start = (current_month - min_date).days
-            x_pos = timeline_left + (days_from_start / date_range) * timeline_width
-            
-            # Month label
-            month_box = slide.shapes.add_textbox(
-                x_pos, Inches(1.1), Inches(0.8), Inches(0.2)
-            )
-            month_box.text_frame.text = current_month.strftime('%b %y')
-            month_box.text_frame.paragraphs[0].font.size = Pt(8)
-            month_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
-            
-            # Next month
-            if current_month.month == 12:
-                current_month = datetime(current_month.year + 1, 1, 1)
-            else:
-                current_month = datetime(current_month.year, current_month.month + 1, 1)
-        
-        # Draw each project as a bar
-        y_pos = timeline_top
-        for idx, project in enumerate(projects[:10]):  # Limit to 10 projects
-            try:
-                start = datetime.strptime(project.start_date, '%Y-%m-%d')
-                end = datetime.strptime(project.target_completion, '%Y-%m-%d')
-            except (ValueError, AttributeError, TypeError):
-                continue
-            
+        # Data rows
+        for idx, proj in enumerate(valid_projects, 1):
             # Project name
-            name_box = slide.shapes.add_textbox(
-                Inches(0.5), y_pos, Inches(1.4), row_height
-            )
-            project_name = getattr(project, 'project_name', 'Unknown')
-            name_box.text_frame.text = str(project_name)[:20]
-            name_box.text_frame.paragraphs[0].font.size = Pt(9)
-            name_box.text_frame.paragraphs[0].font.bold = True
-            name_box.text_frame.paragraphs[0].alignment = PP_ALIGN.RIGHT
-            name_box.text_frame.vertical_anchor = 1  # Middle
+            name_cell = table.cell(idx, 0)
+            name_cell.text = proj['name']
+            name_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            name_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
+            name_cell.vertical_anchor = 1  # Middle
             
-            # Calculate bar position and width
-            days_to_start = (start - min_date).days
-            bar_left = timeline_left + (days_to_start / date_range) * timeline_width
+            # Timeline description (since visual bars are complex in tables)
+            timeline_cell = table.cell(idx, 1)
+            start_str = proj['start'].strftime('%b %Y')
+            end_str = proj['end'].strftime('%b %Y')
+            duration_days = (proj['end'] - proj['start']).days
+            duration_months = max(1, duration_days // 30)
             
-            duration_days = max((end - start).days, 1)  # Ensure at least 1 day
-            bar_width = max((duration_days / date_range) * timeline_width, Inches(0.1))  # Minimum width
-            
-            # Ensure bar stays within bounds
-            if bar_left + bar_width > timeline_left + timeline_width:
-                bar_width = (timeline_left + timeline_width) - bar_left
-            
-            # Draw bar
-            bar = slide.shapes.add_shape(
-                1,  # Rectangle
-                bar_left, y_pos + Inches(0.05),
-                bar_width, Inches(0.35)
+            timeline_text = (
+                f"{start_str} → {end_str}  |  "
+                f"{duration_months} months  |  "
+                f"{proj['completion']}% Complete"
             )
             
-            # Color by completion percentage
-            completion = getattr(project, 'completion_percentage', 0) or 0
-            if completion >= 100:
-                bar.fill.solid()
-                bar.fill.fore_color.rgb = RGBColor(34, 197, 94)  # Green
-            elif completion >= 50:
-                bar.fill.solid()
-                bar.fill.fore_color.rgb = RGBColor(59, 130, 246)  # Blue
+            p = timeline_cell.text_frame.paragraphs[0]
+            p.text = timeline_text
+            p.font.size = Pt(9)
+            
+            # Color code by completion
+            if proj['completion'] >= 100:
+                p.font.color.rgb = RGBColor(34, 197, 94)  # Green
+                p.font.bold = True
+            elif proj['completion'] >= 50:
+                p.font.color.rgb = RGBColor(59, 130, 246)  # Blue
             else:
-                bar.fill.solid()
-                bar.fill.fore_color.rgb = RGBColor(156, 163, 175)  # Gray
+                p.font.color.rgb = RGBColor(107, 114, 128)  # Gray
             
-            bar.line.color.rgb = RGBColor(255, 255, 255)
-            bar.line.width = Pt(1)
+            timeline_cell.vertical_anchor = 1  # Middle
             
-            # Completion percentage label on bar
-            pct_box = slide.shapes.add_textbox(
-                bar_left, y_pos + Inches(0.05),
-                bar_width, Inches(0.35)
-            )
-            pct_box.text_frame.text = f"{int(completion)}%"
-            pct_box.text_frame.paragraphs[0].font.size = Pt(8)
-            pct_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            pct_box.text_frame.paragraphs[0].font.bold = True
-            pct_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-            pct_box.text_frame.vertical_anchor = 1  # Middle
-            
-            y_pos += row_height
+            # Alternating row colors
+            if idx % 2 == 0:
+                for col in range(cols):
+                    table.cell(idx, col).fill.solid()
+                    table.cell(idx, col).fill.fore_color.rgb = RGBColor(249, 250, 251)
     
     def _add_milestones_slide_app_format(self, prs, milestones):
-        """Add milestones slide matching app format - 3-column time-based view (Last/This/Next Month)"""
+        """Add milestones slide - clean table format organized by time period"""
         slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
@@ -310,194 +277,148 @@ class PowerPointExporter:
         )
         title_frame = title_box.text_frame
         title_frame.text = "📍 Upcoming Milestones"
-        title_frame.paragraphs[0].font.size = Pt(28)
+        title_frame.paragraphs[0].font.size = Pt(24)
         title_frame.paragraphs[0].font.bold = True
         title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
-        # Calculate date ranges for last, this, and next month
+        # Calculate date ranges
         today = datetime.now()
-        
-        # This month
         this_month_start = datetime(today.year, today.month, 1)
-        if today.month == 12:
-            this_month_end = datetime(today.year + 1, 1, 1) - timedelta(days=1)
-        else:
-            this_month_end = datetime(today.year, today.month + 1, 1) - timedelta(days=1)
         
-        # Last month
-        if today.month == 1:
-            last_month_start = datetime(today.year - 1, 12, 1)
-            last_month_end = datetime(today.year, 1, 1) - timedelta(days=1)
-        else:
-            last_month_start = datetime(today.year, today.month - 1, 1)
-            last_month_end = datetime(today.year, today.month, 1) - timedelta(days=1)
-        
-        # Next month
-        if today.month == 12:
-            next_month_start = datetime(today.year + 1, 1, 1)
-            next_month_end = datetime(today.year + 1, 2, 1) - timedelta(days=1)
-        else:
-            next_month_start = datetime(today.year, today.month + 1, 1)
-            if today.month == 11:
-                next_month_end = datetime(today.year + 1, 1, 1) - timedelta(days=1)
-            else:
-                next_month_end = datetime(today.year, today.month + 2, 1) - timedelta(days=1)
-        
-        # Categorize milestones by time period
-        last_month_milestones = []
-        this_month_milestones = []
-        next_month_milestones = []
+        # Categorize milestones
+        last_month = []
+        this_month = []
+        next_month = []
         
         for milestone in milestones:
             try:
                 target = datetime.strptime(str(milestone.get('target_date', '')), '%Y-%m-%d')
-                if last_month_start <= target <= last_month_end:
-                    last_month_milestones.append(milestone)
-                elif this_month_start <= target <= this_month_end:
-                    this_month_milestones.append(milestone)
-                elif next_month_start <= target <= next_month_end:
-                    next_month_milestones.append(milestone)
-            except:
-                # If date parsing fails, put in this month by default
-                this_month_milestones.append(milestone)
-        
-        # Column layout
-        col_width = Inches(3.0)
-        col_spacing = Inches(0.2)
-        left_col_x = Inches(0.5)
-        center_col_x = left_col_x + col_width + col_spacing
-        right_col_x = center_col_x + col_width + col_spacing
-        top_y = Inches(1.0)
-        
-        # Helper function to add column with milestones
-        def add_milestone_column(x_pos, title, icon, date_range, milestones_list):
-            # Column header
-            header_box = slide.shapes.add_textbox(x_pos, top_y, col_width, Inches(0.4))
-            hf = header_box.text_frame
-            p = hf.paragraphs[0]
-            p.text = f"{icon} {title}"
-            p.font.size = Pt(14)
-            p.font.bold = True
-            p.font.color.rgb = RGBColor(37, 99, 235) if icon == "📍" else RGBColor(75, 85, 99)
-            
-            # Date range
-            date_box = slide.shapes.add_textbox(x_pos, top_y + Inches(0.35), col_width, Inches(0.25))
-            df = date_box.text_frame
-            df.paragraphs[0].text = date_range
-            df.paragraphs[0].font.size = Pt(9)
-            df.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
-            
-            # Add milestone cards
-            card_y = top_y + Inches(0.7)
-            card_height = Inches(1.0)
-            card_spacing = Inches(0.12)
-            
-            for milestone in milestones_list[:6]:  # Limit to 6 per column
-                if card_y + card_height > Inches(7):
-                    break
-                
-                # Determine colors based on status
-                status = milestone.get('status', 'NOT_STARTED')
-                if status == 'COMPLETED':
-                    border_color = RGBColor(34, 197, 94)  # Green
-                    bg_color = RGBColor(240, 253, 244)
-                elif status == 'IN_PROGRESS':
-                    border_color = RGBColor(234, 179, 8)  # Yellow
-                    bg_color = RGBColor(254, 252, 232)
+                if target < this_month_start:
+                    last_month.append(milestone)
+                elif target.month == today.month and target.year == today.year:
+                    this_month.append(milestone)
                 else:
-                    border_color = RGBColor(59, 130, 246)  # Blue
-                    bg_color = RGBColor(239, 246, 255)
-                
-                # Card background
-                card = slide.shapes.add_shape(1, x_pos, card_y, col_width, card_height)
-                card.fill.solid()
-                card.fill.fore_color.rgb = bg_color
-                card.line.color.rgb = border_color
-                card.line.width = Pt(3)
-                
-                # Card text
-                text_box = slide.shapes.add_textbox(
-                    x_pos + Inches(0.12), card_y + Inches(0.08),
-                    col_width - Inches(0.24), card_height - Inches(0.16)
-                )
-                tf = text_box.text_frame
-                tf.word_wrap = True
-                
-                # Milestone name
-                p = tf.paragraphs[0]
-                p.text = str(milestone.get('name', 'Unnamed'))[:45]
-                p.font.size = Pt(10)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(31, 41, 55)
-                
-                # Project/Category
-                p = tf.add_paragraph()
-                project = milestone.get('parent_project') or milestone.get('project', '')
-                p.text = str(project)[:40]
-                p.font.size = Pt(8)
-                p.font.color.rgb = RGBColor(234, 179, 8)  # Yellow/orange for category
-                p.space_before = Pt(2)
-                
-                # Target date
-                p = tf.add_paragraph()
-                target_date = milestone.get('target_date', '')
-                try:
-                    date_obj = datetime.strptime(str(target_date), '%Y-%m-%d')
-                    date_str = date_obj.strftime('%Y-%m-%d')
-                except:
-                    date_str = str(target_date)
-                p.text = f"Target: {date_str}"
-                p.font.size = Pt(8)
-                p.font.color.rgb = RGBColor(107, 114, 128)
-                p.space_before = Pt(2)
-                
-                # Status
-                p = tf.add_paragraph()
-                status_icons = {'COMPLETED': '✓ COMPLETED', 'IN_PROGRESS': '⏳ IN PROGRESS', 'NOT_STARTED': '○ NOT STARTED'}
-                status_text = status_icons.get(status, status)
-                p.text = status_text
-                p.font.size = Pt(8)
-                p.font.color.rgb = border_color
-                p.space_before = Pt(2)
-                
-                # Resources
-                resources = milestone.get('resources')
-                if resources:
-                    p = tf.add_paragraph()
-                    p.text = f"👤 {str(resources)[:30]}"
-                    p.font.size = Pt(8)
-                    p.font.color.rgb = RGBColor(107, 114, 128)
-                    p.space_before = Pt(2)
-                
-                card_y += card_height + card_spacing
+                    next_month.append(milestone)
+            except:
+                this_month.append(milestone)
         
-        # Add three columns
-        add_milestone_column(
-            left_col_x,
-            "Last Month",
-            "📅",
-            last_month_start.strftime('%b %d') + " - " + last_month_end.strftime('%b %d, %Y'),
-            last_month_milestones
+        # Create comprehensive table
+        all_display_milestones = (
+            [(m, 'Last Month') for m in last_month[:5]] +
+            [(m, 'This Month') for m in this_month[:5]] +
+            [(m, 'Next Month') for m in next_month[:5]]
         )
         
-        add_milestone_column(
-            center_col_x,
-            "This Month",
-            "📍",
-            this_month_start.strftime('%b %d') + " - " + this_month_end.strftime('%b %d, %Y'),
-            this_month_milestones
-        )
+        if not all_display_milestones:
+            no_data = slide.shapes.add_textbox(Inches(2), Inches(3), Inches(6), Inches(1))
+            no_data.text_frame.text = "No milestones"
+            no_data.text_frame.paragraphs[0].font.size = Pt(18)
+            no_data.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            no_data.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
+            return
         
-        add_milestone_column(
-            right_col_x,
-            "Next Month",
-            "🔜",
-            next_month_start.strftime('%b %d') + " - " + next_month_end.strftime('%b %d, %Y'),
-            next_month_milestones
-        )
+        # Create table
+        rows = len(all_display_milestones) + 1
+        cols = 5  # Period, Milestone, Project, Target Date, Status
+        
+        table = slide.shapes.add_table(
+            rows, cols,
+            Inches(0.5), Inches(1.0),
+            Inches(9), Inches(6)
+        ).table
+        
+        # Set column widths
+        table.columns[0].width = Inches(1.2)  # Period
+        table.columns[1].width = Inches(3.0)  # Milestone
+        table.columns[2].width = Inches(2.2)  # Project
+        table.columns[3].width = Inches(1.4)  # Date
+        table.columns[4].width = Inches(1.2)  # Status
+        
+        # Header row
+        headers = ['Period', 'Milestone', 'Project', 'Target Date', 'Status']
+        for col_idx, header in enumerate(headers):
+            cell = table.cell(0, col_idx)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(249, 250, 251)
+            cell.text_frame.paragraphs[0].font.size = Pt(10)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+        
+        # Data rows
+        for idx, (milestone, period) in enumerate(all_display_milestones, 1):
+            # Period
+            period_cell = table.cell(idx, 0)
+            if period == 'This Month':
+                period_cell.text = "📍 This"
+            elif period == 'Last Month':
+                period_cell.text = "📅 Last"
+            else:
+                period_cell.text = "🔜 Next"
+            period_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            period_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            period_cell.vertical_anchor = 1
+            
+            # Milestone name
+            name_cell = table.cell(idx, 1)
+            name_cell.text = str(milestone.get('name', 'Unnamed'))[:50]
+            name_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            name_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
+            name_cell.text_frame.word_wrap = True
+            name_cell.vertical_anchor = 1
+            
+            # Project
+            proj_cell = table.cell(idx, 2)
+            project = milestone.get('parent_project') or milestone.get('project', '')
+            proj_cell.text = str(project)[:35]
+            proj_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            proj_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            proj_cell.text_frame.word_wrap = True
+            proj_cell.vertical_anchor = 1
+            
+            # Target date
+            date_cell = table.cell(idx, 3)
+            try:
+                target_date = datetime.strptime(str(milestone.get('target_date', '')), '%Y-%m-%d')
+                date_cell.text = target_date.strftime('%b %d, %Y')
+            except:
+                date_cell.text = str(milestone.get('target_date', ''))[:12]
+            date_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            date_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            date_cell.vertical_anchor = 1
+            
+            # Status
+            status_cell = table.cell(idx, 4)
+            status = milestone.get('status', 'NOT_STARTED')
+            
+            if status == 'COMPLETED':
+                status_cell.text = "✓ Done"
+                status_cell.fill.solid()
+                status_cell.fill.fore_color.rgb = RGBColor(220, 252, 231)  # Green bg
+                status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(22, 163, 74)
+            elif status == 'IN_PROGRESS':
+                status_cell.text = "⏳ Active"
+                status_cell.fill.solid()
+                status_cell.fill.fore_color.rgb = RGBColor(254, 249, 195)  # Yellow bg
+                status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(161, 98, 7)
+            else:
+                status_cell.text = "○ Pending"
+                status_cell.fill.solid()
+                status_cell.fill.fore_color.rgb = RGBColor(243, 244, 246)  # Gray bg
+                status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            
+            status_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            status_cell.text_frame.paragraphs[0].font.bold = True
+            status_cell.vertical_anchor = 1
+            
+            # Alternating row colors
+            if idx % 2 == 0:
+                for col in [0, 1, 2, 3]:  # Not status column
+                    table.cell(idx, col).fill.solid()
+                    table.cell(idx, col).fill.fore_color.rgb = RGBColor(249, 250, 251)
     
     def _add_risks_slide_app_format(self, prs, risks):
-        """Add risks slide matching app format - cards grouped by severity"""
+        """Add risks slide - clean table format"""
         slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
@@ -507,157 +428,112 @@ class PowerPointExporter:
         )
         title_frame = title_box.text_frame
         title_frame.text = "⚠️ Risk Analysis"
-        title_frame.paragraphs[0].font.size = Pt(28)
+        title_frame.paragraphs[0].font.size = Pt(24)
         title_frame.paragraphs[0].font.bold = True
         title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
-        # Group risks by severity
-        risks_by_severity = {'HIGH': [], 'MEDIUM': [], 'LOW': []}
-        for risk in risks:
-            severity = risk.get('severity', 'LOW') or 'LOW'
-            if severity in risks_by_severity:
-                risks_by_severity[severity].append(risk)
-        
-        # Check if we have any risks
-        total_risks = len(risks_by_severity['HIGH']) + len(risks_by_severity['MEDIUM']) + len(risks_by_severity['LOW'])
-        if total_risks == 0:
-            no_data_box = slide.shapes.add_textbox(
-                Inches(2), Inches(3), Inches(6), Inches(1)
-            )
-            no_data_box.text_frame.text = "No active risks"
-            no_data_box.text_frame.paragraphs[0].font.size = Pt(18)
-            no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-            no_data_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
+        if not risks:
+            no_data = slide.shapes.add_textbox(Inches(2), Inches(3), Inches(6), Inches(1))
+            no_data.text_frame.text = "No active risks"
+            no_data.text_frame.paragraphs[0].font.size = Pt(18)
+            no_data.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            no_data.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
             return
         
-        # Display settings
-        current_y = Inches(1.0)
-        card_width = Inches(9)
-        card_height = Inches(1.1)
-        left_margin = Inches(0.5)
-        spacing = Inches(0.1)
+        # Sort by severity
+        severity_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
+        sorted_risks = sorted(
+            risks,
+            key=lambda r: severity_order.get(r.get('severity', 'LOW'), 3)
+        )[:10]
         
-        # HIGH Severity Risks (Red)
-        if risks_by_severity['HIGH']:
-            # Section header
-            header_box = slide.shapes.add_textbox(
-                left_margin, current_y, Inches(9), Inches(0.4)
-            )
-            header_frame = header_box.text_frame
-            header_frame.text = f"🔴 HIGH Severity Risks ({len(risks_by_severity['HIGH'])})"
-            header_frame.paragraphs[0].font.size = Pt(16)
-            header_frame.paragraphs[0].font.bold = True
-            header_frame.paragraphs[0].font.color.rgb = RGBColor(239, 68, 68)
-            current_y += Inches(0.5)
-            
-            for risk in risks_by_severity['HIGH'][:3]:  # Show top 3
-                if current_y + card_height > Inches(6.8):
-                    break
-                    
-                # Card background
-                card = slide.shapes.add_shape(
-                    1, left_margin, current_y, card_width, card_height
-                )
-                card.fill.solid()
-                card.fill.fore_color.rgb = RGBColor(254, 242, 242)  # Red-50
-                card.line.color.rgb = RGBColor(239, 68, 68)  # Red-500
-                card.line.width = Pt(4)
-                
-                # Text content
-                text_box = slide.shapes.add_textbox(
-                    left_margin + Inches(0.15), current_y + Inches(0.1),
-                    card_width - Inches(0.3), card_height - Inches(0.2)
-                )
-                tf = text_box.text_frame
-                tf.word_wrap = True
-                
-                # Description
-                p = tf.paragraphs[0]
-                desc = str(risk.get('description', 'No description'))[:80]
-                p.text = desc
-                p.font.size = Pt(11)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(31, 41, 55)
-                
-                # Project and status
-                p = tf.add_paragraph()
-                project = str(risk.get('project', ''))[:30]
-                status = str(risk.get('status', 'OPEN'))
-                p.text = f"Project: {project}  |  Status: {status}"
-                p.font.size = Pt(9)
-                p.font.color.rgb = RGBColor(75, 85, 99)
-                p.space_before = Pt(4)
-                
-                # Mitigation
-                p = tf.add_paragraph()
-                mitigation = str(risk.get('mitigation', 'No mitigation plan'))[:90]
-                p.text = f"Mitigation: {mitigation}"
-                p.font.size = Pt(9)
-                p.font.color.rgb = RGBColor(107, 114, 128)
-                p.space_before = Pt(4)
-                
-                current_y += card_height + spacing
+        # Create table
+        rows = len(sorted_risks) + 1
+        cols = 5  # Severity, Description, Project, Status, Mitigation
         
-        # MEDIUM Severity Risks (Yellow)
-        if risks_by_severity['MEDIUM'] and current_y + Inches(0.9) < Inches(6.8):
-            # Section header
-            header_box = slide.shapes.add_textbox(
-                left_margin, current_y, Inches(9), Inches(0.4)
-            )
-            header_frame = header_box.text_frame
-            header_frame.text = f"🟡 MEDIUM Severity Risks ({len(risks_by_severity['MEDIUM'])})"
-            header_frame.paragraphs[0].font.size = Pt(16)
-            header_frame.paragraphs[0].font.bold = True
-            header_frame.paragraphs[0].font.color.rgb = RGBColor(234, 179, 8)
-            current_y += Inches(0.5)
+        table = slide.shapes.add_table(
+            rows, cols,
+            Inches(0.5), Inches(1.0),
+            Inches(9), Inches(6)
+        ).table
+        
+        # Set column widths
+        table.columns[0].width = Inches(1.0)  # Severity
+        table.columns[1].width = Inches(2.8)  # Description
+        table.columns[2].width = Inches(1.8)  # Project
+        table.columns[3].width = Inches(1.0)  # Status
+        table.columns[4].width = Inches(2.4)  # Mitigation
+        
+        # Header row
+        headers = ['Severity', 'Risk Description', 'Project', 'Status', 'Mitigation']
+        for col_idx, header in enumerate(headers):
+            cell = table.cell(0, col_idx)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(249, 250, 251)
+            cell.text_frame.paragraphs[0].font.size = Pt(10)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+        
+        # Data rows
+        for idx, risk in enumerate(sorted_risks, 1):
+            # Severity
+            sev_cell = table.cell(idx, 0)
+            severity = str(risk.get('severity', 'LOW'))
+            sev_cell.text = severity
+            sev_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            sev_cell.text_frame.paragraphs[0].font.bold = True
+            sev_cell.vertical_anchor = 1
             
-            for risk in risks_by_severity['MEDIUM'][:2]:  # Show top 2
-                if current_y + card_height > Inches(6.8):
-                    break
-                    
-                # Card background
-                card = slide.shapes.add_shape(
-                    1, left_margin, current_y, card_width, card_height
-                )
-                card.fill.solid()
-                card.fill.fore_color.rgb = RGBColor(254, 252, 232)  # Yellow-50
-                card.line.color.rgb = RGBColor(234, 179, 8)  # Yellow-500
-                card.line.width = Pt(4)
-                
-                # Text content
-                text_box = slide.shapes.add_textbox(
-                    left_margin + Inches(0.15), current_y + Inches(0.1),
-                    card_width - Inches(0.3), card_height - Inches(0.2)
-                )
-                tf = text_box.text_frame
-                tf.word_wrap = True
-                
-                # Description
-                p = tf.paragraphs[0]
-                desc = str(risk.get('description', 'No description'))[:80]
-                p.text = desc
-                p.font.size = Pt(11)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(31, 41, 55)
-                
-                # Project and status
-                p = tf.add_paragraph()
-                project = str(risk.get('project', ''))[:30]
-                status = str(risk.get('status', 'OPEN'))
-                p.text = f"Project: {project}  |  Status: {status}"
-                p.font.size = Pt(9)
-                p.font.color.rgb = RGBColor(75, 85, 99)
-                p.space_before = Pt(4)
-                
-                # Mitigation
-                p = tf.add_paragraph()
-                mitigation = str(risk.get('mitigation', 'No mitigation plan'))[:90]
-                p.text = f"Mitigation: {mitigation}"
-                p.font.size = Pt(9)
-                p.font.color.rgb = RGBColor(107, 114, 128)
-                p.space_before = Pt(4)
-                
-                current_y += card_height + spacing
+            if severity == 'HIGH':
+                sev_cell.fill.solid()
+                sev_cell.fill.fore_color.rgb = RGBColor(254, 226, 226)  # Light red
+                sev_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(185, 28, 28)
+            elif severity == 'MEDIUM':
+                sev_cell.fill.solid()
+                sev_cell.fill.fore_color.rgb = RGBColor(254, 243, 199)  # Light yellow
+                sev_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(161, 98, 7)
+            else:
+                sev_cell.fill.solid()
+                sev_cell.fill.fore_color.rgb = RGBColor(243, 244, 246)  # Light gray
+                sev_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            
+            # Description
+            desc_cell = table.cell(idx, 1)
+            desc_cell.text = str(risk.get('description', 'No description'))[:70]
+            desc_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            desc_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
+            desc_cell.text_frame.word_wrap = True
+            desc_cell.vertical_anchor = 1
+            
+            # Project
+            proj_cell = table.cell(idx, 2)
+            proj_cell.text = str(risk.get('project', ''))[:30]
+            proj_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            proj_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            proj_cell.text_frame.word_wrap = True
+            proj_cell.vertical_anchor = 1
+            
+            # Status
+            status_cell = table.cell(idx, 3)
+            status_cell.text = str(risk.get('status', 'OPEN'))[:12]
+            status_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            status_cell.vertical_anchor = 1
+            
+            # Mitigation
+            mit_cell = table.cell(idx, 4)
+            mit_cell.text = str(risk.get('mitigation', 'No mitigation plan'))[:60]
+            mit_cell.text_frame.paragraphs[0].font.size = Pt(9)
+            mit_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            mit_cell.text_frame.word_wrap = True
+            mit_cell.vertical_anchor = 1
+            
+            # Alternating row colors
+            if idx % 2 == 0:
+                for col in [1, 2, 3, 4]:  # Not severity column
+                    table.cell(idx, col).fill.solid()
+                    table.cell(idx, col).fill.fore_color.rgb = RGBColor(249, 250, 251)
     
     def _add_changes_slide_app_format(self, prs, changes):
         """Add change management slide matching app format - table with old→new dates"""
