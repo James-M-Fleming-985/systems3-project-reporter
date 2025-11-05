@@ -302,231 +302,406 @@ class PowerPointExporter:
             y_pos += row_height
     
     def _add_milestones_slide_app_format(self, prs, milestones):
-        """Add milestones slide matching app format (top 5-6 milestones)"""
-        slide_layout = prs.slide_layouts[5]  # Blank layout
+        """Add milestones slide matching app format - card-based layout with colored borders"""
+        slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+            Inches(0.5), Inches(0.3), Inches(9), Inches(0.5)
         )
         title_frame = title_box.text_frame
-        title_frame.text = "Upcoming Milestones"
-        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.text = "📍 Upcoming Milestones"
+        title_frame.paragraphs[0].font.size = Pt(28)
         title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(37, 99, 235)
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
         if not milestones:
             no_data_box = slide.shapes.add_textbox(
                 Inches(2), Inches(3), Inches(6), Inches(1)
             )
-            no_data_box.text_frame.text = "No milestones"
-            no_data_box.text_frame.paragraphs[0].font.size = Pt(24)
+            no_data_box.text_frame.text = "No upcoming milestones"
+            no_data_box.text_frame.paragraphs[0].font.size = Pt(18)
             no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            no_data_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
             return
         
-        # Create table
-        rows = len(milestones) + 1
-        cols = 5  # Name, Project, Target Date, Status, Resources
+        # Display milestones as cards (matching app's card layout)
+        card_width = Inches(4.5)
+        card_height = Inches(1.2)
+        left_margin = Inches(0.5)
+        right_margin = Inches(5.2)
+        top_start = Inches(1.0)
+        vertical_spacing = Inches(0.15)
         
-        table = slide.shapes.add_table(
-            rows, cols,
-            Inches(0.5), Inches(1.3),
-            Inches(9), Inches(5.8)
-        ).table
-        
-        # Header row
-        headers = ["Milestone", "Project", "Target Date", "Status", "Resources"]
-        for col, header in enumerate(headers):
-            cell = table.cell(0, col)
-            cell.text = header
-            cell.fill.solid()
-            cell.fill.fore_color.rgb = RGBColor(37, 99, 235)
-            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            cell.text_frame.paragraphs[0].font.bold = True
-            cell.text_frame.paragraphs[0].font.size = Pt(13)
-        
-        # Data rows
-        for idx, milestone in enumerate(milestones, 1):
-            # Milestone name
-            table.cell(idx, 0).text = str(milestone.get('name', ''))[:45]
+        for idx, milestone in enumerate(milestones):
+            # Alternate between left and right columns
+            if idx % 2 == 0:
+                x_pos = left_margin
+            else:
+                x_pos = right_margin
             
-            # Project (parent_project if available)
-            project_name = milestone.get('parent_project') or milestone.get('project', '')
-            table.cell(idx, 1).text = str(project_name)[:25]
+            row = idx // 2
+            y_pos = top_start + (row * (card_height + vertical_spacing))
             
-            # Target date
-            try:
-                target_date = datetime.strptime(milestone['target_date'], '%Y-%m-%d')
-                table.cell(idx, 2).text = target_date.strftime('%b %d, %Y')
-            except (ValueError, KeyError):
-                table.cell(idx, 2).text = str(milestone.get('target_date', ''))
+            # Stop if we exceed slide height
+            if y_pos + card_height > Inches(7):
+                break
             
-            # Status with color coding
-            status_cell = table.cell(idx, 3)
+            # Determine border color based on status
             status = milestone.get('status', 'NOT_STARTED')
-            status_cell.text = str(status).replace('_', ' ')
-            
             if status == 'COMPLETED':
-                status_cell.fill.solid()
-                status_cell.fill.fore_color.rgb = RGBColor(34, 197, 94)
-                status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            elif status == 'NOT_STARTED':
-                status_cell.fill.solid()
-                status_cell.fill.fore_color.rgb = RGBColor(156, 163, 175)
-                status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                border_color = RGBColor(34, 197, 94)  # Green
+                bg_color = RGBColor(240, 253, 244)  # Light green
+            elif status == 'IN_PROGRESS':
+                border_color = RGBColor(234, 179, 8)  # Yellow
+                bg_color = RGBColor(254, 252, 232)  # Light yellow
+            else:
+                border_color = RGBColor(156, 163, 175)  # Gray
+                bg_color = RGBColor(249, 250, 251)  # Light gray
             
-            # Resources
-            resources = milestone.get('resources', '') or ''
-            table.cell(idx, 4).text = str(resources)[:25]
+            # Create card background
+            card = slide.shapes.add_shape(
+                1,  # Rectangle
+                x_pos, y_pos,
+                card_width, card_height
+            )
+            card.fill.solid()
+            card.fill.fore_color.rgb = bg_color
+            card.line.color.rgb = border_color
+            card.line.width = Pt(4)
             
-            # Font size for data
-            for col in range(cols):
-                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(11)
+            # Add text content to card
+            text_box = slide.shapes.add_textbox(
+                x_pos + Inches(0.15), y_pos + Inches(0.1),
+                card_width - Inches(0.3), card_height - Inches(0.2)
+            )
+            tf = text_box.text_frame
+            tf.word_wrap = True
+            tf.vertical_anchor = 1  # Middle
+            
+            # Milestone name (bold)
+            p = tf.paragraphs[0]
+            p.text = str(milestone.get('name', 'Unnamed'))[:50]
+            p.font.size = Pt(12)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(31, 41, 55)
+            
+            # Project name
+            p = tf.add_paragraph()
+            project = milestone.get('parent_project') or milestone.get('project', '')
+            p.text = f"Project: {str(project)[:35]}"
+            p.font.size = Pt(9)
+            p.font.color.rgb = RGBColor(75, 85, 99)
+            p.space_before = Pt(2)
+            
+            # Target date and status on same line
+            p = tf.add_paragraph()
+            target_date = milestone.get('target_date', '')
+            try:
+                date_obj = datetime.strptime(str(target_date), '%Y-%m-%d')
+                date_str = date_obj.strftime('%b %d, %Y')
+            except:
+                date_str = str(target_date)
+            
+            status_icons = {'COMPLETED': '✓', 'IN_PROGRESS': '⏳', 'NOT_STARTED': '○'}
+            icon = status_icons.get(status, '○')
+            p.text = f"📅 {date_str}  |  {icon} {status.replace('_', ' ')}"
+            p.font.size = Pt(9)
+            p.font.color.rgb = RGBColor(107, 114, 128)
+            p.space_before = Pt(2)
+            
+            # Resources if available
+            resources = milestone.get('resources')
+            if resources:
+                p = tf.add_paragraph()
+                p.text = f"👤 {str(resources)[:40]}"
+                p.font.size = Pt(8)
+                p.font.color.rgb = RGBColor(107, 114, 128)
+                p.space_before = Pt(2)
     
     def _add_risks_slide_app_format(self, prs, risks):
-        """Add risks slide matching app format"""
-        slide_layout = prs.slide_layouts[5]  # Blank layout
+        """Add risks slide matching app format - cards grouped by severity"""
+        slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+            Inches(0.5), Inches(0.3), Inches(9), Inches(0.5)
         )
         title_frame = title_box.text_frame
-        title_frame.text = "Active Risks"
-        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.text = "⚠️ Risk Analysis"
+        title_frame.paragraphs[0].font.size = Pt(28)
         title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(239, 68, 68)  # Red
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
-        # Limit to top 10 risks
-        display_risks = risks[:10]
-        
-        # Create table
-        rows = len(display_risks) + 1
-        cols = 4  # Risk, Severity, Status, Mitigation
-        
-        table = slide.shapes.add_table(
-            rows, cols,
-            Inches(0.5), Inches(1.3),
-            Inches(9), Inches(5.8)
-        ).table
-        
-        # Header row
-        headers = ["Risk Description", "Severity", "Status", "Mitigation"]
-        for col, header in enumerate(headers):
-            cell = table.cell(0, col)
-            cell.text = header
-            cell.fill.solid()
-            cell.fill.fore_color.rgb = RGBColor(239, 68, 68)
-            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            cell.text_frame.paragraphs[0].font.bold = True
-            cell.text_frame.paragraphs[0].font.size = Pt(13)
-        
-        # Data rows
-        for idx, risk in enumerate(display_risks, 1):
-            # Risk description
-            description = risk.get('description', '') or ''
-            table.cell(idx, 0).text = str(description)[:50]
-            
-            # Severity with color
-            severity_cell = table.cell(idx, 1)
+        # Group risks by severity
+        risks_by_severity = {'HIGH': [], 'MEDIUM': [], 'LOW': []}
+        for risk in risks:
             severity = risk.get('severity', 'LOW') or 'LOW'
-            severity_cell.text = str(severity)
-            if severity == 'HIGH':
-                severity_cell.fill.solid()
-                severity_cell.fill.fore_color.rgb = RGBColor(239, 68, 68)
-                severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            elif severity == 'MEDIUM':
-                severity_cell.fill.solid()
-                severity_cell.fill.fore_color.rgb = RGBColor(251, 191, 36)
-                severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            if severity in risks_by_severity:
+                risks_by_severity[severity].append(risk)
+        
+        # Display settings
+        current_y = Inches(1.0)
+        card_width = Inches(9)
+        card_height = Inches(1.1)
+        left_margin = Inches(0.5)
+        spacing = Inches(0.1)
+        
+        # HIGH Severity Risks (Red)
+        if risks_by_severity['HIGH']:
+            # Section header
+            header_box = slide.shapes.add_textbox(
+                left_margin, current_y, Inches(9), Inches(0.4)
+            )
+            header_frame = header_box.text_frame
+            header_frame.text = f"🔴 HIGH Severity Risks ({len(risks_by_severity['HIGH'])})"
+            header_frame.paragraphs[0].font.size = Pt(16)
+            header_frame.paragraphs[0].font.bold = True
+            header_frame.paragraphs[0].font.color.rgb = RGBColor(239, 68, 68)
+            current_y += Inches(0.5)
             
-            # Status
-            status = risk.get('status', '') or ''
-            table.cell(idx, 2).text = str(status)
+            for risk in risks_by_severity['HIGH'][:3]:  # Show top 3
+                if current_y + card_height > Inches(6.8):
+                    break
+                    
+                # Card background
+                card = slide.shapes.add_shape(
+                    1, left_margin, current_y, card_width, card_height
+                )
+                card.fill.solid()
+                card.fill.fore_color.rgb = RGBColor(254, 242, 242)  # Red-50
+                card.line.color.rgb = RGBColor(239, 68, 68)  # Red-500
+                card.line.width = Pt(4)
+                
+                # Text content
+                text_box = slide.shapes.add_textbox(
+                    left_margin + Inches(0.15), current_y + Inches(0.1),
+                    card_width - Inches(0.3), card_height - Inches(0.2)
+                )
+                tf = text_box.text_frame
+                tf.word_wrap = True
+                
+                # Description
+                p = tf.paragraphs[0]
+                desc = str(risk.get('description', 'No description'))[:80]
+                p.text = desc
+                p.font.size = Pt(11)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(31, 41, 55)
+                
+                # Project and status
+                p = tf.add_paragraph()
+                project = str(risk.get('project', ''))[:30]
+                status = str(risk.get('status', 'OPEN'))
+                p.text = f"Project: {project}  |  Status: {status}"
+                p.font.size = Pt(9)
+                p.font.color.rgb = RGBColor(75, 85, 99)
+                p.space_before = Pt(4)
+                
+                # Mitigation
+                p = tf.add_paragraph()
+                mitigation = str(risk.get('mitigation', 'No mitigation plan'))[:90]
+                p.text = f"Mitigation: {mitigation}"
+                p.font.size = Pt(9)
+                p.font.color.rgb = RGBColor(107, 114, 128)
+                p.space_before = Pt(4)
+                
+                current_y += card_height + spacing
+        
+        # MEDIUM Severity Risks (Yellow)
+        if risks_by_severity['MEDIUM'] and current_y + Inches(0.9) < Inches(6.8):
+            # Section header
+            header_box = slide.shapes.add_textbox(
+                left_margin, current_y, Inches(9), Inches(0.4)
+            )
+            header_frame = header_box.text_frame
+            header_frame.text = f"🟡 MEDIUM Severity Risks ({len(risks_by_severity['MEDIUM'])})"
+            header_frame.paragraphs[0].font.size = Pt(16)
+            header_frame.paragraphs[0].font.bold = True
+            header_frame.paragraphs[0].font.color.rgb = RGBColor(234, 179, 8)
+            current_y += Inches(0.5)
             
-            # Mitigation
-            mitigation = risk.get('mitigation', '') or ''
-            table.cell(idx, 3).text = str(mitigation)[:40]
-            
-            # Font size for data
-            for col in range(cols):
-                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(10)
+            for risk in risks_by_severity['MEDIUM'][:2]:  # Show top 2
+                if current_y + card_height > Inches(6.8):
+                    break
+                    
+                # Card background
+                card = slide.shapes.add_shape(
+                    1, left_margin, current_y, card_width, card_height
+                )
+                card.fill.solid()
+                card.fill.fore_color.rgb = RGBColor(254, 252, 232)  # Yellow-50
+                card.line.color.rgb = RGBColor(234, 179, 8)  # Yellow-500
+                card.line.width = Pt(4)
+                
+                # Text content
+                text_box = slide.shapes.add_textbox(
+                    left_margin + Inches(0.15), current_y + Inches(0.1),
+                    card_width - Inches(0.3), card_height - Inches(0.2)
+                )
+                tf = text_box.text_frame
+                tf.word_wrap = True
+                
+                # Description
+                p = tf.paragraphs[0]
+                desc = str(risk.get('description', 'No description'))[:80]
+                p.text = desc
+                p.font.size = Pt(11)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(31, 41, 55)
+                
+                # Project and status
+                p = tf.add_paragraph()
+                project = str(risk.get('project', ''))[:30]
+                status = str(risk.get('status', 'OPEN'))
+                p.text = f"Project: {project}  |  Status: {status}"
+                p.font.size = Pt(9)
+                p.font.color.rgb = RGBColor(75, 85, 99)
+                p.space_before = Pt(4)
+                
+                # Mitigation
+                p = tf.add_paragraph()
+                mitigation = str(risk.get('mitigation', 'No mitigation plan'))[:90]
+                p.text = f"Mitigation: {mitigation}"
+                p.font.size = Pt(9)
+                p.font.color.rgb = RGBColor(107, 114, 128)
+                p.space_before = Pt(4)
+                
+                current_y += card_height + spacing
     
     def _add_changes_slide_app_format(self, prs, changes):
-        """Add change management slide matching app format"""
-        slide_layout = prs.slide_layouts[5]  # Blank layout
+        """Add change management slide matching app format - table with old→new dates"""
+        slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+            Inches(0.5), Inches(0.3), Inches(9), Inches(0.5)
         )
         title_frame = title_box.text_frame
-        title_frame.text = "Change Management"
-        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.text = "📅 Change Management"
+        title_frame.paragraphs[0].font.size = Pt(28)
         title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(234, 179, 8)  # Yellow
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
-        # Sort by date and take most recent 10
+        # Sort by date and take most recent
         sorted_changes = sorted(
             changes,
-            key=lambda c: datetime.strptime(c['date'], '%Y-%m-%d'),
+            key=lambda c: c.get('date', '2025-01-01'),
             reverse=True
         )[:10]
         
-        # Create table
+        if not sorted_changes:
+            return
+        
+        # Create table matching app format
         rows = len(sorted_changes) + 1
-        cols = 5  # Date, Project, Old Date, New Date, Reason
+        cols = 5  # Date, Project, Schedule Change (old→new), Reason, Impact
         
         table = slide.shapes.add_table(
             rows, cols,
-            Inches(0.5), Inches(1.3),
-            Inches(9), Inches(5.8)
+            Inches(0.5), Inches(1.0),
+            Inches(9), Inches(6)
         ).table
         
-        # Header row
-        headers = ["Change Date", "Project", "Old Date", "New Date", "Reason"]
+        # Set column widths
+        table.columns[0].width = Inches(1.2)  # Date
+        table.columns[1].width = Inches(1.8)  # Project
+        table.columns[2].width = Inches(2.5)  # Schedule Change
+        table.columns[3].width = Inches(2.3)  # Reason
+        table.columns[4].width = Inches(1.2)  # Impact
+        
+        # Header row with gray background
+        headers = ["Change Date", "Project", "Schedule Change", "Reason", "Impact"]
         for col, header in enumerate(headers):
             cell = table.cell(0, col)
             cell.text = header
             cell.fill.solid()
-            cell.fill.fore_color.rgb = RGBColor(234, 179, 8)
+            cell.fill.fore_color.rgb = RGBColor(249, 250, 251)  # Gray-50
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
             cell.text_frame.paragraphs[0].font.bold = True
-            cell.text_frame.paragraphs[0].font.size = Pt(13)
+            cell.text_frame.paragraphs[0].font.size = Pt(10)
+            cell.text_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
         
         # Data rows
         for idx, change in enumerate(sorted_changes, 1):
             # Change date
             try:
-                change_date = datetime.strptime(change['date'], '%Y-%m-%d')
-                table.cell(idx, 0).text = change_date.strftime('%b %d, %Y')
-            except (ValueError, KeyError):
-                table.cell(idx, 0).text = str(change.get('date', ''))
+                change_date = datetime.strptime(str(change.get('date', '')), '%Y-%m-%d')
+                date_str = change_date.strftime('%b %d, %Y')
+            except:
+                date_str = str(change.get('date', ''))
+            
+            cell = table.cell(idx, 0)
+            cell.text = date_str
+            cell.text_frame.paragraphs[0].font.size = Pt(9)
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
             
             # Project
-            project = change.get('project', '') or ''
-            table.cell(idx, 1).text = str(project)[:20]
+            project = str(change.get('project', ''))[:25]
+            cell = table.cell(idx, 1)
+            cell.text = project
+            cell.text_frame.paragraphs[0].font.size = Pt(9)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
             
-            # Old date
+            # Schedule Change (old → new) with color coding
             try:
-                old_date = datetime.strptime(change['old_date'], '%Y-%m-%d')
-                table.cell(idx, 2).text = old_date.strftime('%b %d, %Y')
-            except (ValueError, KeyError):
-                table.cell(idx, 2).text = str(change.get('old_date', ''))
+                old_date = datetime.strptime(str(change.get('old_date', '')), '%Y-%m-%d')
+                old_str = old_date.strftime('%b %d')
+            except:
+                old_str = str(change.get('old_date', ''))[:10]
             
-            # New date
             try:
-                new_date = datetime.strptime(change['new_date'], '%Y-%m-%d')
-                table.cell(idx, 3).text = new_date.strftime('%b %d, %Y')
-            except (ValueError, KeyError):
-                table.cell(idx, 3).text = str(change.get('new_date', ''))
+                new_date = datetime.strptime(str(change.get('new_date', '')), '%Y-%m-%d')
+                new_str = new_date.strftime('%b %d')
+            except:
+                new_str = str(change.get('new_date', ''))[:10]
+            
+            cell = table.cell(idx, 2)
+            tf = cell.text_frame
+            tf.clear()
+            
+            # Old date (red, strikethrough)
+            p = tf.paragraphs[0]
+            run = p.add_run()
+            run.text = old_str
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(220, 38, 38)  # Red
+            
+            # Arrow
+            run = p.add_run()
+            run.text = " → "
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(107, 114, 128)
+            
+            # New date (green, bold)
+            run = p.add_run()
+            run.text = new_str
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(22, 163, 74)  # Green
+            run.font.bold = True
             
             # Reason
-            reason = change.get('reason', '') or ''
-            table.cell(idx, 4).text = str(reason)[:35]
+            reason = str(change.get('reason', ''))[:45]
+            cell = table.cell(idx, 3)
+            cell.text = reason
+            cell.text_frame.paragraphs[0].font.size = Pt(9)
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+            cell.text_frame.word_wrap = True
             
-            # Font size for data
-            for col in range(cols):
-                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(10)
+            # Impact
+            impact = str(change.get('impact', ''))[:20]
+            cell = table.cell(idx, 4)
+            cell.text = impact
+            cell.text_frame.paragraphs[0].font.size = Pt(8)
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
+            cell.text_frame.word_wrap = True
+            
+            # Add subtle row background (alternating)
+            if idx % 2 == 0:
+                for col in range(cols):
+                    table.cell(idx, col).fill.solid()
+                    table.cell(idx, col).fill.fore_color.rgb = RGBColor(249, 250, 251)

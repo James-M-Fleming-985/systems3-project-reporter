@@ -1,0 +1,125 @@
+# PowerPoint Report Requirements
+# Systems³ Project Reporter - Report Generation Specifications
+# Last Updated: 2025-11-05
+
+report_structure:
+  title: "Systems³ Project Reporter"
+  description: "PowerPoint slides must replicate the app's visual format exactly"
+  
+slides:
+  1_title_page:
+    format: "Standard title slide"
+    content:
+      - "Systems³ Project Reporter title"
+      - "Generated date"
+      - "Project count and milestone summary"
+    
+  2_roadmap_gantt:
+    format: "EXACT REPLICA of app's Gantt/Roadmap page"
+    requirement: "Same format as the one in the application"
+    content:
+      - "Display all ~10 projects as Gantt chart"
+      - "Visual timeline bars showing project duration"
+      - "Same appearance as app's roadmap view"
+    notes:
+      - "User sees Gantt chart in app - replicate that visual"
+      - "Does NOT need to be interactive"
+      - "Static snapshot of the timeline view"
+    
+  3_milestones:
+    format: "EXACT REPLICA of app's Milestone page"
+    requirement: "Use the same format as in the app"
+    display_rules:
+      quantity: "Top 5-6 milestones (depending on how many fit on slide)"
+      order: "Same order as displayed in app (sorted by target date)"
+      layout: "Match the milestone cards/table from app exactly"
+    content:
+      - "Milestone name"
+      - "Project name"
+      - "Parent project (if applicable)"
+      - "Target date"
+      - "Status"
+      - "Resources"
+      - "Completion percentage (if applicable)"
+    notes:
+      - "Must fit all information that appears in app view"
+      - "Should look like screenshot of app milestone view"
+      - "Must remain editable in PowerPoint"
+    
+  4_risks:
+    format: "EXACT REPLICA of app's Risk page"
+    requirement: "Use the same format as the app"
+    display_rules:
+      quantity: "Top 10 risks (or whatever fits on slide)"
+      layout: "Match the risk cards/table from app exactly"
+    content:
+      - "Risk description"
+      - "Severity (with color coding)"
+      - "Status"
+      - "Mitigation plan"
+      - "Associated project"
+    notes:
+      - "Should look like screenshot of app risk view"
+      - "Must remain editable in PowerPoint"
+    
+  5_change_management:
+    format: "EXACT REPLICA of app's Change Management page"
+    requirement: "Use the same format as the app"
+    display_rules:
+      quantity: "10 most recent changes (or whatever fits on slide)"
+      order: "Most recent first (descending by date)"
+      layout: "Match the change cards/table from app exactly"
+    content:
+      - "Change date"
+      - "Project affected"
+      - "Old target date"
+      - "New target date"
+      - "Reason for change"
+      - "Impact (if applicable)"
+    notes:
+      - "Should look like screenshot of app change management view"
+      - "Must remain editable in PowerPoint"
+
+design_principles:
+  primary_goal: "Replicate what we see in the app on the specific pages"
+  key_requirements:
+    - "Each slide should be a snapshot of the corresponding app page"
+    - "Use same colors, fonts, and layout as app"
+    - "All content must remain editable (native PowerPoint objects, not images)"
+    - "Professional appearance matching the web app's design"
+    - "Fit content appropriately on slides (top 5-6 milestones, top 10 risks/changes)"
+  
+  formatting:
+    - "Use app's color scheme consistently"
+    - "Match app's card/table layouts"
+    - "Include same information fields as app displays"
+    - "Maintain visual hierarchy from app"
+
+technical_constraints:
+  - "Must use python-pptx library"
+  - "All elements must be editable (tables, text boxes, shapes)"
+  - "Handle None/null values gracefully"
+  - "Prevent file corruption"
+  - "Generate valid PPTX files"
+
+user_workflow:
+  1: "User views data in web application"
+  2: "User clicks 'Download PowerPoint Report'"
+  3: "PowerPoint opens showing same data in same format"
+  4: "User can present slides that look like app screenshots"
+  5: "User can edit content if needed"
+
+current_issues_to_fix:
+  - "Roadmap slide appears blank/empty instead of showing Gantt bars"
+  - "Milestone slide doesn't match app layout"
+  - "Risk slide doesn't match app layout"
+  - "Change management slide doesn't match app layout"
+  - "Overall appearance not professional enough"
+  - "Not visually replicating the app views"
+
+success_criteria:
+  - "Slides look like polished screenshots of the app"
+  - "All data from app pages represented accurately"
+  - "Professional presentation quality"
+  - "Content is editable in PowerPoint"
+  - "No file corruption errors"
