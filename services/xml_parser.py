@@ -365,21 +365,14 @@ class MSProjectXMLParser:
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
             
-            # Debug: Check UID element for first 3
-            if len(milestones) < 3:
-                print(f"DEBUG: UID element check for '{milestone_data['name']}'")
-                print(f"  Element: {current_task_uid}")
-                if current_task_uid is not None:
-                    print(f"  Element.text: '{current_task_uid.text}'")
-                    print(f"  Element.tag: {current_task_uid.tag}")
-                    # Check if it's finding the right element
-                    for child in task:
-                        tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                        if tag_name == 'UID':
-                            print(f"  Direct UID child found: text='{child.text}'")
-                            # Use this one instead
-                            current_task_uid = child
-                            break
+            # Workaround: _find_element sometimes returns element with no text
+            # Use direct child iteration to find UID with text
+            if not current_task_uid or not current_task_uid.text:
+                for child in task:
+                    tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    if tag_name == 'UID' and child.text:
+                        current_task_uid = child
+                        break
             
             # Convert UID to string for dictionary lookup
             uid_str = str(current_task_uid.text) if current_task_uid and current_task_uid.text else None
@@ -387,7 +380,7 @@ class MSProjectXMLParser:
             # Debug: Log lookup attempt for first 3
             if len(milestones) < 3:
                 print(f"DEBUG: Looking up UID for '{milestone_data['name']}'")
-                print(f"  UID: {uid_str}, Type: {type(current_task_uid.text).__name__ if current_task_uid else 'N/A'}")
+                print(f"  UID: {uid_str}")
                 print(f"  In hierarchy: {uid_str in task_hierarchy if uid_str else False}")
             
             if uid_str and uid_str in task_hierarchy:
