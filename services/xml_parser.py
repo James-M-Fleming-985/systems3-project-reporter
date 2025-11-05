@@ -358,8 +358,18 @@ class MSProjectXMLParser:
             if len(milestones) < 3:
                 print(f"DEBUG: Looking up UID for '{milestone_data['name']}'")
                 print(f"  UID element: {current_task_uid}")
-                print(f"  UID text: {current_task_uid.text if current_task_uid else 'None'}")
-                print(f"  In hierarchy: {current_task_uid.text in task_hierarchy if current_task_uid else False}")
+                if current_task_uid is not None:
+                    print(f"  UID text: {current_task_uid.text}")
+                    print(f"  UID tag: {current_task_uid.tag}")
+                    # Try alternate methods
+                    alt_uid = task.find('.//{{http://schemas.microsoft.com/project}}UID')
+                    print(f"  Alt UID: {alt_uid}, text: {alt_uid.text if alt_uid else 'N/A'}")
+                    # Check all children
+                    for child in task:
+                        tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                        if tag_name == 'UID':
+                            print(f"  Found UID child: {child}, text: {child.text}")
+                print(f"  In hierarchy: {current_task_uid.text in task_hierarchy if current_task_uid and current_task_uid.text else False}")
             
             if current_task_uid and current_task_uid.text in task_hierarchy:
                 task_info = task_hierarchy[current_task_uid.text]
