@@ -32,9 +32,10 @@ class PowerPointExporter:
         """
         Create enhanced PowerPoint presentation:
         1. Title Page
-        2. Roadmap Page (timeline of milestones)
-        3. Milestone Dashboard (4 quadrants)
-        4. Change Management Page
+        2. Roadmap/Gantt Page (all projects timeline)
+        3. Milestones Page (top 5-6 milestones in app format)
+        4. Risks Page (app format)
+        5. Change Management Page (app format)
         
         Args:
             projects: List of Project objects to include
@@ -46,14 +47,13 @@ class PowerPointExporter:
         prs.slide_width = Inches(10)
         prs.slide_height = Inches(7.5)
         
-        # Collect all milestones and changes from all projects
+        # Collect all milestones, risks, and changes from all projects
         all_milestones = []
         all_risks = []
         all_changes = []
         
         for project in projects:
             for milestone in project.milestones:
-                # Add project context to milestone
                 milestone_data = {
                     'name': milestone.name,
                     'project': project.project_name,
@@ -85,18 +85,25 @@ class PowerPointExporter:
                     'impact': change.impact
                 })
         
+        # Sort milestones by date (ascending) - matching app default
+        all_milestones.sort(key=lambda m: datetime.strptime(m['target_date'], '%Y-%m-%d'))
+        
         # 1. Title slide
         self._add_title_slide(prs, projects, all_milestones)
         
-        # 2. Roadmap page (timeline)
-        self._add_roadmap_slide(prs, all_milestones)
+        # 2. Gantt/Roadmap page (visual snapshot of all projects)
+        self._add_gantt_roadmap_slide(prs, projects)
         
-        # 3. Milestone Dashboard (4 quadrants)
-        self._add_milestone_dashboard(prs, all_milestones, all_risks)
+        # 3. Milestones page (top 5-6, app format)
+        self._add_milestones_slide_app_format(prs, all_milestones[:6])
         
-        # 4. Change Management page
+        # 4. Risks page (app format)
+        if all_risks:
+            self._add_risks_slide_app_format(prs, all_risks)
+        
+        # 5. Change Management page (app format)
         if all_changes:
-            self._add_change_management_slide(prs, all_changes)
+            self._add_changes_slide_app_format(prs, all_changes)
         
         # Save to BytesIO
         buffer = BytesIO()
@@ -131,51 +138,168 @@ class PowerPointExporter:
         subtitle.text_frame.paragraphs[0].font.size = Pt(20)
         subtitle.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
     
-    def _add_roadmap_slide(self, prs, all_milestones):
-        """Add roadmap slide showing milestone timeline"""
+    def _add_gantt_roadmap_slide(self, prs, projects):
+        """Add Gantt-style roadmap showing all projects as timeline bars"""
         slide_layout = prs.slide_layouts[5]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.5), Inches(9), Inches(0.7)
+            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
         )
         title_frame = title_box.text_frame
         title_frame.text = "Project Roadmap"
-        title_frame.paragraphs[0].font.size = Pt(36)
+        title_frame.paragraphs[0].font.size = Pt(32)
         title_frame.paragraphs[0].font.bold = True
         title_frame.paragraphs[0].font.color.rgb = RGBColor(37, 99, 235)
         
-        # Sort milestones by date
-        sorted_milestones = sorted(
-            all_milestones,
-            key=lambda m: datetime.strptime(m['target_date'], '%Y-%m-%d')
+        if not projects:
+            return
+        
+        # Get date range across all projects
+        all_dates = []
+        for project in projects:
+            try:
+                all_dates.append(datetime.strptime(project.start_date, '%Y-%m-%d'))
+            except:
+                pass
+            try:
+                all_dates.append(datetime.strptime(project.target_completion, '%Y-%m-%d'))
+            except:
+                pass
+        
+        if not all_dates:
+            return
+        
+        min_date = min(all_dates)
+        max_date = max(all_dates)
+        date_range = (max_date - min_date).days
+        
+        # Timeline dimensions
+        timeline_left = Inches(2)
+        timeline_width = Inches(7)
+        timeline_top = Inches(1.3)
+        row_height = Inches(0.45)
+        
+        # Draw timeline axis (months)
+        current_month = min_date.replace(day=1)
+        month_x = timeline_left
+        
+        while current_month <= max_date:
+            days_from_start = (current_month - min_date).days
+            x_pos = timeline_left + (days_from_start / date_range) * timeline_width
+            
+            # Month label
+            month_box = slide.shapes.add_textbox(
+                x_pos, Inches(1.1), Inches(0.8), Inches(0.2)
+            )
+            month_box.text_frame.text = current_month.strftime('%b %y')
+            month_box.text_frame.paragraphs[0].font.size = Pt(8)
+            month_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
+            
+            # Next month
+            if current_month.month == 12:
+                current_month = datetime(current_month.year + 1, 1, 1)
+            else:
+                current_month = datetime(current_month.year, current_month.month + 1, 1)
+        
+        # Draw each project as a bar
+        y_pos = timeline_top
+        for idx, project in enumerate(projects[:10]):  # Limit to 10 projects
+            try:
+                start = datetime.strptime(project.start_date, '%Y-%m-%d')
+                end = datetime.strptime(project.target_completion, '%Y-%m-%d')
+            except:
+                continue
+            
+            # Project name
+            name_box = slide.shapes.add_textbox(
+                Inches(0.5), y_pos, Inches(1.4), row_height
+            )
+            name_box.text_frame.text = project.project_name[:20]
+            name_box.text_frame.paragraphs[0].font.size = Pt(9)
+            name_box.text_frame.paragraphs[0].font.bold = True
+            name_box.text_frame.paragraphs[0].alignment = PP_ALIGN.RIGHT
+            name_box.text_frame.vertical_anchor = 1  # Middle
+            
+            # Calculate bar position and width
+            days_to_start = (start - min_date).days
+            bar_left = timeline_left + (days_to_start / date_range) * timeline_width
+            
+            duration_days = (end - start).days
+            bar_width = (duration_days / date_range) * timeline_width
+            
+            # Draw bar
+            bar = slide.shapes.add_shape(
+                1,  # Rectangle
+                bar_left, y_pos + Inches(0.05),
+                bar_width, Inches(0.35)
+            )
+            
+            # Color by completion percentage
+            if project.completion_percentage >= 100:
+                bar.fill.solid()
+                bar.fill.fore_color.rgb = RGBColor(34, 197, 94)  # Green
+            elif project.completion_percentage >= 50:
+                bar.fill.solid()
+                bar.fill.fore_color.rgb = RGBColor(59, 130, 246)  # Blue
+            else:
+                bar.fill.solid()
+                bar.fill.fore_color.rgb = RGBColor(156, 163, 175)  # Gray
+            
+            bar.line.color.rgb = RGBColor(255, 255, 255)
+            bar.line.width = Pt(1)
+            
+            # Completion percentage label on bar
+            pct_box = slide.shapes.add_textbox(
+                bar_left, y_pos + Inches(0.05),
+                bar_width, Inches(0.35)
+            )
+            pct_box.text_frame.text = f"{project.completion_percentage}%"
+            pct_box.text_frame.paragraphs[0].font.size = Pt(8)
+            pct_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            pct_box.text_frame.paragraphs[0].font.bold = True
+            pct_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            pct_box.text_frame.vertical_anchor = 1  # Middle
+            
+            y_pos += row_height
+    
+    def _add_milestones_slide_app_format(self, prs, milestones):
+        """Add milestones slide matching app format (top 5-6 milestones)"""
+        slide_layout = prs.slide_layouts[5]  # Blank layout
+        slide = prs.slides.add_slide(slide_layout)
+        
+        # Title
+        title_box = slide.shapes.add_textbox(
+            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
         )
+        title_frame = title_box.text_frame
+        title_frame.text = "Upcoming Milestones"
+        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.paragraphs[0].font.bold = True
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(37, 99, 235)
         
-        # Take next 12 milestones for visibility
-        display_milestones = sorted_milestones[:12]
-        
-        if not display_milestones:
+        if not milestones:
             no_data_box = slide.shapes.add_textbox(
                 Inches(2), Inches(3), Inches(6), Inches(1)
             )
-            no_data_box.text_frame.text = "No upcoming milestones"
+            no_data_box.text_frame.text = "No milestones"
             no_data_box.text_frame.paragraphs[0].font.size = Pt(24)
             no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
             return
         
-        # Create table for roadmap
-        rows = len(display_milestones) + 1
-        cols = 4
+        # Create table
+        rows = len(milestones) + 1
+        cols = 5  # Name, Project, Target Date, Status, Resources
         
         table = slide.shapes.add_table(
             rows, cols,
-            Inches(0.5), Inches(1.5),
-            Inches(9), Inches(5.5)
+            Inches(0.5), Inches(1.3),
+            Inches(9), Inches(5.8)
         ).table
         
         # Header row
-        headers = ["Milestone", "Project", "Target Date", "Status"]
+        headers = ["Milestone", "Project", "Target Date", "Status", "Resources"]
         for col, header in enumerate(headers):
             cell = table.cell(0, col)
             cell.text = header
@@ -183,16 +307,16 @@ class PowerPointExporter:
             cell.fill.fore_color.rgb = RGBColor(37, 99, 235)
             cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             cell.text_frame.paragraphs[0].font.bold = True
-            cell.text_frame.paragraphs[0].font.size = Pt(14)
+            cell.text_frame.paragraphs[0].font.size = Pt(13)
         
         # Data rows
-        for idx, milestone in enumerate(display_milestones, 1):
+        for idx, milestone in enumerate(milestones, 1):
             # Milestone name
-            table.cell(idx, 0).text = milestone['name'][:40]
+            table.cell(idx, 0).text = milestone['name'][:45]
             
-            # Project (use parent_project if available)
+            # Project (parent_project if available)
             project_name = milestone.get('parent_project') or milestone['project']
-            table.cell(idx, 1).text = project_name[:30]
+            table.cell(idx, 1).text = project_name[:25]
             
             # Target date
             target_date = datetime.strptime(milestone['target_date'], '%Y-%m-%d')
@@ -204,314 +328,148 @@ class PowerPointExporter:
             
             if milestone['status'] == 'COMPLETED':
                 status_cell.fill.solid()
-                status_cell.fill.fore_color.rgb = RGBColor(34, 197, 94)  # Green
+                status_cell.fill.fore_color.rgb = RGBColor(34, 197, 94)
                 status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             elif milestone['status'] == 'NOT_STARTED':
                 status_cell.fill.solid()
-                status_cell.fill.fore_color.rgb = RGBColor(156, 163, 175)  # Gray
+                status_cell.fill.fore_color.rgb = RGBColor(156, 163, 175)
                 status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             
-            # Font size for data
-            for col in range(cols):
-                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(11)
+            # Resources
+            table.cell(idx, 4).text = milestone.get('resources', '')[:25]
+            
             # Font size for data
             for col in range(cols):
                 table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(11)
     
-    def _add_milestone_dashboard(self, prs, all_milestones, all_risks):
-        """
-        Add milestone dashboard with 4 quadrants (clockwise from top-left):
-        - Top-Left: This Month's Milestones
-        - Top-Right: Risks
-        - Bottom-Right: Next Month Planned Milestones
-        - Bottom-Left: Milestones Completed Last Month
-        """
+    def _add_risks_slide_app_format(self, prs, risks):
+        """Add risks slide matching app format"""
         slide_layout = prs.slide_layouts[5]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
         # Title
         title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.3), Inches(9), Inches(0.6)
+            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
         )
         title_frame = title_box.text_frame
-        title_frame.text = "Milestone Dashboard"
+        title_frame.text = "Active Risks"
         title_frame.paragraphs[0].font.size = Pt(32)
         title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(37, 99, 235)
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(239, 68, 68)  # Red
         
-        # Get date ranges
-        today = datetime.now()
-        this_month_start = datetime(today.year, today.month, 1)
-        _, last_day = monthrange(today.year, today.month)
-        this_month_end = datetime(today.year, today.month, last_day)
-        
-        # Last month
-        if today.month == 1:
-            last_month_start = datetime(today.year - 1, 12, 1)
-            last_month_end = datetime(today.year - 1, 12, 31)
-        else:
-            last_month_start = datetime(today.year, today.month - 1, 1)
-            _, last_day = monthrange(today.year, today.month - 1)
-            last_month_end = datetime(today.year, today.month - 1, last_day)
-        
-        # Next month
-        if today.month == 12:
-            next_month_start = datetime(today.year + 1, 1, 1)
-            next_month_end = datetime(today.year + 1, 1, 31)
-        else:
-            next_month_start = datetime(today.year, today.month + 1, 1)
-            _, last_day = monthrange(today.year, today.month + 1)
-            next_month_end = datetime(today.year, today.month + 1, last_day)
-        
-        # Filter milestones by date range
-        def in_range(milestone, start, end):
-            try:
-                m_date = datetime.strptime(milestone['target_date'], '%Y-%m-%d')
-                return start <= m_date <= end
-            except:
-                return False
-        
-        this_month = [m for m in all_milestones if in_range(m, this_month_start, this_month_end)]
-        next_month = [m for m in all_milestones if in_range(m, next_month_start, next_month_end)]
-        last_month_completed = [
-            m for m in all_milestones 
-            if m['status'] == 'COMPLETED' and in_range(m, last_month_start, last_month_end)
-        ]
-        
-        # Quadrant positions (left, top, width, height)
-        quad_width = Inches(4.5)
-        quad_height = Inches(3)
-        
-        # Top-Left: This Month's Milestones
-        self._add_quadrant(
-            slide,
-            Inches(0.5), Inches(1.2),
-            quad_width, quad_height,
-            f"This Month ({this_month_start.strftime('%b %Y')})",
-            this_month,
-            RGBColor(251, 191, 36)  # Yellow
-        )
-        
-        # Top-Right: Risks
-        self._add_risks_quadrant(
-            slide,
-            Inches(5.1), Inches(1.2),
-            quad_width, quad_height,
-            "Active Risks",
-            all_risks
-        )
-        
-        # Bottom-Right: Next Month Planned
-        self._add_quadrant(
-            slide,
-            Inches(5.1), Inches(4.4),
-            quad_width, quad_height,
-            f"Next Month ({next_month_start.strftime('%b %Y')})",
-            next_month,
-            RGBColor(59, 130, 246)  # Blue
-        )
-        
-        # Bottom-Left: Last Month Completed
-        self._add_quadrant(
-            slide,
-            Inches(0.5), Inches(4.4),
-            quad_width, quad_height,
-            f"Completed Last Month ({last_month_start.strftime('%b %Y')})",
-            last_month_completed,
-            RGBColor(34, 197, 94)  # Green
-        )
-    
-    def _add_quadrant(self, slide, left, top, width, height, title, milestones, color):
-        """Add a single quadrant to the dashboard"""
-        # Border box
-        shape = slide.shapes.add_shape(
-            1,  # Rectangle
-            left, top, width, height
-        )
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = RGBColor(249, 250, 251)  # Light gray background
-        shape.line.color.rgb = color
-        shape.line.width = Pt(2)
-        
-        # Title
-        title_box = slide.shapes.add_textbox(
-            left + Inches(0.1), top + Inches(0.05),
-            width - Inches(0.2), Inches(0.4)
-        )
-        title_frame = title_box.text_frame
-        title_frame.text = f"{title} ({len(milestones)})"
-        title_frame.paragraphs[0].font.size = Pt(14)
-        title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = color
-        
-        # Milestones list (max 6 visible)
-        y_offset = 0.5
-        for idx, milestone in enumerate(milestones[:6]):
-            milestone_box = slide.shapes.add_textbox(
-                left + Inches(0.15), top + Inches(y_offset),
-                width - Inches(0.3), Inches(0.35)
-            )
-            text_frame = milestone_box.text_frame
-            
-            # Milestone name
-            project = milestone.get('parent_project') or milestone['project']
-            text_frame.text = f"• {milestone['name'][:35]}"
-            text_frame.paragraphs[0].font.size = Pt(9)
-            text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
-            
-            # Add project name in smaller text
-            p = text_frame.add_paragraph()
-            p.text = f"  {project[:30]}"
-            p.font.size = Pt(7)
-            p.font.color.rgb = RGBColor(107, 114, 128)
-            p.font.italic = True
-            
-            y_offset += 0.42
-        
-        # "And X more" if needed
-        if len(milestones) > 6:
-            more_box = slide.shapes.add_textbox(
-                left + Inches(0.15), top + Inches(y_offset),
-                width - Inches(0.3), Inches(0.3)
-            )
-            more_box.text_frame.text = f"  ... and {len(milestones) - 6} more"
-            more_box.text_frame.paragraphs[0].font.size = Pt(8)
-            more_box.text_frame.paragraphs[0].font.italic = True
-            more_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
-    
-    def _add_risks_quadrant(self, slide, left, top, width, height, title, risks):
-        """Add risks quadrant"""
-        # Border box
-        shape = slide.shapes.add_shape(
-            1,  # Rectangle
-            left, top, width, height
-        )
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = RGBColor(254, 242, 242)  # Light red background
-        shape.line.color.rgb = RGBColor(239, 68, 68)  # Red
-        shape.line.width = Pt(2)
-        
-        # Title
-        title_box = slide.shapes.add_textbox(
-            left + Inches(0.1), top + Inches(0.05),
-            width - Inches(0.2), Inches(0.4)
-        )
-        title_frame = title_box.text_frame
-        title_frame.text = f"{title} ({len(risks)})"
-        title_frame.paragraphs[0].font.size = Pt(14)
-        title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(239, 68, 68)
-        
-        # Risks list (max 6 visible)
-        y_offset = 0.5
-        for idx, risk in enumerate(risks[:6]):
-            risk_box = slide.shapes.add_textbox(
-                left + Inches(0.15), top + Inches(y_offset),
-                width - Inches(0.3), Inches(0.35)
-            )
-            text_frame = risk_box.text_frame
-            
-            # Risk severity icon
-            severity_icon = "🔴" if risk['severity'] == 'HIGH' else "🟡" if risk['severity'] == 'MEDIUM' else "🟢"
-            text_frame.text = f"{severity_icon} {risk['description'][:40]}"
-            text_frame.paragraphs[0].font.size = Pt(9)
-            text_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
-            
-            # Add project name
-            p = text_frame.add_paragraph()
-            p.text = f"  {risk['project'][:30]}"
-            p.font.size = Pt(7)
-            p.font.color.rgb = RGBColor(107, 114, 128)
-            p.font.italic = True
-            
-            y_offset += 0.42
-        
-        # "And X more" if needed
-        if len(risks) > 6:
-            more_box = slide.shapes.add_textbox(
-                left + Inches(0.15), top + Inches(y_offset),
-                width - Inches(0.3), Inches(0.3)
-            )
-            more_box.text_frame.text = f"  ... and {len(risks) - 6} more"
-            more_box.text_frame.paragraphs[0].font.size = Pt(8)
-            more_box.text_frame.paragraphs[0].font.italic = True
-            more_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
-    
-    def _add_change_management_slide(self, prs, all_changes):
-        """Add change management slide"""
-        slide_layout = prs.slide_layouts[5]  # Blank layout
-        slide = prs.slides.add_slide(slide_layout)
-        
-        # Title
-        title_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(0.5), Inches(9), Inches(0.7)
-        )
-        title_frame = title_box.text_frame
-        title_frame.text = "Change Management"
-        title_frame.paragraphs[0].font.size = Pt(36)
-        title_frame.paragraphs[0].font.bold = True
-        title_frame.paragraphs[0].font.color.rgb = RGBColor(234, 179, 8)  # Yellow
-        
-        # Sort changes by date (most recent first)
-        sorted_changes = sorted(
-            all_changes,
-            key=lambda c: datetime.strptime(c['date'], '%Y-%m-%d'),
-            reverse=True
-        )
-        
-        # Take most recent 10 changes
-        display_changes = sorted_changes[:10]
-        
-        if not display_changes:
-            no_data_box = slide.shapes.add_textbox(
-                Inches(2), Inches(3), Inches(6), Inches(1)
-            )
-            no_data_box.text_frame.text = "No changes recorded"
-            no_data_box.text_frame.paragraphs[0].font.size = Pt(24)
-            no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-            return
+        # Limit to top 10 risks
+        display_risks = risks[:10]
         
         # Create table
-        rows = len(display_changes) + 1
-        cols = 5
+        rows = len(display_risks) + 1
+        cols = 4  # Risk, Severity, Status, Mitigation
         
         table = slide.shapes.add_table(
             rows, cols,
-            Inches(0.5), Inches(1.5),
-            Inches(9), Inches(5.5)
+            Inches(0.5), Inches(1.3),
+            Inches(9), Inches(5.8)
         ).table
         
         # Header row
-        headers = ["Date", "Project", "Old → New", "Reason", "Impact"]
+        headers = ["Risk Description", "Severity", "Status", "Mitigation"]
         for col, header in enumerate(headers):
             cell = table.cell(0, col)
             cell.text = header
             cell.fill.solid()
-            cell.fill.fore_color.rgb = RGBColor(234, 179, 8)  # Yellow
+            cell.fill.fore_color.rgb = RGBColor(239, 68, 68)
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             cell.text_frame.paragraphs[0].font.bold = True
-            cell.text_frame.paragraphs[0].font.size = Pt(12)
+            cell.text_frame.paragraphs[0].font.size = Pt(13)
         
         # Data rows
-        for idx, change in enumerate(display_changes, 1):
-            # Date
+        for idx, risk in enumerate(display_risks, 1):
+            # Risk description
+            table.cell(idx, 0).text = risk['description'][:50]
+            
+            # Severity with color
+            severity_cell = table.cell(idx, 1)
+            severity_cell.text = risk['severity']
+            if risk['severity'] == 'HIGH':
+                severity_cell.fill.solid()
+                severity_cell.fill.fore_color.rgb = RGBColor(239, 68, 68)
+                severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            elif risk['severity'] == 'MEDIUM':
+                severity_cell.fill.solid()
+                severity_cell.fill.fore_color.rgb = RGBColor(251, 191, 36)
+                severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            
+            # Status
+            table.cell(idx, 2).text = risk['status']
+            
+            # Mitigation
+            table.cell(idx, 3).text = risk['mitigation'][:40]
+            
+            # Font size for data
+            for col in range(cols):
+                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(10)
+    
+    def _add_changes_slide_app_format(self, prs, changes):
+        """Add change management slide matching app format"""
+        slide_layout = prs.slide_layouts[5]  # Blank layout
+        slide = prs.slides.add_slide(slide_layout)
+        
+        # Title
+        title_box = slide.shapes.add_textbox(
+            Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+        )
+        title_frame = title_box.text_frame
+        title_frame.text = "Change Management"
+        title_frame.paragraphs[0].font.size = Pt(32)
+        title_frame.paragraphs[0].font.bold = True
+        title_frame.paragraphs[0].font.color.rgb = RGBColor(234, 179, 8)  # Yellow
+        
+        # Sort by date and take most recent 10
+        sorted_changes = sorted(
+            changes,
+            key=lambda c: datetime.strptime(c['date'], '%Y-%m-%d'),
+            reverse=True
+        )[:10]
+        
+        # Create table
+        rows = len(sorted_changes) + 1
+        cols = 5  # Date, Project, Old Date, New Date, Reason
+        
+        table = slide.shapes.add_table(
+            rows, cols,
+            Inches(0.5), Inches(1.3),
+            Inches(9), Inches(5.8)
+        ).table
+        
+        # Header row
+        headers = ["Change Date", "Project", "Old Date", "New Date", "Reason"]
+        for col, header in enumerate(headers):
+            cell = table.cell(0, col)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(234, 179, 8)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.size = Pt(13)
+        
+        # Data rows
+        for idx, change in enumerate(sorted_changes, 1):
+            # Change date
             change_date = datetime.strptime(change['date'], '%Y-%m-%d')
-            table.cell(idx, 0).text = change_date.strftime('%b %d')
+            table.cell(idx, 0).text = change_date.strftime('%b %d, %Y')
             
             # Project
             table.cell(idx, 1).text = change['project'][:20]
             
-            # Old → New dates
+            # Old date
             old_date = datetime.strptime(change['old_date'], '%Y-%m-%d')
+            table.cell(idx, 2).text = old_date.strftime('%b %d, %Y')
+            
+            # New date
             new_date = datetime.strptime(change['new_date'], '%Y-%m-%d')
-            table.cell(idx, 2).text = f"{old_date.strftime('%b %d')} → {new_date.strftime('%b %d')}"
+            table.cell(idx, 3).text = new_date.strftime('%b %d, %Y')
             
             # Reason
-            table.cell(idx, 3).text = change['reason'][:35]
+            table.cell(idx, 4).text = change['reason'][:35]
             
-            # Impact
-            table.cell(idx, 4).text = change['impact'][:30]
-            
-            # Font size for data
             # Font size for data
             for col in range(cols):
-                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(9)
+                table.cell(idx, col).text_frame.paragraphs[0].font.size = Pt(10)
