@@ -148,14 +148,56 @@ async function exportToPowerPoint() {
         btn.innerHTML = originalText;
         btn.disabled = false;
         
-        // Success message
-        alert('✅ PowerPoint presentation downloaded successfully!');
+        // Success message with modal (matching upload style)
+        showDownloadSuccessModal();
     } catch (error) {
         console.error('Export error:', error);
         alert('Export failed: ' + error.message);
         event.target.disabled = false;
         event.target.innerHTML = '📊 Export to PowerPoint';
     }
+}
+
+function showDownloadSuccessModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0">
+                    <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Download Successful!</h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Your <strong>PowerPoint report</strong> has been generated and downloaded successfully.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                <p class="text-sm text-green-700">
+                    <strong>✓</strong> Check your downloads folder for the presentation file.
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Auto-close after 4 seconds
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.remove();
+        }
+    }, 4000);
 }
 </script>
 {% endblock %}
