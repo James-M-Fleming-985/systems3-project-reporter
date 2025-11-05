@@ -365,6 +365,22 @@ class MSProjectXMLParser:
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
             
+            # Debug: Check UID element for first 3
+            if len(milestones) < 3:
+                print(f"DEBUG: UID element check for '{milestone_data['name']}'")
+                print(f"  Element: {current_task_uid}")
+                if current_task_uid is not None:
+                    print(f"  Element.text: '{current_task_uid.text}'")
+                    print(f"  Element.tag: {current_task_uid.tag}")
+                    # Check if it's finding the right element
+                    for child in task:
+                        tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                        if tag_name == 'UID':
+                            print(f"  Direct UID child found: text='{child.text}'")
+                            # Use this one instead
+                            current_task_uid = child
+                            break
+            
             # Convert UID to string for dictionary lookup
             uid_str = str(current_task_uid.text) if current_task_uid and current_task_uid.text else None
             
