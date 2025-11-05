@@ -364,38 +364,22 @@ class MSProjectXMLParser:
             # Find parent Level 2 project using the hierarchy (updated)
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
-            
-            # Debug: Check initial state
-            if len(milestones) < 3:
-                print(f"DEBUG: Initial UID check for '{milestone_data['name']}'")
-                print(f"  _find_element returned: {current_task_uid}")
-                print(f"  Has text: {current_task_uid.text if current_task_uid else 'No element'}")
+            uid_text = None
             
             # Workaround: _find_element sometimes returns element with no text
-            # Use direct child iteration to find UID with text
-            if not current_task_uid or not current_task_uid.text:
-                if len(milestones) < 3:
-                    print(f"  Using direct child iteration...")
+            # Extract text IMMEDIATELY before it gets consumed
+            if current_task_uid and current_task_uid.text:
+                uid_text = str(current_task_uid.text)
+            else:
+                # Use direct child iteration to find UID with text
                 for child in task:
                     tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                     if tag_name == 'UID' and child.text:
-                        if len(milestones) < 3:
-                            print(f"  Found UID via child: {child.text}")
-                            print(f"  Child element: {child}")
-                            print(f"  Child.text right now: {child.text}")
-                        current_task_uid = child
-                        if len(milestones) < 3:
-                            print(f"  Updated current_task_uid to: {current_task_uid}")
-                            print(f"  current_task_uid.text after assignment: {current_task_uid.text}")
+                        uid_text = str(child.text)  # Store as string immediately
                         break
             
-            # Debug: Check state after child iteration
-            if len(milestones) < 3:
-                print(f"  After iteration - current_task_uid: {current_task_uid}")
-                print(f"  After iteration - has text: {current_task_uid.text if current_task_uid else 'None'}")
-            
             # Convert UID to string for dictionary lookup
-            uid_str = str(current_task_uid.text) if current_task_uid and current_task_uid.text else None
+            uid_str = uid_text if uid_text else None
             
             # Debug: Log lookup attempt for first 3
             if len(milestones) < 3:
