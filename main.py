@@ -9,6 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 
+# Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
+BUILD_VERSION = "1.0.11"  # Last updated: 2025-11-05
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,6 +56,14 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # Setup Jinja2 templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# Export version for use in routers
+def get_template_context(request: Request, **kwargs):
+    """Helper to create template context with build_version"""
+    context = {"request": request, "build_version": BUILD_VERSION}
+    context.update(kwargs)
+    return context
+
+
 # Initialize repository (lazy load to avoid startup failures)
 project_repo = None
 
@@ -95,10 +106,11 @@ async def favicon():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint with build version"""
     return {
         "status": "healthy",
-        "version": "2.0.0"
+        "build_version": BUILD_VERSION,
+        "app": "Systems³ Project Reporter"
     }
 
 

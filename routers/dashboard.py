@@ -36,12 +36,16 @@ async def home(request: Request):
     total_risks = sum(len(p.risks) for p in projects)
     total_changes = sum(len(p.changes) for p in projects)
     
+    # Import BUILD_VERSION from main
+    from main import BUILD_VERSION
+    
     context = {
         "request": request,
         "projects": projects,
         "total_milestones": total_milestones,
         "total_risks": total_risks,
-        "total_changes": total_changes
+        "total_changes": total_changes,
+        "build_version": BUILD_VERSION
     }
     
     return templates.TemplateResponse("index.html", context)
@@ -53,13 +57,15 @@ async def gantt_chart(request: Request):
     FEATURE-WEB-002: Gantt chart visualization (CRITICAL FEATURE)
     User requirement: "Gantt charts is really the only thing specified"
     """
+    from main import BUILD_VERSION
     projects = project_repo.load_all_projects()
     gantt_data = chart_service.format_gantt_data(projects)
     
     context = {
         "request": request,
         "projects": projects,
-        "gantt_data": gantt_data
+        "gantt_data": gantt_data,
+        "build_version": BUILD_VERSION
     }
     
     return templates.TemplateResponse("gantt.html", context)
@@ -71,12 +77,14 @@ async def milestone_tracker(request: Request):
     FEATURE-WEB-003: Milestone quadrant tracker
     Categorizes milestones by status and timeline
     """
+    from main import BUILD_VERSION
     projects = project_repo.load_all_projects()
     quadrants = chart_service.calculate_milestone_quadrants(projects)
     
     context = {
         "request": request,
-        "quadrants": quadrants
+        "quadrants": quadrants,
+        "build_version": BUILD_VERSION
     }
     
     return templates.TemplateResponse("milestones.html", context)
@@ -88,12 +96,14 @@ async def risk_analysis(request: Request):
     FEATURE-WEB-004: Risk analysis dashboard
     Groups risks by severity with visualizations
     """
+    from main import BUILD_VERSION
     projects = project_repo.load_all_projects()
     risk_data = chart_service.format_risk_data(projects)
     
     context = {
         "request": request,
-        "risk_data": risk_data
+        "risk_data": risk_data,
+        "build_version": BUILD_VERSION
     }
     
     return templates.TemplateResponse("risks.html", context)
@@ -105,12 +115,14 @@ async def change_management(request: Request):
     FEATURE-WEB-005: Change management log
     Displays schedule changes sorted by date
     """
+    from main import BUILD_VERSION
     projects = project_repo.load_all_projects()
     changes = chart_service.format_change_data(projects)
     
     context = {
         "request": request,
-        "changes": changes
+        "changes": changes,
+        "build_version": BUILD_VERSION
     }
     
     return templates.TemplateResponse("changes.html", context)

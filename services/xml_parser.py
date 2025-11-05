@@ -379,9 +379,14 @@ class MSProjectXMLParser:
                 for child in task:
                     tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                     if tag_name == 'UID' and child.text:
-                        current_task_uid = child
                         if len(milestones) < 3:
                             print(f"  Found UID via child: {child.text}")
+                            print(f"  Child element: {child}")
+                            print(f"  Child.text right now: {child.text}")
+                        current_task_uid = child
+                        if len(milestones) < 3:
+                            print(f"  Updated current_task_uid to: {current_task_uid}")
+                            print(f"  current_task_uid.text after assignment: {current_task_uid.text}")
                         break
             
             # Debug: Check state after child iteration
