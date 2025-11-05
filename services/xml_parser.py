@@ -365,44 +365,34 @@ class MSProjectXMLParser:
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
             
+            # Convert UID to string for dictionary lookup
+            uid_str = str(current_task_uid.text) if current_task_uid and current_task_uid.text else None
+            
             # Debug: Log lookup attempt for first 3
             if len(milestones) < 3:
                 print(f"DEBUG: Looking up UID for '{milestone_data['name']}'")
-                print(f"  UID element: {current_task_uid}")
-                if current_task_uid is not None:
-                    print(f"  UID text: {current_task_uid.text}")
-                    print(f"  UID tag: {current_task_uid.tag}")
-                    # Try alternate methods
-                    alt_uid = task.find('.//{{http://schemas.microsoft.com/project}}UID')
-                    print(f"  Alt UID: {alt_uid}, text: {alt_uid.text if alt_uid else 'N/A'}")
-                    # Check all children
-                    for child in task:
-                        tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                        if tag_name == 'UID':
-                            print(f"  Found UID child: {child}, text: {child.text}")
-                print(f"  In hierarchy: {current_task_uid.text in task_hierarchy if current_task_uid and current_task_uid.text else False}")
+                print(f"  UID: {uid_str}, Type: {type(current_task_uid.text).__name__ if current_task_uid else 'N/A'}")
+                print(f"  In hierarchy: {uid_str in task_hierarchy if uid_str else False}")
             
-            if current_task_uid and current_task_uid.text in task_hierarchy:
-                task_info = task_hierarchy[current_task_uid.text]
+            if uid_str and uid_str in task_hierarchy:
+                task_info = task_hierarchy[uid_str]
                 parent_project = task_info.get('parent_level2')  # Updated
                 
                 # Debug: Log first 3 milestones' hierarchy info
                 if len(milestones) < 3:
-                    print(f"DEBUG: Milestone '{milestone_data['name']}' - "
+                    print(f"DEBUG: Found in hierarchy - "
                           f"Level: {task_info.get('level')}, "
-                          f"UID: {current_task_uid.text}, "
                           f"Parent: {parent_project}")
             
             milestone_data['parent_project'] = parent_project
             
             # Resources - check resource_map first, then fallback to XML field
-            task_uid = current_task_uid.text if current_task_uid else None
-            if task_uid and task_uid in resource_map:
-                milestone_data['resources'] = resource_map[task_uid]
+            if uid_str and uid_str in resource_map:
+                milestone_data['resources'] = resource_map[uid_str]
                 if len(milestones) < 3:
                     print(f"DEBUG: Resources from map for "
                           f"'{milestone_data['name']}': "
-                          f"{resource_map[task_uid]}")
+                          f"{resource_map[uid_str]}")
             else:
                 # Fallback: try ResourceNames field (older MS Project)
                 resources_elem = self._find_element(task, 'ResourceNames')
