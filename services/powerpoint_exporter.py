@@ -209,14 +209,15 @@ class PowerPointExporter:
             try:
                 start = datetime.strptime(project.start_date, '%Y-%m-%d')
                 end = datetime.strptime(project.target_completion, '%Y-%m-%d')
-            except:
+            except (ValueError, AttributeError, TypeError):
                 continue
             
             # Project name
             name_box = slide.shapes.add_textbox(
                 Inches(0.5), y_pos, Inches(1.4), row_height
             )
-            name_box.text_frame.text = project.project_name[:20]
+            project_name = getattr(project, 'project_name', 'Unknown')
+            name_box.text_frame.text = str(project_name)[:20]
             name_box.text_frame.paragraphs[0].font.size = Pt(9)
             name_box.text_frame.paragraphs[0].font.bold = True
             name_box.text_frame.paragraphs[0].alignment = PP_ALIGN.RIGHT
@@ -237,10 +238,11 @@ class PowerPointExporter:
             )
             
             # Color by completion percentage
-            if project.completion_percentage >= 100:
+            completion = getattr(project, 'completion_percentage', 0) or 0
+            if completion >= 100:
                 bar.fill.solid()
                 bar.fill.fore_color.rgb = RGBColor(34, 197, 94)  # Green
-            elif project.completion_percentage >= 50:
+            elif completion >= 50:
                 bar.fill.solid()
                 bar.fill.fore_color.rgb = RGBColor(59, 130, 246)  # Blue
             else:
@@ -255,7 +257,7 @@ class PowerPointExporter:
                 bar_left, y_pos + Inches(0.05),
                 bar_width, Inches(0.35)
             )
-            pct_box.text_frame.text = f"{project.completion_percentage}%"
+            pct_box.text_frame.text = f"{int(completion)}%"
             pct_box.text_frame.paragraphs[0].font.size = Pt(8)
             pct_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             pct_box.text_frame.paragraphs[0].font.bold = True
@@ -312,31 +314,36 @@ class PowerPointExporter:
         # Data rows
         for idx, milestone in enumerate(milestones, 1):
             # Milestone name
-            table.cell(idx, 0).text = milestone['name'][:45]
+            table.cell(idx, 0).text = str(milestone.get('name', ''))[:45]
             
             # Project (parent_project if available)
-            project_name = milestone.get('parent_project') or milestone['project']
-            table.cell(idx, 1).text = project_name[:25]
+            project_name = milestone.get('parent_project') or milestone.get('project', '')
+            table.cell(idx, 1).text = str(project_name)[:25]
             
             # Target date
-            target_date = datetime.strptime(milestone['target_date'], '%Y-%m-%d')
-            table.cell(idx, 2).text = target_date.strftime('%b %d, %Y')
+            try:
+                target_date = datetime.strptime(milestone['target_date'], '%Y-%m-%d')
+                table.cell(idx, 2).text = target_date.strftime('%b %d, %Y')
+            except (ValueError, KeyError):
+                table.cell(idx, 2).text = str(milestone.get('target_date', ''))
             
             # Status with color coding
             status_cell = table.cell(idx, 3)
-            status_cell.text = milestone['status'].replace('_', ' ')
+            status = milestone.get('status', 'NOT_STARTED')
+            status_cell.text = str(status).replace('_', ' ')
             
-            if milestone['status'] == 'COMPLETED':
+            if status == 'COMPLETED':
                 status_cell.fill.solid()
                 status_cell.fill.fore_color.rgb = RGBColor(34, 197, 94)
                 status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            elif milestone['status'] == 'NOT_STARTED':
+            elif status == 'NOT_STARTED':
                 status_cell.fill.solid()
                 status_cell.fill.fore_color.rgb = RGBColor(156, 163, 175)
                 status_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             
             # Resources
-            table.cell(idx, 4).text = milestone.get('resources', '')[:25]
+            resources = milestone.get('resources', '') or ''
+            table.cell(idx, 4).text = str(resources)[:25]
             
             # Font size for data
             for col in range(cols):
@@ -384,25 +391,29 @@ class PowerPointExporter:
         # Data rows
         for idx, risk in enumerate(display_risks, 1):
             # Risk description
-            table.cell(idx, 0).text = risk['description'][:50]
+            description = risk.get('description', '') or ''
+            table.cell(idx, 0).text = str(description)[:50]
             
             # Severity with color
             severity_cell = table.cell(idx, 1)
-            severity_cell.text = risk['severity']
-            if risk['severity'] == 'HIGH':
+            severity = risk.get('severity', 'LOW') or 'LOW'
+            severity_cell.text = str(severity)
+            if severity == 'HIGH':
                 severity_cell.fill.solid()
                 severity_cell.fill.fore_color.rgb = RGBColor(239, 68, 68)
                 severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            elif risk['severity'] == 'MEDIUM':
+            elif severity == 'MEDIUM':
                 severity_cell.fill.solid()
                 severity_cell.fill.fore_color.rgb = RGBColor(251, 191, 36)
                 severity_cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
             
             # Status
-            table.cell(idx, 2).text = risk['status']
+            status = risk.get('status', '') or ''
+            table.cell(idx, 2).text = str(status)
             
             # Mitigation
-            table.cell(idx, 3).text = risk['mitigation'][:40]
+            mitigation = risk.get('mitigation', '') or ''
+            table.cell(idx, 3).text = str(mitigation)[:40]
             
             # Font size for data
             for col in range(cols):
@@ -453,22 +464,33 @@ class PowerPointExporter:
         # Data rows
         for idx, change in enumerate(sorted_changes, 1):
             # Change date
-            change_date = datetime.strptime(change['date'], '%Y-%m-%d')
-            table.cell(idx, 0).text = change_date.strftime('%b %d, %Y')
+            try:
+                change_date = datetime.strptime(change['date'], '%Y-%m-%d')
+                table.cell(idx, 0).text = change_date.strftime('%b %d, %Y')
+            except (ValueError, KeyError):
+                table.cell(idx, 0).text = str(change.get('date', ''))
             
             # Project
-            table.cell(idx, 1).text = change['project'][:20]
+            project = change.get('project', '') or ''
+            table.cell(idx, 1).text = str(project)[:20]
             
             # Old date
-            old_date = datetime.strptime(change['old_date'], '%Y-%m-%d')
-            table.cell(idx, 2).text = old_date.strftime('%b %d, %Y')
+            try:
+                old_date = datetime.strptime(change['old_date'], '%Y-%m-%d')
+                table.cell(idx, 2).text = old_date.strftime('%b %d, %Y')
+            except (ValueError, KeyError):
+                table.cell(idx, 2).text = str(change.get('old_date', ''))
             
             # New date
-            new_date = datetime.strptime(change['new_date'], '%Y-%m-%d')
-            table.cell(idx, 3).text = new_date.strftime('%b %d, %Y')
+            try:
+                new_date = datetime.strptime(change['new_date'], '%Y-%m-%d')
+                table.cell(idx, 3).text = new_date.strftime('%b %d, %Y')
+            except (ValueError, KeyError):
+                table.cell(idx, 3).text = str(change.get('new_date', ''))
             
             # Reason
-            table.cell(idx, 4).text = change['reason'][:35]
+            reason = change.get('reason', '') or ''
+            table.cell(idx, 4).text = str(reason)[:35]
             
             # Font size for data
             for col in range(cols):
