@@ -8,85 +8,31 @@
     <p class="text-gray-600">Milestones organized by status and timeline</p>
 </div>
 
-<!-- Filters -->
-<div class="bg-white rounded-lg shadow p-6 mb-6">
-    <div class="mb-4">
-        <div class="flex items-center justify-between mb-4">
-            <label class="text-sm font-semibold text-gray-700">Filters:</label>
-            <button onclick="resetFilters()" class="text-sm text-blue-600 hover:text-blue-700 font-medium transition">
-                Reset Filters
-            </button>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Parent Project Filter -->
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-2">📂 Parent Project</label>
-                <select id="parentProjectFilter" multiple 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        style="height: 100px;" onchange="applyFilters()">
-                    <!-- Options populated by JavaScript -->
-                </select>
-            </div>
-            
-            <!-- Resource Filter -->
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-2">👤 Resource</label>
-                <select id="resourceFilter" multiple 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        style="height: 100px;" onchange="applyFilters()">
-                    <!-- Options populated by JavaScript -->
-                </select>
-            </div>
-            
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-2">Status</label>
-                <div class="space-y-2">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="filterOpen" checked onchange="applyFilters()" 
-                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                        <span class="text-sm text-gray-700">Open</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="filterAtRisk" checked onchange="applyFilters()" 
-                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                        <span class="text-sm text-gray-700">At Risk</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="filterCompleted" checked onchange="applyFilters()" 
-                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                        <span class="text-sm text-gray-700">Completed</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="filterPastDue" checked onchange="applyFilters()" 
-                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                        <span class="text-sm text-gray-700">Past Due</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Filter Results Count -->
-        <div class="mt-4 text-sm text-gray-600">
-            Showing <span id="filteredCount" class="font-semibold">0</span> of <span id="totalCount" class="font-semibold">0</span> milestones
-        </div>
-    </div>
-</div>
-
 <!-- View Controls -->
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <div class="flex items-center justify-between">
-        <label class="text-sm font-semibold text-gray-700">View:</label>
-        <div class="flex space-x-2">
-            <button onclick="switchView('status')" id="statusViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                Status View
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-semibold text-gray-700">View:</label>
+            <div class="flex space-x-2">
+                <button onclick="switchView('status')" id="statusViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    Status View
+                </button>
+                <button onclick="switchView('week')" id="weekViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    Week View
+                </button>
+                <button onclick="switchView('month')" id="monthViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    Month View
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <label class="text-sm font-semibold text-gray-700">Sort by Date:</label>
+            <button onclick="sortMilestones('asc')" id="sortAscBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                ⬆️ Ascending
             </button>
-            <button onclick="switchView('week')" id="weekViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                Week View
-            </button>
-            <button onclick="switchView('month')" id="monthViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                Month View
+            <button onclick="sortMilestones('desc')" id="sortDescBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                ⬇️ Descending
             </button>
         </div>
     </div>
@@ -213,132 +159,43 @@
 // All milestones data from server
 const allMilestones = {{ quadrants | tojson }};
 
-// Filtered milestones (starts as all milestones)
-let filteredMilestones = { ...allMilestones };
+// Current sort order
+let currentSortOrder = 'asc'; // Default ascending
 
-// Initialize filters on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeFilters();
-    updateFilterCounts();
-});
-
-// Initialize filter dropdowns
-function initializeFilters() {
-    const allMilestonesList = [
-        ...allMilestones.completed_past,
-        ...allMilestones.open,
-        ...allMilestones.upcoming_future,
-        ...allMilestones.delayed
-    ];
+// Sort milestones by target date
+function sortMilestones(order) {
+    currentSortOrder = order;
     
-    // Extract unique parent projects
-    const parentProjects = new Set();
-    const resources = new Set();
+    // Update button styles
+    const ascBtn = document.getElementById('sortAscBtn');
+    const descBtn = document.getElementById('sortDescBtn');
     
-    allMilestonesList.forEach(m => {
-        if (m.parent_project) {
-            parentProjects.add(m.parent_project);
-        }
-        if (m.resources) {
-            // Handle comma-separated resources
-            m.resources.split(',').forEach(r => resources.add(r.trim()));
-        }
-    });
+    if (order === 'asc') {
+        ascBtn.className = 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+        descBtn.className = 'px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+    } else {
+        ascBtn.className = 'px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+        descBtn.className = 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+    }
     
-    // Populate parent project filter
-    const parentProjectFilter = document.getElementById('parentProjectFilter');
-    Array.from(parentProjects).sort().forEach(project => {
-        const option = document.createElement('option');
-        option.value = project;
-        option.textContent = project;
-        parentProjectFilter.appendChild(option);
-    });
-    
-    // Populate resource filter
-    const resourceFilter = document.getElementById('resourceFilter');
-    Array.from(resources).sort().forEach(resource => {
-        const option = document.createElement('option');
-        option.value = resource;
-        option.textContent = resource;
-        resourceFilter.appendChild(option);
-    });
-}
-
-// Apply filters
-function applyFilters() {
-    const selectedParentProjects = Array.from(document.getElementById('parentProjectFilter').selectedOptions).map(o => o.value);
-    const selectedResources = Array.from(document.getElementById('resourceFilter').selectedOptions).map(o => o.value);
-    
-    const filterOpen = document.getElementById('filterOpen').checked;
-    const filterAtRisk = document.getElementById('filterAtRisk').checked;
-    const filterCompleted = document.getElementById('filterCompleted').checked;
-    const filterPastDue = document.getElementById('filterPastDue').checked;
-    
-    // Filter each quadrant
-    filteredMilestones = {
-        completed_past: filterMilestones(allMilestones.completed_past, selectedParentProjects, selectedResources, filterCompleted, 'completed_past'),
-        open: filterMilestones(allMilestones.open, selectedParentProjects, selectedResources, filterOpen, 'open'),
-        upcoming_future: filterMilestones(allMilestones.upcoming_future, selectedParentProjects, selectedResources, filterAtRisk, 'upcoming_future'),
-        delayed: filterMilestones(allMilestones.delayed, selectedParentProjects, selectedResources, filterPastDue, 'delayed')
+    // Sort all quadrants
+    const sortFn = (a, b) => {
+        const dateA = new Date(a.target_date);
+        const dateB = new Date(b.target_date);
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
     };
     
+    allMilestones.completed_past.sort(sortFn);
+    allMilestones.open.sort(sortFn);
+    allMilestones.upcoming_future.sort(sortFn);
+    allMilestones.delayed.sort(sortFn);
+    
     // Re-render current view
-    const currentView = document.querySelector('[id$="View"]:not([style*="display: none"])').id.replace('View', '');
-    switchView(currentView);
-    
-    // Update counts
-    updateFilterCounts();
-}
-
-// Filter milestones based on criteria
-function filterMilestones(milestones, parentProjects, resources, statusEnabled, quadrantType) {
-    if (!statusEnabled) return [];
-    
-    return milestones.filter(m => {
-        // Parent project filter
-        if (parentProjects.length > 0 && !parentProjects.includes(m.parent_project)) {
-            return false;
-        }
-        
-        // Resource filter
-        if (resources.length > 0) {
-            if (!m.resources) return false;
-            const milestoneResources = m.resources.split(',').map(r => r.trim());
-            const hasMatchingResource = resources.some(r => milestoneResources.includes(r));
-            if (!hasMatchingResource) return false;
-        }
-        
-        return true;
-    });
-}
-
-// Reset filters
-function resetFilters() {
-    document.getElementById('parentProjectFilter').selectedIndex = -1;
-    document.getElementById('resourceFilter').selectedIndex = -1;
-    document.getElementById('filterOpen').checked = true;
-    document.getElementById('filterAtRisk').checked = true;
-    document.getElementById('filterCompleted').checked = true;
-    document.getElementById('filterPastDue').checked = true;
-    applyFilters();
-}
-
-// Update filter counts
-function updateFilterCounts() {
-    const totalCount = 
-        allMilestones.completed_past.length +
-        allMilestones.open.length +
-        allMilestones.upcoming_future.length +
-        allMilestones.delayed.length;
-    
-    const filteredCount = 
-        filteredMilestones.completed_past.length +
-        filteredMilestones.open.length +
-        filteredMilestones.upcoming_future.length +
-        filteredMilestones.delayed.length;
-    
-    document.getElementById('totalCount').textContent = totalCount;
-    document.getElementById('filteredCount').textContent = filteredCount;
+    const currentView = document.querySelector('[id$="View"]:not(.hidden)');
+    if (currentView) {
+        const viewName = currentView.id.replace('View', '');
+        switchView(viewName);
+    }
 }
 
 // Date helper functions
@@ -435,22 +292,22 @@ function populateWeekView() {
     document.getElementById('thisWeekRange').textContent = formatDateRange(thisWeekRange.start, thisWeekRange.end);
     document.getElementById('nextWeekRange').textContent = formatDateRange(nextWeekRange.start, nextWeekRange.end);
     
-    const filteredMilestonesList = [
-        ...filteredMilestones.completed_past,
-        ...filteredMilestones.open,
-        ...filteredMilestones.upcoming_future,
-        ...filteredMilestones.delayed
+    const allMilestonesList = [
+        ...allMilestones.completed_past,
+        ...allMilestones.open,
+        ...allMilestones.upcoming_future,
+        ...allMilestones.delayed
     ];
     
-    const lastWeekCompleted = filteredMilestonesList.filter(m => 
+    const lastWeekCompleted = allMilestonesList.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastWeekRange.start, lastWeekRange.end)
     );
     
-    const thisWeekMilestones = filteredMilestonesList.filter(m => 
+    const thisWeekMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, thisWeekRange.start, thisWeekRange.end)
     );
     
-    const nextWeekMilestones = filteredMilestonesList.filter(m => 
+    const nextWeekMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, nextWeekRange.start, nextWeekRange.end)
     );
     
@@ -481,22 +338,22 @@ function populateMonthView() {
     document.getElementById('thisMonthRange').textContent = formatDateRange(thisMonthRange.start, thisMonthRange.end);
     document.getElementById('nextMonthRange').textContent = formatDateRange(nextMonthRange.start, nextMonthRange.end);
     
-    const filteredMilestonesList = [
-        ...filteredMilestones.completed_past,
-        ...filteredMilestones.open,
-        ...filteredMilestones.upcoming_future,
-        ...filteredMilestones.delayed
+    const allMilestonesList = [
+        ...allMilestones.completed_past,
+        ...allMilestones.open,
+        ...allMilestones.upcoming_future,
+        ...allMilestones.delayed
     ];
     
-    const lastMonthCompleted = filteredMilestonesList.filter(m => 
+    const lastMonthCompleted = allMilestonesList.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
     );
     
-    const thisMonthMilestones = filteredMilestonesList.filter(m => 
+    const thisMonthMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, thisMonthRange.start, thisMonthRange.end)
     );
     
-    const nextMonthMilestones = filteredMilestonesList.filter(m => 
+    const nextMonthMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
     );
     
@@ -516,30 +373,30 @@ function populateMonthView() {
 // Populate status view (quadrant view)
 function populateStatusView() {
     // Completed Past quadrant
-    document.getElementById('completedPastContainer').innerHTML = filteredMilestones.completed_past.length > 0
-        ? filteredMilestones.completed_past.map(m => renderMilestoneCard(m, 'green')).join('')
+    document.getElementById('completedPastContainer').innerHTML = allMilestones.completed_past.length > 0
+        ? allMilestones.completed_past.map(m => renderMilestoneCard(m, 'green')).join('')
         : '<p class="text-sm text-gray-500">No completed milestones</p>';
     
     // Open quadrant
-    document.getElementById('openContainer').innerHTML = filteredMilestones.open.length > 0
-        ? filteredMilestones.open.map(m => renderMilestoneCard(m, 'gray')).join('')
+    document.getElementById('openContainer').innerHTML = allMilestones.open.length > 0
+        ? allMilestones.open.map(m => renderMilestoneCard(m, 'gray')).join('')
         : '<p class="text-sm text-gray-500">No open milestones</p>';
     
     // At Risk quadrant
-    document.getElementById('atRiskContainer').innerHTML = filteredMilestones.upcoming_future.length > 0
-        ? filteredMilestones.upcoming_future.map(m => renderMilestoneCard(m, 'yellow')).join('')
+    document.getElementById('atRiskContainer').innerHTML = allMilestones.upcoming_future.length > 0
+        ? allMilestones.upcoming_future.map(m => renderMilestoneCard(m, 'yellow')).join('')
         : '<p class="text-sm text-gray-500">No at-risk milestones</p>';
     
     // Past Due quadrant
-    document.getElementById('pastDueContainer').innerHTML = filteredMilestones.delayed.length > 0
-        ? filteredMilestones.delayed.map(m => renderMilestoneCard(m, 'red')).join('')
+    document.getElementById('pastDueContainer').innerHTML = allMilestones.delayed.length > 0
+        ? allMilestones.delayed.map(m => renderMilestoneCard(m, 'red')).join('')
         : '<p class="text-sm text-gray-500">No past due milestones</p>';
     
     // Update counts in headers
-    document.getElementById('completedCount').textContent = filteredMilestones.completed_past.length;
-    document.getElementById('openCount').textContent = filteredMilestones.open.length;
-    document.getElementById('atRiskCount').textContent = filteredMilestones.upcoming_future.length;
-    document.getElementById('pastDueCount').textContent = filteredMilestones.delayed.length;
+    document.getElementById('completedCount').textContent = allMilestones.completed_past.length;
+    document.getElementById('openCount').textContent = allMilestones.open.length;
+    document.getElementById('atRiskCount').textContent = allMilestones.upcoming_future.length;
+    document.getElementById('pastDueCount').textContent = allMilestones.delayed.length;
 }
 
 // Render milestone card for status view
