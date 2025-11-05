@@ -114,13 +114,11 @@ class PowerPointExporter:
         
         logger.info(f"Collected {len(all_milestones)} milestones, {len(all_risks)} risks, {len(all_changes)} changes")
         
-        # 3. Milestones page (top 5-6, app format)
-        if all_milestones:
-            self._add_milestones_slide_app_format(prs, all_milestones[:6])
+        # 3. Milestones page (3-column time-based view)
+        self._add_milestones_slide_app_format(prs, all_milestones)  # Pass all, method filters by month
         
         # 4. Risks page (app format)
-        if all_risks:
-            self._add_risks_slide_app_format(prs, all_risks)
+        self._add_risks_slide_app_format(prs, all_risks)  # Always create, even if empty
         
         # 5. Change Management page (app format)
         if all_changes:
@@ -302,7 +300,7 @@ class PowerPointExporter:
             y_pos += row_height
     
     def _add_milestones_slide_app_format(self, prs, milestones):
-        """Add milestones slide matching app format - card-based layout with colored borders"""
+        """Add milestones slide matching app format - 3-column time-based view (Last/This/Next Month)"""
         slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
         
@@ -316,109 +314,187 @@ class PowerPointExporter:
         title_frame.paragraphs[0].font.bold = True
         title_frame.paragraphs[0].font.color.rgb = RGBColor(31, 41, 55)
         
-        if not milestones:
-            no_data_box = slide.shapes.add_textbox(
-                Inches(2), Inches(3), Inches(6), Inches(1)
-            )
-            no_data_box.text_frame.text = "No upcoming milestones"
-            no_data_box.text_frame.paragraphs[0].font.size = Pt(18)
-            no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
-            no_data_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
-            return
+        # Calculate date ranges for last, this, and next month
+        today = datetime.now()
         
-        # Display milestones as cards (matching app's card layout)
-        card_width = Inches(4.5)
-        card_height = Inches(1.2)
-        left_margin = Inches(0.5)
-        right_margin = Inches(5.2)
-        top_start = Inches(1.0)
-        vertical_spacing = Inches(0.15)
+        # This month
+        this_month_start = datetime(today.year, today.month, 1)
+        if today.month == 12:
+            this_month_end = datetime(today.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            this_month_end = datetime(today.year, today.month + 1, 1) - timedelta(days=1)
         
-        for idx, milestone in enumerate(milestones):
-            # Alternate between left and right columns
-            if idx % 2 == 0:
-                x_pos = left_margin
+        # Last month
+        if today.month == 1:
+            last_month_start = datetime(today.year - 1, 12, 1)
+            last_month_end = datetime(today.year, 1, 1) - timedelta(days=1)
+        else:
+            last_month_start = datetime(today.year, today.month - 1, 1)
+            last_month_end = datetime(today.year, today.month, 1) - timedelta(days=1)
+        
+        # Next month
+        if today.month == 12:
+            next_month_start = datetime(today.year + 1, 1, 1)
+            next_month_end = datetime(today.year + 1, 2, 1) - timedelta(days=1)
+        else:
+            next_month_start = datetime(today.year, today.month + 1, 1)
+            if today.month == 11:
+                next_month_end = datetime(today.year + 1, 1, 1) - timedelta(days=1)
             else:
-                x_pos = right_margin
-            
-            row = idx // 2
-            y_pos = top_start + (row * (card_height + vertical_spacing))
-            
-            # Stop if we exceed slide height
-            if y_pos + card_height > Inches(7):
-                break
-            
-            # Determine border color based on status
-            status = milestone.get('status', 'NOT_STARTED')
-            if status == 'COMPLETED':
-                border_color = RGBColor(34, 197, 94)  # Green
-                bg_color = RGBColor(240, 253, 244)  # Light green
-            elif status == 'IN_PROGRESS':
-                border_color = RGBColor(234, 179, 8)  # Yellow
-                bg_color = RGBColor(254, 252, 232)  # Light yellow
-            else:
-                border_color = RGBColor(156, 163, 175)  # Gray
-                bg_color = RGBColor(249, 250, 251)  # Light gray
-            
-            # Create card background
-            card = slide.shapes.add_shape(
-                1,  # Rectangle
-                x_pos, y_pos,
-                card_width, card_height
-            )
-            card.fill.solid()
-            card.fill.fore_color.rgb = bg_color
-            card.line.color.rgb = border_color
-            card.line.width = Pt(4)
-            
-            # Add text content to card
-            text_box = slide.shapes.add_textbox(
-                x_pos + Inches(0.15), y_pos + Inches(0.1),
-                card_width - Inches(0.3), card_height - Inches(0.2)
-            )
-            tf = text_box.text_frame
-            tf.word_wrap = True
-            tf.vertical_anchor = 1  # Middle
-            
-            # Milestone name (bold)
-            p = tf.paragraphs[0]
-            p.text = str(milestone.get('name', 'Unnamed'))[:50]
-            p.font.size = Pt(12)
-            p.font.bold = True
-            p.font.color.rgb = RGBColor(31, 41, 55)
-            
-            # Project name
-            p = tf.add_paragraph()
-            project = milestone.get('parent_project') or milestone.get('project', '')
-            p.text = f"Project: {str(project)[:35]}"
-            p.font.size = Pt(9)
-            p.font.color.rgb = RGBColor(75, 85, 99)
-            p.space_before = Pt(2)
-            
-            # Target date and status on same line
-            p = tf.add_paragraph()
-            target_date = milestone.get('target_date', '')
+                next_month_end = datetime(today.year, today.month + 2, 1) - timedelta(days=1)
+        
+        # Categorize milestones by time period
+        last_month_milestones = []
+        this_month_milestones = []
+        next_month_milestones = []
+        
+        for milestone in milestones:
             try:
-                date_obj = datetime.strptime(str(target_date), '%Y-%m-%d')
-                date_str = date_obj.strftime('%b %d, %Y')
+                target = datetime.strptime(str(milestone.get('target_date', '')), '%Y-%m-%d')
+                if last_month_start <= target <= last_month_end:
+                    last_month_milestones.append(milestone)
+                elif this_month_start <= target <= this_month_end:
+                    this_month_milestones.append(milestone)
+                elif next_month_start <= target <= next_month_end:
+                    next_month_milestones.append(milestone)
             except:
-                date_str = str(target_date)
+                # If date parsing fails, put in this month by default
+                this_month_milestones.append(milestone)
+        
+        # Column layout
+        col_width = Inches(3.0)
+        col_spacing = Inches(0.2)
+        left_col_x = Inches(0.5)
+        center_col_x = left_col_x + col_width + col_spacing
+        right_col_x = center_col_x + col_width + col_spacing
+        top_y = Inches(1.0)
+        
+        # Helper function to add column with milestones
+        def add_milestone_column(x_pos, title, icon, date_range, milestones_list):
+            # Column header
+            header_box = slide.shapes.add_textbox(x_pos, top_y, col_width, Inches(0.4))
+            hf = header_box.text_frame
+            p = hf.paragraphs[0]
+            p.text = f"{icon} {title}"
+            p.font.size = Pt(14)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(37, 99, 235) if icon == "📍" else RGBColor(75, 85, 99)
             
-            status_icons = {'COMPLETED': '✓', 'IN_PROGRESS': '⏳', 'NOT_STARTED': '○'}
-            icon = status_icons.get(status, '○')
-            p.text = f"📅 {date_str}  |  {icon} {status.replace('_', ' ')}"
-            p.font.size = Pt(9)
-            p.font.color.rgb = RGBColor(107, 114, 128)
-            p.space_before = Pt(2)
+            # Date range
+            date_box = slide.shapes.add_textbox(x_pos, top_y + Inches(0.35), col_width, Inches(0.25))
+            df = date_box.text_frame
+            df.paragraphs[0].text = date_range
+            df.paragraphs[0].font.size = Pt(9)
+            df.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
             
-            # Resources if available
-            resources = milestone.get('resources')
-            if resources:
+            # Add milestone cards
+            card_y = top_y + Inches(0.7)
+            card_height = Inches(1.0)
+            card_spacing = Inches(0.12)
+            
+            for milestone in milestones_list[:6]:  # Limit to 6 per column
+                if card_y + card_height > Inches(7):
+                    break
+                
+                # Determine colors based on status
+                status = milestone.get('status', 'NOT_STARTED')
+                if status == 'COMPLETED':
+                    border_color = RGBColor(34, 197, 94)  # Green
+                    bg_color = RGBColor(240, 253, 244)
+                elif status == 'IN_PROGRESS':
+                    border_color = RGBColor(234, 179, 8)  # Yellow
+                    bg_color = RGBColor(254, 252, 232)
+                else:
+                    border_color = RGBColor(59, 130, 246)  # Blue
+                    bg_color = RGBColor(239, 246, 255)
+                
+                # Card background
+                card = slide.shapes.add_shape(1, x_pos, card_y, col_width, card_height)
+                card.fill.solid()
+                card.fill.fore_color.rgb = bg_color
+                card.line.color.rgb = border_color
+                card.line.width = Pt(3)
+                
+                # Card text
+                text_box = slide.shapes.add_textbox(
+                    x_pos + Inches(0.12), card_y + Inches(0.08),
+                    col_width - Inches(0.24), card_height - Inches(0.16)
+                )
+                tf = text_box.text_frame
+                tf.word_wrap = True
+                
+                # Milestone name
+                p = tf.paragraphs[0]
+                p.text = str(milestone.get('name', 'Unnamed'))[:45]
+                p.font.size = Pt(10)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(31, 41, 55)
+                
+                # Project/Category
                 p = tf.add_paragraph()
-                p.text = f"👤 {str(resources)[:40]}"
+                project = milestone.get('parent_project') or milestone.get('project', '')
+                p.text = str(project)[:40]
+                p.font.size = Pt(8)
+                p.font.color.rgb = RGBColor(234, 179, 8)  # Yellow/orange for category
+                p.space_before = Pt(2)
+                
+                # Target date
+                p = tf.add_paragraph()
+                target_date = milestone.get('target_date', '')
+                try:
+                    date_obj = datetime.strptime(str(target_date), '%Y-%m-%d')
+                    date_str = date_obj.strftime('%Y-%m-%d')
+                except:
+                    date_str = str(target_date)
+                p.text = f"Target: {date_str}"
                 p.font.size = Pt(8)
                 p.font.color.rgb = RGBColor(107, 114, 128)
                 p.space_before = Pt(2)
+                
+                # Status
+                p = tf.add_paragraph()
+                status_icons = {'COMPLETED': '✓ COMPLETED', 'IN_PROGRESS': '⏳ IN PROGRESS', 'NOT_STARTED': '○ NOT STARTED'}
+                status_text = status_icons.get(status, status)
+                p.text = status_text
+                p.font.size = Pt(8)
+                p.font.color.rgb = border_color
+                p.space_before = Pt(2)
+                
+                # Resources
+                resources = milestone.get('resources')
+                if resources:
+                    p = tf.add_paragraph()
+                    p.text = f"👤 {str(resources)[:30]}"
+                    p.font.size = Pt(8)
+                    p.font.color.rgb = RGBColor(107, 114, 128)
+                    p.space_before = Pt(2)
+                
+                card_y += card_height + card_spacing
+        
+        # Add three columns
+        add_milestone_column(
+            left_col_x,
+            "Last Month",
+            "📅",
+            last_month_start.strftime('%b %d') + " - " + last_month_end.strftime('%b %d, %Y'),
+            last_month_milestones
+        )
+        
+        add_milestone_column(
+            center_col_x,
+            "This Month",
+            "📍",
+            this_month_start.strftime('%b %d') + " - " + this_month_end.strftime('%b %d, %Y'),
+            this_month_milestones
+        )
+        
+        add_milestone_column(
+            right_col_x,
+            "Next Month",
+            "🔜",
+            next_month_start.strftime('%b %d') + " - " + next_month_end.strftime('%b %d, %Y'),
+            next_month_milestones
+        )
     
     def _add_risks_slide_app_format(self, prs, risks):
         """Add risks slide matching app format - cards grouped by severity"""
@@ -441,6 +517,18 @@ class PowerPointExporter:
             severity = risk.get('severity', 'LOW') or 'LOW'
             if severity in risks_by_severity:
                 risks_by_severity[severity].append(risk)
+        
+        # Check if we have any risks
+        total_risks = len(risks_by_severity['HIGH']) + len(risks_by_severity['MEDIUM']) + len(risks_by_severity['LOW'])
+        if total_risks == 0:
+            no_data_box = slide.shapes.add_textbox(
+                Inches(2), Inches(3), Inches(6), Inches(1)
+            )
+            no_data_box.text_frame.text = "No active risks"
+            no_data_box.text_frame.paragraphs[0].font.size = Pt(18)
+            no_data_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            no_data_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(107, 114, 128)
+            return
         
         # Display settings
         current_y = Inches(1.0)

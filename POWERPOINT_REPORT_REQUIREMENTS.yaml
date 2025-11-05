@@ -1,6 +1,6 @@
 # PowerPoint Report Requirements
 # Systems³ Project Reporter - Report Generation Specifications
-# Last Updated: 2025-11-05
+# Last Updated: 2025-11-05 (Updated with actual app screenshots)
 
 report_structure:
   title: "Systems³ Project Reporter"
@@ -16,84 +16,146 @@ slides:
     
   2_roadmap_gantt:
     format: "EXACT REPLICA of app's Gantt/Roadmap page"
-    requirement: "Same format as the one in the application"
+    requirement: "Program Roadmap - Project Overview"
+    visual_reference: "Horizontal Gantt bars with completion percentages"
+    layout:
+      - "Project names on left (vertical axis)"
+      - "Timeline on bottom (horizontal axis with dates)"
+      - "Horizontal bars showing project duration"
+      - "Completion percentage displayed on each bar"
+      - "Bars color-coded by completion % (dark gray to light gray gradient)"
     content:
-      - "Display all ~10 projects as Gantt chart"
-      - "Visual timeline bars showing project duration"
-      - "Same appearance as app's roadmap view"
+      - "All ~10-14 projects displayed"
+      - "Project name on left side"
+      - "Bar starts at project start date"
+      - "Bar ends at target completion date"
+      - "Completion % shown on bar (e.g., '67% Complete', '100% Complete')"
+      - "Timeline axis shows months (e.g., '2024-09-01', '2025-01-01')"
+    styling:
+      - "White background"
+      - "Gray bars (darker = higher completion %)"
+      - "Clean, professional Gantt chart appearance"
     notes:
-      - "User sees Gantt chart in app - replicate that visual"
-      - "Does NOT need to be interactive"
-      - "Static snapshot of the timeline view"
+      - "This is the MAIN requirement - user specifically requested Gantt chart"
+      - "Must show all projects as horizontal timeline bars"
+      - "NOT cards, NOT table - pure Gantt chart visualization"
     
   3_milestones:
-    format: "EXACT REPLICA of app's Milestone page"
-    requirement: "Use the same format as in the app"
+    format: "EXACT REPLICA of app's Milestone page - 3-column time-based view"
+    requirement: "Last Month | This Month | Next Month layout"
+    visual_reference: "Three columns with milestone cards organized by time period"
+    layout:
+      type: "3-column grid"
+      columns:
+        left: "📅 Last Month (Oct 1 - Oct 31, 2025)"
+        center: "📍 This Month (Nov 1 - Nov 30, 2025)"  
+        right: "🔜 Next Month (Dec 1 - Dec 31, 2025)"
+    card_format:
+      border: "Left border colored by status/project"
+      background: "Light colored background"
+      content:
+        - "Milestone name (bold)"
+        - "Project name"
+        - "Category/Phase (e.g., 'Vat 8 Remove & Install')"
+        - "Target date"
+        - "Status indicator (✓ COMPLETED / ○ NOT STARTED)"
+        - "Resource/Owner name (👤)"
+        - "Completion bar if in progress"
+      colors:
+        completed: "Green border + green background"
+        in_progress: "Yellow/Orange border + yellow background"
+        not_started: "Blue/Gray border + light background"
     display_rules:
-      quantity: "Top 5-6 milestones (depending on how many fit on slide)"
-      order: "Same order as displayed in app (sorted by target date)"
-      layout: "Match the milestone cards/table from app exactly"
-    content:
-      - "Milestone name"
-      - "Project name"
-      - "Parent project (if applicable)"
-      - "Target date"
-      - "Status"
-      - "Resources"
-      - "Completion percentage (if applicable)"
+      - "Group milestones by time period (last/this/next month)"
+      - "Show all milestones that fit in each column"
+      - "Completed items in 'Last Month'"
+      - "Active/upcoming items in 'This Month'"
+      - "Future items in 'Next Month'"
+    styling:
+      - "Clean card layout with colored left borders"
+      - "Icons for status (✓ ○)"
+      - "Icons for resources (👤)"
+      - "Date ranges shown in column headers"
     notes:
-      - "Must fit all information that appears in app view"
-      - "Should look like screenshot of app milestone view"
-      - "Must remain editable in PowerPoint"
+      - "This is a TIME-BASED view, not status-based"
+      - "Three distinct time periods: Last/This/Next Month"
+      - "Cards show full milestone details"
     
   4_risks:
-    format: "EXACT REPLICA of app's Risk page"
-    requirement: "Use the same format as the app"
-    display_rules:
-      quantity: "Top 10 risks (or whatever fits on slide)"
-      layout: "Match the risk cards/table from app exactly"
-    content:
-      - "Risk description"
-      - "Severity (with color coding)"
-      - "Status"
-      - "Mitigation plan"
-      - "Associated project"
-    notes:
-      - "Should look like screenshot of app risk view"
-      - "Must remain editable in PowerPoint"
+    format: "Risk slide is MISSING from current implementation"
+    requirement: "Must be added - showing active risks"
+    status: "NEEDS TO BE IMPLEMENTED"
+    suggested_format:
+      - "Card-based layout grouped by severity"
+      - "HIGH risks in red cards"
+      - "MEDIUM risks in yellow cards"
+      - "LOW risks in gray cards"
     
   5_change_management:
     format: "EXACT REPLICA of app's Change Management page"
-    requirement: "Use the same format as the app"
-    display_rules:
-      quantity: "10 most recent changes (or whatever fits on slide)"
-      order: "Most recent first (descending by date)"
-      layout: "Match the change cards/table from app exactly"
+    requirement: "Table showing schedule changes with old→new date visualization"
+    visual_reference: "Clean table with strikethrough old dates and green new dates"
+    layout:
+      type: "Data table"
+      columns:
+        - "CHANGE ID (blue badge)"
+        - "PROJECT"
+        - "DATE (change date)"
+        - "SCHEDULE CHANGE (old → new)"
+        - "REASON"
+        - "IMPACT (colored badge)"
+      row_styling:
+        - "Hover effect on rows"
+        - "Clean white background"
+        - "Subtle dividing lines"
+    schedule_change_visualization:
+      old_date:
+        color: "Red"
+        style: "Strikethrough (line-through)"
+        example: "2025-10-15"
+      arrow: "→"
+      new_date:
+        color: "Green"  
+        style: "Bold"
+        example: "2025-09-24"
+      display: "2025-10-15 → 2025-09-24"
     content:
-      - "Change date"
-      - "Project affected"
-      - "Old target date"
-      - "New target date"
+      - "Change ID as blue badge (e.g., 'CHG-ZLD-PI-LIMs-Roll-Out--Final')"
+      - "Project name"
+      - "Date of change"
+      - "Old date (red, strikethrough) → New date (green, bold)"
       - "Reason for change"
-      - "Impact (if applicable)"
+      - "Impact assessment (colored badge)"
+    styling:
+      - "Clean table with headers in gray background"
+      - "Blue badges for Change IDs"
+      - "Red strikethrough for old dates"
+      - "Green bold for new dates"
+      - "Impact badges color-coded (red=high, yellow=moderate, gray=minor)"
+    display_rules:
+      - "Show 10 most recent changes"
+      - "Sort by date descending (newest first)"
+      - "Clear old→new date visualization"
     notes:
-      - "Should look like screenshot of app change management view"
-      - "Must remain editable in PowerPoint"
+      - "Table format, not cards"
+      - "Emphasis on schedule change visualization"
+      - "Professional, clean appearance"
 
 design_principles:
   primary_goal: "Replicate what we see in the app on the specific pages"
   key_requirements:
-    - "Each slide should be a snapshot of the corresponding app page"
-    - "Use same colors, fonts, and layout as app"
-    - "All content must remain editable (native PowerPoint objects, not images)"
-    - "Professional appearance matching the web app's design"
-    - "Fit content appropriately on slides (top 5-6 milestones, top 10 risks/changes)"
+    - "Roadmap = Horizontal Gantt chart (NOT cards)"
+    - "Milestones = 3-column time-based view (Last/This/Next Month)"
+    - "Risks = Card-based grouped by severity (MISSING - needs implementation)"
+    - "Changes = Table with old→new date visualization"
+    - "All content must remain editable (native PowerPoint objects)"
   
   formatting:
-    - "Use app's color scheme consistently"
-    - "Match app's card/table layouts"
+    - "Use app's exact color scheme"
+    - "Match app's layout structure precisely"
     - "Include same information fields as app displays"
     - "Maintain visual hierarchy from app"
+    - "Use icons where app uses them (✓ ○ 👤 📅 📍 🔜)"
 
 technical_constraints:
   - "Must use python-pptx library"
@@ -102,24 +164,26 @@ technical_constraints:
   - "Prevent file corruption"
   - "Generate valid PPTX files"
 
-user_workflow:
-  1: "User views data in web application"
-  2: "User clicks 'Download PowerPoint Report'"
-  3: "PowerPoint opens showing same data in same format"
-  4: "User can present slides that look like app screenshots"
-  5: "User can edit content if needed"
-
-current_issues_to_fix:
-  - "Roadmap slide appears blank/empty instead of showing Gantt bars"
-  - "Milestone slide doesn't match app layout"
-  - "Risk slide doesn't match app layout"
-  - "Change management slide doesn't match app layout"
-  - "Overall appearance not professional enough"
-  - "Not visually replicating the app views"
+current_issues_identified:
+  roadmap:
+    issue: "Currently showing blank/empty instead of Gantt bars"
+    fix_needed: "Draw horizontal bars for each project with completion %"
+  milestones:
+    issue: "Using 2-column card layout instead of 3-column time-based"
+    fix_needed: "Change to Last Month | This Month | Next Month columns"
+  risks:
+    issue: "Slide is completely missing"
+    fix_needed: "Implement risks slide with severity-grouped cards"
+  changes:
+    issue: "Current table doesn't match app's clean format"
+    fix_needed: "Use exact app table format with better old→new visualization"
 
 success_criteria:
-  - "Slides look like polished screenshots of the app"
-  - "All data from app pages represented accurately"
+  - "Roadmap shows horizontal Gantt bars for all projects"
+  - "Milestones organized in 3 time-based columns"
+  - "Risks slide exists and shows severity-grouped cards"
+  - "Changes table has clean format with red strikethrough → green bold dates"
+  - "All slides look like polished screenshots of the app"
   - "Professional presentation quality"
   - "Content is editable in PowerPoint"
   - "No file corruption errors"
