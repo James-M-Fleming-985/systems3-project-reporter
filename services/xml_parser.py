@@ -190,6 +190,17 @@ class MSProjectXMLParser:
         if level2_projects:
             print(f"DEBUG: Level 2 projects: {list(level2_projects.values())[:3]}")
         
+        # Debug: Show sample UIDs in hierarchy
+        sample_uids = list(task_hierarchy.keys())[:10]
+        print(f"DEBUG: Sample UIDs in hierarchy: {sample_uids}")
+        
+        # Check if milestone UIDs would be in hierarchy
+        if '8704' in task_hierarchy:
+            print(f"DEBUG: UID 8704 found in hierarchy: {task_hierarchy['8704']}")
+        else:
+            print(f"DEBUG: UID 8704 NOT in hierarchy")
+
+        
         # Debug: Check first task to see what's wrong
         if tasks and len(tasks) > 0:
             first_task = tasks[0]
