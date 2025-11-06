@@ -329,9 +329,8 @@ function populateWeekView() {
             const el = document.getElementById(id);
             if (el) {
                 el.style.overflowY = 'auto';
-                el.style.height = '850px';  // Fixed height instead of max-height
+                el.style.height = '850px';
                 el.style.display = 'block';
-                console.log(`Applied scroll to ${id}, scrollHeight: ${el.scrollHeight}, clientHeight: ${el.clientHeight}`);
             }
         });
     }, 100);
