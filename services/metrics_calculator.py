@@ -40,19 +40,13 @@ class MetricsCalculator:
         completion_rate = self._calculate_completion_rate(all_tasks)
         spi = self._calculate_spi(all_tasks)
         milestone_health = self._calculate_milestone_health(all_tasks)
-        schedule_trend_raw = self._calculate_schedule_trend(all_tasks)
-        
-        # Transform schedule_trend to frontend-friendly format
-        schedule_trend = {
-            'periods': [week['label'] for week in schedule_trend_raw],
-            'spi_values': [week['spi'] for week in schedule_trend_raw],
-            'raw_data': schedule_trend_raw  # Keep for debugging
-        }
+        schedule_trend = self._calculate_schedule_trend(all_tasks)
         
         return {
             'completion_rate': completion_rate,
             'spi': spi,
             'milestone_health': milestone_health,
+            'schedule_trend': schedule_trend,
             'schedule_trend': schedule_trend,
             'total_milestones': len(all_tasks),
             'total_projects': len(projects),
