@@ -24,6 +24,31 @@
         tailwind.config = { corePlugins: { preflight: true } };
     </script>
     
+    <!-- Custom CSS for scrollable containers -->
+    <style>
+        .scrollable-milestone-container {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            max-height: 850px !important;
+            display: block !important;
+        }
+        /* Custom scrollbar styling */
+        .scrollable-milestone-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollable-milestone-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .scrollable-milestone-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .scrollable-milestone-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    
     <!-- Plotly.js for charts -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     
