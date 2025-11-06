@@ -102,30 +102,18 @@
 </div>
 
 <!-- Week View (Hidden by default) -->
-<div id="weekView" class="hidden">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Last Week -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Week</h3>
-            <p class="text-sm text-gray-500 mb-4" id="lastWeekRange"></p>
-            <div id="lastWeekCompleted" class="space-y-3 overflow-y-auto max-h-96"></div>
-        </div>
+    <!-- Week View Section -->
+    <div id="weekViewSection" class="mt-8 hidden">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">📅 Week View</h3>
         
-        <!-- This Week -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Week</h3>
-            <p class="text-sm text-gray-500 mb-4" id="thisWeekRange"></p>
-            <div id="thisWeekMilestones" class="space-y-3 overflow-y-auto max-h-96"></div>
-        </div>
-        
-        <!-- Next Week -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Week</h3>
-            <p class="text-sm text-gray-500 mb-4" id="nextWeekRange"></p>
-            <div id="nextWeekMilestones" class="space-y-3 overflow-y-auto max-h-96"></div>
-        </div>
-    </div>
-</div>
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Last Week -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">� Last Week</h4>
+                    <span class="text-sm text-gray-600">{{ last_week_range }}</span>
+                </div>
+                <div class="space-y-3 overflow-y-auto" style="max-height: 900px;">  <!-- 50% increase from 600px -->
 
 <!-- Month View (Hidden by default) -->
 <div id="monthView" class="hidden">
@@ -134,21 +122,21 @@
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastMonthRange"></p>
-            <div id="lastMonthCompleted" class="space-y-3 overflow-y-auto max-h-96"></div>
+            <div id="lastMonthCompleted" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
         </div>
         
         <!-- This Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisMonthRange"></p>
-            <div id="thisMonthMilestones" class="space-y-3 overflow-y-auto max-h-96"></div>
+            <div id="thisMonthMilestones" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
         </div>
         
         <!-- Next Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextMonthRange"></p>
-            <div id="nextMonthMilestones" class="space-y-3 overflow-y-auto max-h-96"></div>
+            <div id="nextMonthMilestones" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
         </div>
     </div>
 </div>

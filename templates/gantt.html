@@ -15,24 +15,8 @@
 
 {% block content %}
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Gantt Chart</h2>
-    <p class="text-gray-600">Timeline view of all project milestones</p>
-</div>
-
-<!-- View Controls -->
-<div class="bg-white rounded-lg shadow p-6 mb-6">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <!-- Project Filters -->
-        <div class="flex items-center space-x-4">
-            <label class="text-sm font-semibold text-gray-700">Projects:</label>
-            <div class="flex flex-wrap gap-3" id="projectFilters">
-                <!-- Project filter checkboxes are generated from ganttData Resource values by JS -->
-            </div>
-            <button onclick="toggleAllProjects()" class="px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium hover:bg-gray-200 transition">
-                Toggle All
-            </button>
-        </div>
-    </div>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Program Roadmap</h2>
+    <p class="text-gray-600">Interactive timeline view of all projects</p>
 </div>
 
 <!-- Gantt Chart Container -->
@@ -58,43 +42,6 @@
         </div>
     </div>
 </div>
-
-<!-- Milestone Details -->
-<div class="mt-6 bg-white rounded-lg shadow p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Milestone Details</h3>
-    <div class="overflow-x-auto">
-        <table id="milestoneTable" class="min-w-full divide-y divide-gray-200 display">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Milestone</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Date</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for project in projects %}
-                    {% for milestone in project.milestones %}
-                    <tr>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ milestone.name }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ project.project_name }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ milestone.target_date }}</td>
-                        <td class="px-4 py-3">
-                            {% if milestone.status == "COMPLETED" %}
-                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Completed</span>
-                            {% elif milestone.status == "IN_PROGRESS" %}
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">⏳ In Progress</span>
-                            {% else %}
-                                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">○ Not Started</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -104,51 +51,7 @@ const ganttData = {{ gantt_data | tojson }};
 
 // Global state
 let currentView = 'roadmap';  // Default to roadmap view
-let enabledProjects = new Set();
 let chartDiv = document.getElementById('ganttChart');
-
-// Build project filter checkboxes from ganttData Resource values
-function buildProjectFiltersFromGanttData() {
-    const filtersDiv = document.getElementById('projectFilters');
-    filtersDiv.innerHTML = '';
-
-    const resources = Array.from(new Set(ganttData.map(t => t.Resource))).sort();
-
-    resources.forEach(res => {
-        const label = document.createElement('label');
-        label.className = 'flex items-center space-x-2 cursor-pointer';
-
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.className = 'project-filter w-4 h-4 text-blue-600 rounded focus:ring-blue-500';
-        input.dataset.project = res;
-        input.checked = true;
-
-        const span = document.createElement('span');
-        span.className = 'text-sm text-gray-700';
-        span.textContent = res;
-
-        label.appendChild(input);
-        label.appendChild(span);
-        filtersDiv.appendChild(label);
-
-        // default: enable all
-        enabledProjects.add(res);
-
-        // attach change listener
-        input.addEventListener('change', function() {
-            if (this.checked) {
-                enabledProjects.add(this.dataset.project);
-            } else {
-                enabledProjects.delete(this.dataset.project);
-            }
-            renderChart();
-        });
-    });
-}
-
-// build filters now
-buildProjectFiltersFromGanttData();
 
 // Color mapping for status
 const statusColors = {
@@ -157,62 +60,11 @@ const statusColors = {
     'NOT_STARTED': '#9ca3af'     // gray-400
 };
 
-// Color mapping for projects (roadmap view)
-const projectColors = {
-    'ZnNi Line Phase 1 - Equipment Installation': '#3b82f6',  // blue-500
-    'Quality System Upgrade': '#8b5cf6',                      // violet-500
-    'Infrastructure Development': '#ec4899'                   // pink-500
-};
-
-// Group by project (Resource field contains the project groups)
-const projectData = {};
-ganttData.forEach(task => {
-    if (!projectData[task.Resource]) {
-        projectData[task.Resource] = [];
-    }
-    projectData[task.Resource].push(task);
-});
-
 // Helper function to parse dates correctly (avoid timezone issues)
 function parseDate(dateStr) {
     // dateStr format: "YYYY-MM-DD"
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);  // month is 0-indexed
-}
-
-// Function to create detail view traces
-function createDetailViewTraces() {
-    const traces = [];
-    const filteredData = ganttData.filter(task => enabledProjects.has(task.Resource));
-    
-    filteredData.forEach(task => {
-        traces.push({
-            x: [parseDate(task.Start), parseDate(task.Finish)],
-            y: [task.Task],
-            type: 'bar',
-            orientation: 'h',
-            marker: {
-                color: statusColors[task.Status],
-                line: {
-                    color: 'rgba(0,0,0,0.2)',
-                    width: 1
-                }
-            },
-            name: task.Resource,
-            text: task.Status,
-            customdata: [[task.Resource, task.Status]],
-            hovertemplate: '<b>%{y}</b><br>' +
-                          'Project: %{customdata[0]}<br>' +
-                          'Status: %{customdata[1]}<br>' +
-                          'Start: %{x[0]|%Y-%m-%d}<br>' +
-                          'End: %{x[1]|%Y-%m-%d}' +
-                          '<extra></extra>',
-            showlegend: true,
-            legendgroup: task.Resource
-        });
-    });
-    
-    return traces;
 }
 
 // Function to create roadmap view traces (grouped by project)
@@ -222,8 +74,6 @@ function createRoadmapViewTraces() {
     // Group tasks by Resource (which contains our project groups from backend)
     const resourceGroups = {};
     ganttData.forEach(task => {
-        if (!enabledProjects.has(task.Resource)) return;
-        
         if (!resourceGroups[task.Resource]) {
             resourceGroups[task.Resource] = [];
         }
@@ -393,55 +243,7 @@ function renderChart() {
     Plotly.newPlot(chartDiv, traces, layout, config);
 }
 
-// Function to toggle all projects
-function toggleAllProjects() {
-    const checkboxes = document.querySelectorAll('.project-filter');
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = !allChecked;
-        if (checkbox.checked) {
-            enabledProjects.add(checkbox.dataset.project);
-        } else {
-            enabledProjects.delete(checkbox.dataset.project);
-        }
-    });
-    
-    renderChart();
-}
-
-// project filter listeners are attached when filters are generated
-
 // Initial render
 renderChart();
-
-// Initialize DataTable with sorting and filtering
-$(document).ready(function() {
-    $('#milestoneTable').DataTable({
-        pageLength: 25,
-        order: [[2, 'asc']],  // Sort by target date by default
-        language: {
-            search: "Search milestones:",
-            lengthMenu: "Show _MENU_ milestones per page"
-        },
-        columnDefs: [
-            {
-                targets: 3,  // Status column
-                render: function(data, type, row) {
-                    if (type === 'display') {
-                        if (data === 'COMPLETED') {
-                            return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Completed</span>';
-                        } else if (data === 'IN_PROGRESS') {
-                            return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">⏳ In Progress</span>';
-                        } else {
-                            return '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">○ Not Started</span>';
-                        }
-                    }
-                    return data;
-                }
-            }
-        ]
-    });
-});
 </script>
 {% endblock %}
