@@ -90,6 +90,24 @@ async def milestone_tracker(request: Request):
     return templates.TemplateResponse("milestones.html", context)
 
 
+@router.get("/metrics", response_class=HTMLResponse)
+async def program_metrics(request: Request):
+    """
+    FEATURE-WEB-006: Program metrics dashboard
+    Displays KPIs and health metrics for selected program
+    """
+    from main import BUILD_VERSION
+    # TODO: Filter by selected program from query param or session
+    # projects = project_repo.load_all_projects()
+    
+    context = {
+        "request": request,
+        "build_version": BUILD_VERSION
+    }
+    
+    return templates.TemplateResponse("metrics.html", context)
+
+
 @router.get("/risks", response_class=HTMLResponse)
 async def risk_analysis(request: Request):
     """

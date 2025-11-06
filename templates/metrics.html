@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Metrics - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📈 Program Metrics</h2>
+    <p class="text-gray-600">Key performance indicators and program health metrics</p>
+</div>
+
+<!-- Program Selection Check -->
+<div id="noProgramSelected" class="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6">
+    <div class="flex items-center">
+        <svg class="w-8 h-8 text-yellow-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <div>
+            <h3 class="text-lg font-bold text-yellow-800 mb-2">No Program Selected</h3>
+            <p class="text-yellow-700 mb-3">Please select a program from the Portfolio Dashboard to view its metrics.</p>
+            <a href="/dashboard" class="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition">
+                Go to Portfolio Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Content (hidden until program selected) -->
+<div id="metricsContent" class="hidden">
+    
+    <!-- Current Program Banner -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="font-semibold text-blue-800">Viewing Metrics For: <span id="selectedProgramNameMetrics"></span></p>
+                    <p class="text-sm text-blue-700">Last Updated: <span id="lastUpdated"></span></p>
+                </div>
+            </div>
+            <a href="/dashboard" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+                Change Program
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Schedule Performance Index (SPI) -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-600">Schedule Performance</h3>
+                <div class="bg-green-100 rounded-full p-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="spiValue">-</p>
+            <p class="text-xs text-gray-500 mt-1">SPI (Target: ≥1.0)</p>
+        </div>
+
+        <!-- Completion Rate -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-600">Completion Rate</h3>
+                <div class="bg-blue-100 rounded-full p-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="completionRate">-</p>
+            <p class="text-xs text-gray-500 mt-1">Milestones Completed</p>
+        </div>
+
+        <!-- Risk Score -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-600">Risk Score</h3>
+                <div class="bg-red-100 rounded-full p-2">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="riskScore">-</p>
+            <p class="text-xs text-gray-500 mt-1">Open Risks</p>
+        </div>
+
+        <!-- Change Velocity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-600">Change Velocity</h3>
+                <div class="bg-yellow-100 rounded-full p-2">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" id="changeVelocity">-</p>
+            <p class="text-xs text-gray-500 mt-1">Changes This Month</p>
+        </div>
+    </div>
+
+    <!-- Detailed Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        
+        <!-- Milestone Health Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Milestone Health</h3>
+            <div id="milestoneHealthChart" style="width:100%; height:300px;"></div>
+        </div>
+
+        <!-- Risk Distribution -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Risk Distribution</h3>
+            <div id="riskDistributionChart" style="width:100%; height:300px;"></div>
+        </div>
+    </div>
+
+    <!-- Timeline Metrics -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Schedule Trend</h3>
+        <div id="scheduleTrendChart" style="width:100%; height:400px;"></div>
+    </div>
+
+    <!-- Custom Metrics Table -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Custom Program Metrics</h3>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+                + Add Metric
+            </button>
+        </div>
+        <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program</p>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Metric Name
+                        </th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Current Value
+                        </th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Target
+                        </th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Last Updated
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="customMetricsTable">
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No custom metrics defined yet. Click "Add Metric" to create one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Check for selected program on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    const noProgramDiv = document.getElementById('noProgramSelected');
+    const metricsDiv = document.getElementById('metricsContent');
+    const programNameSpan = document.getElementById('selectedProgramNameMetrics');
+    const lastUpdatedSpan = document.getElementById('lastUpdated');
+    
+    if (selectedProgram) {
+        // Show metrics content
+        noProgramDiv.classList.add('hidden');
+        metricsDiv.classList.remove('hidden');
+        programNameSpan.textContent = selectedProgram;
+        lastUpdatedSpan.textContent = new Date().toLocaleString();
+        
+        // Load metrics data
+        loadMetricsData(selectedProgram);
+    } else {
+        // Show "no program selected" message
+        noProgramDiv.classList.remove('hidden');
+        metricsDiv.classList.add('hidden');
+    }
+});
+
+function loadMetricsData(programName) {
+    // TODO: Fetch actual metrics from backend
+    // For now, show placeholder data
+    
+    // Calculate metrics (placeholder - will be replaced with real data)
+    document.getElementById('spiValue').textContent = '0.95';
+    document.getElementById('completionRate').textContent = '67%';
+    document.getElementById('riskScore').textContent = '8';
+    document.getElementById('changeVelocity').textContent = '12';
+    
+    // Create placeholder charts
+    createMilestoneHealthChart();
+    createRiskDistributionChart();
+    createScheduleTrendChart();
+}
+
+function createMilestoneHealthChart() {
+    // Placeholder for Plotly chart
+    const data = [{
+        values: [10, 5, 3],
+        labels: ['Completed', 'In Progress', 'Not Started'],
+        type: 'pie',
+        marker: {
+            colors: ['#22c55e', '#eab308', '#9ca3af']
+        }
+    }];
+    
+    const layout = {
+        showlegend: true,
+        margin: { t: 0, b: 0, l: 0, r: 0 }
+    };
+    
+    Plotly.newPlot('milestoneHealthChart', data, layout, {responsive: true});
+}
+
+function createRiskDistributionChart() {
+    // Placeholder for Plotly chart
+    const data = [{
+        x: ['High', 'Medium', 'Low'],
+        y: [3, 4, 1],
+        type: 'bar',
+        marker: {
+            color: ['#ef4444', '#f59e0b', '#10b981']
+        }
+    }];
+    
+    const layout = {
+        yaxis: { title: 'Count' },
+        margin: { t: 10, b: 40, l: 40, r: 10 }
+    };
+    
+    Plotly.newPlot('riskDistributionChart', data, layout, {responsive: true});
+}
+
+function createScheduleTrendChart() {
+    // Placeholder for Plotly chart
+    const data = [{
+        x: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        y: [0.92, 0.95, 0.98, 1.02],
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'SPI Trend',
+        line: { color: '#3b82f6' }
+    }];
+    
+    const layout = {
+        yaxis: { title: 'Schedule Performance Index' },
+        xaxis: { title: 'Time Period' },
+        margin: { t: 10, b: 40, l: 50, r: 10 },
+        shapes: [{
+            type: 'line',
+            x0: 'Week 1',
+            y0: 1.0,
+            x1: 'Week 4',
+            y1: 1.0,
+            line: {
+                color: '#22c55e',
+                width: 2,
+                dash: 'dash'
+            }
+        }]
+    };
+    
+    Plotly.newPlot('scheduleTrendChart', data, layout, {responsive: true});
+}
+</script>
+{% endblock %}
