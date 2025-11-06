@@ -199,29 +199,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadMetricsData(programName) {
-    // TODO: Fetch actual metrics from backend
-    // For now, show placeholder data
+    // Use real metrics data from backend
+    const metrics = {{ metrics | tojson | safe }};
     
-    // Calculate metrics (placeholder - will be replaced with real data)
-    document.getElementById('spiValue').textContent = '0.95';
-    document.getElementById('completionRate').textContent = '67%';
-    document.getElementById('riskScore').textContent = '8';
-    document.getElementById('changeVelocity').textContent = '12';
+    if (!metrics) {
+        console.error('No metrics data available');
+        return;
+    }
     
-    // Create placeholder charts
-    createMilestoneHealthChart();
-    createRiskDistributionChart();
-    createScheduleTrendChart();
+    // Update KPI cards with real data
+    document.getElementById('spiValue').textContent = metrics.spi || '1.00';
+    document.getElementById('completionRate').textContent = metrics.completion_rate + '%';
+    document.getElementById('riskScore').textContent = '-'; // Will be from risk upload
+    document.getElementById('changeVelocity').textContent = '-'; // TODO: calculate from changes
+    
+    // Update last updated timestamp
+    if (metrics.last_updated) {
+        const date = new Date(metrics.last_updated);
+        document.getElementById('lastUpdated').textContent = date.toLocaleString();
+    }
+    
+    // Create charts with real data
+    createMilestoneHealthChart(metrics.milestone_health);
+    createRiskDistributionChart(); // Placeholder until risk upload
+    createScheduleTrendChart(metrics.schedule_trend);
 }
 
-function createMilestoneHealthChart() {
-    // Placeholder for Plotly chart
+function createMilestoneHealthChart(healthData) {
+    // Use real milestone health data
     const data = [{
-        values: [10, 5, 3],
-        labels: ['Completed', 'In Progress', 'Not Started'],
+        values: [
+            healthData.completed || 0,
+            healthData.in_progress || 0,
+            healthData.not_started || 0,
+            healthData.late || 0
+        ],
+        labels: ['Completed', 'In Progress', 'Not Started', 'Late/Overdue'],
         type: 'pie',
         marker: {
-            colors: ['#22c55e', '#eab308', '#9ca3af']
+            colors: ['#22c55e', '#eab308', '#9ca3af', '#ef4444']
         }
     }];
     
@@ -252,32 +268,54 @@ function createRiskDistributionChart() {
     Plotly.newPlot('riskDistributionChart', data, layout, {responsive: true});
 }
 
-function createScheduleTrendChart() {
-    // Placeholder for Plotly chart
+function createScheduleTrendChart(trendData) {
+    if (!trendData || !trendData.periods || trendData.periods.length === 0) {
+        // Show empty state
+        document.getElementById('scheduleTrendChart').innerHTML = 
+            '<div class="flex items-center justify-center h-full text-gray-500">No trend data available yet</div>';
+        return;
+    }
+    
+    // Use real schedule trend data
     const data = [{
-        x: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        y: [0.92, 0.95, 0.98, 1.02],
+        x: trendData.periods,
+        y: trendData.spi_values,
         type: 'scatter',
         mode: 'lines+markers',
         name: 'SPI Trend',
-        line: { color: '#3b82f6' }
+        line: { color: '#3b82f6', width: 3 },
+        marker: { size: 8 }
     }];
     
     const layout = {
-        yaxis: { title: 'Schedule Performance Index' },
-        xaxis: { title: 'Time Period' },
-        margin: { t: 10, b: 40, l: 50, r: 10 },
+        yaxis: { 
+            title: 'Schedule Performance Index',
+            zeroline: false
+        },
+        xaxis: { 
+            title: 'Time Period',
+            tickangle: -45
+        },
+        margin: { t: 10, b: 60, l: 50, r: 10 },
         shapes: [{
             type: 'line',
-            x0: 'Week 1',
+            x0: trendData.periods[0],
             y0: 1.0,
-            x1: 'Week 4',
+            x1: trendData.periods[trendData.periods.length - 1],
             y1: 1.0,
             line: {
                 color: '#22c55e',
                 width: 2,
                 dash: 'dash'
             }
+        }],
+        annotations: [{
+            x: trendData.periods[Math.floor(trendData.periods.length / 2)],
+            y: 1.0,
+            text: 'Target (1.0)',
+            showarrow: false,
+            yshift: 10,
+            font: { size: 10, color: '#22c55e' }
         }]
     };
     

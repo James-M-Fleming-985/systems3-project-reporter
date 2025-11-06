@@ -97,11 +97,16 @@ async def program_metrics(request: Request):
     Displays KPIs and health metrics for selected program
     """
     from main import BUILD_VERSION
-    # TODO: Filter by selected program from query param or session
-    # projects = project_repo.load_all_projects()
+    from services.metrics_calculator import MetricsCalculator
+    
+    # Load projects and calculate metrics
+    projects = project_repo.load_all_projects()
+    metrics_calculator = MetricsCalculator()
+    metrics = metrics_calculator.calculate_program_metrics(projects)
     
     context = {
         "request": request,
+        "metrics": metrics,
         "build_version": BUILD_VERSION
     }
     
