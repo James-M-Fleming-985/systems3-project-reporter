@@ -10,19 +10,28 @@ from collections import defaultdict
 class MetricsCalculator:
     """Calculate program metrics from project data"""
     
-    def calculate_program_metrics(self, projects: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def calculate_program_metrics(self, projects: List[Any]) -> Dict[str, Any]:
         """
         Calculate comprehensive metrics for a program
         
         Args:
-            projects: List of project dictionaries from XML
+            projects: List of Project objects (Pydantic models)
             
         Returns:
             Dictionary containing calculated metrics
         """
         all_tasks = []
         for project in projects:
-            all_tasks.extend(project.get('tasks', []))
+            # Access Pydantic model fields directly
+            milestones = getattr(project, 'milestones', [])
+            # Convert Pydantic Milestone objects to dicts for processing
+            for milestone in milestones:
+                task_dict = {
+                    'name': getattr(milestone, 'name', ''),
+                    'status': getattr(milestone, 'status', 'NOT_STARTED'),
+                    'target_date': getattr(milestone, 'target_date', None),
+                }
+                all_tasks.append(task_dict)
         
         if not all_tasks:
             return self._empty_metrics()
