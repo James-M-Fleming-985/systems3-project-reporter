@@ -40,7 +40,14 @@ class MetricsCalculator:
         completion_rate = self._calculate_completion_rate(all_tasks)
         spi = self._calculate_spi(all_tasks)
         milestone_health = self._calculate_milestone_health(all_tasks)
-        schedule_trend = self._calculate_schedule_trend(all_tasks)
+        schedule_trend_raw = self._calculate_schedule_trend(all_tasks)
+        
+        # Transform schedule_trend to frontend-friendly format
+        schedule_trend = {
+            'periods': [week['label'] for week in schedule_trend_raw],
+            'spi_values': [week['spi'] for week in schedule_trend_raw],
+            'raw_data': schedule_trend_raw  # Keep for debugging
+        }
         
         return {
             'completion_rate': completion_rate,
@@ -142,13 +149,15 @@ class MetricsCalculator:
         
         return health
     
-    def _calculate_schedule_trend(self, tasks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _calculate_schedule_trend(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Calculate SPI trend over time (weekly for last 4 weeks)
         Shows if project performance is improving or declining
+        Returns dict with periods and spi_values arrays for Plotly
         """
         today = datetime.now().date()
-        weeks = []
+        periods = []
+        spi_values = []
         
         # Calculate SPI for each of the last 4 weeks
         for i in range(4, 0, -1):
@@ -182,14 +191,13 @@ class MetricsCalculator:
             
             spi = earned / planned if planned > 0 else 1.0
             
-            weeks.append({
-                'label': f'Week {5-i}',
-                'start_date': week_start.isoformat(),
-                'end_date': week_end.isoformat(),
-                'spi': round(spi, 2)
-            })
+            periods.append(f'Week {5-i}')
+            spi_values.append(round(spi, 2))
         
-        return weeks
+        return {
+            'periods': periods,
+            'spi_values': spi_values
+        }
     
     def _empty_metrics(self) -> Dict[str, Any]:
         """Return empty/default metrics when no data available"""
@@ -202,7 +210,10 @@ class MetricsCalculator:
                 'not_started': 0,
                 'late': 0
             },
-            'schedule_trend': [],
+            'schedule_trend': {
+                'periods': [],
+                'spi_values': []
+            },
             'total_milestones': 0,
             'total_projects': 0,
             'last_updated': datetime.now().isoformat()
