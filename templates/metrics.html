@@ -134,7 +134,7 @@
                 + Add Metric
             </button>
         </div>
-        <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program</p>
+        <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program. Update values regularly to see trends.</p>
         
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -150,6 +150,9 @@
                             Target
                         </th>
                         <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Target Date
+                        </th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
                         <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -162,7 +165,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200" id="customMetricsTable">
                     <tr id="noMetricsRow">
-                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                             No custom metrics defined yet. Click "Add Metric" to create one.
                         </td>
                     </tr>
@@ -173,12 +176,14 @@
 
 </div>
 
-<!-- Add Custom Metric Modal -->
+<!-- Add/Edit Custom Metric Modal -->
 <div id="addMetricModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Add Custom Metric</h3>
+            <h3 id="modalTitle" class="text-lg font-bold text-gray-900 mb-4">Add Custom Metric</h3>
             <form id="addMetricForm">
+                <input type="hidden" id="editingMetricIndex" value="">
+                
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Metric Name</label>
                     <input type="text" id="metricName" required 
@@ -187,15 +192,20 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Current Value</label>
-                    <input type="number" id="metricValue" required 
+                    <input type="number" step="0.01" id="metricValue" required 
                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                            placeholder="e.g., 85">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Target Value</label>
-                    <input type="number" id="metricTarget" required 
+                    <input type="number" step="0.01" id="metricTarget" required 
                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                            placeholder="e.g., 100">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Target Date</label>
+                    <input type="date" id="metricTargetDate" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Unit (optional)</label>
@@ -208,12 +218,64 @@
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
                         Cancel
                     </button>
-                    <button type="submit"
+                    <button type="submit" id="submitMetricBtn"
                             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
                         Add Metric
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Value Modal -->
+<div id="updateValueModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Update Metric Value</h3>
+            <p class="text-sm text-gray-600 mb-4">Update the current value to track progress over time</p>
+            <form id="updateValueForm">
+                <input type="hidden" id="updateMetricIndex" value="">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Metric Name</label>
+                    <input type="text" id="updateMetricNameDisplay" disabled
+                           class="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100 text-gray-700">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Value</label>
+                    <input type="number" step="0.01" id="updateMetricValue" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter new value">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancelUpdateBtn"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        Update Value
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Metric Trend Chart Modal -->
+<div id="trendChartModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="trendChartTitle" class="text-lg font-bold text-gray-900">Metric Trend</h3>
+                <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="metricTrendChart" style="width:100%; height:400px;"></div>
         </div>
     </div>
 </div>
@@ -382,6 +444,19 @@ function loadCustomMetrics() {
     const stored = localStorage.getItem(storageKey);
     if (stored) {
         customMetrics = JSON.parse(stored);
+        // Migrate old metrics to include history if needed
+        customMetrics = customMetrics.map(metric => {
+            if (!metric.history) {
+                metric.history = [{
+                    value: metric.value,
+                    date: metric.lastUpdated
+                }];
+            }
+            if (!metric.targetDate) {
+                metric.targetDate = null;
+            }
+            return metric;
+        });
         renderCustomMetrics();
     }
 }
@@ -393,6 +468,25 @@ function saveCustomMetrics() {
     
     const storageKey = `customMetrics_${selectedProgram}`;
     localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+}
+
+// Calculate status and color
+function getMetricStatus(value, target) {
+    const percentage = target > 0 ? (value / target) * 100 : 0;
+    let status, color;
+    
+    if (percentage >= 100) {
+        status = 'On Track';
+        color = 'text-green-600';
+    } else if (percentage >= 70) {
+        status = 'At Risk';
+        color = 'text-yellow-600';
+    } else {
+        status = 'Behind';
+        color = 'text-red-600';
+    }
+    
+    return { status, color, percentage: percentage.toFixed(1) };
 }
 
 // Render custom metrics table
@@ -407,6 +501,7 @@ function renderCustomMetrics() {
         return;
     }
     
+        
     // Hide "no metrics" message
     if (noMetricsRow) {
         noMetricsRow.style.display = 'none';
@@ -418,11 +513,11 @@ function renderCustomMetrics() {
     
     // Add metric rows
     customMetrics.forEach((metric, index) => {
-        const percentage = metric.target > 0 ? ((metric.value / metric.target) * 100).toFixed(1) : 0;
-        const status = percentage >= 100 ? 'On Track' : percentage >= 70 ? 'At Risk' : 'Behind';
-        const statusColor = percentage >= 100 ? 'text-green-600' : percentage >= 70 ? 'text-yellow-600' : 'text-red-600';
+        const { status, color, percentage } = getMetricStatus(metric.value, metric.target);
+        const targetDateStr = metric.targetDate ? new Date(metric.targetDate).toLocaleDateString() : 'Not set';
         
         const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
         row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 ${metric.name}
@@ -433,7 +528,25 @@ function renderCustomMetrics() {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ${metric.target}${metric.unit ? ' ' + metric.unit : ''}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm ${statusColor} font-semibold">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                ${targetDateStr}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm ${color} font-semibold">
+                ${status} (${percentage}%)
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${new Date(metric.lastUpdated).toLocaleDateString()}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                <button onclick="updateMetricValue(${index})" class="text-blue-600 hover:text-blue-800">Update</button>
+                <button onclick="editMetric(${index})" class="text-indigo-600 hover:text-indigo-800">Edit</button>
+                <button onclick="showTrendChart(${index})" class="text-green-600 hover:text-green-800">Trend</button>
+                <button onclick="deleteMetric(${index})" class="text-red-600 hover:text-red-800">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
                 ${status} (${percentage}%)
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -445,6 +558,97 @@ function renderCustomMetrics() {
         `;
         tbody.appendChild(row);
     });
+}
+
+// Edit a custom metric
+function editMetric(index) {
+    const metric = customMetrics[index];
+    
+    document.getElementById('modalTitle').textContent = 'Edit Custom Metric';
+    document.getElementById('submitMetricBtn').textContent = 'Save Changes';
+    document.getElementById('editingMetricIndex').value = index;
+    
+    document.getElementById('metricName').value = metric.name;
+    document.getElementById('metricValue').value = metric.value;
+    document.getElementById('metricTarget').value = metric.target;
+    document.getElementById('metricTargetDate').value = metric.targetDate || '';
+    document.getElementById('metricUnit').value = metric.unit || '';
+    
+    document.getElementById('addMetricModal').classList.remove('hidden');
+}
+
+// Update metric value (keeps history)
+function updateMetricValue(index) {
+    const metric = customMetrics[index];
+    
+    document.getElementById('updateMetricNameDisplay').value = metric.name;
+    document.getElementById('updateMetricValue').value = metric.value;
+    document.getElementById('updateMetricIndex').value = index;
+    
+    document.getElementById('updateValueModal').classList.remove('hidden');
+}
+
+// Show trend chart for a metric
+function showTrendChart(index) {
+    const metric = customMetrics[index];
+    
+    if (!metric.history || metric.history.length === 0) {
+        alert('No history available for this metric yet.');
+        return;
+    }
+    
+    document.getElementById('trendChartTitle').textContent = `${metric.name} - Trend Chart`;
+    
+    // Sort history by date
+    const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+    const values = sortedHistory.map(h => h.value);
+    
+    const data = [{
+        x: dates,
+        y: values,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: metric.name,
+        line: { color: '#3b82f6', width: 3 },
+        marker: { size: 8 }
+    }];
+    
+    const layout = {
+        yaxis: { 
+            title: metric.unit ? `Value (${metric.unit})` : 'Value',
+            zeroline: false
+        },
+        xaxis: { 
+            title: 'Date',
+            tickangle: -45
+        },
+        margin: { t: 10, b: 60, l: 60, r: 10 },
+        shapes: [{
+            type: 'line',
+            x0: dates[0],
+            y0: metric.target,
+            x1: dates[dates.length - 1],
+            y1: metric.target,
+            line: {
+                color: '#22c55e',
+                width: 2,
+                dash: 'dash'
+            }
+        }],
+        annotations: [{
+            x: dates[Math.floor(dates.length / 2)],
+            y: metric.target,
+            text: `Target (${metric.target}${metric.unit ? ' ' + metric.unit : ''})`,
+            showarrow: false,
+            yshift: 10,
+            font: { size: 10, color: '#22c55e' }
+        }]
+    };
+    
+    Plotly.newPlot('metricTrendChart', data, layout, {responsive: true});
+    document.getElementById('trendChartModal').classList.remove('hidden');
 }
 
 // Delete a custom metric
@@ -463,8 +667,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const addMetricModal = document.getElementById('addMetricModal');
     const addMetricForm = document.getElementById('addMetricForm');
     
+    const updateValueModal = document.getElementById('updateValueModal');
+    const cancelUpdateBtn = document.getElementById('cancelUpdateBtn');
+    const updateValueForm = document.getElementById('updateValueForm');
+    
+    const trendChartModal = document.getElementById('trendChartModal');
+    const closeTrendChartBtn = document.getElementById('closeTrendChartBtn');
+    
+    // Add/Edit Metric Modal
     if (addMetricBtn) {
         addMetricBtn.addEventListener('click', function() {
+            document.getElementById('modalTitle').textContent = 'Add Custom Metric';
+            document.getElementById('submitMetricBtn').textContent = 'Add Metric';
+            document.getElementById('editingMetricIndex').value = '';
+            addMetricForm.reset();
             addMetricModal.classList.remove('hidden');
         });
     }
@@ -473,6 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelMetricBtn.addEventListener('click', function() {
             addMetricModal.classList.add('hidden');
             addMetricForm.reset();
+            document.getElementById('editingMetricIndex').value = '';
         });
     }
     
@@ -480,20 +697,88 @@ document.addEventListener('DOMContentLoaded', function() {
         addMetricForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const newMetric = {
+            const editIndex = document.getElementById('editingMetricIndex').value;
+            const value = parseFloat(document.getElementById('metricValue').value);
+            
+            const metricData = {
                 name: document.getElementById('metricName').value,
-                value: parseFloat(document.getElementById('metricValue').value),
+                value: value,
                 target: parseFloat(document.getElementById('metricTarget').value),
+                targetDate: document.getElementById('metricTargetDate').value,
                 unit: document.getElementById('metricUnit').value,
                 lastUpdated: new Date().toISOString()
             };
             
-            customMetrics.push(newMetric);
+            if (editIndex === '') {
+                // Adding new metric
+                metricData.history = [{
+                    value: value,
+                    date: new Date().toISOString()
+                }];
+                customMetrics.push(metricData);
+            } else {
+                // Editing existing metric
+                const index = parseInt(editIndex);
+                customMetrics[index] = {
+                    ...customMetrics[index],
+                    ...metricData,
+                    history: customMetrics[index].history || [{
+                        value: value,
+                        date: new Date().toISOString()
+                    }]
+                };
+            }
+            
             saveCustomMetrics();
             renderCustomMetrics();
             
             addMetricModal.classList.add('hidden');
             addMetricForm.reset();
+            document.getElementById('editingMetricIndex').value = '';
+        });
+    }
+    
+    // Update Value Modal
+    if (cancelUpdateBtn) {
+        cancelUpdateBtn.addEventListener('click', function() {
+            updateValueModal.classList.add('hidden');
+            updateValueForm.reset();
+        });
+    }
+    
+    if (updateValueForm) {
+        updateValueForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const index = parseInt(document.getElementById('updateMetricIndex').value);
+            const newValue = parseFloat(document.getElementById('updateMetricValue').value);
+            
+            // Add to history
+            if (!customMetrics[index].history) {
+                customMetrics[index].history = [];
+            }
+            
+            customMetrics[index].history.push({
+                value: newValue,
+                date: new Date().toISOString()
+            });
+            
+            // Update current value
+            customMetrics[index].value = newValue;
+            customMetrics[index].lastUpdated = new Date().toISOString();
+            
+            saveCustomMetrics();
+            renderCustomMetrics();
+            
+            updateValueModal.classList.add('hidden');
+            updateValueForm.reset();
+        });
+    }
+    
+    // Trend Chart Modal
+    if (closeTrendChartBtn) {
+        closeTrendChartBtn.addEventListener('click', function() {
+            trendChartModal.classList.add('hidden');
         });
     }
     
