@@ -37,7 +37,7 @@
 
 <!-- Gantt Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%; height:500px;"></div>
+    <div id="ganttChart" style="width:100%; min-height:500px; overflow-y:auto; overflow-x:auto;"></div>
 </div>
 
 <!-- Legend -->
@@ -248,7 +248,6 @@ function createRoadmapViewTraces() {
     // Create aggregated project timeline bars
     Object.keys(resourceGroups).forEach(projectGroup => {
         const projectTasks = resourceGroups[projectGroup];
-        const color = projectGroupColors[projectGroup] || '#6b7280';
         
         // Calculate project timeline span (earliest start to latest finish)
         const startDates = projectTasks.map(task => parseDate(task.Start));
@@ -257,48 +256,52 @@ function createRoadmapViewTraces() {
         const projectStart = new Date(Math.min(...startDates));
         const projectFinish = new Date(Math.max(...finishDates));
         
+        // Calculate duration in milliseconds
+        const duration = projectFinish - projectStart;
+        
         // Calculate completion statistics
         const completedTasks = projectTasks.filter(t => t.Status === 'COMPLETED').length;
         const inProgressTasks = projectTasks.filter(t => t.Status === 'IN_PROGRESS').length;
         const totalTasks = projectTasks.length;
         const completionPercent = Math.round((completedTasks / totalTasks) * 100);
         
-        // Determine overall project status
+        // Determine overall project status and color based on completion
         let projectStatus = 'NOT_STARTED';
-        let opacity = 0.4;
+        let barColor = '#9ca3af';  // gray-400 for not started
+        
         if (completedTasks === totalTasks) {
             projectStatus = 'COMPLETED';
-            opacity = 1.0;
+            barColor = '#22c55e';  // green-500 for completed
         } else if (inProgressTasks > 0 || completedTasks > 0) {
             projectStatus = 'IN_PROGRESS';
-            opacity = 0.7;
+            barColor = '#eab308';  // yellow-500 for in progress
         }
         
-        // Format dates for display (convert back to strings)
+        // Format dates for display
         const startStr = projectStart.toISOString().split('T')[0];
         const finishStr = projectFinish.toISOString().split('T')[0];
         
         // Debug logging
         console.log(`Project: ${projectGroup}`);
         console.log(`  Date range: ${startStr} to ${finishStr}`);
-        console.log(`  Task dates: ${projectTasks.map(t => t.Start).join(', ')}`);
+        console.log(`  Status: ${projectStatus} (${completedTasks}/${totalTasks} completed)`);
         
-        // Create single consolidated bar per project
+        // Create single consolidated bar per project using base + duration
         traces.push({
-            x: [projectStart, projectFinish],
+            x: [duration],
             y: [projectGroup],
+            base: projectStart,
             type: 'bar',
             orientation: 'h',
             marker: {
-                color: color,
-                opacity: opacity,
+                color: barColor,
                 line: {
                     color: 'rgba(0,0,0,0.3)',
                     width: 2
                 }
             },
             name: projectGroup,
-            text: '',  // Remove % complete from bar
+            text: '',
             customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr, completionPercent]],
             hovertemplate: '<b>%{y}</b><br>' +
                           'Tasks: %{customdata[1]} total<br>' +
@@ -308,6 +311,9 @@ function createRoadmapViewTraces() {
                           'Timeline: %{customdata[5]} to %{customdata[6]}<br>' +
                           'Progress: %{customdata[7]}%' +
                           '<extra></extra>',
+            showlegend: false
+        });
+    });
             showlegend: false
         });
     });
@@ -321,6 +327,11 @@ function getLayout() {
         ? 'Project Timeline - Milestone Detail View' 
         : 'Program Roadmap - Project Overview';
     
+    // Count unique projects to set appropriate height
+    const uniqueProjects = new Set(ganttData.map(t => t.Resource));
+    const projectCount = uniqueProjects.size;
+    const chartHeight = Math.max(500, projectCount * 50);  // 50px per project, minimum 500px
+    
     return {
         title: {
             text: title,
@@ -330,7 +341,11 @@ function getLayout() {
             title: 'Date',
             type: 'date',
             tickformat: '%Y-%m-%d',
-            tickangle: -45  // Rotate x-axis labels to 45 degrees
+            tickangle: -45,  // Rotate x-axis labels to 45 degrees
+            rangeslider: {
+                visible: true,  // Add range slider for zooming timeline
+                thickness: 0.05
+            }
         },
         yaxis: {
             title: {
@@ -338,20 +353,22 @@ function getLayout() {
                 standoff: 20  // Move y-axis title away from axis to avoid nested appearance
             },
             automargin: true,
-            autorange: true  // Allow proper alignment, not just left-justified
+            autorange: true,
+            fixedrange: false  // Allow vertical scrolling/zooming
         },
         barmode: 'overlay',
         bargap: 0.2,
-        height: 500,  // Reduce size to fit better
+        height: chartHeight,  // Dynamic height based on project count
         margin: {
-            l: 200,  // Adjusted left margin
+            l: 250,  // Increased for longer project names
             r: 80,
             t: 80,
-            b: 100  // Increased bottom margin for rotated labels
+            b: 150  // Increased bottom margin for range slider
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
         paper_bgcolor: 'white',
+        dragmode: 'pan',  // Enable panning by default
         modebar: {
             orientation: 'v',
             bgcolor: 'rgba(255,255,255,0.9)',
@@ -367,6 +384,8 @@ const config = {
     displayModeBar: true,
     displaylogo: false,
     modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+    modeBarButtonsToAdd: ['pan2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
+    scrollZoom: true,  // Enable scroll to zoom
     modeBarPosition: 'top'
 };
 
