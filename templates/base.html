@@ -19,6 +19,10 @@
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Suppress Tailwind CDN production warning
+        tailwind.config = { corePlugins: { preflight: true } };
+    </script>
     
     <!-- Plotly.js for charts -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
