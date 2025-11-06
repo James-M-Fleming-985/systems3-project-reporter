@@ -322,6 +322,19 @@ function populateWeekView() {
     document.getElementById('nextWeekMilestones').innerHTML = nextWeekMilestones.length > 0
         ? nextWeekMilestones.map(m => renderMilestone(m)).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+    
+    // Force scroll properties after content is loaded
+    setTimeout(() => {
+        ['lastWeekCompleted', 'thisWeekMilestones', 'nextWeekMilestones'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.overflowY = 'auto';
+                el.style.maxHeight = '850px';
+                el.style.display = 'block';
+                console.log(`Applied scroll to ${id}, scrollHeight: ${el.scrollHeight}, clientHeight: ${el.clientHeight}`);
+            }
+        });
+    }, 100);
 }
 
 // Populate month view
