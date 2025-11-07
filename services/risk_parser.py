@@ -112,7 +112,8 @@ class RiskParser:
                     'owner': risk.get('owner', 'Unassigned'),
                     'date_identified': date_identified,
                     'status': risk.get('status', 'open'),
-                    'category': risk.get('category', 'general')
+                    'category': risk.get('category', 'general'),
+                    'project': risk.get('project', '')
                 }
                 
                 normalized_risks.append(normalized_risk)
@@ -171,6 +172,8 @@ class RiskParser:
                     column_map['status'] = col
                 elif 'category' in col or 'type' in col:
                     column_map['category'] = col
+                elif 'project' in col:
+                    column_map['project'] = col
             
             # Validate required columns
             if 'title' not in column_map:
@@ -233,6 +236,11 @@ class RiskParser:
                 if pd.isna(row.get(column_map.get('category', ''))):
                     category = 'general'
                 
+                # Get project (optional)
+                project = str(row.get(column_map.get('project', ''), ''))
+                if pd.isna(row.get(column_map.get('project', ''))):
+                    project = ''
+                
                 normalized_risk = {
                     'id': risk_id,
                     'title': title,
@@ -244,7 +252,8 @@ class RiskParser:
                     'owner': owner,
                     'date_identified': date_identified,
                     'status': status.lower(),
-                    'category': category.lower()
+                    'category': category.lower(),
+                    'project': project
                 }
                 
                 normalized_risks.append(normalized_risk)

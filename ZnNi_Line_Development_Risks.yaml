@@ -1,0 +1,50 @@
+risks:
+  - id: R001
+    project: SF Documentation Optimization
+    title: NADCAP Audit Preparation Delay Risk
+    description: >
+      The SF team being so busy with many other tasks from wider stakeholders,
+      there may be delays in completing the NADCAP action plan and SF documentation review,
+      meaning we may not be ready for the NADCAP Audit and the pre-audit planned for March 26, 2025.
+    likelihood: high
+    impact: high
+    mitigations: >
+      Prioritize NADCAP tasks; assign dedicated resources; weekly progress reviews;
+      escalate to management if delays occur
+    owner: SF Team Lead
+    date_identified: "2025-11-07"
+    status: open
+    category: schedule
+
+  - id: R002
+    project: SF Documentation Optimization
+    title: SF QMS Documentation Hierarchy Accuracy
+    description: >
+      If we do not fully understand the documentation hierarchy, the overarching document
+      (SF QMS) could have inaccuracies which defeats the objective of being able to signpost
+      anyone unfamiliar with the documentation in SF.
+    likelihood: medium
+    impact: high
+    mitigations: >
+      Conduct documentation hierarchy workshop; peer review of QMS structure;
+      validate with SF stakeholders; create visual documentation map
+    owner: Documentation Lead
+    date_identified: "2025-11-07"
+    status: open
+    category: quality
+
+  - id: R003
+    project: Surface Finish Table 1 Implementation Complete
+    title: Process Engineer Capacity Constraint
+    description: >
+      The process engineer carrying out the work for validating the Surface Finish Table 1
+      is really busy and may not complete the review in the given timeframe.
+    likelihood: high
+    impact: medium
+    mitigations: >
+      Identify backup engineer; break validation into smaller tasks;
+      provide additional support; adjust timeline if needed
+    owner: Process Engineering Manager
+    date_identified: "2025-11-07"
+    status: open
+    category: resource
