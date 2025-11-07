@@ -435,8 +435,20 @@ function addRiskManually() {
 }
 
 function editRisk(event) {
-    const riskId = event.target.getAttribute('data-risk-id');
-    console.log('Editing risk:', riskId); // Debug log
+    const button = event.target;
+    const riskId = button.getAttribute('data-risk-id');
+    
+    console.log('=== EDIT RISK DEBUG ===');
+    console.log('Button clicked:', button);
+    console.log('Risk ID from data attribute:', riskId);
+    console.log('All data attributes:', button.dataset);
+    console.log('========================');
+    
+    if (!riskId) {
+        showToast('Error: Risk ID not found', 'error');
+        console.error('Risk ID is null or undefined');
+        return;
+    }
     
     // Fetch risk details first
     fetch(`/risks/detail/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`)
