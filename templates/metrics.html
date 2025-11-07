@@ -284,20 +284,21 @@
 
 {% block scripts %}
 <script>
-// Check for selected program on page load
+// All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for selected program on page load
     const selectedProgram = localStorage.getItem('selectedProgram');
     const noProgramDiv = document.getElementById('noProgramSelected');
     const metricsDiv = document.getElementById('metricsContent');
     const programNameSpan = document.getElementById('selectedProgramNameMetrics');
-    const lastUpdatedSpan = document.getElementById('lastUpdated');
+    
+    console.log('Metrics page - Selected program from localStorage:', selectedProgram);
     
     if (selectedProgram) {
         // Show metrics content
         noProgramDiv.classList.add('hidden');
         metricsDiv.classList.remove('hidden');
         programNameSpan.textContent = selectedProgram;
-        lastUpdatedSpan.textContent = new Date().toLocaleString();
         
         // Load metrics data
         loadMetricsData(selectedProgram);
@@ -306,7 +307,15 @@ document.addEventListener('DOMContentLoaded', function() {
         noProgramDiv.classList.remove('hidden');
         metricsDiv.classList.add('hidden');
     }
+    
+    // Initialize modal controls
+    initializeModalControls();
+    
+    // Load custom metrics
+    loadCustomMetrics();
 });
+
+function initializeModalControls() {
 
 function loadMetricsData(programName) {
     // Use real metrics data from backend
@@ -317,6 +326,8 @@ function loadMetricsData(programName) {
         return;
     }
     
+    console.log('Loading metrics data:', metrics);
+    
     // Update KPI cards with real data
     document.getElementById('spiValue').textContent = metrics.spi || '1.00';
     document.getElementById('completionRate').textContent = metrics.completion_rate + '%';
@@ -324,9 +335,10 @@ function loadMetricsData(programName) {
     document.getElementById('changeVelocity').textContent = '-'; // TODO: calculate from changes
     
     // Update last updated timestamp
-    if (metrics.last_updated) {
+    const lastUpdatedSpan = document.getElementById('lastUpdated');
+    if (lastUpdatedSpan && metrics.last_updated) {
         const date = new Date(metrics.last_updated);
-        document.getElementById('lastUpdated').textContent = date.toLocaleString();
+        lastUpdatedSpan.textContent = date.toLocaleString();
     }
     
     // Create charts with real data
@@ -661,7 +673,7 @@ function deleteMetric(index) {
 }
 
 // Modal controls
-document.addEventListener('DOMContentLoaded', function() {
+function initializeModalControls() {
     const addMetricBtn = document.getElementById('addMetricBtn');
     const cancelMetricBtn = document.getElementById('cancelMetricBtn');
     const addMetricModal = document.getElementById('addMetricModal');
@@ -781,9 +793,6 @@ document.addEventListener('DOMContentLoaded', function() {
             trendChartModal.classList.add('hidden');
         });
     }
-    
-    // Load custom metrics on page load
-    loadCustomMetrics();
-});
+}
 </script>
 {% endblock %}
