@@ -194,4 +194,4 @@ async def get_projects():
     Used by upload forms to populate program dropdown
     """
     projects = project_repo.load_all_projects()
-    return [{"name": p.name, "id": p.name} for p in projects]
+    return [{"name": p.project_name, "id": p.project_name} for p in projects]
