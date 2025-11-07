@@ -41,16 +41,20 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
-    """Upload page for XML files"""
+    """Unified upload page for project XML and risk files"""
+    from main import BUILD_VERSION
+    
     # Get existing projects
     projects = project_repo.load_all_projects()
     
     context = {
         "request": request,
-        "projects": projects
+        "projects": projects,
+        "build_version": BUILD_VERSION
     }
     
-    return templates.TemplateResponse("upload.html", context)
+    return templates.TemplateResponse("upload_unified.html", context)
+
 
 
 @router.post("/upload/xml")

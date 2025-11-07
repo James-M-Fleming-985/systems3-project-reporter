@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Data - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📤 Upload Data</h2>
+    <p class="text-gray-600">Upload project XML files and risk data to update your dashboard</p>
+</div>
+
+<!-- Upload Cards -->
+<div class="grid md:grid-cols-2 gap-6">
+    <!-- Project Data Upload Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-4">
+            <svg class="w-12 h-12 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Project Data</h3>
+                <p class="text-sm text-gray-600">MS Project XML files</p>
+            </div>
+        </div>
+        
+        <p class="text-gray-700 mb-4">
+            Upload Microsoft Project XML files to track milestones, timelines, and project progress.
+        </p>
+        
+        <ul class="text-sm text-gray-600 mb-4 space-y-1">
+            <li>✓ Automatic change detection</li>
+            <li>✓ Milestone tracking</li>
+            <li>✓ Gantt chart generation</li>
+            <li>✓ Weekly update comparison</li>
+        </ul>
+        
+        <button onclick="openProjectUploadModal()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+            Upload Project XML
+        </button>
+    </div>
+
+    <!-- Risk Data Upload Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-center mb-4">
+            <svg class="w-12 h-12 text-red-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Risk Data</h3>
+                <p class="text-sm text-gray-600">Excel, CSV, or YAML files</p>
+            </div>
+        </div>
+        
+        <p class="text-gray-700 mb-4">
+            Upload risk registers to calculate risk scores and visualize risk distribution.
+        </p>
+        
+        <ul class="text-sm text-gray-600 mb-4 space-y-1">
+            <li>✓ YAML, Excel, or CSV formats</li>
+            <li>✓ Automatic severity calculation</li>
+            <li>✓ Risk score metrics</li>
+            <li>✓ Distribution charts</li>
+        </ul>
+        
+        <button onclick="openRiskUploadModal()" class="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+            Upload Risk Data
+        </button>
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="mt-8 bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Recent Uploads</h3>
+    <div id="recentUploads" class="text-gray-600">
+        <p class="text-center py-8">No recent uploads</p>
+    </div>
+</div>
+
+<!-- Project Upload Modal -->
+<div id="projectUploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-800">Upload Project XML</h3>
+                <button onclick="closeProjectUploadModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <!-- Drop Zone -->
+            <div id="projectDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-4 cursor-pointer hover:border-blue-500 transition-colors">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="mt-4 text-lg text-gray-600">Drag and drop MS Project XML file</p>
+                <p class="text-sm text-gray-500 mt-2">or click to browse</p>
+                <input type="file" id="projectFileInput" accept=".xml" class="hidden">
+            </div>
+            
+            <div id="projectFileInfo" class="hidden bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                <p class="text-sm text-blue-800"><strong>Selected:</strong> <span id="projectFileName"></span></p>
+                <p class="text-sm text-blue-600 mt-1" id="projectFileSize"></p>
+            </div>
+            
+            <!-- Baseline Option -->
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-start">
+                    <input type="checkbox" id="projectBaselineCheckbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-1">
+                    <label for="projectBaselineCheckbox" class="ml-3 text-sm text-gray-700">
+                        <span class="font-semibold">Set as Baseline</span>
+                        <p class="text-gray-600 mt-1">Skip change detection and establish this as the new baseline for future comparisons.</p>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Progress -->
+            <div id="projectProgress" class="hidden bg-blue-50 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-gray-700">Processing XML file...</span>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div id="projectSuccess" class="hidden bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-green-800 font-semibold">Upload successful!</span>
+                </div>
+                <p class="text-sm text-green-700 mt-2" id="projectSuccessMessage"></p>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="projectError" class="hidden bg-red-50 border border-red-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-red-800 font-semibold">Upload failed</span>
+                </div>
+                <p class="text-sm text-red-700 mt-2" id="projectErrorMessage"></p>
+            </div>
+            
+            <button id="projectUploadBtn" onclick="uploadProjectFile()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-semibold" disabled>
+                Upload Project XML
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Upload Modal -->
+<div id="riskUploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-800">Upload Risk Data</h3>
+                <button onclick="closeRiskUploadModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <!-- Program Name Input -->
+            <div class="mb-4">
+                <label for="riskProgramName" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Program Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="riskProgramName" placeholder="e.g., ZnNi Line Development Plan-09.xml" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                <p class="text-xs text-gray-600 mt-1">Must match the program name from your uploaded project XML</p>
+            </div>
+            
+            <!-- Drop Zone -->
+            <div id="riskDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-4 cursor-pointer hover:border-red-500 transition-colors">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="mt-4 text-lg text-gray-600">Drag and drop risk file</p>
+                <p class="text-sm text-gray-500 mt-2">YAML (.yaml, .yml), Excel (.xlsx, .xls), or CSV (.csv)</p>
+                <input type="file" id="riskFileInput" accept=".yaml,.yml,.xlsx,.xls,.csv" class="hidden">
+            </div>
+            
+            <div id="riskFileInfo" class="hidden bg-red-50 border border-red-200 rounded p-4 mb-4">
+                <p class="text-sm text-red-800"><strong>Selected:</strong> <span id="riskFileName"></span></p>
+                <p class="text-sm text-red-600 mt-1" id="riskFileSize"></p>
+            </div>
+            
+            <!-- Format Examples -->
+            <details class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <summary class="cursor-pointer font-semibold text-gray-700">📋 File Format Examples</summary>
+                <div class="mt-4 space-y-4 text-sm">
+                    <div>
+                        <p class="font-semibold text-gray-800 mb-2">YAML Format:</p>
+                        <pre class="bg-gray-800 text-green-400 p-3 rounded overflow-x-auto"><code>risks:
+  - id: R001
+    title: "Supply chain disruption"
+    description: "Potential delays from supplier"
+    likelihood: high  # or: low, medium, high, critical
+    impact: high
+    mitigations: "Identify backup suppliers"
+    owner: "John Doe"
+    date_identified: "2025-01-15"
+    status: open</code></pre>
+                    </div>
+                    
+                    <div>
+                        <p class="font-semibold text-gray-800 mb-2">Excel/CSV Columns:</p>
+                        <pre class="bg-gray-800 text-green-400 p-3 rounded overflow-x-auto"><code>ID | Title | Description | Likelihood | Impact | Mitigations | Owner | Date Identified | Status</code></pre>
+                        <p class="text-gray-600 mt-2">Column names are flexible (case-insensitive)</p>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Progress -->
+            <div id="riskProgress" class="hidden bg-red-50 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-red-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-gray-700">Processing risk file...</span>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div id="riskSuccess" class="hidden bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <div class="flex items-center mb-2">
+                    <svg class="h-5 w-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-green-800 font-semibold">Upload successful!</span>
+                </div>
+                <div id="riskSuccessDetails" class="text-sm text-green-700 ml-8"></div>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="riskError" class="hidden bg-red-50 border border-red-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-red-800 font-semibold">Upload failed</span>
+                </div>
+                <p class="text-sm text-red-700 mt-2" id="riskErrorMessage"></p>
+            </div>
+            
+            <button id="riskUploadBtn" onclick="uploadRiskFile()" class="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-semibold" disabled>
+                Upload Risk Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal functions
+function openProjectUploadModal() {
+    document.getElementById('projectUploadModal').classList.remove('hidden');
+}
+
+function closeProjectUploadModal() {
+    document.getElementById('projectUploadModal').classList.add('hidden');
+    resetProjectUpload();
+}
+
+function openRiskUploadModal() {
+    document.getElementById('riskUploadModal').classList.remove('hidden');
+}
+
+function closeRiskUploadModal() {
+    document.getElementById('riskUploadModal').classList.add('hidden');
+    resetRiskUpload();
+}
+
+// Project Upload Logic
+let projectFile = null;
+
+const projectDropZone = document.getElementById('projectDropZone');
+const projectFileInput = document.getElementById('projectFileInput');
+
+projectDropZone.addEventListener('click', () => projectFileInput.click());
+
+projectDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    projectDropZone.classList.add('border-blue-500', 'bg-blue-50');
+});
+
+projectDropZone.addEventListener('dragleave', () => {
+    projectDropZone.classList.remove('border-blue-500', 'bg-blue-50');
+});
+
+projectDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    projectDropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleProjectFile(files[0]);
+    }
+});
+
+projectFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleProjectFile(e.target.files[0]);
+    }
+});
+
+function handleProjectFile(file) {
+    if (!file.name.endsWith('.xml')) {
+        alert('Please select an XML file');
+        return;
+    }
+    
+    projectFile = file;
+    document.getElementById('projectFileName').textContent = file.name;
+    document.getElementById('projectFileSize').textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+    document.getElementById('projectFileInfo').classList.remove('hidden');
+    document.getElementById('projectUploadBtn').disabled = false;
+}
+
+async function uploadProjectFile() {
+    if (!projectFile) return;
+    
+    const formData = new FormData();
+    formData.append('file', projectFile);
+    
+    const isBaseline = document.getElementById('projectBaselineCheckbox').checked;
+    if (isBaseline) {
+        formData.append('baseline', 'true');
+    }
+    
+    // Hide previous messages
+    document.getElementById('projectSuccess').classList.add('hidden');
+    document.getElementById('projectError').classList.add('hidden');
+    
+    // Show progress
+    document.getElementById('projectProgress').classList.remove('hidden');
+    document.getElementById('projectUploadBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/upload/xml', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('projectProgress').classList.add('hidden');
+        
+        if (response.ok) {
+            document.getElementById('projectSuccess').classList.remove('hidden');
+            document.getElementById('projectSuccessMessage').textContent = 
+                `${data.project_name} uploaded successfully! ${data.changes_detected || 0} changes detected.`;
+            
+            // Refresh after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 2000);
+        } else {
+            throw new Error(data.detail || 'Upload failed');
+        }
+    } catch (error) {
+        document.getElementById('projectProgress').classList.add('hidden');
+        document.getElementById('projectError').classList.remove('hidden');
+        document.getElementById('projectErrorMessage').textContent = error.message;
+        document.getElementById('projectUploadBtn').disabled = false;
+    }
+}
+
+function resetProjectUpload() {
+    projectFile = null;
+    document.getElementById('projectFileInfo').classList.add('hidden');
+    document.getElementById('projectSuccess').classList.add('hidden');
+    document.getElementById('projectError').classList.add('hidden');
+    document.getElementById('projectProgress').classList.add('hidden');
+    document.getElementById('projectUploadBtn').disabled = true;
+    document.getElementById('projectBaselineCheckbox').checked = false;
+    projectFileInput.value = '';
+}
+
+// Risk Upload Logic
+let riskFile = null;
+
+const riskDropZone = document.getElementById('riskDropZone');
+const riskFileInput = document.getElementById('riskFileInput');
+const riskProgramName = document.getElementById('riskProgramName');
+
+riskDropZone.addEventListener('click', () => riskFileInput.click());
+
+riskDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    riskDropZone.classList.add('border-red-500', 'bg-red-50');
+});
+
+riskDropZone.addEventListener('dragleave', () => {
+    riskDropZone.classList.remove('border-red-500', 'bg-red-50');
+});
+
+riskDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    riskDropZone.classList.remove('border-red-500', 'bg-red-50');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleRiskFile(files[0]);
+    }
+});
+
+riskFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleRiskFile(e.target.files[0]);
+    }
+});
+
+riskProgramName.addEventListener('input', updateRiskUploadButton);
+
+function handleRiskFile(file) {
+    const validExtensions = ['.yaml', '.yml', '.xlsx', '.xls', '.csv'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!validExtensions.includes(fileExt)) {
+        alert('Please select a YAML, Excel, or CSV file');
+        return;
+    }
+    
+    riskFile = file;
+    document.getElementById('riskFileName').textContent = file.name;
+    document.getElementById('riskFileSize').textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+    document.getElementById('riskFileInfo').classList.remove('hidden');
+    updateRiskUploadButton();
+}
+
+function updateRiskUploadButton() {
+    const hasFile = riskFile !== null;
+    const hasProgram = riskProgramName.value.trim() !== '';
+    document.getElementById('riskUploadBtn').disabled = !(hasFile && hasProgram);
+}
+
+async function uploadRiskFile() {
+    if (!riskFile || !riskProgramName.value.trim()) return;
+    
+    const formData = new FormData();
+    formData.append('file', riskFile);
+    formData.append('program_name', riskProgramName.value.trim());
+    
+    // Hide previous messages
+    document.getElementById('riskSuccess').classList.add('hidden');
+    document.getElementById('riskError').classList.add('hidden');
+    
+    // Show progress
+    document.getElementById('riskProgress').classList.remove('hidden');
+    document.getElementById('riskUploadBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/risks/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('riskProgress').classList.add('hidden');
+        
+        if (response.ok && data.success) {
+            document.getElementById('riskSuccess').classList.remove('hidden');
+            const details = `
+                <p>Program: <strong>${data.program_name}</strong></p>
+                <p>Total Risks: <strong>${data.risk_count}</strong></p>
+                <p>Critical: ${data.severity_counts.critical} | High: ${data.severity_counts.high} | Medium: ${data.severity_counts.medium} | Low: ${data.severity_counts.low}</p>
+            `;
+            document.getElementById('riskSuccessDetails').innerHTML = details;
+            
+            // Refresh metrics after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/dashboard/metrics';
+            }, 2000);
+        } else {
+            throw new Error(data.detail || data.message || 'Upload failed');
+        }
+    } catch (error) {
+        document.getElementById('riskProgress').classList.add('hidden');
+        document.getElementById('riskError').classList.remove('hidden');
+        document.getElementById('riskErrorMessage').textContent = error.message;
+        document.getElementById('riskUploadBtn').disabled = false;
+    }
+}
+
+function resetRiskUpload() {
+    riskFile = null;
+    document.getElementById('riskFileInfo').classList.add('hidden');
+    document.getElementById('riskSuccess').classList.add('hidden');
+    document.getElementById('riskError').classList.add('hidden');
+    document.getElementById('riskProgress').classList.add('hidden');
+    document.getElementById('riskUploadBtn').disabled = true;
+    document.getElementById('riskProgramName').value = '';
+    riskFileInput.value = '';
+}
+
+// Close modals on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeProjectUploadModal();
+        closeRiskUploadModal();
+    }
+});
+</script>
+
+{% endblock %}
