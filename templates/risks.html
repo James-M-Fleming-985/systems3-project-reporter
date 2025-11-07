@@ -219,7 +219,134 @@
 </div>
 {% endif %}
 
+<!-- Add/Edit Risk Modal -->
+<div id="riskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-8 border w-11/12 max-w-2xl shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Risk</h3>
+            <button onclick="closeRiskModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="riskForm" class="space-y-4">
+            <input type="hidden" id="editMode" value="false">
+            <input type="hidden" id="originalRiskId" value="">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Risk ID *</label>
+                    <input type="text" id="riskId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="R001">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Project *</label>
+                    <input type="text" id="riskProject" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Project name">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input type="text" id="riskTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Brief risk title">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea id="riskDescription" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Detailed risk description"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Likelihood (1-5) *</label>
+                    <select id="riskLikelihood" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select...</option>
+                        <option value="1">1 - Very Low</option>
+                        <option value="2">2 - Low</option>
+                        <option value="3">3 - Medium</option>
+                        <option value="4">4 - High</option>
+                        <option value="5">5 - Very High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Impact (1-5) *</label>
+                    <select id="riskImpact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select...</option>
+                        <option value="1">1 - Very Low</option>
+                        <option value="2">2 - Low</option>
+                        <option value="3">3 - Medium</option>
+                        <option value="4">4 - High</option>
+                        <option value="5">5 - Very High</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                    <select id="riskStatus" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select...</option>
+                        <option value="Active">Active</option>
+                        <option value="Mitigated">Mitigated</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Monitoring">Monitoring</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Owner *</label>
+                    <input type="text" id="riskOwner" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Risk owner name">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <input type="text" id="riskCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Technical, Schedule, Resource, etc.">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mitigation Strategy</label>
+                <textarea id="riskMitigations" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="How will this risk be mitigated?"></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="closeRiskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <span id="submitBtnText">Add Risk</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Risk Details Modal -->
+<div id="viewRiskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-8 border w-11/12 max-w-3xl shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-800">Risk Details</h3>
+            <button onclick="closeViewRiskModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div id="riskDetailsContent" class="space-y-4">
+            <!-- Risk details will be populated here -->
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-6 border-t mt-6">
+            <button onclick="closeViewRiskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+const programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
+
 function sortTable(columnIndex) {
     const table = document.getElementById('risksTable');
     const tbody = table.getElementsByTagName('tbody')[0];
@@ -235,30 +362,227 @@ function sortTable(columnIndex) {
 }
 
 function addRiskManually() {
-    alert('Manual risk entry feature coming soon!');
-    // TODO: Open modal for manual risk entry
-}
-
-function downloadRisks(format) {
-    const programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
-    window.location.href = `/risks/export/${programName}?format=${format}`;
-}
-
-function viewRiskDetails(riskId) {
-    alert(`View details for risk: ${riskId}\n\nDetailed view coming soon!`);
-    // TODO: Open modal with full risk details
+    document.getElementById('editMode').value = 'false';
+    document.getElementById('modalTitle').textContent = 'Add New Risk';
+    document.getElementById('submitBtnText').textContent = 'Add Risk';
+    document.getElementById('riskForm').reset();
+    document.getElementById('riskId').disabled = false;
+    document.getElementById('riskModal').classList.remove('hidden');
 }
 
 function editRisk(riskId) {
-    alert(`Edit risk: ${riskId}\n\nEdit functionality coming soon!`);
-    // TODO: Open modal for editing risk
+    // Fetch risk details first
+    fetch(`/risks/detail/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`)
+        .then(response => response.json())
+        .then(risk => {
+            document.getElementById('editMode').value = 'true';
+            document.getElementById('originalRiskId').value = riskId;
+            document.getElementById('modalTitle').textContent = 'Edit Risk';
+            document.getElementById('submitBtnText').textContent = 'Update Risk';
+            
+            // Populate form
+            document.getElementById('riskId').value = risk.id;
+            document.getElementById('riskId').disabled = true; // Can't change ID when editing
+            document.getElementById('riskProject').value = risk.project || '';
+            document.getElementById('riskTitle').value = risk.title || '';
+            document.getElementById('riskDescription').value = risk.description || '';
+            document.getElementById('riskLikelihood').value = risk.likelihood || '';
+            document.getElementById('riskImpact').value = risk.impact || '';
+            document.getElementById('riskStatus').value = risk.status || '';
+            document.getElementById('riskOwner').value = risk.owner || '';
+            document.getElementById('riskCategory').value = risk.category || '';
+            document.getElementById('riskMitigations').value = risk.mitigations || '';
+            
+            document.getElementById('riskModal').classList.remove('hidden');
+        })
+        .catch(error => {
+            alert('Error loading risk details: ' + error.message);
+        });
 }
 
-function deleteRisk(riskId) {
-    if (confirm(`Are you sure you want to delete risk ${riskId}?`)) {
-        alert('Delete functionality coming soon!');
-        // TODO: Implement delete API call
+function closeRiskModal() {
+    document.getElementById('riskModal').classList.add('hidden');
+    document.getElementById('riskForm').reset();
+}
+
+async function deleteRisk(riskId) {
+    if (!confirm(`Are you sure you want to delete risk ${riskId}?\n\nThis action cannot be undone.`)) {
+        return;
     }
+    
+    try {
+        const response = await fetch(`/risks/delete/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            alert('Risk deleted successfully');
+            window.location.reload();
+        } else {
+            throw new Error(data.detail || data.message || 'Delete failed');
+        }
+    } catch (error) {
+        alert('Error deleting risk: ' + error.message);
+    }
+}
+
+function viewRiskDetails(riskId) {
+    fetch(`/risks/detail/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`)
+        .then(response => response.json())
+        .then(risk => {
+            const severityColors = {
+                'critical': 'bg-purple-100 text-purple-800',
+                'high': 'bg-red-100 text-red-800',
+                'medium': 'bg-yellow-100 text-yellow-800',
+                'low': 'bg-gray-100 text-gray-800'
+            };
+            
+            const severityColor = severityColors[risk.severity_normalized] || 'bg-gray-100 text-gray-800';
+            
+            document.getElementById('riskDetailsContent').innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Risk ID</p>
+                            <p class="text-lg font-semibold">${risk.id}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Severity</p>
+                            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full ${severityColor}">
+                                ${risk.severity_normalized.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Title</p>
+                    <p class="text-lg font-semibold">${risk.title}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Description</p>
+                    <p class="text-gray-700">${risk.description}</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Project</p>
+                        <p class="font-medium">${risk.project}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Owner</p>
+                        <p class="font-medium">${risk.owner}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Likelihood</p>
+                        <p class="font-medium">${risk.likelihood}/5</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Impact</p>
+                        <p class="font-medium">${risk.impact}/5</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Status</p>
+                        <p class="font-medium">${risk.status}</p>
+                    </div>
+                </div>
+                
+                ${risk.category ? `
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Category</p>
+                    <p class="font-medium">${risk.category}</p>
+                </div>
+                ` : ''}
+                
+                ${risk.mitigations ? `
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Mitigation Strategy</p>
+                    <p class="text-gray-700">${risk.mitigations}</p>
+                </div>
+                ` : ''}
+                
+                ${risk.date_identified ? `
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Date Identified</p>
+                    <p class="font-medium">${risk.date_identified}</p>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('viewRiskModal').classList.remove('hidden');
+        })
+        .catch(error => {
+            alert('Error loading risk details: ' + error.message);
+        });
+}
+
+function closeViewRiskModal() {
+    document.getElementById('viewRiskModal').classList.add('hidden');
+}
+
+// Handle form submission
+document.getElementById('riskForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const isEdit = document.getElementById('editMode').value === 'true';
+    const riskId = document.getElementById('riskId').value.trim();
+    
+    const riskData = {
+        program_name: programName,
+        id: riskId,
+        title: document.getElementById('riskTitle').value.trim(),
+        description: document.getElementById('riskDescription').value.trim(),
+        project: document.getElementById('riskProject').value.trim(),
+        likelihood: parseInt(document.getElementById('riskLikelihood').value),
+        impact: parseInt(document.getElementById('riskImpact').value),
+        status: document.getElementById('riskStatus').value,
+        owner: document.getElementById('riskOwner').value.trim(),
+        category: document.getElementById('riskCategory').value.trim(),
+        mitigations: document.getElementById('riskMitigations').value.trim()
+    };
+    
+    try {
+        let response;
+        
+        if (isEdit) {
+            const originalRiskId = document.getElementById('originalRiskId').value;
+            // Remove program_name and id from update payload
+            const { program_name, id, ...updateData } = riskData;
+            
+            response = await fetch(`/risks/update/${encodeURIComponent(programName)}/${encodeURIComponent(originalRiskId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+        } else {
+            response = await fetch('/risks/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(riskData)
+            });
+        }
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            alert(isEdit ? 'Risk updated successfully' : 'Risk created successfully');
+            window.location.reload();
+        } else {
+            throw new Error(data.detail || data.message || 'Operation failed');
+        }
+    } catch (error) {
+        alert('Error saving risk: ' + error.message);
+    }
+});
+
+function downloadRisks(format) {
+    window.location.href = `/risks/export/${encodeURIComponent(programName)}?format=${format}`;
 }
 </script>
 {% endblock %}

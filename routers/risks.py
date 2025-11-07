@@ -2,11 +2,13 @@
 Risk Upload Router
 Handles risk file uploads and management.
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Body
 from fastapi.responses import JSONResponse
-from typing import Optional
+from typing import Optional, Dict, Any, List
+from pydantic import BaseModel
 from services.risk_parser import RiskParser
 from repositories.risk_repository import RiskRepository
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,6 +17,244 @@ router = APIRouter(prefix="/risks", tags=["risks"])
 
 # Initialize repository
 risk_repo = RiskRepository()
+
+
+# Pydantic models for request/response
+class RiskCreate(BaseModel):
+    program_name: str
+    id: str
+    title: str
+    description: str
+    project: str
+    likelihood: int
+    impact: int
+    status: str
+    owner: str
+    category: Optional[str] = None
+    mitigations: Optional[str] = None
+
+
+class RiskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    project: Optional[str] = None
+    likelihood: Optional[int] = None
+    impact: Optional[int] = None
+    status: Optional[str] = None
+    owner: Optional[str] = None
+    category: Optional[str] = None
+    mitigations: Optional[str] = None
+
+
+@router.post("/create")
+async def create_risk(risk: RiskCreate):
+    """
+    Manually create a new risk.
+    
+    Args:
+        risk: Risk data
+        
+    Returns:
+        JSON response with created risk
+    """
+    try:
+        # Load existing risks for the program
+        existing_risks = risk_repo.load_risks(risk.program_name) or []
+        
+        # Check if risk ID already exists
+        if any(r['id'] == risk.id for r in existing_risks):
+            raise HTTPException(status_code=400, detail=f"Risk ID {risk.id} already exists")
+        
+        # Calculate severity from likelihood and impact
+        severity_score = risk.likelihood + risk.impact
+        if severity_score >= 9:
+            severity = 'critical'
+        elif severity_score >= 7:
+            severity = 'high'
+        elif severity_score >= 4:
+            severity = 'medium'
+        else:
+            severity = 'low'
+        
+        # Create new risk object
+        new_risk = {
+            'id': risk.id,
+            'title': risk.title,
+            'description': risk.description,
+            'project': risk.project,
+            'likelihood': risk.likelihood,
+            'impact': risk.impact,
+            'severity_normalized': severity,
+            'status': risk.status,
+            'owner': risk.owner,
+            'category': risk.category or '',
+            'mitigations': risk.mitigations or '',
+            'date_identified': datetime.now().strftime('%Y-%m-%d')
+        }
+        
+        # Add to existing risks
+        existing_risks.append(new_risk)
+        
+        # Save back to repository
+        risk_repo.save_risks(risk.program_name, existing_risks)
+        
+        logger.info(f"Created new risk {risk.id} for program {risk.program_name}")
+        
+        return JSONResponse(content={
+            'success': True,
+            'message': 'Risk created successfully',
+            'risk': new_risk
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating risk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.put("/update/{program_name}/{risk_id}")
+async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
+    """
+    Update an existing risk.
+    
+    Args:
+        program_name: Name of the program
+        risk_id: ID of the risk to update
+        updates: Risk fields to update
+        
+    Returns:
+        JSON response with updated risk
+    """
+    try:
+        # Load existing risks
+        risks = risk_repo.load_risks(program_name)
+        
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+        
+        # Find the risk to update
+        risk_index = None
+        for i, r in enumerate(risks):
+            if r['id'] == risk_id:
+                risk_index = i
+                break
+        
+        if risk_index is None:
+            raise HTTPException(status_code=404, detail=f"Risk {risk_id} not found")
+        
+        # Update fields
+        risk = risks[risk_index]
+        update_data = updates.dict(exclude_unset=True)
+        
+        for field, value in update_data.items():
+            risk[field] = value
+        
+        # Recalculate severity if likelihood or impact changed
+        if 'likelihood' in update_data or 'impact' in update_data:
+            severity_score = risk['likelihood'] + risk['impact']
+            if severity_score >= 9:
+                risk['severity_normalized'] = 'critical'
+            elif severity_score >= 7:
+                risk['severity_normalized'] = 'high'
+            elif severity_score >= 4:
+                risk['severity_normalized'] = 'medium'
+            else:
+                risk['severity_normalized'] = 'low'
+        
+        # Save back to repository
+        risk_repo.save_risks(program_name, risks)
+        
+        logger.info(f"Updated risk {risk_id} for program {program_name}")
+        
+        return JSONResponse(content={
+            'success': True,
+            'message': 'Risk updated successfully',
+            'risk': risk
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating risk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.delete("/delete/{program_name}/{risk_id}")
+async def delete_risk(program_name: str, risk_id: str):
+    """
+    Delete a specific risk.
+    
+    Args:
+        program_name: Name of the program
+        risk_id: ID of the risk to delete
+        
+    Returns:
+        JSON response confirming deletion
+    """
+    try:
+        # Load existing risks
+        risks = risk_repo.load_risks(program_name)
+        
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+        
+        # Filter out the risk to delete
+        original_count = len(risks)
+        risks = [r for r in risks if r['id'] != risk_id]
+        
+        if len(risks) == original_count:
+            raise HTTPException(status_code=404, detail=f"Risk {risk_id} not found")
+        
+        # Save back to repository
+        risk_repo.save_risks(program_name, risks)
+        
+        logger.info(f"Deleted risk {risk_id} from program {program_name}")
+        
+        return JSONResponse(content={
+            'success': True,
+            'message': f'Risk {risk_id} deleted successfully'
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting risk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/detail/{program_name}/{risk_id}")
+async def get_risk_detail(program_name: str, risk_id: str):
+    """
+    Get details of a specific risk.
+    
+    Args:
+        program_name: Name of the program
+        risk_id: ID of the risk
+        
+    Returns:
+        JSON response with risk details
+    """
+    try:
+        # Load risks
+        risks = risk_repo.load_risks(program_name)
+        
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+        
+        # Find the risk
+        risk = next((r for r in risks if r['id'] == risk_id), None)
+        
+        if not risk:
+            raise HTTPException(status_code=404, detail=f"Risk {risk_id} not found")
+        
+        return JSONResponse(content=risk)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving risk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/upload")
