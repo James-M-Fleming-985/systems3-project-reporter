@@ -156,12 +156,27 @@ async def risk_analysis(request: Request):
     Groups risks by severity with visualizations
     """
     from main import BUILD_VERSION
+    from repositories.risk_repository import RiskRepository
+    
     projects = project_repo.load_all_projects()
     risk_data = chart_service.format_risk_data(projects)
+    
+    # Also load standalone risk data from RiskRepository
+    risk_repo = RiskRepository()
+    standalone_risks = []
+    
+    if projects:
+        # Load risks for the first project's program
+        program_name = getattr(projects[0], 'project_name', None)
+        if program_name:
+            loaded_risks = risk_repo.load_risks(program_name)
+            if loaded_risks:
+                standalone_risks = loaded_risks
     
     context = {
         "request": request,
         "risk_data": risk_data,
+        "standalone_risks": standalone_risks,
         "build_version": BUILD_VERSION
     }
     

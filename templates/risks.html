@@ -12,21 +12,172 @@
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow p-6">
         <p class="text-gray-500 text-sm mb-2">Total Risks</p>
-        <p class="text-4xl font-bold text-gray-800">{{ risk_data.total }}</p>
+        <p class="text-4xl font-bold text-gray-800">{{ risk_data.total + (standalone_risks|length if standalone_risks else 0) }}</p>
     </div>
     <div class="bg-red-50 rounded-lg shadow p-6">
         <p class="text-red-600 text-sm mb-2">HIGH Severity</p>
-        <p class="text-4xl font-bold text-red-600">{{ risk_data.counts.HIGH }}</p>
+        <p class="text-4xl font-bold text-red-600">{{ risk_data.counts.HIGH + (standalone_risks|selectattr('severity_normalized', 'equalto', 'critical')|list|length + standalone_risks|selectattr('severity_normalized', 'equalto', 'high')|list|length if standalone_risks else 0) }}</p>
     </div>
     <div class="bg-yellow-50 rounded-lg shadow p-6">
         <p class="text-yellow-600 text-sm mb-2">MEDIUM Severity</p>
-        <p class="text-4xl font-bold text-yellow-600">{{ risk_data.counts.MEDIUM }}</p>
+        <p class="text-4xl font-bold text-yellow-600">{{ risk_data.counts.MEDIUM + (standalone_risks|selectattr('severity_normalized', 'equalto', 'medium')|list|length if standalone_risks else 0) }}</p>
     </div>
     <div class="bg-gray-50 rounded-lg shadow p-6">
         <p class="text-gray-600 text-sm mb-2">LOW Severity</p>
-        <p class="text-4xl font-bold text-gray-600">{{ risk_data.counts.LOW }}</p>
+        <p class="text-4xl font-bold text-gray-600">{{ risk_data.counts.LOW + (standalone_risks|selectattr('severity_normalized', 'equalto', 'low')|list|length if standalone_risks else 0) }}</p>
     </div>
 </div>
+
+<!-- Uploaded Risk Data -->
+{% if standalone_risks %}
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Uploaded Risk Data</h3>
+    
+    <!-- Critical Risks -->
+    {% set critical_risks = standalone_risks|selectattr('severity_normalized', 'equalto', 'critical')|list %}
+    {% if critical_risks %}
+    <div class="mb-6">
+        <h4 class="text-lg font-bold text-red-700 mb-3">🔴 Critical Severity</h4>
+        <div class="space-y-3">
+            {% for risk in critical_risks %}
+            <div class="border-l-4 border-red-700 bg-red-50 p-4 rounded">
+                <div class="flex justify-between items-start mb-2">
+                    <h5 class="font-bold text-gray-800">{{ risk.id }} - {{ risk.title }}</h5>
+                    <span class="px-3 py-1 bg-red-200 text-red-900 rounded-full text-xs font-semibold uppercase">
+                        {{ risk.status }}
+                    </span>
+                </div>
+                <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-2">
+                    <div>
+                        <p class="text-gray-600">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                        <p class="text-gray-600">Owner: <span class="font-semibold">{{ risk.owner }}</span></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Likelihood: <span class="font-semibold">{{ risk.likelihood }}</span></p>
+                        <p class="text-gray-600">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                    </div>
+                </div>
+                {% if risk.mitigations %}
+                <div class="mt-2 pt-2 border-t border-red-200">
+                    <p class="text-sm text-gray-600"><strong>Mitigations:</strong> {{ risk.mitigations }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- High Risks -->
+    {% set high_risks = standalone_risks|selectattr('severity_normalized', 'equalto', 'high')|list %}
+    {% if high_risks %}
+    <div class="mb-6">
+        <h4 class="text-lg font-bold text-red-600 mb-3">🔴 High Severity</h4>
+        <div class="space-y-3">
+            {% for risk in high_risks %}
+            <div class="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+                <div class="flex justify-between items-start mb-2">
+                    <h5 class="font-bold text-gray-800">{{ risk.id }} - {{ risk.title }}</h5>
+                    <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold uppercase">
+                        {{ risk.status }}
+                    </span>
+                </div>
+                <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-2">
+                    <div>
+                        <p class="text-gray-600">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                        <p class="text-gray-600">Owner: <span class="font-semibold">{{ risk.owner }}</span></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Likelihood: <span class="font-semibold">{{ risk.likelihood }}</span></p>
+                        <p class="text-gray-600">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                    </div>
+                </div>
+                {% if risk.mitigations %}
+                <div class="mt-2 pt-2 border-t border-red-200">
+                    <p class="text-sm text-gray-600"><strong>Mitigations:</strong> {{ risk.mitigations }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Medium Risks -->
+    {% set medium_risks = standalone_risks|selectattr('severity_normalized', 'equalto', 'medium')|list %}
+    {% if medium_risks %}
+    <div class="mb-6">
+        <h4 class="text-lg font-bold text-yellow-600 mb-3">🟡 Medium Severity</h4>
+        <div class="space-y-3">
+            {% for risk in medium_risks %}
+            <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
+                <div class="flex justify-between items-start mb-2">
+                    <h5 class="font-bold text-gray-800">{{ risk.id }} - {{ risk.title }}</h5>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold uppercase">
+                        {{ risk.status }}
+                    </span>
+                </div>
+                <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-2">
+                    <div>
+                        <p class="text-gray-600">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                        <p class="text-gray-600">Owner: <span class="font-semibold">{{ risk.owner }}</span></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Likelihood: <span class="font-semibold">{{ risk.likelihood }}</span></p>
+                        <p class="text-gray-600">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                    </div>
+                </div>
+                {% if risk.mitigations %}
+                <div class="mt-2 pt-2 border-t border-yellow-200">
+                    <p class="text-sm text-gray-600"><strong>Mitigations:</strong> {{ risk.mitigations }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Low Risks -->
+    {% set low_risks = standalone_risks|selectattr('severity_normalized', 'equalto', 'low')|list %}
+    {% if low_risks %}
+    <div>
+        <h4 class="text-lg font-bold text-gray-600 mb-3">⚪ Low Severity</h4>
+        <div class="space-y-3">
+            {% for risk in low_risks %}
+            <div class="border-l-4 border-gray-400 bg-gray-50 p-4 rounded">
+                <div class="flex justify-between items-start mb-2">
+                    <h5 class="font-bold text-gray-800">{{ risk.id }} - {{ risk.title }}</h5>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold uppercase">
+                        {{ risk.status }}
+                    </span>
+                </div>
+                <p class="text-gray-700 mb-2">{{ risk.description }}</p>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-2">
+                    <div>
+                        <p class="text-gray-600">Project: <span class="font-semibold">{{ risk.project }}</span></p>
+                        <p class="text-gray-600">Owner: <span class="font-semibold">{{ risk.owner }}</span></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Likelihood: <span class="font-semibold">{{ risk.likelihood }}</span></p>
+                        <p class="text-gray-600">Impact: <span class="font-semibold">{{ risk.impact }}</span></p>
+                    </div>
+                </div>
+                {% if risk.mitigations %}
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                    <p class="text-sm text-gray-600"><strong>Mitigations:</strong> {{ risk.mitigations }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- HIGH Severity Risks -->
 {% if risk_data.by_severity.HIGH %}
