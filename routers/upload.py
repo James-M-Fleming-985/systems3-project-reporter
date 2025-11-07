@@ -179,6 +179,13 @@ async def upload_xml(
                 []  # No new changes yet, user will add reasons later if needed
             )
         
+        # **IMPORTANT: Do NOT save risks from XML to project YAML**
+        # Risks are managed separately via /risks endpoints and stored in data/risks/
+        # Preserve existing risks if any were in the YAML (legacy)
+        existing_yaml_risks = []
+        if existing_project and hasattr(existing_project, 'risks'):
+            existing_yaml_risks = existing_project.risks
+        
         # Convert to dict for YAML serialization
         project_dict = {
             'project_name': new_project.project_name,
@@ -200,6 +207,8 @@ async def upload_xml(
                 }
                 for m in new_project.milestones
             ],
+            # Preserve existing YAML risks only (don't overwrite with XML risks)
+            # New risks should be uploaded via /risks/upload endpoint
             'risks': [
                 {
                     'risk_id': r.risk_id,
@@ -210,8 +219,8 @@ async def upload_xml(
                     'mitigation': r.mitigation,
                     'status': r.status
                 }
-                for r in new_project.risks
-            ],
+                for r in existing_yaml_risks
+            ] if existing_yaml_risks else [],
             'changes': [
                 {
                     'change_id': c.change_id,

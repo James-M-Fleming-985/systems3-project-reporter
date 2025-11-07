@@ -406,3 +406,55 @@ async def delete_risks(program_name: str):
     except Exception as e:
         logger.error(f"Error deleting risks: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.post("/normalize-ids/{program_name}")
+async def normalize_risk_ids(program_name: str):
+    """
+    Normalize all risk IDs for a program to R001, R002, R003 format.
+    Useful for fixing old uploads with date-based or invalid IDs.
+    
+    Args:
+        program_name: Name of the program
+        
+    Returns:
+        JSON response with updated risk count and ID mapping
+    """
+    try:
+        # Load existing risks
+        risks = risk_repo.load_risks(program_name)
+        
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+        
+        # Track ID changes for response
+        id_mapping = {}
+        counter = 1
+        
+        # Normalize each risk ID to R### format
+        for risk in risks:
+            old_id = risk['id']
+            new_id = f"R{str(counter).zfill(3)}"
+            
+            # Update the risk ID
+            risk['id'] = new_id
+            id_mapping[old_id] = new_id
+            counter += 1
+        
+        # Save normalized risks
+        risk_repo.save_risks(program_name, risks)
+        
+        logger.info(f"Normalized {len(risks)} risk IDs for {program_name}")
+        
+        return JSONResponse(content={
+            'success': True,
+            'message': f'Successfully normalized {len(risks)} risk IDs',
+            'risks_updated': len(risks),
+            'id_mapping': id_mapping
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error normalizing risk IDs: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

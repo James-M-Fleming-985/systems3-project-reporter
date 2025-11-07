@@ -64,6 +64,12 @@
             </svg>
             Add Risk Manually
         </button>
+        <button onclick="normalizeRiskIds()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2" title="Convert all risk IDs to R001, R002, R003 format">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Normalize IDs
+        </button>
     </div>
     <div class="flex gap-3">
         <button onclick="downloadRisks('excel')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
@@ -433,6 +439,36 @@ function addRiskManually() {
     document.getElementById('riskForm').reset();
     document.getElementById('riskId').disabled = false;
     document.getElementById('riskModal').classList.remove('hidden');
+}
+
+async function normalizeRiskIds() {
+    if (!confirm('This will renumber all risk IDs to R001, R002, R003 format. Continue?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/risks/normalize-ids/${encodeURIComponent(programName)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.detail || 'Failed to normalize IDs');
+        }
+        
+        showToast(`Successfully normalized ${data.risks_updated} risk IDs`, 'success');
+        
+        // Reload page to show updated IDs
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Error normalizing risk IDs:', error);
+        showToast('Error normalizing risk IDs: ' + error.message, 'error');
+    }
 }
 
 function editRisk(event) {
