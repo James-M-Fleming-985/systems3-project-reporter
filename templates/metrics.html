@@ -288,24 +288,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Check for selected program on page load
     const selectedProgram = localStorage.getItem('selectedProgram');
+    const selectedProgramCode = localStorage.getItem('selectedProgramCode');
     const noProgramDiv = document.getElementById('noProgramSelected');
     const metricsDiv = document.getElementById('metricsContent');
     const programNameSpan = document.getElementById('selectedProgramNameMetrics');
     
-    console.log('Metrics page - Selected program from localStorage:', selectedProgram);
+    console.log('=== Metrics Page Debug ===');
+    console.log('Selected program from localStorage:', selectedProgram);
+    console.log('Selected program code:', selectedProgramCode);
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    console.log('All localStorage:', JSON.stringify(localStorage));
     
-    if (selectedProgram) {
+    if (selectedProgram && selectedProgram !== 'null' && selectedProgram.trim() !== '') {
+        console.log('✅ Program selected, showing metrics content');
         // Show metrics content
-        noProgramDiv.classList.add('hidden');
-        metricsDiv.classList.remove('hidden');
-        programNameSpan.textContent = selectedProgram;
+        if (noProgramDiv) noProgramDiv.classList.add('hidden');
+        if (metricsDiv) metricsDiv.classList.remove('hidden');
+        if (programNameSpan) programNameSpan.textContent = selectedProgram;
         
         // Load metrics data
         loadMetricsData(selectedProgram);
     } else {
+        console.log('❌ No program selected, showing warning');
         // Show "no program selected" message
-        noProgramDiv.classList.remove('hidden');
-        metricsDiv.classList.add('hidden');
+        if (noProgramDiv) noProgramDiv.classList.remove('hidden');
+        if (metricsDiv) metricsDiv.classList.add('hidden');
     }
     
     // Initialize modal controls
@@ -318,33 +325,38 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeModalControls() {
 
 function loadMetricsData(programName) {
-    // Use real metrics data from backend
-    const metrics = {{ metrics | tojson | safe }};
-    
-    if (!metrics) {
-        console.error('No metrics data available');
-        return;
+    try {
+        // Use real metrics data from backend
+        const metrics = {{ metrics | tojson | safe }};
+        
+        if (!metrics) {
+            console.error('No metrics data available');
+            return;
+        }
+        
+        console.log('Loading metrics data:', metrics);
+        
+        // Update KPI cards with real data
+        document.getElementById('spiValue').textContent = metrics.spi || '1.00';
+        document.getElementById('completionRate').textContent = (metrics.completion_rate || 0) + '%';
+        document.getElementById('riskScore').textContent = '-'; // Will be from risk upload
+        document.getElementById('changeVelocity').textContent = '-'; // TODO: calculate from changes
+        
+        // Update last updated timestamp
+        const lastUpdatedSpan = document.getElementById('lastUpdated');
+        if (lastUpdatedSpan && metrics.last_updated) {
+            const date = new Date(metrics.last_updated);
+            lastUpdatedSpan.textContent = date.toLocaleString();
+        }
+        
+        // Create charts with real data
+        createMilestoneHealthChart(metrics.milestone_health || {completed: 0, in_progress: 0, not_started: 0, late: 0});
+        createRiskDistributionChart(); // Placeholder until risk upload
+        createScheduleTrendChart(metrics.schedule_trend || {periods: [], spi_values: []});
+    } catch (error) {
+        console.error('Error loading metrics data:', error);
+        console.error('Error stack:', error.stack);
     }
-    
-    console.log('Loading metrics data:', metrics);
-    
-    // Update KPI cards with real data
-    document.getElementById('spiValue').textContent = metrics.spi || '1.00';
-    document.getElementById('completionRate').textContent = metrics.completion_rate + '%';
-    document.getElementById('riskScore').textContent = '-'; // Will be from risk upload
-    document.getElementById('changeVelocity').textContent = '-'; // TODO: calculate from changes
-    
-    // Update last updated timestamp
-    const lastUpdatedSpan = document.getElementById('lastUpdated');
-    if (lastUpdatedSpan && metrics.last_updated) {
-        const date = new Date(metrics.last_updated);
-        lastUpdatedSpan.textContent = date.toLocaleString();
-    }
-    
-    // Create charts with real data
-    createMilestoneHealthChart(metrics.milestone_health);
-    createRiskDistributionChart(); // Placeholder until risk upload
-    createScheduleTrendChart(metrics.schedule_trend);
 }
 
 function createMilestoneHealthChart(healthData) {
