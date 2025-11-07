@@ -3,6 +3,23 @@
 {% block title %}Risk Analysis - Systems³ Project Reporter{% endblock %}
 
 {% block content %}
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 hidden">
+    <div id="toastContent" class="bg-white rounded-lg shadow-lg p-4 max-w-md border-l-4">
+        <div class="flex items-start">
+            <div id="toastIcon" class="flex-shrink-0"></div>
+            <div class="ml-3 flex-1">
+                <p id="toastMessage" class="text-sm font-medium"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2">⚠️ Risk Analysis</h2>
     <p class="text-gray-600">Active risks grouped by severity</p>
@@ -151,9 +168,9 @@
                     {{ risk.owner }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onclick="viewRiskDetails('{{ risk.id }}')" class="text-blue-600 hover:text-blue-900 mr-3">View</button>
-                    <button onclick="editRisk('{{ risk.id }}')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                    <button onclick="deleteRisk('{{ risk.id }}')" class="text-red-600 hover:text-red-900">Delete</button>
+                    <button onclick="viewRiskDetails(this.getAttribute('data-risk-id'))" data-risk-id="{{ risk.id }}" class="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                    <button onclick="editRisk(this.getAttribute('data-risk-id'))" data-risk-id="{{ risk.id }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                    <button onclick="deleteRisk(this.getAttribute('data-risk-id'))" data-risk-id="{{ risk.id }}" class="text-red-600 hover:text-red-900">Delete</button>
                 </td>
             </tr>
             {% endfor %}
@@ -347,6 +364,53 @@
 <script>
 const programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
 
+// Toast notification functions
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastContent = document.getElementById('toastContent');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    // Set message
+    toastMessage.textContent = message;
+    
+    // Set icon and colors based on type
+    let iconSvg = '';
+    let borderColor = '';
+    
+    if (type === 'success') {
+        borderColor = 'border-green-500';
+        iconSvg = `<svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>`;
+    } else if (type === 'error') {
+        borderColor = 'border-red-500';
+        iconSvg = `<svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>`;
+    } else if (type === 'warning') {
+        borderColor = 'border-yellow-500';
+        iconSvg = `<svg class="h-6 w-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>`;
+    }
+    
+    toastIcon.innerHTML = iconSvg;
+    toastContent.className = `bg-white rounded-lg shadow-lg p-4 max-w-md border-l-4 ${borderColor}`;
+    
+    // Show toast
+    toast.classList.remove('hidden');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        hideToast();
+    }, 3000);
+}
+
+function hideToast() {
+    document.getElementById('toast').classList.add('hidden');
+}
+
 function sortTable(columnIndex) {
     const table = document.getElementById('risksTable');
     const tbody = table.getElementsByTagName('tbody')[0];
@@ -371,12 +435,21 @@ function addRiskManually() {
 }
 
 function editRisk(riskId) {
+    console.log('Editing risk:', riskId); // Debug log
+    
     // Fetch risk details first
     fetch(`/risks/detail/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(risk => {
+            console.log('Loaded risk data:', risk); // Debug log
+            
             document.getElementById('editMode').value = 'true';
-            document.getElementById('originalRiskId').value = riskId;
+            document.getElementById('originalRiskId').value = risk.id;
             document.getElementById('modalTitle').textContent = 'Edit Risk';
             document.getElementById('submitBtnText').textContent = 'Update Risk';
             
@@ -396,7 +469,8 @@ function editRisk(riskId) {
             document.getElementById('riskModal').classList.remove('hidden');
         })
         .catch(error => {
-            alert('Error loading risk details: ' + error.message);
+            console.error('Error loading risk:', error);
+            showToast('Error loading risk details: ' + error.message, 'error');
         });
 }
 
@@ -418,19 +492,24 @@ async function deleteRisk(riskId) {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            alert('Risk deleted successfully');
-            window.location.reload();
+            showToast('Risk deleted successfully', 'success');
+            setTimeout(() => window.location.reload(), 1000);
         } else {
             throw new Error(data.detail || data.message || 'Delete failed');
         }
     } catch (error) {
-        alert('Error deleting risk: ' + error.message);
+        showToast('Error deleting risk: ' + error.message, 'error');
     }
 }
 
 function viewRiskDetails(riskId) {
     fetch(`/risks/detail/${encodeURIComponent(programName)}/${encodeURIComponent(riskId)}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(risk => {
             const severityColors = {
                 'critical': 'bg-purple-100 text-purple-800',
@@ -518,7 +597,7 @@ function viewRiskDetails(riskId) {
             document.getElementById('viewRiskModal').classList.remove('hidden');
         })
         .catch(error => {
-            alert('Error loading risk details: ' + error.message);
+            showToast('Error loading risk details: ' + error.message, 'error');
         });
 }
 
@@ -552,6 +631,8 @@ document.getElementById('riskForm').addEventListener('submit', async (e) => {
         
         if (isEdit) {
             const originalRiskId = document.getElementById('originalRiskId').value;
+            console.log('Updating risk:', originalRiskId); // Debug log
+            
             // Remove program_name and id from update payload
             const { program_name, id, ...updateData } = riskData;
             
@@ -571,13 +652,14 @@ document.getElementById('riskForm').addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            alert(isEdit ? 'Risk updated successfully' : 'Risk created successfully');
-            window.location.reload();
+            showToast(isEdit ? 'Risk updated successfully' : 'Risk created successfully', 'success');
+            closeRiskModal();
+            setTimeout(() => window.location.reload(), 1000);
         } else {
             throw new Error(data.detail || data.message || 'Operation failed');
         }
     } catch (error) {
-        alert('Error saving risk: ' + error.message);
+        showToast('Error saving risk: ' + error.message, 'error');
     }
 });
 
