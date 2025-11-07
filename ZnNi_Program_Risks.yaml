@@ -1,0 +1,50 @@
+risks:
+  - id: R001
+    project: SF Documentation Optimization
+    title: NADCAP Audit Preparation Delays
+    description: >
+      The SF team is very busy with many other tasks from wider stakeholders. 
+      There may be delays in completing the NADCAP action plan and SF documentation review, 
+      meaning we may not be ready for the NADCAP Audit and the pre-audit planned for March 26, 2026.
+    likelihood: high
+    impact: high
+    mitigations: >
+      Prioritize NADCAP tasks; Allocate dedicated resource time; 
+      Weekly progress reviews; Escalate to management if delays occur
+    owner: SF Team Lead
+    date_identified: 2025-11-07
+    status: open
+    category: schedule
+    
+  - id: R002
+    project: SF Documentation Optimization
+    title: SF QMS Documentation Hierarchy Inaccuracies
+    description: >
+      If we do not fully understand the documentation hierarchy, the overarching document 
+      (the SF QMS) could have inaccuracies which defeats the objective of being able to 
+      signpost anyone unfamiliar with the documentation in SF.
+    likelihood: medium
+    impact: high
+    mitigations: >
+      Conduct thorough documentation hierarchy workshop; Create visual mapping of document structure; 
+      Peer review of QMS by multiple stakeholders; Include SF veterans in review process
+    owner: Documentation Specialist
+    date_identified: 2025-11-07
+    status: open
+    category: quality
+    
+  - id: R003
+    project: Surface Finish Table 1 Implementation Complete
+    title: Surface Finish Table Validation Delay
+    description: >
+      The process engineer carrying out the work for validating Surface Finish Table 1 
+      is really busy and may not complete the review in the given timeframe.
+    likelihood: high
+    impact: medium
+    mitigations: >
+      Identify backup resource; Break down validation into smaller milestones; 
+      Request management support to free up engineer time; Consider parallel validation approach
+    owner: Process Engineering Manager
+    date_identified: 2025-11-07
+    status: open
+    category: resource

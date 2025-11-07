@@ -185,3 +185,13 @@ async def change_management(request: Request):
     }
     
     return templates.TemplateResponse("changes.html", context)
+
+
+@router.get("/api/projects")
+async def get_projects():
+    """
+    API endpoint to get list of all projects
+    Used by upload forms to populate program dropdown
+    """
+    projects = project_repo.load_all_projects()
+    return [{"name": p.name, "id": p.name} for p in projects]

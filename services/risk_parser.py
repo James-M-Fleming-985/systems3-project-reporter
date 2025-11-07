@@ -7,6 +7,7 @@ import pandas as pd
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
+import io
 
 
 class RiskParser:
@@ -144,7 +145,11 @@ class RiskParser:
         """
         try:
             # Read Excel file
-            df = pd.read_excel(file_content, engine='openpyxl')
+            # Accept bytes or file-like object
+            if isinstance(file_content, (bytes, bytearray)):
+                df = pd.read_excel(io.BytesIO(file_content), engine='openpyxl')
+            else:
+                df = pd.read_excel(file_content, engine='openpyxl')
             
             # Normalize column names (case-insensitive matching)
             df.columns = df.columns.str.strip().str.lower()
@@ -282,9 +287,133 @@ class RiskParser:
         """
         filename_lower = filename.lower()
         
-        if filename_lower.endswith('.yaml') or filename_lower.endswith('.yml'):
+        if filename_lower.endswith(('.yaml', '.yml')):
             return RiskParser.parse_yaml(file_content)
-        elif filename_lower.endswith('.xlsx') or filename_lower.endswith('.xls'):
+        elif filename_lower.endswith(('.xlsx', '.xls')):
             return RiskParser.parse_excel(file_content)
+        elif filename_lower.endswith('.csv'):
+            return RiskParser.parse_csv(file_content)
         else:
-            raise ValueError(f"Unsupported file format. Expected .yaml, .yml, or .xlsx, got: {filename}")
+            raise ValueError(f"Unsupported file format. Expected .yaml, .yml, .xlsx, or .csv, got: {filename}")
+
+    @staticmethod
+    def parse_csv(file_content: bytes) -> List[Dict[str, Any]]:
+        """
+        Parse CSV risk file.
+        Flexible column matching similar to Excel parser.
+        """
+        try:
+            # Decode and load into DataFrame
+            text = file_content.decode('utf-8') if isinstance(file_content, (bytes, bytearray)) else str(file_content)
+            df = pd.read_csv(io.StringIO(text))
+
+            # Reuse Excel parsing logic by writing df to a buffer and calling same mapping
+            # Normalize column names (case-insensitive matching)
+            df.columns = df.columns.str.strip().str.lower()
+
+            # Column mapping (flexible matching)
+            column_map = {}
+            for col in df.columns:
+                if 'id' in col:
+                    column_map['id'] = col
+                elif 'title' in col or 'name' in col or 'risk' in col:
+                    column_map['title'] = col
+                elif 'desc' in col:
+                    column_map['description'] = col
+                elif 'likelihood' in col or 'probability' in col:
+                    column_map['likelihood'] = col
+                elif 'impact' in col or 'consequence' in col:
+                    column_map['impact'] = col
+                elif 'mitigation' in col or 'response' in col or 'action' in col:
+                    column_map['mitigations'] = col
+                elif 'owner' in col or 'assigned' in col:
+                    column_map['owner'] = col
+                elif 'date' in col or 'identified' in col:
+                    column_map['date_identified'] = col
+                elif 'status' in col:
+                    column_map['status'] = col
+                elif 'category' in col or 'type' in col:
+                    column_map['category'] = col
+                elif 'project' in col:
+                    column_map['project'] = col
+
+            if 'title' not in column_map:
+                raise ValueError("CSV must have a Title/Name/Risk column")
+
+            normalized_risks = []
+            for idx, row in df.iterrows():
+                if pd.isna(row.get(column_map.get('title', ''))):
+                    continue
+
+                risk_id = row.get(column_map.get('id', ''), f"R{str(idx + 1).zfill(3)}")
+                if pd.isna(risk_id):
+                    risk_id = f"R{str(idx + 1).zfill(3)}"
+                else:
+                    risk_id = str(risk_id)
+
+                title = str(row.get(column_map.get('title', ''), 'Untitled Risk'))
+                description = str(row.get(column_map.get('description', ''), ''))
+                if pd.isna(row.get(column_map.get('description', ''))):
+                    description = ''
+
+                likelihood_raw = row.get(column_map.get('likelihood', ''), 'medium')
+                impact_raw = row.get(column_map.get('impact', ''), 'medium')
+
+                likelihood = RiskParser.normalize_level(likelihood_raw)
+                impact = RiskParser.normalize_level(impact_raw)
+
+                mitigations = str(row.get(column_map.get('mitigations', ''), ''))
+                if pd.isna(row.get(column_map.get('mitigations', ''))):
+                    mitigations = ''
+
+                owner = str(row.get(column_map.get('owner', ''), 'Unassigned'))
+                if pd.isna(row.get(column_map.get('owner', ''))):
+                    owner = 'Unassigned'
+
+                date_raw = row.get(column_map.get('date_identified', ''))
+                if pd.isna(date_raw):
+                    date_identified = datetime.now().isoformat()
+                else:
+                    try:
+                        date_identified = pd.to_datetime(date_raw).isoformat()
+                    except:
+                        date_identified = datetime.now().isoformat()
+
+                status = str(row.get(column_map.get('status', ''), 'open'))
+                if pd.isna(row.get(column_map.get('status', ''))):
+                    status = 'open'
+
+                category = str(row.get(column_map.get('category', ''), 'general'))
+                if pd.isna(row.get(column_map.get('category', ''))):
+                    category = 'general'
+
+                project = str(row.get(column_map.get('project', ''), ''))
+                if pd.isna(row.get(column_map.get('project', ''))):
+                    project = ''
+
+                normalized_risk = {
+                    'id': risk_id,
+                    'title': title,
+                    'description': description,
+                    'likelihood': likelihood,
+                    'impact': impact,
+                    'severity_normalized': RiskParser.calculate_severity(likelihood, impact),
+                    'mitigations': mitigations,
+                    'owner': owner,
+                    'date_identified': date_identified,
+                    'status': status.lower(),
+                    'category': category.lower(),
+                    'project': project
+                }
+
+                normalized_risks.append(normalized_risk)
+
+            if not normalized_risks:
+                raise ValueError("No valid risks found in CSV file")
+
+            return normalized_risks
+
+        except pd.errors.EmptyDataError:
+            raise ValueError("CSV file is empty")
+        except Exception as e:
+            raise ValueError(f"Error parsing CSV: {str(e)}")
