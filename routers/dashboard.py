@@ -98,11 +98,19 @@ async def program_metrics(request: Request):
     """
     from main import BUILD_VERSION
     from services.metrics_calculator import MetricsCalculator
+    import logging
+    import json
+    
+    logger = logging.getLogger(__name__)
     
     # Load projects and calculate metrics
     projects = project_repo.load_all_projects()
+    logger.info(f"Loaded {len(projects)} projects for metrics calculation")
+    
     metrics_calculator = MetricsCalculator()
     metrics = metrics_calculator.calculate_program_metrics(projects)
+    
+    logger.info(f"Calculated metrics: {json.dumps(metrics, indent=2)}")
     
     context = {
         "request": request,

@@ -288,10 +288,22 @@
 
 {% block scripts %}
 <script>
-// Embed metrics data safely
-var METRICS_DATA = {{ metrics | tojson }};
+console.log('=== METRICS SCRIPT BLOCK STARTING ===');
+</script>
+<script id="metrics-data-script">
+// Embed metrics data safely - this should be valid JSON
+try {
+    console.log('About to parse metrics data...');
+    var METRICS_DATA = {{ metrics | tojson | safe }};
+    console.log('✅ METRICS_DATA loaded successfully:', METRICS_DATA);
+} catch (e) {
+    console.error('❌ Error loading METRICS_DATA:', e);
+    console.error('Error details:', e.message, e.stack);
+    var METRICS_DATA = null;
+}
 </script>
 <script>
+console.log('=== MAIN SCRIPT BLOCK STARTING ===');
 // All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
     // Check for selected program on page load
