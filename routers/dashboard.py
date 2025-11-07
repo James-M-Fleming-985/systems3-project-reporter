@@ -118,7 +118,7 @@ async def program_metrics(request: Request):
     
     if projects:
         # Get program name from first project
-        program_name = getattr(projects[0], 'name', 'Unknown')
+        program_name = getattr(projects[0], 'project_name', 'Unknown')
         risks = risk_repo.load_risks(program_name)
         
         if risks:

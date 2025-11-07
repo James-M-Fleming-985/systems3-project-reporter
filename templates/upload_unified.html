@@ -519,9 +519,9 @@ async function uploadRiskFile() {
             `;
             document.getElementById('riskSuccessDetails').innerHTML = details;
             
-            // Refresh metrics after 2 seconds
+            // Redirect to risks page after 2 seconds
             setTimeout(() => {
-                window.location.href = '/dashboard/metrics';
+                window.location.href = '/dashboard/risks';
             }, 2000);
         } else {
             throw new Error(data.detail || data.message || 'Upload failed');
