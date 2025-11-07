@@ -212,3 +212,54 @@ class MetricsCalculator:
             'total_projects': 0,
             'last_updated': datetime.now().isoformat()
         }
+    
+    def calculate_risk_metrics(self, risks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Calculate risk score and distribution from normalized risks.
+        
+        Args:
+            risks: List of normalized risk dictionaries
+            
+        Returns:
+            Dictionary with risk_score (1-100) and risk_distribution
+        """
+        if not risks:
+            return {
+                'risk_score': 0,
+                'risk_distribution': {
+                    'critical': 0,
+                    'high': 0,
+                    'medium': 0,
+                    'low': 0
+                },
+                'total_risks': 0
+            }
+        
+        # Count risks by severity
+        distribution = {
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0
+        }
+        
+        for risk in risks:
+            severity = risk.get('severity_normalized', 'medium')
+            if severity in distribution:
+                distribution[severity] += 1
+        
+        # Calculate overall risk score (0-100 scale)
+        # Weight: critical=100, high=75, medium=50, low=25
+        weights = {'critical': 100, 'high': 75, 'medium': 50, 'low': 25}
+        total_score = sum(distribution[sev] * weights[sev] for sev in distribution)
+        max_score = len(risks) * 100  # If all risks were critical
+        
+        risk_score = round((total_score / max_score) * 100) if max_score > 0 else 0
+        
+        return {
+            'risk_score': risk_score,
+            'risk_distribution': distribution,
+            'total_risks': len(risks),
+            'open_risks': sum(1 for r in risks if r.get('status', 'open').lower() == 'open'),
+            'closed_risks': sum(1 for r in risks if r.get('status', 'open').lower() == 'closed')
+        }

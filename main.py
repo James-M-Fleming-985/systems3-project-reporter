@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.37"
+BUILD_VERSION = "1.0.50"
 
 
 # Setup logging
@@ -117,7 +117,7 @@ async def health_check():
 
 
 # Import routers
-from routers import dashboard, upload, export
+from routers import dashboard, upload, export, risks
 
 # Include routers
 # Dashboard router has: /, /gantt, /milestones, /risks, /changes
@@ -126,6 +126,8 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(upload.router, tags=["upload"])
 # Export router has: /export/powerpoint
 app.include_router(export.router, tags=["export"])
+# Risks router has: /risks/upload, /risks/programs, /risks/{program_name}
+app.include_router(risks.router, tags=["risks"])
 
 # Optional: Subscription and Stripe routers (if dependencies available)
 try:

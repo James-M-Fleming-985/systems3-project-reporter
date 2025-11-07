@@ -98,6 +98,7 @@ async def program_metrics(request: Request):
     """
     from main import BUILD_VERSION
     from services.metrics_calculator import MetricsCalculator
+    from repositories.risk_repository import RiskRepository
     import logging
     import json
     
@@ -110,7 +111,33 @@ async def program_metrics(request: Request):
     metrics_calculator = MetricsCalculator()
     metrics = metrics_calculator.calculate_program_metrics(projects)
     
-    logger.info(f"Calculated metrics: {json.dumps(metrics, indent=2)}")
+    # Try to load risk data for the first program
+    # In future, this should be based on selected program from frontend
+    risk_repo = RiskRepository()
+    risk_metrics = None
+    
+    if projects:
+        # Get program name from first project
+        program_name = getattr(projects[0], 'name', 'Unknown')
+        risks = risk_repo.load_risks(program_name)
+        
+        if risks:
+            logger.info(f"Loaded {len(risks)} risks for {program_name}")
+            risk_metrics = metrics_calculator.calculate_risk_metrics(risks)
+            logger.info(f"Calculated risk metrics: {json.dumps(risk_metrics, indent=2)}")
+        else:
+            logger.info(f"No risks found for {program_name}")
+    
+    # Merge risk metrics into main metrics
+    if risk_metrics:
+        metrics.update(risk_metrics)
+    else:
+        # Provide default risk metrics
+        metrics['risk_score'] = 0
+        metrics['risk_distribution'] = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
+        metrics['total_risks'] = 0
+    
+    logger.info(f"Final metrics with risks: {json.dumps(metrics, indent=2)}")
     
     context = {
         "request": request,
@@ -119,6 +146,7 @@ async def program_metrics(request: Request):
     }
     
     return templates.TemplateResponse("metrics.html", context)
+
 
 
 @router.get("/risks", response_class=HTMLResponse)
