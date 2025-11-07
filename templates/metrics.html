@@ -342,8 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCustomMetrics();
 });
 
-function initializeModalControls() {
-
 function loadMetricsData(programName) {
     try {
         // Use metrics data from global variable (set by server)
@@ -585,18 +583,6 @@ function renderCustomMetrics() {
                 <button onclick="updateMetricValue(${index})" class="text-blue-600 hover:text-blue-800">Update</button>
                 <button onclick="editMetric(${index})" class="text-indigo-600 hover:text-indigo-800">Edit</button>
                 <button onclick="showTrendChart(${index})" class="text-green-600 hover:text-green-800">Trend</button>
-                <button onclick="deleteMetric(${index})" class="text-red-600 hover:text-red-800">Delete</button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-                ${status} (${percentage}%)
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${new Date(metric.lastUpdated).toLocaleDateString()}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <button onclick="deleteMetric(${index})" class="text-red-600 hover:text-red-800">Delete</button>
             </td>
         `;
