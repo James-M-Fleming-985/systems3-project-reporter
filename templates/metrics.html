@@ -284,6 +284,10 @@
 
 {% block scripts %}
 <script>
+// Embed metrics data safely
+var METRICS_DATA = {{ metrics | tojson }};
+</script>
+<script>
 // All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
     // Check for selected program on page load
@@ -326,8 +330,8 @@ function initializeModalControls() {
 
 function loadMetricsData(programName) {
     try {
-        // Use real metrics data from backend
-        const metrics = {{ metrics | tojson | safe }};
+        // Use metrics data from global variable (set by server)
+        const metrics = METRICS_DATA;
         
         if (!metrics) {
             console.error('No metrics data available');
