@@ -355,10 +355,18 @@ function loadMetricsData(programName) {
         console.log('Loading metrics data:', metrics);
         
         // Update KPI cards with real data
-        document.getElementById('spiValue').textContent = metrics.spi || '1.00';
-        document.getElementById('completionRate').textContent = (metrics.completion_rate || 0) + '%';
-        document.getElementById('riskScore').textContent = '-'; // Will be from risk upload
-        document.getElementById('changeVelocity').textContent = '-'; // TODO: calculate from changes
+        console.log('Updating KPI cards...');
+        const spiEl = document.getElementById('spiValue');
+        const completionEl = document.getElementById('completionRate');
+        const riskEl = document.getElementById('riskScore');
+        const changeEl = document.getElementById('changeVelocity');
+        
+        console.log('Found elements:', {spiEl, completionEl, riskEl, changeEl});
+        
+        if (spiEl) spiEl.textContent = metrics.spi || '1.00';
+        if (completionEl) completionEl.textContent = (metrics.completion_rate || 0) + '%';
+        if (riskEl) riskEl.textContent = '-'; // Will be from risk upload
+        if (changeEl) changeEl.textContent = '-'; // TODO: calculate from changes
         
         // Update last updated timestamp
         const lastUpdatedSpan = document.getElementById('lastUpdated');
@@ -368,16 +376,32 @@ function loadMetricsData(programName) {
         }
         
         // Create charts with real data
+        console.log('Creating milestone health chart...');
         createMilestoneHealthChart(metrics.milestone_health || {completed: 0, in_progress: 0, not_started: 0, late: 0});
+        
+        console.log('Creating risk distribution chart...');
         createRiskDistributionChart(); // Placeholder until risk upload
+        
+        console.log('Creating schedule trend chart...');
         createScheduleTrendChart(metrics.schedule_trend || {periods: [], spi_values: []});
+        
+        console.log('✅ All charts created successfully');
     } catch (error) {
-        console.error('Error loading metrics data:', error);
+        console.error('❌ Error loading metrics data:', error);
         console.error('Error stack:', error.stack);
     }
 }
 
 function createMilestoneHealthChart(healthData) {
+    console.log('createMilestoneHealthChart called with:', healthData);
+    const chartDiv = document.getElementById('milestoneHealthChart');
+    console.log('milestoneHealthChart div found:', chartDiv);
+    
+    if (!chartDiv) {
+        console.error('❌ milestoneHealthChart div not found!');
+        return;
+    }
+    
     // Use real milestone health data
     const data = [{
         values: [
@@ -398,10 +422,21 @@ function createMilestoneHealthChart(healthData) {
         margin: { t: 0, b: 0, l: 0, r: 0 }
     };
     
+    console.log('Plotting milestone health chart...');
     Plotly.newPlot('milestoneHealthChart', data, layout, {responsive: true});
+    console.log('✅ Milestone health chart plotted');
 }
 
 function createRiskDistributionChart() {
+    console.log('createRiskDistributionChart called');
+    const chartDiv = document.getElementById('riskDistributionChart');
+    console.log('riskDistributionChart div found:', chartDiv);
+    
+    if (!chartDiv) {
+        console.error('❌ riskDistributionChart div not found!');
+        return;
+    }
+    
     // Placeholder for Plotly chart
     const data = [{
         x: ['High', 'Medium', 'Low'],
@@ -417,11 +452,23 @@ function createRiskDistributionChart() {
         margin: { t: 10, b: 40, l: 40, r: 10 }
     };
     
+    console.log('Plotting risk distribution chart...');
     Plotly.newPlot('riskDistributionChart', data, layout, {responsive: true});
+    console.log('✅ Risk distribution chart plotted');
 }
 
 function createScheduleTrendChart(trendData) {
+    console.log('createScheduleTrendChart called with:', trendData);
+    const chartDiv = document.getElementById('scheduleTrendChart');
+    console.log('scheduleTrendChart div found:', chartDiv);
+    
+    if (!chartDiv) {
+        console.error('❌ scheduleTrendChart div not found!');
+        return;
+    }
+    
     if (!trendData || !trendData.periods || trendData.periods.length === 0) {
+        console.log('No trend data available, showing empty state');
         // Show empty state
         document.getElementById('scheduleTrendChart').innerHTML = 
             '<div class="flex items-center justify-center h-full text-gray-500">No trend data available yet</div>';
@@ -471,7 +518,9 @@ function createScheduleTrendChart(trendData) {
         }]
     };
     
+    console.log('Plotting schedule trend chart...');
     Plotly.newPlot('scheduleTrendChart', data, layout, {responsive: true});
+    console.log('✅ Schedule trend chart plotted');
 }
 
 // Custom Metrics Management
@@ -479,13 +528,23 @@ let customMetrics = [];
 
 // Load custom metrics from localStorage
 function loadCustomMetrics() {
+    console.log('loadCustomMetrics called');
     const selectedProgram = localStorage.getItem('selectedProgram');
-    if (!selectedProgram) return;
+    console.log('Selected program for custom metrics:', selectedProgram);
+    
+    if (!selectedProgram) {
+        console.log('No program selected, skipping custom metrics load');
+        return;
+    }
     
     const storageKey = `customMetrics_${selectedProgram}`;
     const stored = localStorage.getItem(storageKey);
+    console.log('Custom metrics from storage:', stored);
+    
     if (stored) {
         customMetrics = JSON.parse(stored);
+        console.log('Parsed custom metrics:', customMetrics);
+        
         // Migrate old metrics to include history if needed
         customMetrics = customMetrics.map(metric => {
             if (!metric.history) {
@@ -499,7 +558,11 @@ function loadCustomMetrics() {
             }
             return metric;
         });
+        
+        console.log('Calling renderCustomMetrics...');
         renderCustomMetrics();
+    } else {
+        console.log('No stored custom metrics found');
     }
 }
 
@@ -533,10 +596,19 @@ function getMetricStatus(value, target) {
 
 // Render custom metrics table
 function renderCustomMetrics() {
+    console.log('renderCustomMetrics called, customMetrics:', customMetrics);
     const tbody = document.getElementById('customMetricsTable');
     const noMetricsRow = document.getElementById('noMetricsRow');
     
+    console.log('Found table elements:', {tbody, noMetricsRow});
+    
+    if (!tbody) {
+        console.error('❌ customMetricsTable not found!');
+        return;
+    }
+    
     if (customMetrics.length === 0) {
+        console.log('No custom metrics to display');
         if (noMetricsRow) {
             noMetricsRow.style.display = 'table-row';
         }
