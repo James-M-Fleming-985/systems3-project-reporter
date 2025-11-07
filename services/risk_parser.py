@@ -56,6 +56,39 @@ class RiskParser:
         )
     
     @staticmethod
+    def ensure_unique_ids(risks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Ensure all risk IDs are unique. Auto-generate new IDs for duplicates.
+        
+        Args:
+            risks: List of risk dictionaries
+            
+        Returns:
+            List of risks with unique IDs
+        """
+        seen_ids = set()
+        unique_risks = []
+        counter = 1
+        
+        for risk in risks:
+            original_id = risk.get('id', '')
+            risk_id = original_id
+            
+            # If ID is missing, duplicate, or invalid, generate a new one
+            if not risk_id or risk_id in seen_ids:
+                # Find next available R### ID
+                while f"R{str(counter).zfill(3)}" in seen_ids:
+                    counter += 1
+                risk_id = f"R{str(counter).zfill(3)}"
+                risk['id'] = risk_id
+                counter += 1
+            
+            seen_ids.add(risk_id)
+            unique_risks.append(risk)
+        
+        return unique_risks
+    
+    @staticmethod
     def parse_yaml(file_content: bytes) -> List[Dict[str, Any]]:
         """
         Parse YAML risk file.
@@ -118,6 +151,9 @@ class RiskParser:
                 }
                 
                 normalized_risks.append(normalized_risk)
+            
+            # Ensure all IDs are unique
+            normalized_risks = RiskParser.ensure_unique_ids(normalized_risks)
             
             return normalized_risks
             
@@ -266,6 +302,9 @@ class RiskParser:
             if not normalized_risks:
                 raise ValueError("No valid risks found in Excel file")
             
+            # Ensure all IDs are unique
+            normalized_risks = RiskParser.ensure_unique_ids(normalized_risks)
+            
             return normalized_risks
             
         except pd.errors.EmptyDataError:
@@ -410,6 +449,9 @@ class RiskParser:
 
             if not normalized_risks:
                 raise ValueError("No valid risks found in CSV file")
+
+            # Ensure all IDs are unique
+            normalized_risks = RiskParser.ensure_unique_ids(normalized_risks)
 
             return normalized_risks
 

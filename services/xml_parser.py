@@ -438,6 +438,8 @@ class MSProjectXMLParser:
     def _extract_risks(self, root: ET.Element) -> List[Risk]:
         """Extract risks from custom table or extended attributes"""
         risks = []
+        seen_ids = set()
+        counter = 1
         
         # Try to find risks in custom table
         risk_table = root.find('.//RiskTable')
@@ -445,6 +447,20 @@ class MSProjectXMLParser:
             for risk_elem in risk_table.findall('Risk'):
                 risk_data = self._parse_risk_element(risk_elem)
                 if risk_data:
+                    # Ensure unique ID
+                    original_id = risk_data.get('risk_id', '')
+                    risk_id = original_id
+                    
+                    # If ID is missing, duplicate, or invalid, generate new one
+                    if not risk_id or risk_id in seen_ids:
+                        # Find next available R### ID
+                        while f"R{str(counter).zfill(3)}" in seen_ids:
+                            counter += 1
+                        risk_id = f"R{str(counter).zfill(3)}"
+                        risk_data['risk_id'] = risk_id
+                        counter += 1
+                    
+                    seen_ids.add(risk_id)
                     risks.append(Risk(**risk_data))
         
         return risks

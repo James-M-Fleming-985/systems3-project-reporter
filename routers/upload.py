@@ -164,6 +164,73 @@ async def upload_xml(
         
         logger.info(f"Saved upload to {upload_path}")
         
+        # **FIX: Always save the project data, not just when confirming changes**
+        # This ensures milestones, gantt data, and risks are updated
+        project_dir = DATA_DIR / f"PROJECT-{new_project.project_code.replace('-', '_')}"
+        project_dir.mkdir(exist_ok=True)
+        
+        yaml_path = project_dir / "project_status.yaml"
+        
+        # Merge with existing changes if this is an update (not baseline)
+        if existing_project and not is_baseline_upload:
+            # Keep existing change reasons
+            new_project.changes = change_detector.merge_changes(
+                existing_project.changes,
+                []  # No new changes yet, user will add reasons later if needed
+            )
+        
+        # Convert to dict for YAML serialization
+        project_dict = {
+            'project_name': new_project.project_name,
+            'project_code': new_project.project_code,
+            'status': new_project.status,
+            'start_date': new_project.start_date,
+            'target_completion': new_project.target_completion,
+            'completion_percentage': new_project.completion_percentage,
+            'milestones': [
+                {
+                    'name': m.name,
+                    'target_date': m.target_date,
+                    'status': m.status,
+                    'completion_date': m.completion_date,
+                    'completion_percentage': m.completion_percentage,
+                    'notes': m.notes,
+                    'parent_project': m.parent_project,
+                    'resources': m.resources
+                }
+                for m in new_project.milestones
+            ],
+            'risks': [
+                {
+                    'risk_id': r.risk_id,
+                    'description': r.description,
+                    'severity': r.severity,
+                    'probability': r.probability,
+                    'impact': r.impact,
+                    'mitigation': r.mitigation,
+                    'status': r.status
+                }
+                for r in new_project.risks
+            ],
+            'changes': [
+                {
+                    'change_id': c.change_id,
+                    'date': c.date,
+                    'old_date': c.old_date,
+                    'new_date': c.new_date,
+                    'reason': c.reason,
+                    'impact': c.impact
+                }
+                for c in new_project.changes
+            ]
+        }
+        
+        with open(yaml_path, 'w') as f:
+            yaml.dump(project_dict, f, default_flow_style=False, sort_keys=False)
+        
+        logger.info(f"Project data saved to {yaml_path}")
+        logger.info(f"Saved {len(new_project.milestones)} milestones, {len(new_project.risks)} risks")
+        
         # Record the upload for subscription tracking
         try:
             sub_service.record_project_upload(

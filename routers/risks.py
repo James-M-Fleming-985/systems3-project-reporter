@@ -22,7 +22,7 @@ risk_repo = RiskRepository()
 # Pydantic models for request/response
 class RiskCreate(BaseModel):
     program_name: str
-    id: str
+    id: Optional[str] = None  # Make ID optional - will auto-generate if not provided
     title: str
     description: str
     project: str
@@ -52,7 +52,7 @@ async def create_risk(risk: RiskCreate):
     Manually create a new risk.
     
     Args:
-        risk: Risk data
+        risk: Risk data (ID is optional - will auto-generate if not provided or duplicate)
         
     Returns:
         JSON response with created risk
@@ -61,9 +61,19 @@ async def create_risk(risk: RiskCreate):
         # Load existing risks for the program
         existing_risks = risk_repo.load_risks(risk.program_name) or []
         
-        # Check if risk ID already exists
-        if any(r['id'] == risk.id for r in existing_risks):
-            raise HTTPException(status_code=400, detail=f"Risk ID {risk.id} already exists")
+        # Auto-generate unique risk ID if not provided or if duplicate exists
+        risk_id = risk.id
+        if not risk_id or any(r['id'] == risk_id for r in existing_risks):
+            # Find highest existing numeric ID (R001, R002, etc.)
+            max_num = 0
+            for r in existing_risks:
+                if r['id'].startswith('R') and r['id'][1:].isdigit():
+                    num = int(r['id'][1:])
+                    max_num = max(max_num, num)
+            
+            # Generate next ID
+            risk_id = f"R{str(max_num + 1).zfill(3)}"
+            logger.info(f"Auto-generated risk ID: {risk_id}")
         
         # Calculate severity from likelihood and impact
         severity_score = risk.likelihood + risk.impact
@@ -78,7 +88,7 @@ async def create_risk(risk: RiskCreate):
         
         # Create new risk object
         new_risk = {
-            'id': risk.id,
+            'id': risk_id,  # Use auto-generated or validated ID
             'title': risk.title,
             'description': risk.description,
             'project': risk.project,
