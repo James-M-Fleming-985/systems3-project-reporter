@@ -344,7 +344,10 @@ async def upload_risks(
             # Extract from filename (remove extension and _risks suffix)
             program_name = file.filename.replace('_risks', '').rsplit('.', 1)[0]
         
-        logger.info(f"Uploading risks for program: {program_name}, file: {file.filename}")
+        # Clean program name (remove file extensions)
+        clean_prog_name = clean_program_name(program_name)
+        
+        logger.info(f"Uploading risks for program: {clean_prog_name} (original: {program_name}), file: {file.filename}")
         
         # Parse file
         try:
@@ -352,8 +355,29 @@ async def upload_risks(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         
-        # Save to repository
-        filepath = risk_repo.save_risks(program_name, risks)
+        # Get program prefix for risk IDs
+        prefix = extract_program_prefix(clean_prog_name)
+        
+        # Ensure all risks have unique IDs with program prefix
+        existing_risks = risk_repo.load_risks(clean_prog_name) or []
+        seen_ids = {r['id'] for r in existing_risks}
+        counter = len(existing_risks) + 1
+        
+        for risk in risks:
+            # If risk doesn't have an ID or has a duplicate/invalid ID, generate one
+            if not risk.get('id') or risk['id'] in seen_ids or not risk['id'].startswith(prefix):
+                new_id = f"{prefix}-{str(counter).zfill(3)}"
+                while new_id in seen_ids:
+                    counter += 1
+                    new_id = f"{prefix}-{str(counter).zfill(3)}"
+                risk['id'] = new_id
+                seen_ids.add(new_id)
+                counter += 1
+            else:
+                seen_ids.add(risk['id'])
+        
+        # Save to repository (use cleaned name)
+        filepath = risk_repo.save_risks(clean_prog_name, risks)
         
         logger.info(f"Successfully parsed and saved {len(risks)} risks to {filepath}")
         
@@ -413,10 +437,13 @@ async def get_risks(program_name: str):
         JSON response with risks
     """
     try:
-        risks = risk_repo.load_risks(program_name)
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
+        risks = risk_repo.load_risks(clean_prog_name)
         
         if risks is None:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
         
         return JSONResponse(content={
             'success': True,
@@ -444,10 +471,13 @@ async def delete_risks(program_name: str):
         JSON response confirming deletion
     """
     try:
-        deleted = risk_repo.delete_risks(program_name)
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
+        deleted = risk_repo.delete_risks(clean_prog_name)
         
         if not deleted:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
         
         return JSONResponse(content={
             'success': True,
