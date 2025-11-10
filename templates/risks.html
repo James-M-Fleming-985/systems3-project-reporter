@@ -379,8 +379,6 @@ programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yam
 // Remove trailing version numbers like -09, -10, etc.
 programName = programName.replace(/-\d+$/, '').trim();
 
-console.log('Program name (cleaned):', programName);
-
 // Toast notification functions
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
@@ -485,15 +483,8 @@ function editRisk(event) {
     const button = event.target;
     const riskId = button.getAttribute('data-risk-id');
     
-    console.log('=== EDIT RISK DEBUG ===');
-    console.log('Button clicked:', button);
-    console.log('Risk ID from data attribute:', riskId);
-    console.log('All data attributes:', button.dataset);
-    console.log('========================');
-    
     if (!riskId) {
         showToast('Error: Risk ID not found', 'error');
-        console.error('Risk ID is null or undefined');
         return;
     }
     
@@ -506,7 +497,6 @@ function editRisk(event) {
             return response.json();
         })
         .then(risk => {
-            console.log('Loaded risk data:', risk); // Debug log
             
             document.getElementById('editMode').value = 'true';
             document.getElementById('originalRiskId').value = risk.id;
