@@ -6,20 +6,35 @@ import json
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RiskRepository:
     """Repository for managing risk data storage."""
     
-    def __init__(self, storage_dir: str = "data/risks"):
+    def __init__(self, storage_dir: str = None):
         """
         Initialize risk repository.
         
         Args:
-            storage_dir: Directory to store risk JSON files
+            storage_dir: Directory to store risk JSON files. 
+                        If None, uses DATA_STORAGE_PATH env var or defaults to "data/risks"
         """
+        if storage_dir is None:
+            # Use persistent storage path from environment variable (Railway Volume)
+            base_data_dir = os.getenv("DATA_STORAGE_PATH", "data")
+            storage_dir = os.path.join(base_data_dir, "risks")
+        
         self.storage_dir = storage_dir
         os.makedirs(storage_dir, exist_ok=True)
+        
+        # Log storage location for debugging
+        logger.info(f"RiskRepository initialized with storage_dir: {self.storage_dir}")
+        logger.info(f"DATA_STORAGE_PATH env var: {os.getenv('DATA_STORAGE_PATH', 'NOT SET')}")
+
     
     def save_risks(self, program_name: str, risks: List[Dict[str, Any]]) -> str:
         """
