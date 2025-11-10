@@ -369,7 +369,14 @@
 </div>
 
 <script>
-const programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
+<script>
+// Get program name from localStorage (set by project selector in dashboard)
+let programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
+
+// Clean program name (remove file extensions)
+programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
+
+console.log('Program name (cleaned):', programName);
 
 // Toast notification functions
 function showToast(message, type = 'success') {

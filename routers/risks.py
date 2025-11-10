@@ -19,6 +19,38 @@ router = APIRouter(prefix="/risks", tags=["risks"])
 risk_repo = RiskRepository()
 
 
+def extract_program_prefix(program_name: str) -> str:
+    """
+    Extract a short program prefix from program name for risk IDs.
+    Examples:
+        "ZnNi Line Development Plan" -> "ZDP"
+        "Advanced Manufacturing" -> "AM"
+        "Quality Control System" -> "QCS"
+    """
+    # Remove file extensions if present
+    clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    
+    # Split into words and take first letter of each significant word
+    words = [w for w in clean_name.split() if len(w) > 2 or w.upper() == w]
+    
+    if len(words) >= 3:
+        # Take first letter of first 3 words
+        prefix = ''.join(w[0].upper() for w in words[:3])
+    elif len(words) == 2:
+        # Take first 2 letters of first word + first letter of second
+        prefix = words[0][:2].upper() + words[1][0].upper()
+    else:
+        # Just take first 3 letters
+        prefix = clean_name[:3].upper()
+    
+    return prefix
+
+
+def clean_program_name(program_name: str) -> str:
+    """Remove file extensions from program name"""
+    return program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+
+
 # Pydantic models for request/response
 class RiskCreate(BaseModel):
     program_name: str
@@ -58,22 +90,34 @@ async def create_risk(risk: RiskCreate):
         JSON response with created risk
     """
     try:
+        # Clean program name (remove extensions)
+        clean_prog_name = clean_program_name(risk.program_name)
+        
         # Load existing risks for the program
-        existing_risks = risk_repo.load_risks(risk.program_name) or []
+        existing_risks = risk_repo.load_risks(clean_prog_name) or []
+        
+        # Get program prefix for risk IDs
+        prefix = extract_program_prefix(clean_prog_name)
         
         # Auto-generate unique risk ID if not provided or if duplicate exists
         risk_id = risk.id
         if not risk_id or any(r['id'] == risk_id for r in existing_risks):
-            # Find highest existing numeric ID (R001, R002, etc.)
+            # Find highest existing numeric ID with this prefix (ZDP-001, ZDP-002, etc.)
             max_num = 0
             for r in existing_risks:
-                if r['id'].startswith('R') and r['id'][1:].isdigit():
-                    num = int(r['id'][1:])
+                rid = r['id']
+                # Check if ID matches our prefix pattern
+                if rid.startswith(prefix + '-') and rid[len(prefix)+1:].isdigit():
+                    num = int(rid[len(prefix)+1:])
                     max_num = max(max_num, num)
             
             # Generate next ID
-            risk_id = f"R{str(max_num + 1).zfill(3)}"
+            risk_id = f"{prefix}-{str(max_num + 1).zfill(3)}"
             logger.info(f"Auto-generated risk ID: {risk_id}")
+        
+        # Validate no duplicate ID
+        if any(r['id'] == risk_id for r in existing_risks):
+            raise HTTPException(status_code=409, detail=f"Risk ID {risk_id} already exists")
         
         # Calculate severity from likelihood and impact
         severity_score = risk.likelihood + risk.impact
@@ -105,10 +149,10 @@ async def create_risk(risk: RiskCreate):
         # Add to existing risks
         existing_risks.append(new_risk)
         
-        # Save back to repository
-        risk_repo.save_risks(risk.program_name, existing_risks)
+        # Save back to repository (use cleaned name)
+        risk_repo.save_risks(clean_prog_name, existing_risks)
         
-        logger.info(f"Created new risk {risk.id} for program {risk.program_name}")
+        logger.info(f"Created new risk {risk_id} for program {clean_prog_name}")
         
         return JSONResponse(content={
             'success': True,
@@ -137,11 +181,14 @@ async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
         JSON response with updated risk
     """
     try:
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
         # Load existing risks
-        risks = risk_repo.load_risks(program_name)
+        risks = risk_repo.load_risks(clean_prog_name)
         
         if not risks:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
         
         # Find the risk to update
         risk_index = None
@@ -173,9 +220,9 @@ async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
                 risk['severity_normalized'] = 'low'
         
         # Save back to repository
-        risk_repo.save_risks(program_name, risks)
+        risk_repo.save_risks(clean_prog_name, risks)
         
-        logger.info(f"Updated risk {risk_id} for program {program_name}")
+        logger.info(f"Updated risk {risk_id} for program {clean_prog_name}")
         
         return JSONResponse(content={
             'success': True,
@@ -203,11 +250,14 @@ async def delete_risk(program_name: str, risk_id: str):
         JSON response confirming deletion
     """
     try:
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
         # Load existing risks
-        risks = risk_repo.load_risks(program_name)
+        risks = risk_repo.load_risks(clean_prog_name)
         
         if not risks:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
         
         # Filter out the risk to delete
         original_count = len(risks)
@@ -217,9 +267,9 @@ async def delete_risk(program_name: str, risk_id: str):
             raise HTTPException(status_code=404, detail=f"Risk {risk_id} not found")
         
         # Save back to repository
-        risk_repo.save_risks(program_name, risks)
+        risk_repo.save_risks(clean_prog_name, risks)
         
-        logger.info(f"Deleted risk {risk_id} from program {program_name}")
+        logger.info(f"Deleted risk {risk_id} from program {clean_prog_name}")
         
         return JSONResponse(content={
             'success': True,
@@ -246,11 +296,14 @@ async def get_risk_detail(program_name: str, risk_id: str):
         JSON response with risk details
     """
     try:
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
         # Load risks
-        risks = risk_repo.load_risks(program_name)
+        risks = risk_repo.load_risks(clean_prog_name)
         
         if not risks:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
         
         # Find the risk
         risk = next((r for r in risks if r['id'] == risk_id), None)
@@ -411,7 +464,7 @@ async def delete_risks(program_name: str):
 @router.post("/normalize-ids/{program_name}")
 async def normalize_risk_ids(program_name: str):
     """
-    Normalize all risk IDs for a program to R001, R002, R003 format.
+    Normalize all risk IDs for a program to use program prefix format (e.g., ZDP-001, ZDP-002).
     Useful for fixing old uploads with date-based or invalid IDs.
     
     Args:
@@ -421,20 +474,26 @@ async def normalize_risk_ids(program_name: str):
         JSON response with updated risk count and ID mapping
     """
     try:
+        # Clean program name
+        clean_prog_name = clean_program_name(program_name)
+        
         # Load existing risks
-        risks = risk_repo.load_risks(program_name)
+        risks = risk_repo.load_risks(clean_prog_name)
         
         if not risks:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {program_name}")
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
+        
+        # Get program prefix
+        prefix = extract_program_prefix(clean_prog_name)
         
         # Track ID changes for response
         id_mapping = {}
         counter = 1
         
-        # Normalize each risk ID to R### format
+        # Normalize each risk ID to PREFIX-### format
         for risk in risks:
             old_id = risk['id']
-            new_id = f"R{str(counter).zfill(3)}"
+            new_id = f"{prefix}-{str(counter).zfill(3)}"
             
             # Update the risk ID
             risk['id'] = new_id
@@ -442,9 +501,9 @@ async def normalize_risk_ids(program_name: str):
             counter += 1
         
         # Save normalized risks
-        risk_repo.save_risks(program_name, risks)
+        risk_repo.save_risks(clean_prog_name, risks)
         
-        logger.info(f"Normalized {len(risks)} risk IDs for {program_name}")
+        logger.info(f"Normalized {len(risks)} risk IDs for {clean_prog_name} using prefix {prefix}")
         
         return JSONResponse(content={
             'success': True,
