@@ -169,8 +169,10 @@ async def risk_analysis(request: Request):
         # Load risks for the first project's program (clean the name)
         program_name = getattr(projects[0], 'project_name', None)
         if program_name:
-            # Remove file extensions
+            import re
+            # Remove file extensions and version numbers
             clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+            clean_name = re.sub(r'-\d+$', '', clean_name).strip()
             loaded_risks = risk_repo.load_risks(clean_name)
             if loaded_risks:
                 standalone_risks = loaded_risks

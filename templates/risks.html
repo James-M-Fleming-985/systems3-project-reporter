@@ -372,8 +372,12 @@
 // Get program name from localStorage (set by project selector in dashboard)
 let programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
 
-// Clean program name (remove file extensions)
+// Clean program name (remove file extensions and version numbers)
+// Remove extensions
 programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
+
+// Remove trailing version numbers like -09, -10, etc.
+programName = programName.replace(/-\d+$/, '').trim();
 
 console.log('Program name (cleaned):', programName);
 

@@ -47,8 +47,18 @@ def extract_program_prefix(program_name: str) -> str:
 
 
 def clean_program_name(program_name: str) -> str:
-    """Remove file extensions from program name"""
-    return program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    """
+    Remove file extensions and version numbers from program name.
+    Examples:
+        "ZnNi Line Development Plan-09.xml" -> "ZnNi Line Development Plan"
+        "Project Name-10.xlsx" -> "Project Name"
+    """
+    import re
+    # Remove extensions
+    clean = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    # Remove trailing version numbers like -09, -10, etc.
+    clean = re.sub(r'-\d+$', '', clean).strip()
+    return clean
 
 
 # Pydantic models for request/response
