@@ -149,21 +149,21 @@
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastMonthRange"></p>
-            <div id="lastMonthCompleted" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
+            <div id="lastMonthCompleted" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
         
         <!-- This Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisMonthRange"></p>
-            <div id="thisMonthMilestones" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
+            <div id="thisMonthMilestones" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
         
         <!-- Next Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextMonthRange"></p>
-            <div id="nextMonthMilestones" class="space-y-3 overflow-y-auto" style="max-height: 900px;"></div>  <!-- 50% increase from 600px -->
+            <div id="nextMonthMilestones" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
     </div>
 </div>
@@ -243,7 +243,7 @@ function isDateInRange(dateStr, start, end) {
 }
 
 // Milestone rendering function
-function renderMilestone(milestone, showStatus = true) {
+function renderMilestone(milestone, showStatus = true, cardHeight = 'min-h-[140px]') {
     const statusColors = {
         'COMPLETED': 'green',
         'IN_PROGRESS': 'yellow',
@@ -260,9 +260,9 @@ function renderMilestone(milestone, showStatus = true) {
     const icon = statusIcons[milestone.status] || '○';
     
     let html = `
-        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden min-h-[140px]">
-            <p class="font-semibold text-gray-800">${milestone.name}</p>
-            <p class="text-sm font-medium text-gray-700">${milestone.project}</p>`;
+        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden ${cardHeight}">
+            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>
+            <p class="text-xs font-medium text-gray-700">${milestone.project}</p>`;
     
     if (milestone.parent_project) {
         html += `<p class="text-xs text-gray-500">📂 ${milestone.parent_project}</p>`;
@@ -387,23 +387,58 @@ function populateMonthView() {
     // Apply card limit if set (skip if -1 which means "All")
     const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '15');
     console.log('Applying card limit:', cardLimit, 'to', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length, 'milestones');
+    
+    // Calculate dynamic card height based on card limit to fit within fixed container
+    // Container height is 800px, need to account for spacing
+    let cardHeight = 'min-h-[140px]';
+    let spacing = 'space-y-2';
+    
     if (cardLimit > 0 && cardLimit !== -1) {
         lastMonthCompleted = lastMonthCompleted.slice(0, cardLimit);
         thisMonthMilestones = thisMonthMilestones.slice(0, cardLimit);
         nextMonthMilestones = nextMonthMilestones.slice(0, cardLimit);
         console.log('After limit:', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length);
+        
+        // Adjust card height based on number of cards to fit in ~800px container
+        // Account for spacing between cards (8px per gap)
+        const containerHeight = 800;
+        const totalSpacing = (cardLimit - 1) * 8;
+        const availableHeight = containerHeight - totalSpacing;
+        const calculatedHeight = Math.floor(availableHeight / cardLimit);
+        
+        if (cardLimit <= 5) {
+            cardHeight = 'min-h-[140px]'; // Default size for 5 or fewer
+            spacing = 'space-y-3';
+        } else if (cardLimit <= 10) {
+            cardHeight = 'min-h-[70px] max-h-[70px]'; // Smaller for 10
+            spacing = 'space-y-2';
+        } else if (cardLimit <= 15) {
+            cardHeight = 'min-h-[45px] max-h-[45px]'; // Even smaller for 15
+            spacing = 'space-y-2';
+        } else if (cardLimit <= 20) {
+            cardHeight = 'min-h-[35px] max-h-[35px]'; // Compact for 20
+            spacing = 'space-y-1';
+        } else {
+            cardHeight = 'min-h-[28px] max-h-[28px]'; // Very compact for 25
+            spacing = 'space-y-1';
+        }
     }
     
+    // Update container spacing
+    document.getElementById('lastMonthCompleted').className = `${spacing} overflow-y-auto`;
+    document.getElementById('thisMonthMilestones').className = `${spacing} overflow-y-auto`;
+    document.getElementById('nextMonthMilestones').className = `${spacing} overflow-y-auto`;
+    
     document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
-        ? lastMonthCompleted.map(m => renderMilestone(m)).join('')
+        ? lastMonthCompleted.map(m => renderMilestone(m, true, cardHeight)).join('')
         : '<p class="text-sm text-gray-500">No milestones completed</p>';
     
     document.getElementById('thisMonthMilestones').innerHTML = thisMonthMilestones.length > 0
-        ? thisMonthMilestones.map(m => renderMilestone(m)).join('')
+        ? thisMonthMilestones.map(m => renderMilestone(m, true, cardHeight)).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
     
     document.getElementById('nextMonthMilestones').innerHTML = nextMonthMilestones.length > 0
-        ? nextMonthMilestones.map(m => renderMilestone(m)).join('')
+        ? nextMonthMilestones.map(m => renderMilestone(m, true, cardHeight)).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
 }
 
