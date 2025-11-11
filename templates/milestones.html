@@ -28,7 +28,7 @@
         
         <div class="flex items-center space-x-4">
             <!-- Cards per column dropdown (only visible in month view) -->
-            <div id="cardsPerColumnControl" class="hidden flex items-center space-x-2">
+            <div id="cardsPerColumnControl" class="hidden items-center space-x-2">
                 <label for="cardsPerColumn" class="text-sm font-semibold text-gray-700">Cards per column:</label>
                 <select id="cardsPerColumn" onchange="updateCardsPerColumn()" class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="5">5</option>
@@ -384,12 +384,14 @@ function populateMonthView() {
         isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
     );
     
-    // Apply card limit if set
+    // Apply card limit if set (skip if -1 which means "All")
     const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '15');
-    if (cardLimit > 0) {
+    console.log('Applying card limit:', cardLimit, 'to', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length, 'milestones');
+    if (cardLimit > 0 && cardLimit !== -1) {
         lastMonthCompleted = lastMonthCompleted.slice(0, cardLimit);
         thisMonthMilestones = thisMonthMilestones.slice(0, cardLimit);
         nextMonthMilestones = nextMonthMilestones.slice(0, cardLimit);
+        console.log('After limit:', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length);
     }
     
     document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
@@ -409,6 +411,7 @@ function populateMonthView() {
 function updateCardsPerColumn() {
     const select = document.getElementById('cardsPerColumn');
     const value = select.value;
+    console.log('Cards per column changed to:', value);
     localStorage.setItem('milestonesCardsPerColumn', value);
     populateMonthView();
 }
@@ -488,6 +491,7 @@ function switchView(view) {
     weekView.classList.add('hidden');
     monthView.classList.add('hidden');
     cardsPerColumnControl.classList.add('hidden');
+    cardsPerColumnControl.classList.remove('flex');
     
     // Reset button styles
     const inactiveClass = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
@@ -507,10 +511,13 @@ function switchView(view) {
         weekView.classList.remove('hidden');
         weekBtn.className = activeClass;
     } else if (view === 'month') {
+        console.log('Switching to month view, showing cards per column control');
         populateMonthView();
         monthView.classList.remove('hidden');
         monthBtn.className = activeClass;
         cardsPerColumnControl.classList.remove('hidden');
+        cardsPerColumnControl.classList.add('flex');
+        console.log('Cards per column control display:', window.getComputedStyle(cardsPerColumnControl).display);
     }
 }
 
