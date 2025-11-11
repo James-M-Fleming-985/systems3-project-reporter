@@ -26,14 +26,29 @@
             </div>
         </div>
         
-        <div class="flex items-center space-x-2">
-            <label class="text-sm font-semibold text-gray-700">Sort by Date:</label>
-            <button onclick="sortMilestones('asc')" id="sortAscBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                ⬆️ Ascending
-            </button>
-            <button onclick="sortMilestones('desc')" id="sortDescBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                ⬇️ Descending
-            </button>
+        <div class="flex items-center space-x-4">
+            <!-- Cards per column dropdown (only visible in month view) -->
+            <div id="cardsPerColumnControl" class="hidden flex items-center space-x-2">
+                <label for="cardsPerColumn" class="text-sm font-semibold text-gray-700">Cards per column:</label>
+                <select id="cardsPerColumn" onchange="updateCardsPerColumn()" class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15" selected>15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="-1">All</option>
+                </select>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-semibold text-gray-700">Sort by Date:</label>
+                <button onclick="sortMilestones('asc')" id="sortAscBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    ⬆️ Ascending
+                </button>
+                <button onclick="sortMilestones('desc')" id="sortDescBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    ⬇️ Descending
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -357,17 +372,25 @@ function populateMonthView() {
         ...allMilestones.delayed
     ];
     
-    const lastMonthCompleted = allMilestonesList.filter(m => 
+    let lastMonthCompleted = allMilestonesList.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
     );
     
-    const thisMonthMilestones = allMilestonesList.filter(m => 
+    let thisMonthMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, thisMonthRange.start, thisMonthRange.end)
     );
     
-    const nextMonthMilestones = allMilestonesList.filter(m => 
+    let nextMonthMilestones = allMilestonesList.filter(m => 
         isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
     );
+    
+    // Apply card limit if set
+    const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '15');
+    if (cardLimit > 0) {
+        lastMonthCompleted = lastMonthCompleted.slice(0, cardLimit);
+        thisMonthMilestones = thisMonthMilestones.slice(0, cardLimit);
+        nextMonthMilestones = nextMonthMilestones.slice(0, cardLimit);
+    }
     
     document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
         ? lastMonthCompleted.map(m => renderMilestone(m)).join('')
@@ -380,6 +403,14 @@ function populateMonthView() {
     document.getElementById('nextMonthMilestones').innerHTML = nextMonthMilestones.length > 0
         ? nextMonthMilestones.map(m => renderMilestone(m)).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+}
+
+// Update cards per column setting
+function updateCardsPerColumn() {
+    const select = document.getElementById('cardsPerColumn');
+    const value = select.value;
+    localStorage.setItem('milestonesCardsPerColumn', value);
+    populateMonthView();
 }
 
 // Populate status view (quadrant view)
@@ -446,15 +477,17 @@ function switchView(view) {
     const statusView = document.getElementById('statusView');
     const weekView = document.getElementById('weekView');
     const monthView = document.getElementById('monthView');
+    const cardsPerColumnControl = document.getElementById('cardsPerColumnControl');
     
     const statusBtn = document.getElementById('statusViewBtn');
     const weekBtn = document.getElementById('weekViewBtn');
     const monthBtn = document.getElementById('monthViewBtn');
     
-    // Hide all views
+    // Hide all views and controls
     statusView.classList.add('hidden');
     weekView.classList.add('hidden');
     monthView.classList.add('hidden');
+    cardsPerColumnControl.classList.add('hidden');
     
     // Reset button styles
     const inactiveClass = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
@@ -477,11 +510,16 @@ function switchView(view) {
         populateMonthView();
         monthView.classList.remove('hidden');
         monthBtn.className = activeClass;
+        cardsPerColumnControl.classList.remove('hidden');
     }
 }
 
 // Initialize view on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Load saved cards per column preference
+    const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '15';
+    document.getElementById('cardsPerColumn').value = savedLimit;
+    
     populateStatusView();
 });
 </script>
