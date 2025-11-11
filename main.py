@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.77"
+BUILD_VERSION = "1.0.78"
 
 
 # Setup logging
@@ -42,6 +42,7 @@ logger.info(f"Static directory: {STATIC_DIR}")
 logger.info(f"Templates directory: {TEMPLATES_DIR}")
 logger.info(f"Mock data directory: {MOCK_DATA_DIR}")
 logger.info(f"Data directory: {DATA_DIR}")
+logger.info(f"DATA_STORAGE_PATH env var: {os.getenv('DATA_STORAGE_PATH', 'NOT SET')}")
 
 # Ensure required directories exist
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -86,6 +87,10 @@ async def startup_event():
         project_repo = ProjectRepository(data_dir=DATA_DIR)
         projects = project_repo.load_all_projects()
         logger.info(f"Loaded {len(projects)} projects successfully")
+        
+        # Log milestone counts for debugging
+        for project in projects:
+            logger.info(f"Project {project.project_code}: {len(project.milestones)} milestones, {len(project.risks)} risks")
     except Exception as e:
         logger.warning(f"Could not load projects: {e}")
         project_repo = ProjectRepository(data_dir=DATA_DIR)
