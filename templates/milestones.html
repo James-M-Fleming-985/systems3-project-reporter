@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">📍 Milestone Tracker</h2>
-    <p class="text-gray-600">Milestones organized by status and timeline</p>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2" id="milestonePageTitle">📍 Milestone Tracker</h2>
+    <p class="text-gray-600" id="milestonePageSubtitle">Milestones organized by status and timeline</p>
 </div>
 
 <!-- View Controls -->
@@ -262,8 +262,7 @@ function renderMilestone(milestone, showStatus = true, cardHeight = 'min-h-[140p
     
     let html = `
         <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden ${cardHeight}">
-            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>
-            <p class="text-xs font-medium text-gray-700">${milestone.project}</p>`;
+            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>`;
     
     if (milestone.parent_project) {
         html += `<p class="text-xs text-gray-500">📂 ${milestone.parent_project}</p>`;
@@ -561,6 +560,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved cards per column preference (default to Normal view)
     const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '-1';
     document.getElementById('cardsPerColumn').value = savedLimit;
+    
+    // Update page title with program name
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    if (selectedProgram) {
+        // Remove file extension and clean up the name
+        const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
+        document.getElementById('milestonePageTitle').textContent = `📍 ${cleanName} - Milestone Tracker`;
+        document.getElementById('milestonePageSubtitle').textContent = `Milestones organized by status and timeline`;
+    }
     
     populateStatusView();
 });

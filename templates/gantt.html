@@ -15,8 +15,8 @@
 
 {% block content %}
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Program Roadmap</h2>
-    <p class="text-gray-600">Interactive timeline view of all projects</p>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2" id="ganttPageTitle">📅 Program Roadmap</h2>
+    <p class="text-gray-600" id="ganttPageSubtitle">Interactive timeline view of all projects</p>
 </div>
 
 <!-- Gantt Chart Container -->
@@ -241,6 +241,15 @@ function renderChart() {
     const traces = createRoadmapViewTraces();  // Always use roadmap view
     const layout = getLayout();
     Plotly.newPlot(chartDiv, traces, layout, config);
+}
+
+// Update page title with program name
+const selectedProgram = localStorage.getItem('selectedProgram');
+if (selectedProgram) {
+    // Remove file extension and clean up the name
+    const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
+    document.getElementById('ganttPageTitle').textContent = `📅 ${cleanName} - Program Roadmap`;
+    document.getElementById('ganttPageSubtitle').textContent = `Interactive timeline view of all projects`;
 }
 
 // Initial render

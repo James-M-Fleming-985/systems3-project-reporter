@@ -21,8 +21,8 @@
 </div>
 
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">⚠️ Risk Analysis</h2>
-    <p class="text-gray-600">Active risks grouped by severity</p>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2" id="risksPageTitle">⚠️ Risk Analysis</h2>
+    <p class="text-gray-600" id="risksPageSubtitle">Active risks grouped by severity</p>
 </div>
 
 <!-- Risk Summary Cards -->
@@ -719,6 +719,15 @@ document.getElementById('riskForm').addEventListener('submit', async (e) => {
 
 function downloadRisks(format) {
     window.location.href = `/risks/export/${encodeURIComponent(programName)}?format=${format}`;
+}
+
+// Update page title with program name
+const selectedProgram = localStorage.getItem('selectedProgram');
+if (selectedProgram) {
+    // Remove file extension and clean up the name
+    const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
+    document.getElementById('risksPageTitle').textContent = `⚠️ ${cleanName} - Risk Analysis`;
+    document.getElementById('risksPageSubtitle').textContent = `Active risks grouped by severity`;
 }
 </script>
 {% endblock %}
