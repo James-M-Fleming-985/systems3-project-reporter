@@ -31,12 +31,13 @@
             <div id="cardsPerColumnControl" class="hidden items-center space-x-2">
                 <label for="cardsPerColumn" class="text-sm font-semibold text-gray-700">Cards per column:</label>
                 <select id="cardsPerColumn" onchange="updateCardsPerColumn()" class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="-1">Normal</option>
                     <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
                     <option value="10">10</option>
-                    <option value="15" selected>15</option>
-                    <option value="20">20</option>
-                    <option value="25">25</option>
-                    <option value="-1">All</option>
                 </select>
             </div>
             
@@ -384,44 +385,44 @@ function populateMonthView() {
         isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
     );
     
-    // Apply card limit if set (skip if -1 which means "All")
-    const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '15');
+    // Apply card limit if set (skip if -1 which means "Normal" view)
+    const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '-1');
     console.log('Applying card limit:', cardLimit, 'to', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length, 'milestones');
     
     // Calculate dynamic card height based on card limit to fit within fixed container
     // Container height is 800px, need to account for spacing
     let cardHeight = 'min-h-[140px]';
-    let spacing = 'space-y-2';
+    let spacing = 'space-y-3';
     
-    if (cardLimit > 0 && cardLimit !== -1) {
+    if (cardLimit > 0) {
+        // Slice arrays to the selected limit
         lastMonthCompleted = lastMonthCompleted.slice(0, cardLimit);
         thisMonthMilestones = thisMonthMilestones.slice(0, cardLimit);
         nextMonthMilestones = nextMonthMilestones.slice(0, cardLimit);
         console.log('After limit:', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length);
         
-        // Adjust card height based on number of cards to fit in ~800px container
-        // Account for spacing between cards (8px per gap)
-        const containerHeight = 800;
-        const totalSpacing = (cardLimit - 1) * 8;
-        const availableHeight = containerHeight - totalSpacing;
-        const calculatedHeight = Math.floor(availableHeight / cardLimit);
-        
-        if (cardLimit <= 5) {
-            cardHeight = 'min-h-[140px]'; // Default size for 5 or fewer
+        // Adjust card height and spacing based on number of cards to fit in ~800px container
+        if (cardLimit === 5) {
+            cardHeight = 'min-h-[140px] max-h-[140px]';
             spacing = 'space-y-3';
-        } else if (cardLimit <= 10) {
-            cardHeight = 'min-h-[70px] max-h-[70px]'; // Smaller for 10
+        } else if (cardLimit === 6) {
+            cardHeight = 'min-h-[115px] max-h-[115px]';
             spacing = 'space-y-2';
-        } else if (cardLimit <= 15) {
-            cardHeight = 'min-h-[45px] max-h-[45px]'; // Even smaller for 15
+        } else if (cardLimit === 7) {
+            cardHeight = 'min-h-[98px] max-h-[98px]';
             spacing = 'space-y-2';
-        } else if (cardLimit <= 20) {
-            cardHeight = 'min-h-[35px] max-h-[35px]'; // Compact for 20
-            spacing = 'space-y-1';
-        } else {
-            cardHeight = 'min-h-[28px] max-h-[28px]'; // Very compact for 25
-            spacing = 'space-y-1';
+        } else if (cardLimit === 8) {
+            cardHeight = 'min-h-[85px] max-h-[85px]';
+            spacing = 'space-y-2';
+        } else if (cardLimit === 9) {
+            cardHeight = 'min-h-[75px] max-h-[75px]';
+            spacing = 'space-y-2';
+        } else if (cardLimit === 10) {
+            cardHeight = 'min-h-[68px] max-h-[68px]';
+            spacing = 'space-y-2';
         }
+    }
+    // else: cardLimit is -1 (Normal), use default full-size cards with scrolling
     }
     
     // Update container spacing
@@ -558,8 +559,8 @@ function switchView(view) {
 
 // Initialize view on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved cards per column preference
-    const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '15';
+    // Load saved cards per column preference (default to Normal view)
+    const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '-1';
     document.getElementById('cardsPerColumn').value = savedLimit;
     
     populateStatusView();
