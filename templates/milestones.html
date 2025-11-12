@@ -317,8 +317,9 @@ function renderMilestone(milestone, showStatus = true, cardHeight = 'min-h-[140p
     const icon = statusIcons[milestone.status] || '○';
     
     let html = `
-        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden ${cardHeight} cursor-pointer hover:shadow-md transition-shadow" onclick="editMilestone(${milestoneIndex})">`;
-            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>`;
+        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden ${cardHeight} cursor-pointer hover:shadow-md transition-shadow" onclick="editMilestone(${milestoneIndex})">
+            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>
+    `;
     
     if (milestone.parent_project) {
         html += `<p class="text-xs text-gray-500">📂 ${milestone.parent_project}</p>`;
