@@ -203,7 +203,8 @@ async def upload_xml(
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
                     'parent_project': m.parent_project,
-                    'resources': m.resources
+                    'resources': m.resources,
+                    'project': new_project.project_code  # Add project code for frontend
                 }
                 for m in new_project.milestones
             ],
@@ -370,7 +371,8 @@ async def confirm_upload(
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
                     'parent_project': m.parent_project,
-                    'resources': m.resources
+                    'resources': m.resources,
+                    'project': new_project.project_code  # Add project code for frontend
                 }
                 for m in new_project.milestones
             ],
@@ -476,7 +478,10 @@ async def update_change_reason(
                     'status': m.status,
                     'completion_date': m.completion_date,
                     'completion_percentage': m.completion_percentage,
-                    'notes': m.notes
+                    'notes': m.notes,
+                    'parent_project': getattr(m, 'parent_project', None),
+                    'resources': getattr(m, 'resources', None),
+                    'project': project.project_code  # Add project code for frontend
                 }
                 for m in project.milestones
             ],
