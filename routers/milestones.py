@@ -74,6 +74,7 @@ async def update_milestone(data: MilestoneUpdate):
         
         # Find and update the milestone
         updated = False
+        match_type = None
         if 'milestones' in project_data:
             incoming_name = updated_milestone['name'].strip()
             incoming_date = updated_milestone.get('target_date', '')
@@ -91,10 +92,12 @@ async def update_milestone(data: MilestoneUpdate):
                 if yaml_name == incoming_name:
                     logger.warning(f"✅ EXACT MATCH FOUND at index {i}: '{yaml_name}'")
                     updated = True
+                    match_type = 'exact'
                 # Try simple substring match (for truncated display names)
                 elif incoming_name and len(incoming_name) > 10 and incoming_name in yaml_name:
                     logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' in '{yaml_name}'")
                     updated = True
+                    match_type = 'substring'
                 # Fallback: match by target_date + parent_project + name substring
                 elif (milestone.get('target_date') == incoming_date and 
                       milestone.get('parent_project', '').strip() == incoming_parent.strip() and
@@ -104,11 +107,12 @@ async def update_milestone(data: MilestoneUpdate):
                     logger.warning(f"✅ FUZZY MATCH FOUND at index {i}: '{yaml_name}' contains '{incoming_name}'")
                     logger.warning(f"   Matched by date ({incoming_date}) + parent ({incoming_parent})")
                     updated = True
+                    match_type = 'fuzzy'
                 
                 if updated:
-                    # Update the milestone - preserve the original YAML name
+                    # Update the milestone - always save the incoming name (allows user edits)
                     project_data['milestones'][i] = {
-                        'name': milestone['name'],  # Keep original name from YAML
+                        'name': incoming_name,  # Always use edited name from user
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
                         'resources': updated_milestone.get('resources'),
@@ -116,6 +120,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
                     }
+                    logger.warning(f"✅ Saved milestone name: '{project_data['milestones'][i]['name']}' (match type: {match_type})")
                     break
         
         if not updated:
