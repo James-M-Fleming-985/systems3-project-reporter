@@ -84,9 +84,10 @@ async def update_milestone(data: MilestoneUpdate):
                     logger.warning(f"Comparing #{i}: '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
                 
                 if yaml_name == incoming_name:
+                    logger.warning(f"✅ MATCH FOUND at index {i}: '{yaml_name}'")
                     # Update the milestone
                     project_data['milestones'][i] = {
-                        'name': updated_milestone['name'],
+                        'name': updated_milestone['name'].strip(),  # Save the trimmed version
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
                         'resources': updated_milestone.get('resources'),
@@ -98,7 +99,11 @@ async def update_milestone(data: MilestoneUpdate):
                     break
         
         if not updated:
-            raise HTTPException(status_code=404, detail="Milestone not found")
+            # Search for similar names to help debug
+            logger.warning(f"❌ NO MATCH FOUND after searching {len(project_data.get('milestones', []))} milestones")
+            similar = [m['name'] for m in project_data.get('milestones', []) if 'Kardex' in m['name'] or 'Gordano' in m['name']]
+            logger.warning(f"Milestones containing 'Kardex' or 'Gordano': {similar}")
+            raise HTTPException(status_code=404, detail=f"Milestone '{updated_milestone['name'].strip()}' not found in {len(project_data.get('milestones', []))} milestones")
         
         # Save updated project data
         with open(yaml_path, 'w', encoding='utf-8') as f:
