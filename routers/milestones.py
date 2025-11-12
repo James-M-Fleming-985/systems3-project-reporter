@@ -91,6 +91,10 @@ async def update_milestone(data: MilestoneUpdate):
                 if yaml_name == incoming_name:
                     logger.warning(f"✅ EXACT MATCH FOUND at index {i}: '{yaml_name}'")
                     updated = True
+                # Try simple substring match (for truncated display names)
+                elif incoming_name and len(incoming_name) > 10 and incoming_name in yaml_name:
+                    logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' in '{yaml_name}'")
+                    updated = True
                 # Fallback: match by target_date + parent_project + name substring
                 elif (milestone.get('target_date') == incoming_date and 
                       milestone.get('parent_project', '').strip() == incoming_parent.strip() and
