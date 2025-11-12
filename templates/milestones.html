@@ -607,6 +607,10 @@ function switchView(view) {
     weekBtn.className = inactiveClass;
     monthBtn.className = inactiveClass;
     
+    // Show cards per column control for all views
+    cardsPerColumnControl.classList.remove('hidden');
+    cardsPerColumnControl.classList.add('flex');
+    
     // Show selected view
     if (view === 'status') {
         populateStatusView();
@@ -617,13 +621,9 @@ function switchView(view) {
         weekView.classList.remove('hidden');
         weekBtn.className = activeClass;
     } else if (view === 'month') {
-        console.log('Switching to month view, showing cards per column control');
         populateMonthView();
         monthView.classList.remove('hidden');
         monthBtn.className = activeClass;
-        cardsPerColumnControl.classList.remove('hidden');
-        cardsPerColumnControl.classList.add('flex');
-        console.log('Cards per column control display:', window.getComputedStyle(cardsPerColumnControl).display);
     }
 }
 

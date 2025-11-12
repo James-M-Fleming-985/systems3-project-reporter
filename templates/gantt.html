@@ -67,9 +67,15 @@ function parseDate(dateStr) {
     return new Date(year, month - 1, day);  // month is 0-indexed
 }
 
+// Store annotation data for completion percentages
+let completionAnnotations = [];
+
 // Function to create roadmap view traces (grouped by project)
 function createRoadmapViewTraces() {
     const traces = [];
+    
+    // Clear previous annotations
+    completionAnnotations = [];
     
     // Group tasks by Resource (which contains our project groups from backend)
     const resourceGroups = {};
@@ -136,6 +142,13 @@ function createRoadmapViewTraces() {
         console.log(`  Date range: ${startStr} to ${finishStr}`);
         console.log(`  Status: ${projectStatus} (${completedTasks}/${totalTasks} completed)`);
         
+        // Store annotation data for this project
+        completionAnnotations.push({
+            x: projectFinish,
+            y: projectGroup,
+            text: `${completionPercent}%`
+        });
+        
         // Create single consolidated bar per project using base + duration
         traces.push({
             x: [duration],
@@ -179,6 +192,28 @@ function getLayout() {
     const projectCount = uniqueProjects.size;
     const chartHeight = Math.max(500, projectCount * 50);  // 50px per project, minimum 500px
     
+    // Create annotations for completion percentages
+    const annotations = completionAnnotations.map(annot => ({
+        x: annot.x,
+        y: annot.y,
+        xref: 'x',
+        yref: 'y',
+        text: annot.text,
+        showarrow: false,
+        font: {
+            size: 13,
+            color: '#1f2937',
+            family: 'Arial, sans-serif',
+            weight: 'bold'
+        },
+        xanchor: 'left',
+        xshift: 8,
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bordercolor: '#d1d5db',
+        borderwidth: 1,
+        borderpad: 4
+    }));
+    
     return {
         title: {
             text: title,
@@ -208,13 +243,14 @@ function getLayout() {
         height: chartHeight,  // Dynamic height based on project count
         margin: {
             l: 250,  // Increased for longer project names
-            r: 80,
+            r: 120,  // Increased for percentage labels
             t: 80,
             b: 150  // Increased bottom margin for range slider
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
         paper_bgcolor: 'white',
+        annotations: annotations,  // Add completion percentage annotations
         dragmode: 'pan',  // Enable panning by default
         modebar: {
             orientation: 'v',
