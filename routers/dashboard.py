@@ -117,16 +117,25 @@ async def program_metrics(request: Request):
     risk_metrics = None
     
     if projects:
-        # Get program name from first project
-        program_name = getattr(projects[0], 'project_name', 'Unknown')
-        risks = risk_repo.load_risks(program_name)
+        # Collect all risks from all projects  
+        all_risks = []
+        for project in projects:
+            if hasattr(project, 'risks') and project.risks:
+                all_risks.extend(project.risks)
         
-        if risks:
-            logger.info(f"Loaded {len(risks)} risks for {program_name}")
-            risk_metrics = metrics_calculator.calculate_risk_metrics(risks)
+        if all_risks:
+            logger.info(f"Loaded {len(all_risks)} total risks from {len(projects)} project(s)")
+            # Convert Risk objects to dictionaries if needed
+            risks_dicts = []
+            for r in all_risks:
+                if hasattr(r, 'dict'):
+                    risks_dicts.append(r.dict())
+                elif isinstance(r, dict):
+                    risks_dicts.append(r)
+            risk_metrics = metrics_calculator.calculate_risk_metrics(risks_dicts)
             logger.info(f"Calculated risk metrics: {json.dumps(risk_metrics, indent=2)}")
         else:
-            logger.info(f"No risks found for {program_name}")
+            logger.info(f"No risks found in {len(projects)} project(s)")
     
     # Merge risk metrics into main metrics
     if risk_metrics:

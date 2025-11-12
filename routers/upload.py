@@ -179,12 +179,16 @@ async def upload_xml(
                 []  # No new changes yet, user will add reasons later if needed
             )
         
-        # **IMPORTANT: Do NOT save risks from XML to project YAML**
-        # Risks are managed separately via /risks endpoints and stored in data/risks/
-        # Preserve existing risks if any were in the YAML (legacy)
-        existing_yaml_risks = []
-        if existing_project and hasattr(existing_project, 'risks'):
-            existing_yaml_risks = existing_project.risks
+        # Save risks from XML - merge with existing if updating
+        yaml_risks = new_project.risks  # Start with risks from new XML
+        
+        # If updating (not baseline), preserve existing risks that aren't in the new XML
+        if existing_project and hasattr(existing_project, 'risks') and not is_baseline_upload:
+            # Keep existing risks, update with new ones from XML by risk_id
+            existing_risk_ids = {r.risk_id for r in yaml_risks}
+            for existing_risk in existing_project.risks:
+                if existing_risk.risk_id not in existing_risk_ids:
+                    yaml_risks.append(existing_risk)
         
         # Convert to dict for YAML serialization
         project_dict = {
@@ -196,6 +200,7 @@ async def upload_xml(
             'completion_percentage': new_project.completion_percentage,
             'milestones': [
                 {
+                    'id': getattr(m, 'id', None),  # Include milestone ID
                     'name': m.name,
                     'target_date': m.target_date,
                     'status': m.status,
@@ -208,8 +213,7 @@ async def upload_xml(
                 }
                 for m in new_project.milestones
             ],
-            # Preserve existing YAML risks only (don't overwrite with XML risks)
-            # New risks should be uploaded via /risks/upload endpoint
+            # Save risks from XML to project YAML
             'risks': [
                 {
                     'risk_id': r.risk_id,
@@ -220,8 +224,8 @@ async def upload_xml(
                     'mitigation': r.mitigation,
                     'status': r.status
                 }
-                for r in existing_yaml_risks
-            ] if existing_yaml_risks else [],
+                for r in yaml_risks
+            ],
             'changes': [
                 {
                     'change_id': c.change_id,
