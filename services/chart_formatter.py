@@ -102,7 +102,7 @@ class ChartFormatterService:
                 
                 milestone_data = {
                     'name': milestone.name,
-                    'project': project.project_name,
+                    'project': project.project_code,  # Use project_code for updates
                     'parent_project': milestone.parent_project,
                     'target_date': milestone.target_date,
                     'status': milestone.status,
