@@ -612,6 +612,9 @@ function switchView(view) {
     const weekBtn = document.getElementById('weekViewBtn');
     const monthBtn = document.getElementById('monthViewBtn');
     
+    // Save current view to localStorage
+    localStorage.setItem('currentMilestoneView', view);
+    
     // Hide all views and controls
     statusView.classList.add('hidden');
     weekView.classList.add('hidden');
@@ -689,10 +692,19 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
     
     // Check if milestone has project field
     if (!milestone.project) {
-        alert('⚠️ This milestone is missing project information.\n\nPlease re-upload your XML file to fix this issue.');
+        alert('⚠️ This milestone is missing project information.\n\nPlease refresh the page or re-upload your XML file.');
         closeMilestoneModal();
         return;
     }
+    
+    // Check if project looks like a filename instead of a code (legacy data)
+    if (milestone.project.includes('.xml') || milestone.project.includes(' ')) {
+        alert('⚠️ This milestone has outdated project information.\n\nPlease refresh the page. If the issue persists, re-upload your XML file.');
+        closeMilestoneModal();
+        return;
+    }
+    
+    console.log('Updating milestone with project code:', milestone.project);
     
     try {
         const response = await fetch(`/milestones/update`, {
@@ -732,7 +744,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('milestonePageSubtitle').textContent = `Milestones organized by status and timeline`;
     }
     
-    populateStatusView();
+    // Restore saved view or default to status view
+    const savedView = localStorage.getItem('currentMilestoneView') || 'status';
+    switchView(savedView);
 });
 </script>
 {% endblock %}
