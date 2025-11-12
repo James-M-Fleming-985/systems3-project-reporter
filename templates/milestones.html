@@ -3,6 +3,13 @@
 {% block title %}Milestone Tracker - Systems³ Project Reporter{% endblock %}
 
 {% block content %}
+<!-- Notification Modal -->
+<div id="notificationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-0 border w-11/12 md:w-2/3 lg:w-1/3 shadow-xl rounded-lg bg-white">
+        <div id="notificationContent"></div>
+    </div>
+</div>
+
 <!-- Edit Milestone Modal -->
 <div id="editMilestoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/3 shadow-lg rounded-md bg-white">
@@ -229,7 +236,16 @@
 {% block scripts %}
 <script>
 // All milestones data from server
-const allMilestones = {{ quadrants | tojson }};
+const allMilestones = {{ quadrants | tojson | safe }};
+
+// Validate and log milestone data
+console.log('Loaded milestones:', allMilestones);
+if (allMilestones) {
+    const sampleMilestone = [...(allMilestones.completed_past || []), ...(allMilestones.open || [])][0];
+    if (sampleMilestone) {
+        console.log('Sample milestone project field:', sampleMilestone.project);
+    }
+}
 
 // Current sort order
 let currentSortOrder = 'asc'; // Default ascending
@@ -650,6 +666,59 @@ function switchView(view) {
     }
 }
 
+// Notification functions
+function showNotification(type, title, message, details = null) {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notificationContent');
+    
+    const isError = type === 'error';
+    const iconColor = isError ? 'red' : 'green';
+    const bgColor = isError ? 'red' : 'green';
+    const icon = isError 
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0">
+                    <svg class="h-12 w-12 text-${iconColor}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${icon}
+                    </svg>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                    <p class="mt-2 text-sm text-gray-600">${message}</p>
+                    ${details ? `<p class="mt-2 text-xs text-gray-500">${details}</p>` : ''}
+                </div>
+            </div>
+            
+            <div class="bg-${bgColor}-50 border-l-4 border-${bgColor}-500 p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-${bgColor}-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm text-${bgColor}-800">
+                        ${isError ? 'Please try refreshing the page or re-uploading your XML file.' : 'Your changes have been saved successfully.'}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button onclick="closeNotification()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    OK
+                </button>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeNotification() {
+    document.getElementById('notificationModal').classList.add('hidden');
+}
+
 // Milestone editing functions
 let allMilestonesFlat = [];
 
@@ -692,15 +761,25 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
     
     // Check if milestone has project field
     if (!milestone.project) {
-        alert('⚠️ This milestone is missing project information.\n\nPlease refresh the page or re-upload your XML file.');
         closeMilestoneModal();
+        showNotification(
+            'error',
+            'Missing Project Information',
+            'This milestone is missing project information.',
+            'Please refresh the page or re-upload your XML file to fix this issue.'
+        );
         return;
     }
     
     // Check if project looks like a filename instead of a code (legacy data)
     if (milestone.project.includes('.xml') || milestone.project.includes(' ')) {
-        alert('⚠️ This milestone has outdated project information.\n\nPlease refresh the page. If the issue persists, re-upload your XML file.');
         closeMilestoneModal();
+        showNotification(
+            'error',
+            'Outdated Project Information',
+            `Project field contains "${milestone.project.substring(0, 50)}..." which appears to be a filename rather than a project code.`,
+            'Please refresh the page to reload the data. If the issue persists, re-upload your XML file.'
+        );
         return;
     }
     
@@ -720,12 +799,30 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
         
         if (response.ok && data.success) {
             closeMilestoneModal();
-            window.location.reload();
+            showNotification(
+                'success',
+                'Milestone Updated Successfully!',
+                `"${updatedMilestone.name}" has been updated with the latest changes.`
+            );
+            // Reload after a brief delay to show the success message
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('❌ Error updating milestone:\n\n' + (data.detail || 'Unknown error'));
+            closeMilestoneModal();
+            showNotification(
+                'error',
+                'Error Updating Milestone',
+                data.detail || 'An unexpected error occurred while updating the milestone.',
+                'Please try again or contact support if the problem persists.'
+            );
         }
     } catch (error) {
-        alert('❌ Error updating milestone:\n\n' + error.message);
+        closeMilestoneModal();
+        showNotification(
+            'error',
+            'Network Error',
+            'Unable to connect to the server.',
+            `Error: ${error.message}`
+        );
     }
 });
 
