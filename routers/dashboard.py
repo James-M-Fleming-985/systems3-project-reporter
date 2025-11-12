@@ -117,19 +117,31 @@ async def program_metrics(request: Request):
     risk_metrics = None
     
     if projects:
-        # Collect all risks from all projects  
+        # Collect all risks from TWO sources:
+        # 1. Project YAML files (risks embedded in project)
+        # 2. RiskRepository (risks uploaded separately)
         all_risks = []
+        
+        # Source 1: Risks from project YAML
         for project in projects:
             logger.info(f"Project {project.project_code}: has 'risks' attr? {hasattr(project, 'risks')}")
             if hasattr(project, 'risks'):
                 logger.info(f"Project {project.project_code}: risks count = {len(project.risks)}")
                 logger.info(f"Project {project.project_code}: risks type = {type(project.risks)}")
                 if project.risks:
-                    logger.info(f"Project {project.project_code}: First risk = {project.risks[0]}")
+                    logger.info(f"Project {project.project_code}: First risk from YAML = {project.risks[0]}")
                     all_risks.extend(project.risks)
         
+        # Source 2: Risks from RiskRepository
+        # Try to load risks for each project by name
+        for project in projects:
+            repo_risks = risk_repo.load_risks(project.project_name)
+            if repo_risks:
+                logger.info(f"Project {project.project_name}: Loaded {len(repo_risks)} risks from RiskRepository")
+                all_risks.extend(repo_risks)
+        
         if all_risks:
-            logger.info(f"✅ Loaded {len(all_risks)} total risks from {len(projects)} project(s)")
+            logger.info(f"✅ Loaded {len(all_risks)} total risks from {len(projects)} project(s) (YAML + Repository)")
             # Convert Risk objects to dictionaries if needed
             risks_dicts = []
             for r in all_risks:
@@ -143,7 +155,7 @@ async def program_metrics(request: Request):
             risk_metrics = metrics_calculator.calculate_risk_metrics(risks_dicts)
             logger.info(f"Calculated risk metrics: {json.dumps(risk_metrics, indent=2)}")
         else:
-            logger.warning(f"❌ No risks found in {len(projects)} project(s). You may need to re-upload your XML file.")
+            logger.warning(f"❌ No risks found in {len(projects)} project(s) from either YAML or RiskRepository")
     
     # Merge risk metrics into main metrics
     if risk_metrics:
