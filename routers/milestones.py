@@ -33,6 +33,11 @@ async def update_milestone(data: MilestoneUpdate):
         project_code = data.project_code
         updated_milestone = data.milestone
         
+        # Log the incoming request for debugging
+        logger.warning(f"=== MILESTONE UPDATE REQUEST ===")
+        logger.warning(f"Project code: {project_code}")
+        logger.warning(f"Milestone name: {updated_milestone.get('name', 'N/A')}")
+        
         # Validate project_code
         if not project_code:
             raise HTTPException(
@@ -41,24 +46,44 @@ async def update_milestone(data: MilestoneUpdate):
             )
         
         # Find the project directory
-        project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+        transformed_code = project_code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
         yaml_path = project_dir / "project_status.yaml"
         
+        logger.warning(f"Looking for directory: {project_dir}")
+        logger.warning(f"YAML path: {yaml_path}")
+        logger.warning(f"YAML exists: {yaml_path.exists()}")
+        
         if not yaml_path.exists():
+            # List what directories DO exist to help debug
+            existing_dirs = [d.name for d in DATA_DIR.iterdir() if d.is_dir() and d.name.startswith('PROJECT')]
             raise HTTPException(
                 status_code=404, 
-                detail=f"Project '{project_code}' not found. Please re-upload your XML file."
+                detail=f"Project directory 'PROJECT-{transformed_code}' not found. Available directories: {existing_dirs}"
             )
         
         # Load existing project data
         with open(yaml_path, 'r', encoding='utf-8') as f:
             project_data = yaml.safe_load(f)
         
+        # Debug logging
+        logger.warning(f"=== SEARCHING FOR MILESTONE ===")
+        logger.warning(f"Looking for milestone: '{updated_milestone['name']}'")
+        logger.warning(f"Total milestones in YAML: {len(project_data.get('milestones', []))}")
+        logger.warning(f"First 5 milestone names: {[m['name'] for m in project_data.get('milestones', [])][:5]}")
+        
         # Find and update the milestone
         updated = False
         if 'milestones' in project_data:
             for i, milestone in enumerate(project_data['milestones']):
-                if milestone['name'] == updated_milestone['name']:
+                # Normalize both names for comparison (trim whitespace)
+                yaml_name = milestone['name'].strip()
+                incoming_name = updated_milestone['name'].strip()
+                
+                if i < 3:  # Log first 3 comparisons
+                    logger.warning(f"Comparing #{i}: '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
+                
+                if yaml_name == incoming_name:
                     # Update the milestone
                     project_data['milestones'][i] = {
                         'name': updated_milestone['name'],
