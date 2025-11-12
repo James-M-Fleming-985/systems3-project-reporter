@@ -93,21 +93,19 @@ async def update_milestone(data: MilestoneUpdate):
                     logger.warning(f"✅ EXACT MATCH FOUND at index {i}: '{yaml_name}'")
                     updated = True
                     match_type = 'exact'
-                # Try simple substring match (for truncated display names)
-                elif incoming_name and len(incoming_name) > 10 and incoming_name in yaml_name:
-                    logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' in '{yaml_name}'")
+                # Try bidirectional substring match (handles both truncation and editing)
+                elif incoming_name and len(incoming_name) > 10 and (incoming_name in yaml_name or yaml_name in incoming_name):
+                    logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' ↔ '{yaml_name}'")
                     updated = True
                     match_type = 'substring'
-                # Fallback: match by target_date + parent_project + name substring
+                # Match by target_date + parent_project (allows name changes while keeping same milestone)
                 elif (milestone.get('target_date') == incoming_date and 
                       milestone.get('parent_project', '').strip() == incoming_parent.strip() and
-                      incoming_date and incoming_parent and  # Make sure these fields exist
-                      incoming_name in yaml_name and  # Check if incoming name is a substring
-                      len(incoming_name) > 10):  # Require at least 10 chars to avoid false matches
-                    logger.warning(f"✅ FUZZY MATCH FOUND at index {i}: '{yaml_name}' contains '{incoming_name}'")
-                    logger.warning(f"   Matched by date ({incoming_date}) + parent ({incoming_parent})")
+                      incoming_date and incoming_parent):  # Make sure these fields exist
+                    logger.warning(f"✅ DATE+PARENT MATCH FOUND at index {i}: date={incoming_date}, parent={incoming_parent}")
+                    logger.warning(f"   Name change: '{yaml_name}' → '{incoming_name}'")
                     updated = True
-                    match_type = 'fuzzy'
+                    match_type = 'date_parent'
                 
                 if updated:
                     # Update the milestone - always save the incoming name (allows user edits)
