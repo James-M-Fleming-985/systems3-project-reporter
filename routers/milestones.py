@@ -33,12 +33,22 @@ async def update_milestone(data: MilestoneUpdate):
         project_code = data.project_code
         updated_milestone = data.milestone
         
+        # Validate project_code
+        if not project_code:
+            raise HTTPException(
+                status_code=400, 
+                detail="Milestone is missing project information. Please re-upload your XML file to fix this."
+            )
+        
         # Find the project directory
         project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
         yaml_path = project_dir / "project_status.yaml"
         
         if not yaml_path.exists():
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Project '{project_code}' not found. Please re-upload your XML file."
+            )
         
         # Load existing project data
         with open(yaml_path, 'r', encoding='utf-8') as f:

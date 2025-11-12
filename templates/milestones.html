@@ -687,6 +687,13 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
         completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0
     };
     
+    // Check if milestone has project field
+    if (!milestone.project) {
+        alert('⚠️ This milestone is missing project information.\n\nPlease re-upload your XML file to fix this issue.');
+        closeMilestoneModal();
+        return;
+    }
+    
     try {
         const response = await fetch(`/milestones/update`, {
             method: 'POST',
@@ -703,10 +710,10 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
             closeMilestoneModal();
             window.location.reload();
         } else {
-            alert('Error updating milestone: ' + (data.detail || 'Unknown error'));
+            alert('❌ Error updating milestone:\n\n' + (data.detail || 'Unknown error'));
         }
     } catch (error) {
-        alert('Error updating milestone: ' + error.message);
+        alert('❌ Error updating milestone:\n\n' + error.message);
     }
 });
 
