@@ -75,19 +75,36 @@ async def update_milestone(data: MilestoneUpdate):
         # Find and update the milestone
         updated = False
         if 'milestones' in project_data:
+            incoming_name = updated_milestone['name'].strip()
+            incoming_date = updated_milestone.get('target_date', '')
+            incoming_parent = updated_milestone.get('parent_project', '')
+            
             for i, milestone in enumerate(project_data['milestones']):
                 # Normalize both names for comparison (trim whitespace)
                 yaml_name = milestone['name'].strip()
-                incoming_name = updated_milestone['name'].strip()
                 
                 if i < 3:  # Log first 3 comparisons
                     logger.warning(f"Comparing #{i}: '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
+                    logger.warning(f"   Substring check: '{incoming_name}' in '{yaml_name}' ? {incoming_name in yaml_name}")
                 
+                # Try exact match first
                 if yaml_name == incoming_name:
-                    logger.warning(f"✅ MATCH FOUND at index {i}: '{yaml_name}'")
-                    # Update the milestone
+                    logger.warning(f"✅ EXACT MATCH FOUND at index {i}: '{yaml_name}'")
+                    updated = True
+                # Fallback: match by target_date + parent_project + name substring
+                elif (milestone.get('target_date') == incoming_date and 
+                      milestone.get('parent_project', '').strip() == incoming_parent.strip() and
+                      incoming_date and incoming_parent and  # Make sure these fields exist
+                      incoming_name in yaml_name and  # Check if incoming name is a substring
+                      len(incoming_name) > 10):  # Require at least 10 chars to avoid false matches
+                    logger.warning(f"✅ FUZZY MATCH FOUND at index {i}: '{yaml_name}' contains '{incoming_name}'")
+                    logger.warning(f"   Matched by date ({incoming_date}) + parent ({incoming_parent})")
+                    updated = True
+                
+                if updated:
+                    # Update the milestone - preserve the original YAML name
                     project_data['milestones'][i] = {
-                        'name': updated_milestone['name'].strip(),  # Save the trimmed version
+                        'name': milestone['name'],  # Keep original name from YAML
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
                         'resources': updated_milestone.get('resources'),
@@ -95,7 +112,6 @@ async def update_milestone(data: MilestoneUpdate):
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
                     }
-                    updated = True
                     break
         
         if not updated:
