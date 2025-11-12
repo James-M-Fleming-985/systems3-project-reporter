@@ -120,11 +120,16 @@ async def program_metrics(request: Request):
         # Collect all risks from all projects  
         all_risks = []
         for project in projects:
-            if hasattr(project, 'risks') and project.risks:
-                all_risks.extend(project.risks)
+            logger.info(f"Project {project.project_code}: has 'risks' attr? {hasattr(project, 'risks')}")
+            if hasattr(project, 'risks'):
+                logger.info(f"Project {project.project_code}: risks count = {len(project.risks)}")
+                logger.info(f"Project {project.project_code}: risks type = {type(project.risks)}")
+                if project.risks:
+                    logger.info(f"Project {project.project_code}: First risk = {project.risks[0]}")
+                    all_risks.extend(project.risks)
         
         if all_risks:
-            logger.info(f"Loaded {len(all_risks)} total risks from {len(projects)} project(s)")
+            logger.info(f"✅ Loaded {len(all_risks)} total risks from {len(projects)} project(s)")
             # Convert Risk objects to dictionaries if needed
             risks_dicts = []
             for r in all_risks:
@@ -132,10 +137,13 @@ async def program_metrics(request: Request):
                     risks_dicts.append(r.dict())
                 elif isinstance(r, dict):
                     risks_dicts.append(r)
+                else:
+                    logger.warning(f"Unknown risk type: {type(r)}")
+            logger.info(f"Converted {len(risks_dicts)} risks to dicts")
             risk_metrics = metrics_calculator.calculate_risk_metrics(risks_dicts)
             logger.info(f"Calculated risk metrics: {json.dumps(risk_metrics, indent=2)}")
         else:
-            logger.info(f"No risks found in {len(projects)} project(s)")
+            logger.warning(f"❌ No risks found in {len(projects)} project(s). You may need to re-upload your XML file.")
     
     # Merge risk metrics into main metrics
     if risk_metrics:
