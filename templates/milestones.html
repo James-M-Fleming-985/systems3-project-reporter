@@ -5,7 +5,7 @@
 {% block content %}
 <!-- Edit Milestone Modal -->
 <div id="editMilestoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/3 shadow-lg rounded-md bg-white">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-2xl font-bold text-gray-800">Edit Milestone</h3>
             <button onclick="closeMilestoneModal()" class="text-gray-400 hover:text-gray-600">
@@ -43,8 +43,8 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Completion Percentage</label>
-                <input type="number" id="milestoneCompletion" min="0" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Completion Percentage (0-100)</label>
+                <input type="number" id="milestoneCompletion" min="0" max="100" placeholder="Enter 0-100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             
             <div class="flex justify-end space-x-3 pt-4">
@@ -364,35 +364,45 @@ function populateWeekView() {
     document.getElementById('thisWeekRange').textContent = formatDateRange(thisWeekRange.start, thisWeekRange.end);
     document.getElementById('nextWeekRange').textContent = formatDateRange(nextWeekRange.start, nextWeekRange.end);
     
-    const allMilestonesList = [
+    // Build flat array for editing with indices
+    allMilestonesFlat = [
         ...allMilestones.completed_past,
         ...allMilestones.open,
         ...allMilestones.upcoming_future,
         ...allMilestones.delayed
     ];
     
-    const lastWeekCompleted = allMilestonesList.filter(m => 
+    const lastWeekCompleted = allMilestonesFlat.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastWeekRange.start, lastWeekRange.end)
     );
     
-    const thisWeekMilestones = allMilestonesList.filter(m => 
+    const thisWeekMilestones = allMilestonesFlat.filter(m => 
         isDateInRange(m.target_date, thisWeekRange.start, thisWeekRange.end)
     );
     
-    const nextWeekMilestones = allMilestonesList.filter(m => 
+    const nextWeekMilestones = allMilestonesFlat.filter(m => 
         isDateInRange(m.target_date, nextWeekRange.start, nextWeekRange.end)
     );
     
     document.getElementById('lastWeekCompleted').innerHTML = lastWeekCompleted.length > 0
-        ? lastWeekCompleted.map(m => renderMilestone(m)).join('')
+        ? lastWeekCompleted.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, 'min-h-[140px]', index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones completed</p>';
     
     document.getElementById('thisWeekMilestones').innerHTML = thisWeekMilestones.length > 0
-        ? thisWeekMilestones.map(m => renderMilestone(m)).join('')
+        ? thisWeekMilestones.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, 'min-h-[140px]', index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
     
     document.getElementById('nextWeekMilestones').innerHTML = nextWeekMilestones.length > 0
-        ? nextWeekMilestones.map(m => renderMilestone(m)).join('')
+        ? nextWeekMilestones.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, 'min-h-[140px]', index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
     
     // Force scroll properties after content is loaded
@@ -422,22 +432,23 @@ function populateMonthView() {
     document.getElementById('thisMonthRange').textContent = formatDateRange(thisMonthRange.start, thisMonthRange.end);
     document.getElementById('nextMonthRange').textContent = formatDateRange(nextMonthRange.start, nextMonthRange.end);
     
-    const allMilestonesList = [
+    // Build flat array for editing with indices
+    allMilestonesFlat = [
         ...allMilestones.completed_past,
         ...allMilestones.open,
         ...allMilestones.upcoming_future,
         ...allMilestones.delayed
     ];
     
-    let lastMonthCompleted = allMilestonesList.filter(m => 
+    let lastMonthCompleted = allMilestonesFlat.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
     );
     
-    let thisMonthMilestones = allMilestonesList.filter(m => 
+    let thisMonthMilestones = allMilestonesFlat.filter(m => 
         isDateInRange(m.target_date, thisMonthRange.start, thisMonthRange.end)
     );
     
-    let nextMonthMilestones = allMilestonesList.filter(m => 
+    let nextMonthMilestones = allMilestonesFlat.filter(m => 
         isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
     );
     
@@ -486,15 +497,24 @@ function populateMonthView() {
     document.getElementById('nextMonthMilestones').className = `${spacing} overflow-y-auto`;
     
     document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
-        ? lastMonthCompleted.map(m => renderMilestone(m, true, cardHeight)).join('')
+        ? lastMonthCompleted.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, cardHeight, index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones completed</p>';
     
     document.getElementById('thisMonthMilestones').innerHTML = thisMonthMilestones.length > 0
-        ? thisMonthMilestones.map(m => renderMilestone(m, true, cardHeight)).join('')
+        ? thisMonthMilestones.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, cardHeight, index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
     
     document.getElementById('nextMonthMilestones').innerHTML = nextMonthMilestones.length > 0
-        ? nextMonthMilestones.map(m => renderMilestone(m, true, cardHeight)).join('')
+        ? nextMonthMilestones.map(m => {
+            const index = allMilestonesFlat.indexOf(m);
+            return renderMilestone(m, true, cardHeight, index);
+        }).join('')
         : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
 }
 
