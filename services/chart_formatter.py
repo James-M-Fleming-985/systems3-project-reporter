@@ -101,6 +101,7 @@ class ChartFormatterService:
                 ).date()
                 
                 milestone_data = {
+                    'id': getattr(milestone, 'id', None),  # Include milestone ID if available
                     'name': milestone.name,
                     'project': project.project_code,  # Use project_code for updates
                     'parent_project': milestone.parent_project,

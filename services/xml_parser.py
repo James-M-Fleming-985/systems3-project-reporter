@@ -325,6 +325,16 @@ class MSProjectXMLParser:
             # At this point, we know it's a milestone
             milestone_data = {}
             
+            # UID (unique identifier from MS Project)
+            uid_elem = self._find_element(task, 'UID')
+            if uid_elem is not None and uid_elem.text:
+                milestone_data['id'] = uid_elem.text
+            else:
+                # Fallback: generate ID from name + date if UID missing
+                import hashlib
+                fallback_id = hashlib.md5(f"{name_elem.text if name_elem is not None else 'unknown'}".encode()).hexdigest()[:12]
+                milestone_data['id'] = fallback_id
+            
             # Name (required)
             name_elem = self._find_element(task, 'Name')
             if name_elem is None or not name_elem.text:

@@ -76,6 +76,7 @@ async def update_milestone(data: MilestoneUpdate):
         updated = False
         match_type = None
         if 'milestones' in project_data:
+            incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
             incoming_date = updated_milestone.get('target_date', '')
             incoming_parent = updated_milestone.get('parent_project', '')
@@ -83,14 +84,20 @@ async def update_milestone(data: MilestoneUpdate):
             for i, milestone in enumerate(project_data['milestones']):
                 # Normalize both names for comparison (trim whitespace)
                 yaml_name = milestone['name'].strip()
+                yaml_id = milestone.get('id')
                 
                 if i < 3:  # Log first 3 comparisons
-                    logger.warning(f"Comparing #{i}: '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
-                    logger.warning(f"   Substring check: '{incoming_name}' in '{yaml_name}' ? {incoming_name in yaml_name}")
+                    logger.warning(f"Comparing #{i}: ID '{yaml_id}' == '{incoming_id}' ? {yaml_id == incoming_id if incoming_id else 'N/A'}")
+                    logger.warning(f"           Name '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
                 
-                # Try exact match first
-                if yaml_name == incoming_name:
-                    logger.warning(f"✅ EXACT MATCH FOUND at index {i}: '{yaml_name}'")
+                # Try ID match first (most reliable)
+                if incoming_id and yaml_id and yaml_id == incoming_id:
+                    logger.warning(f"✅ ID MATCH FOUND at index {i}: ID={yaml_id}")
+                    updated = True
+                    match_type = 'id'
+                # Try exact name match
+                elif yaml_name == incoming_name:
+                    logger.warning(f"✅ EXACT NAME MATCH FOUND at index {i}: '{yaml_name}'")
                     updated = True
                     match_type = 'exact'
                 # Try bidirectional substring match (handles both truncation and editing)
@@ -110,6 +117,7 @@ async def update_milestone(data: MilestoneUpdate):
                 if updated:
                     # Update the milestone - always save the incoming name (allows user edits)
                     project_data['milestones'][i] = {
+                        'id': milestone.get('id'),  # Preserve the milestone ID
                         'name': incoming_name,  # Always use edited name from user
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
@@ -118,7 +126,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
                     }
-                    logger.warning(f"✅ Saved milestone name: '{project_data['milestones'][i]['name']}' (match type: {match_type})")
+                    logger.warning(f"✅ Saved milestone ID={milestone.get('id')} name: '{project_data['milestones'][i]['name']}' (match type: {match_type})")
                     break
         
         if not updated:
