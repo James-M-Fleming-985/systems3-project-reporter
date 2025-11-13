@@ -839,11 +839,11 @@ function showMetricsFieldMapping(data) {
     const thead = document.getElementById('metricsPreviewTableHead');
     const tbody = document.getElementById('metricsPreviewTableBody');
     
-    thead.innerHTML = '<tr>' + headers.map(h => \`<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">\${h}</th>\`).join('') + '</tr>';
+    thead.innerHTML = '<tr>' + headers.map(h => '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">' + h + '</th>').join('') + '</tr>';
     
     const previewRows = rows.slice(0, 5);
     tbody.innerHTML = previewRows.map(row => 
-        '<tr>' + headers.map(h => \`<td class="px-4 py-2 text-sm text-gray-900">\${row[h] || ''}</td>\`).join('') + '</tr>'
+        '<tr>' + headers.map(h => '<td class="px-4 py-2 text-sm text-gray-900">' + (row[h] || '') + '</td>').join('') + '</tr>'
     ).join('');
     
     // Populate mapping dropdowns
@@ -854,12 +854,12 @@ function showMetricsFieldMapping(data) {
     
     [mapMetricName, mapDate, mapValue].forEach(select => {
         select.innerHTML = '<option value="">-- Select Column --</option>' + 
-            headers.map(h => \`<option value="\${h}">\${h}</option>\`).join('');
+            headers.map(h => '<option value="' + h + '">' + h + '</option>').join('');
     });
     
     // Annotation is optional
     mapAnnotation.innerHTML = '<option value="">-- None --</option>' + 
-        headers.map(h => \`<option value="\${h}">\${h}</option>\`).join('');
+        headers.map(h => '<option value="' + h + '">' + h + '</option>').join('');
     
     // Auto-detect columns
     headers.forEach(header => {
@@ -890,7 +890,7 @@ function importMetricsData() {
     const { rows } = parsedFileData;
     
     // Load existing metrics
-    const storageKey = \`customMetrics_\${programName}\`;
+    const storageKey = 'customMetrics_' + programName;
     let customMetrics = JSON.parse(localStorage.getItem(storageKey) || '[]');
     
     let importCount = 0;
@@ -966,7 +966,7 @@ function importMetricsData() {
     localStorage.setItem(storageKey, JSON.stringify(customMetrics));
     
     closeMetricsUploadModal();
-    showNotification('Import Complete', \`Metrics imported: \${importCount}\\nData points added: \${updateCount}\\n\\nGo to the Metrics tab on the dashboard to view the imported data.\`, 'success');
+    showNotification('Import Complete', 'Metrics imported: ' + importCount + '\nData points added: ' + updateCount + '\n\nGo to the Metrics tab on the dashboard to view the imported data.', 'success');
 }
 </script>
 
