@@ -909,7 +909,17 @@ function importMetricsData() {
         
         let date;
         try {
-            date = new Date(dateStr);
+            // Check if dateStr is an Excel serial number (numeric > 1000)
+            const numDate = parseFloat(dateStr);
+            if (!isNaN(numDate) && numDate > 1000) {
+                // Excel serial date: days since 1900-01-01 (with 1900 leap year bug)
+                const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899 (accounting for bug)
+                date = new Date(excelEpoch.getTime() + numDate * 86400000);
+            } else {
+                // Try parsing as text date
+                date = new Date(dateStr);
+            }
+            
             if (isNaN(date.getTime())) return;
         } catch (e) {
             return;
