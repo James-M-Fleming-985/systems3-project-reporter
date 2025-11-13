@@ -563,28 +563,43 @@ async def normalize_risk_ids(program_name: str):
 
 @router.get("/export/{program_name}")
 async def export_risks_pdf(program_name: str):
-    """Export risks to PDF with full details including mitigations"""
+    """Export risks to PDF in landscape format with multiple risks per page"""
     try:
         from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.pagesizes import letter, landscape
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-        from reportlab.lib.enums import TA_LEFT, TA_CENTER
+        from reportlab.platypus import (
+            SimpleDocTemplate, Table, TableStyle, 
+            Paragraph, Spacer, PageBreak, KeepTogether
+        )
+        from reportlab.lib.enums import TA_CENTER
         
         # Clean program name
-        clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
-        clean_name = clean_name.split('-')[0].strip() if '-' in clean_name else clean_name
+        clean_name = program_name.replace('.xml', '').replace(
+            '.xlsx', '').replace('.yaml', '').strip()
+        clean_name = (clean_name.split('-')[0].strip() 
+                     if '-' in clean_name else clean_name)
         
         # Get risks
         risks = risk_repo.load_risks(clean_name)
         
         if not risks:
-            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_name}")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No risks found for program: {clean_name}"
+            )
         
-        # Create PDF in memory
+        # Create PDF in memory - LANDSCAPE orientation
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=landscape(letter),
+            topMargin=0.5*inch, 
+            bottomMargin=0.5*inch,
+            leftMargin=0.5*inch,
+            rightMargin=0.5*inch
+        )
         
         # Container for PDF elements
         elements = []
@@ -594,95 +609,134 @@ async def export_risks_pdf(program_name: str):
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=16,
+            fontSize=18,
             textColor=colors.HexColor('#1e40af'),
-            spaceAfter=12,
+            spaceAfter=8,
             alignment=TA_CENTER
         )
-        heading_style = ParagraphStyle(
-            'CustomHeading',
+        risk_title_style = ParagraphStyle(
+            'RiskTitle',
             parent=styles['Heading2'],
-            fontSize=12,
+            fontSize=11,
             textColor=colors.HexColor('#1e40af'),
-            spaceAfter=6,
-            spaceBefore=12
+            spaceAfter=4,
+            spaceBefore=6
         )
         normal_style = styles['Normal']
-        normal_style.fontSize = 10
+        normal_style.fontSize = 9
+        small_style = ParagraphStyle(
+            'Small',
+            parent=styles['Normal'],
+            fontSize=8
+        )
         
         # Title
-        elements.append(Paragraph(f"Risk Register: {clean_name}", title_style))
-        elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Paragraph(
+            f"Risk Register: {clean_name}", title_style))
+        elements.append(Paragraph(
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 
+            small_style
+        ))
+        elements.append(Spacer(1, 0.2*inch))
         
-        # Process each risk
+        # Process risks - 2 per page in landscape
+        risks_per_page = 2
+        
         for i, risk in enumerate(risks):
-            # Risk header table
-            header_data = [
-                ['Risk ID:', risk.get('id', 'N/A'), 'Severity:', risk.get('severity_normalized', 'N/A').upper()],
-                ['Status:', risk.get('status', 'N/A'), 'Owner:', risk.get('owner', 'N/A')]
-            ]
+            risk_elements = []
             
-            header_table = Table(header_data, colWidths=[1*inch, 2.5*inch, 1*inch, 2*inch])
+            # Risk title
+            risk_elements.append(Paragraph(
+                f"<b>{risk.get('id', 'N/A')}: "
+                f"{risk.get('title', 'Untitled Risk')}</b>", 
+                risk_title_style
+            ))
+            
+            # Compact header table
+            severity = risk.get('severity_normalized', 'N/A').upper()
+            status = risk.get('status', 'N/A')
+            owner = risk.get('owner', 'N/A')
+            
+            header_data = [[
+                f"Severity: {severity}",
+                f"Status: {status}",
+                f"Owner: {owner}",
+                f"Likelihood: {risk.get('likelihood', 'N/A')}",
+                f"Impact: {risk.get('impact', 'N/A')}"
+            ]]
+            
+            header_table = Table(header_data, colWidths=[
+                1.5*inch, 1.5*inch, 1.8*inch, 1.5*inch, 1.3*inch
+            ])
             header_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e5e7eb')),
-                ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#e5e7eb')),
+                ('BACKGROUND', (0, 0), (-1, -1), 
+                 colors.HexColor('#f3f4f6')),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
             ]))
             
-            elements.append(Paragraph(f"<b>{risk.get('title', 'Untitled Risk')}</b>", heading_style))
-            elements.append(header_table)
-            elements.append(Spacer(1, 0.1*inch))
+            risk_elements.append(header_table)
+            risk_elements.append(Spacer(1, 0.08*inch))
+            
+            # Description and Mitigations in 2 columns
+            desc_miti_data = []
             
             # Description
-            elements.append(Paragraph("<b>Description:</b>", normal_style))
-            elements.append(Paragraph(risk.get('description', 'No description available'), normal_style))
-            elements.append(Spacer(1, 0.1*inch))
+            desc_text = risk.get('description', 'No description available')
+            desc_para = Paragraph(
+                f"<b>Description:</b><br/>{desc_text}", 
+                small_style
+            )
             
             # Mitigations
             mitigations = risk.get('mitigations', [])
             if mitigations:
-                elements.append(Paragraph("<b>Mitigations:</b>", normal_style))
                 if isinstance(mitigations, list):
-                    for idx, mitigation in enumerate(mitigations, 1):
-                        elements.append(Paragraph(f"{idx}. {mitigation}", normal_style))
+                    miti_text = "<br/>".join([
+                        f"{idx}. {m}" 
+                        for idx, m in enumerate(mitigations, 1)
+                    ])
                 else:
-                    elements.append(Paragraph(str(mitigations), normal_style))
-                elements.append(Spacer(1, 0.1*inch))
+                    miti_text = str(mitigations)
+                miti_para = Paragraph(
+                    f"<b>Mitigations:</b><br/>{miti_text}", 
+                    small_style
+                )
+            else:
+                miti_para = Paragraph(
+                    "<b>Mitigations:</b><br/>None specified", 
+                    small_style
+                )
             
-            # Additional details table
-            details_data = [
-                ['Likelihood:', risk.get('likelihood', 'N/A')],
-                ['Impact:', risk.get('impact', 'N/A')],
-            ]
+            desc_miti_data = [[desc_para, miti_para]]
             
-            if risk.get('category'):
-                details_data.append(['Category:', risk.get('category')])
-            if risk.get('date_identified'):
-                details_data.append(['Date Identified:', risk.get('date_identified')])
-            
-            details_table = Table(details_data, colWidths=[1.5*inch, 5*inch])
-            details_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            desc_miti_table = Table(
+                desc_miti_data, 
+                colWidths=[4*inch, 3.6*inch]
+            )
+            desc_miti_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
             ]))
             
-            elements.append(details_table)
+            risk_elements.append(desc_miti_table)
             
-            # Add page break between risks (except for last one)
-            if i < len(risks) - 1:
+            # Keep risk together, add to elements
+            elements.append(KeepTogether(risk_elements))
+            
+            # Add spacer between risks
+            if (i + 1) % risks_per_page == 0 and i < len(risks) - 1:
+                # Page break after every 2 risks
                 elements.append(PageBreak())
+            elif i < len(risks) - 1:
+                # Just spacing between risks on same page
+                elements.append(Spacer(1, 0.15*inch))
         
         # Build PDF
         doc.build(elements)
@@ -693,16 +747,23 @@ async def export_risks_pdf(program_name: str):
         buffer.close()
         
         # Return as download
-        filename = f"risks_{clean_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        filename = (f"risks_{clean_name.replace(' ', '_')}_"
+                   f"{datetime.now().strftime('%Y%m%d')}.pdf")
         
         return StreamingResponse(
             io.BytesIO(pdf_data),
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
         )
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error exporting risks to PDF: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
+        logger.error(f"Error exporting risks to PDF: {str(e)}", 
+                    exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error generating PDF: {str(e)}"
+        )
