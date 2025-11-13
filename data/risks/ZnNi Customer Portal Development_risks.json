@@ -1,0 +1,68 @@
+{
+  "program_name": "ZnNi Customer Portal Development",
+  "risks": [
+    {
+      "id": "ZCP-001",
+      "title": "SF team bandwidth causing delays",
+      "description": "SF team busy with other stakeholder tasks may delay completion of NADCAP action plan and SF documentation review, risking readiness for NADCAP Audit and pre-audit planned for 2026-03-26.",
+      "likelihood": "high",
+      "impact": "high",
+      "severity_normalized": "critical",
+      "mitigations": [
+        "Prioritise NADCAP tasks",
+        "Assign backup reviewers",
+        "Escalate to stakeholders",
+        "Schedule focused review sessions"
+      ],
+      "owner": "SF Team Lead",
+      "date_identified": "2025-11-01T00:00:00",
+      "status": "open",
+      "category": "Quality",
+      "project": "SF Documentation Optimization"
+    },
+    {
+      "id": "ZCP-002",
+      "title": "Documentation hierarchy misunderstanding",
+      "description": "If we don't fully understand documentation hierarchy, the overarching SF QMS could have inaccuracies, undermining signposting and guidance for unfamiliar users.",
+      "likelihood": "medium",
+      "impact": "high",
+      "severity_normalized": "high",
+      "mitigations": [
+        "Perform documentation mapping workshop",
+        "Consult QMS owner",
+        "Run peer reviews"
+      ],
+      "owner": "Process Engineer",
+      "date_identified": "2025-11-01T00:00:00",
+      "status": "open",
+      "category": "Documentation",
+      "project": "SF Documentation Optimization"
+    },
+    {
+      "id": "ZCP-003",
+      "title": "Surface Finish Table 1 validation delayed",
+      "description": "Process engineer responsible for validating Surface Finish Table 1 is overloaded and may not complete the review in time.",
+      "likelihood": "high",
+      "impact": "medium",
+      "severity_normalized": "high",
+      "mitigations": [
+        "Allocate deputy reviewer",
+        "Extend review resources",
+        "Set firm deadlines and escalate if missed"
+      ],
+      "owner": "Process Engineer",
+      "date_identified": "2025-11-01T00:00:00",
+      "status": "open",
+      "category": "Validation",
+      "project": "SF Documentation Optimization"
+    }
+  ],
+  "risk_count": 3,
+  "last_updated": "2025-11-13T09:07:51.030288",
+  "severity_counts": {
+    "critical": 1,
+    "high": 2,
+    "medium": 0,
+    "low": 0
+  }
+}

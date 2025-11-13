@@ -1,14 +1,326 @@
 nohup: ignoring input
-INFO:     Will watch for changes in these directories: ['/workspaces/professional_excellence/projects/PROJECT-003 REPORT GENERATOR/SYSTEM-003_ZnNi_Report_Generation']
-INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
-INFO:     Started reloader process [3948] using WatchFiles
-INFO:     Started server process [3973]
+INFO:     Will watch for changes in these directories: ['/workspaces/control_tower/systems3-project-reporter']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [11389] using WatchFiles
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [11463]
 INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 0 projects successfully
+INFO:main:Systems³ Project Reporter started successfully!
 INFO:     Application startup complete.
-INFO:     127.0.0.1:39770 - "GET /health HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET / HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET / HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET /gantt HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET /gantt HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET /risks HTTP/1.1" 200 OK
-INFO:     194.73.84.139:0 - "GET /changes HTTP/1.1" 200 OK
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:     127.0.0.1:48748 - "POST /upload HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:54376 - "POST /upload HTTP/1.1" 405 Method Not Allowed
+INFO:routers.upload:Starting XML upload for user aa5ee1cb-d086-449c-98e2-42f12f277d14
+INFO:routers.upload:Baseline upload: False
+INFO:routers.upload:File size: 0.00MB
+INFO:routers.upload:Upload limits check passed
+INFO:routers.upload:XML file read successfully
+ERROR:routers.upload:Upload failed with error: prefix 'ms' not found in prefix map
+Traceback (most recent call last):
+  File "/workspaces/control_tower/systems3-project-reporter/routers/upload.py", line 106, in upload_xml
+    new_project = xml_parser.parse_string(xml_content)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/control_tower/systems3-project-reporter/services/xml_parser.py", line 74, in parse_string
+    project_data['milestones'] = self._extract_milestones(root)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/control_tower/systems3-project-reporter/services/xml_parser.py", line 146, in _extract_milestones
+    resource_map = self._build_resource_map(root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/control_tower/systems3-project-reporter/services/xml_parser.py", line 564, in _build_resource_map
+    found_resources = root.findall(resource_xpath)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/xml/etree/ElementPath.py", line 411, in findall
+    return list(iterfind(elem, path, namespaces))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/xml/etree/ElementPath.py", line 384, in iterfind
+    selector.append(ops[token[0]](next, token))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/xml/etree/ElementPath.py", line 185, in prepare_descendant
+    token = next()
+            ^^^^^^
+  File "/usr/local/lib/python3.12/xml/etree/ElementPath.py", line 87, in xpath_tokenizer
+    raise SyntaxError("prefix %r not found in prefix map" % prefix) from None
+SyntaxError: prefix 'ms' not found in prefix map
+INFO:     127.0.0.1:33022 - "POST /upload/xml HTTP/1.1" 400 Bad Request
+WARNING:  WatchFiles detected changes in 'services/xml_parser.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11463]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [13122]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 0 projects successfully
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+INFO:routers.upload:Starting XML upload for user 522abb4d-17b7-4301-b26f-c0aca3d4b04c
+INFO:routers.upload:Baseline upload: False
+INFO:routers.upload:File size: 0.00MB
+INFO:routers.upload:Upload limits check passed
+INFO:routers.upload:XML file read successfully
+INFO:routers.upload:Parsed project: ZnNi Customer Portal Development (ZCP-P1)
+INFO:routers.upload:Milestones found: 0
+INFO:routers.upload:Risks found: 0
+INFO:routers.upload:Changes found: 0
+WARNING:routers.upload:No milestones extracted from XML!
+INFO:routers.upload:Saved upload to /workspaces/control_tower/systems3-project-reporter/uploads/ZCP-P1_20251113_090319.xml
+INFO:routers.upload:Project data saved to /workspaces/control_tower/systems3-project-reporter/mock_data/PROJECT-ZCP_P1/project_status.yaml
+INFO:routers.upload:Saved 0 milestones, 0 risks
+INFO:routers.upload:Recorded upload in subscription tracking
+INFO:routers.upload:Upload completed successfully
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+DEBUG: Built task hierarchy with 0 tasks
+DEBUG: Found 0 Level 2 projects
+DEBUG: Sample UIDs in hierarchy: []
+DEBUG: UID 8704 NOT in hierarchy
+DEBUG: First task inspection:
+  UID: elem=True, text='1', tail='
+            '
+  UID children: []
+  UID attrib: {}
+  Name: text='Requirements Finalization'
+  Level: text='N/A'
+DEBUG: Building parent_level2 relationships...
+DEBUG: Assigned parent_level2 to 0 tasks
+INFO:     127.0.0.1:47346 - "POST /upload/xml HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50256 - "POST /upload/confirm HTTP/1.1" 422 Unprocessable Entity
+INFO:routers.upload:Confirm upload called for project: ZCP-P1
+INFO:routers.upload:Upload path: /workspaces/control_tower/systems3-project-reporter/uploads/ZCP-P1_20251113_090319.xml
+INFO:routers.upload:Changes JSON: []...
+INFO:routers.upload:Read XML file successfully, size: 3560 bytes
+INFO:routers.upload:Parsed project: ZnNi Customer Portal Development
+INFO:routers.upload:Project ZCP-P1 saved successfully
+DEBUG: Built task hierarchy with 0 tasks
+DEBUG: Found 0 Level 2 projects
+DEBUG: Sample UIDs in hierarchy: []
+DEBUG: UID 8704 NOT in hierarchy
+DEBUG: First task inspection:
+  UID: elem=True, text='1', tail='
+            '
+  UID children: []
+  UID attrib: {}
+  Name: text='Requirements Finalization'
+  Level: text='N/A'
+DEBUG: Building parent_level2 relationships...
+DEBUG: Assigned parent_level2 to 0 tasks
+INFO:     127.0.0.1:48818 - "POST /upload/confirm HTTP/1.1" 200 OK
+INFO:routers.risks:Uploading risks for program: ZnNi Customer Portal Development (original: ZnNi Customer Portal Development), file: znni_risks.yaml
+INFO:routers.risks:Successfully parsed and saved 3 risks to data/risks/ZnNi Customer Portal Development_risks.json
+🔍 RiskRepository.load_risks() called with program_name: 'ZnNi Customer Portal Development'
+🔍 Constructed safe_name: 'ZnNi Customer Portal Development'
+🔍 Looking for filename: 'ZnNi Customer Portal Development_risks.json'
+🔍 Full filepath: 'data/risks/ZnNi Customer Portal Development_risks.json'
+🔍 File exists: False
+🔍 Actual files in data/risks: []
+❌ Risk file not found: data/risks/ZnNi Customer Portal Development_risks.json
+INFO:     127.0.0.1:40210 - "POST /risks/upload HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'repositories/risk_repository.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13122]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [16151]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 1 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+WARNING:routers.dashboard:Loaded 1 projects for metrics calculation
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+WARNING:routers.dashboard:Project ZCP-P1: has 'risks' attr? True
+WARNING:routers.dashboard:Project ZCP-P1: risks count = 0
+WARNING:routers.dashboard:Project ZCP-P1: risks type = <class 'list'>
+WARNING:routers.dashboard:🔍 Attempting to load risks for project: original='ZnNi Customer Portal Development', cleaned='ZnNi Customer Portal Development'
+WARNING:routers.dashboard:✅ Project ZnNi Customer Portal Development: Loaded 3 risks from RiskRepository
+WARNING:routers.dashboard:✅ Loaded 3 total risks from 1 project(s) (YAML + Repository)
+INFO:routers.dashboard:Converted 3 risks to dicts
+INFO:routers.dashboard:Calculated risk metrics: {
+  "risk_score": 83,
+  "risk_distribution": {
+    "critical": 1,
+    "high": 2,
+    "medium": 0,
+    "low": 0
+  },
+  "total_risks": 3,
+  "open_risks": 3,
+  "closed_risks": 0
+}
+INFO:routers.dashboard:Final metrics with risks: {
+  "completion_rate": 0.0,
+  "spi": 1.0,
+  "milestone_health": {
+    "completed": 0,
+    "in_progress": 0,
+    "not_started": 0,
+    "late": 0
+  },
+  "schedule_trend": {
+    "periods": [],
+    "spi_values": []
+  },
+  "total_milestones": 0,
+  "total_projects": 0,
+  "last_updated": "2025-11-13T09:10:52.455134",
+  "risk_score": 83,
+  "risk_distribution": {
+    "critical": 1,
+    "high": 2,
+    "medium": 0,
+    "low": 0
+  },
+  "total_risks": 3,
+  "open_risks": 3,
+  "closed_risks": 0
+}
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+🔍 RiskRepository.load_risks() called with program_name: 'ZnNi Customer Portal Development'
+🔍 Constructed safe_name: 'ZnNi Customer Portal Development'
+🔍 Looking for filename: 'ZnNi Customer Portal Development_risks.json'
+🔍 Full filepath: '/workspaces/control_tower/systems3-project-reporter/data/risks/ZnNi Customer Portal Development_risks.json'
+🔍 File exists: True
+🔍 Actual files in /workspaces/control_tower/systems3-project-reporter/data/risks: ['ZnNi Customer Portal Development_risks.json']
+INFO:     127.0.0.1:38862 - "GET /dashboard/metrics HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16151]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [16848]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 1 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/dashboard.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16848]
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [23688]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 1 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/metrics_calculator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23688]
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [25360]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 1 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/metrics_calculator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25360]
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [25462]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:main:Loaded 1 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.

@@ -1,0 +1,30 @@
+{
+  "aa5ee1cb-d086-449c-98e2-42f12f277d14": {
+    "user_id": "aa5ee1cb-d086-449c-98e2-42f12f277d14",
+    "email": "demo@example.com",
+    "full_name": "Demo User",
+    "created_at": "2025-11-13 08:59:34.590255",
+    "last_login": null,
+    "is_active": true,
+    "subscription_tier": "free",
+    "subscription_started": "2025-11-13 08:59:34.590255",
+    "subscription_expires": null,
+    "projects_uploaded_this_month": 0,
+    "total_projects_uploaded": 0,
+    "last_reset_date": "2025-11-13"
+  },
+  "522abb4d-17b7-4301-b26f-c0aca3d4b04c": {
+    "user_id": "522abb4d-17b7-4301-b26f-c0aca3d4b04c",
+    "email": "demo@example.com",
+    "full_name": "Demo User",
+    "created_at": "2025-11-13 09:03:19.155150",
+    "last_login": null,
+    "is_active": true,
+    "subscription_tier": "free",
+    "subscription_started": "2025-11-13 09:03:19.155150",
+    "subscription_expires": null,
+    "projects_uploaded_this_month": 1,
+    "total_projects_uploaded": 1,
+    "last_reset_date": "2025-11-13"
+  }
+}
