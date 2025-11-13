@@ -609,25 +609,25 @@ async def export_risks_pdf(program_name: str):
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=18,
+            fontSize=16,
             textColor=colors.HexColor('#1e40af'),
-            spaceAfter=8,
+            spaceAfter=6,
             alignment=TA_CENTER
         )
         risk_title_style = ParagraphStyle(
             'RiskTitle',
             parent=styles['Heading2'],
-            fontSize=11,
+            fontSize=10,
             textColor=colors.HexColor('#1e40af'),
-            spaceAfter=4,
-            spaceBefore=6
+            spaceAfter=2,
+            spaceBefore=4
         )
         normal_style = styles['Normal']
-        normal_style.fontSize = 9
+        normal_style.fontSize = 8
         small_style = ParagraphStyle(
             'Small',
             parent=styles['Normal'],
-            fontSize=8
+            fontSize=7
         )
         
         # Title
@@ -637,59 +637,56 @@ async def export_risks_pdf(program_name: str):
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 
             small_style
         ))
-        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Spacer(1, 0.15*inch))
         
-        # Process risks - 2 per page in landscape
-        risks_per_page = 2
-        
+        # Process risks - 3-4 per page in landscape
         for i, risk in enumerate(risks):
             risk_elements = []
             
-            # Risk title
+            # Compact risk title with ID
             risk_elements.append(Paragraph(
                 f"<b>{risk.get('id', 'N/A')}: "
                 f"{risk.get('title', 'Untitled Risk')}</b>", 
                 risk_title_style
             ))
             
-            # Compact header table
+            # Very compact single-row header
             severity = risk.get('severity_normalized', 'N/A').upper()
             status = risk.get('status', 'N/A')
             owner = risk.get('owner', 'N/A')
+            likelihood = risk.get('likelihood', 'N/A')
+            impact = risk.get('impact', 'N/A')
             
             header_data = [[
-                f"Severity: {severity}",
+                f"Sev: {severity}",
                 f"Status: {status}",
                 f"Owner: {owner}",
-                f"Likelihood: {risk.get('likelihood', 'N/A')}",
-                f"Impact: {risk.get('impact', 'N/A')}"
+                f"L: {likelihood}",
+                f"I: {impact}"
             ]]
             
             header_table = Table(header_data, colWidths=[
-                1.5*inch, 1.5*inch, 1.8*inch, 1.5*inch, 1.3*inch
+                1.2*inch, 1.3*inch, 1.8*inch, 1*inch, 1*inch
             ])
             header_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), 
                  colors.HexColor('#f3f4f6')),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
             ]))
             
             risk_elements.append(header_table)
-            risk_elements.append(Spacer(1, 0.08*inch))
+            risk_elements.append(Spacer(1, 0.05*inch))
             
             # Description and Mitigations in 2 columns
-            desc_miti_data = []
-            
-            # Description
-            desc_text = risk.get('description', 'No description available')
+            desc_text = risk.get('description', 'No description')
             desc_para = Paragraph(
-                f"<b>Description:</b><br/>{desc_text}", 
+                f"<b>Desc:</b> {desc_text}", 
                 small_style
             )
             
@@ -697,19 +694,19 @@ async def export_risks_pdf(program_name: str):
             mitigations = risk.get('mitigations', [])
             if mitigations:
                 if isinstance(mitigations, list):
-                    miti_text = "<br/>".join([
+                    miti_text = "; ".join([
                         f"{idx}. {m}" 
                         for idx, m in enumerate(mitigations, 1)
                     ])
                 else:
                     miti_text = str(mitigations)
                 miti_para = Paragraph(
-                    f"<b>Mitigations:</b><br/>{miti_text}", 
+                    f"<b>Miti:</b> {miti_text}", 
                     small_style
                 )
             else:
                 miti_para = Paragraph(
-                    "<b>Mitigations:</b><br/>None specified", 
+                    "<b>Miti:</b> None", 
                     small_style
                 )
             
@@ -721,22 +718,18 @@ async def export_risks_pdf(program_name: str):
             )
             desc_miti_table.setStyle(TableStyle([
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('TOPPADDING', (0, 0), (-1, -1), 2),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 1),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
             ]))
             
             risk_elements.append(desc_miti_table)
             
-            # Keep risk together, add to elements
+            # Keep risk together
             elements.append(KeepTogether(risk_elements))
             
-            # Add spacer between risks
-            if (i + 1) % risks_per_page == 0 and i < len(risks) - 1:
-                # Page break after every 2 risks
-                elements.append(PageBreak())
-            elif i < len(risks) - 1:
-                # Just spacing between risks on same page
-                elements.append(Spacer(1, 0.15*inch))
+            # Minimal spacing between risks
+            if i < len(risks) - 1:
+                elements.append(Spacer(1, 0.12*inch))
         
         # Build PDF
         doc.build(elements)
