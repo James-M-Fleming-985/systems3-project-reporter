@@ -7,9 +7,13 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import os
+import logging
 
 from repositories.project_repository import ProjectRepository
 from services.chart_formatter import ChartFormatterService
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["dashboard"])
 
@@ -99,14 +103,11 @@ async def program_metrics(request: Request):
     from main import BUILD_VERSION
     from services.metrics_calculator import MetricsCalculator
     from repositories.risk_repository import RiskRepository
-    import logging
     import json
-    
-    logger = logging.getLogger(__name__)
     
     # Load projects and calculate metrics
     projects = project_repo.load_all_projects()
-    logger.info(f"Loaded {len(projects)} projects for metrics calculation")
+    logger.warning(f"Loaded {len(projects)} projects for metrics calculation")
     
     metrics_calculator = MetricsCalculator()
     metrics = metrics_calculator.calculate_program_metrics(projects)
@@ -124,24 +125,33 @@ async def program_metrics(request: Request):
         
         # Source 1: Risks from project YAML
         for project in projects:
-            logger.info(f"Project {project.project_code}: has 'risks' attr? {hasattr(project, 'risks')}")
+            logger.warning(f"Project {project.project_code}: has 'risks' attr? {hasattr(project, 'risks')}")
             if hasattr(project, 'risks'):
-                logger.info(f"Project {project.project_code}: risks count = {len(project.risks)}")
-                logger.info(f"Project {project.project_code}: risks type = {type(project.risks)}")
+                logger.warning(f"Project {project.project_code}: risks count = {len(project.risks)}")
+                logger.warning(f"Project {project.project_code}: risks type = {type(project.risks)}")
                 if project.risks:
-                    logger.info(f"Project {project.project_code}: First risk from YAML = {project.risks[0]}")
+                    logger.warning(f"Project {project.project_code}: First risk from YAML = {project.risks[0]}")
                     all_risks.extend(project.risks)
         
         # Source 2: Risks from RiskRepository
         # Try to load risks for each project by name
+        # Use the same cleaning logic as risk upload to ensure filename matches
+        import re
         for project in projects:
-            repo_risks = risk_repo.load_risks(project.project_name)
+            # Clean the project name the same way as risk upload does
+            clean_name = project.project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+            clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+            
+            logger.warning(f"🔍 Attempting to load risks for project: original='{project.project_name}', cleaned='{clean_name}'")
+            repo_risks = risk_repo.load_risks(clean_name)
             if repo_risks:
-                logger.info(f"Project {project.project_name}: Loaded {len(repo_risks)} risks from RiskRepository")
+                logger.warning(f"✅ Project {project.project_name}: Loaded {len(repo_risks)} risks from RiskRepository")
                 all_risks.extend(repo_risks)
+            else:
+                logger.warning(f"❌ Project {project.project_name}: No risks found in RiskRepository for cleaned name '{clean_name}'")
         
         if all_risks:
-            logger.info(f"✅ Loaded {len(all_risks)} total risks from {len(projects)} project(s) (YAML + Repository)")
+            logger.warning(f"✅ Loaded {len(all_risks)} total risks from {len(projects)} project(s) (YAML + Repository)")
             # Convert Risk objects to dictionaries if needed
             risks_dicts = []
             for r in all_risks:
@@ -195,16 +205,23 @@ async def risk_analysis(request: Request):
     standalone_risks = []
     
     if projects:
-        # Load risks for the first project's program (clean the name)
+        # Load risks for the first project's program (clean the name the same way as risk upload)
         program_name = getattr(projects[0], 'project_name', None)
         if program_name:
             import re
-            # Remove file extensions and version numbers
+            # Use the SAME cleaning logic as risk upload (from routers/risks.py)
+            # Remove extensions
             clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+            # Remove trailing version numbers like -09, -10, etc.
             clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+            
+            logger.warning(f"🔍 Risks page: Loading risks for program: original='{program_name}', cleaned='{clean_name}'")
             loaded_risks = risk_repo.load_risks(clean_name)
             if loaded_risks:
+                logger.warning(f"✅ Risks page: Loaded {len(loaded_risks)} risks for '{clean_name}'")
                 standalone_risks = loaded_risks
+            else:
+                logger.warning(f"❌ Risks page: No risks found for cleaned name '{clean_name}'")
     
     context = {
         "request": request,

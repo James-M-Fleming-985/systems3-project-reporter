@@ -190,17 +190,58 @@ async def upload_xml(
                 if existing_risk.risk_id not in existing_risk_ids:
                     yaml_risks.append(existing_risk)
         
-        # Convert to dict for YAML serialization
-        project_dict = {
-            'project_name': new_project.project_name,
-            'project_code': new_project.project_code,
-            'status': new_project.status,
-            'start_date': new_project.start_date,
-            'target_completion': new_project.target_completion,
-            'completion_percentage': new_project.completion_percentage,
-            'milestones': [
+        # SMART MERGE: Preserve manually edited milestone data when re-uploading
+        milestones_to_save = []
+        if existing_project and not is_baseline_upload and hasattr(existing_project, 'milestones'):
+            # Create lookup by milestone ID (most reliable) and name (fallback)
+            existing_by_id = {getattr(m, 'id', None): m for m in existing_project.milestones if getattr(m, 'id', None)}
+            existing_by_name = {m.name: m for m in existing_project.milestones}
+            
+            for new_milestone in new_project.milestones:
+                new_id = getattr(new_milestone, 'id', None)
+                
+                # Try to find existing milestone by ID first, then name
+                existing = None
+                if new_id and new_id in existing_by_id:
+                    existing = existing_by_id[new_id]
+                elif new_milestone.name in existing_by_name:
+                    existing = existing_by_name[new_milestone.name]
+                
+                if existing:
+                    # PRESERVE user edits: Use existing data for user-editable fields
+                    # REFRESH from XML: dates and percentages (these come from MS Project)
+                    merged_milestone = {
+                        'id': new_id,  # Keep ID from XML
+                        'name': existing.name,  # PRESERVE: User may have edited
+                        'target_date': new_milestone.target_date,  # REFRESH from XML
+                        'status': new_milestone.status,  # REFRESH from XML
+                        'completion_date': new_milestone.completion_date,  # REFRESH from XML
+                        'completion_percentage': new_milestone.completion_percentage,  # REFRESH from XML
+                        'notes': existing.notes,  # PRESERVE: User edits
+                        'parent_project': new_milestone.parent_project,  # REFRESH from XML
+                        'resources': existing.resources,  # PRESERVE: User edits
+                        'project': new_project.project_code
+                    }
+                    milestones_to_save.append(merged_milestone)
+                else:
+                    # New milestone not in existing data - add it
+                    milestones_to_save.append({
+                        'id': new_id,
+                        'name': new_milestone.name,
+                        'target_date': new_milestone.target_date,
+                        'status': new_milestone.status,
+                        'completion_date': new_milestone.completion_date,
+                        'completion_percentage': new_milestone.completion_percentage,
+                        'notes': new_milestone.notes,
+                        'parent_project': new_milestone.parent_project,
+                        'resources': new_milestone.resources,
+                        'project': new_project.project_code
+                    })
+        else:
+            # First upload or baseline - use all milestones from XML as-is
+            milestones_to_save = [
                 {
-                    'id': getattr(m, 'id', None),  # Include milestone ID
+                    'id': getattr(m, 'id', None),
                     'name': m.name,
                     'target_date': m.target_date,
                     'status': m.status,
@@ -209,10 +250,20 @@ async def upload_xml(
                     'notes': m.notes,
                     'parent_project': m.parent_project,
                     'resources': m.resources,
-                    'project': new_project.project_code  # Add project code for frontend
+                    'project': new_project.project_code
                 }
                 for m in new_project.milestones
-            ],
+            ]
+        
+        # Convert to dict for YAML serialization
+        project_dict = {
+            'project_name': new_project.project_name,
+            'project_code': new_project.project_code,
+            'status': new_project.status,
+            'start_date': new_project.start_date,
+            'target_completion': new_project.target_completion,
+            'completion_percentage': new_project.completion_percentage,
+            'milestones': milestones_to_save,
             # Save risks from XML to project YAML
             'risks': [
                 {

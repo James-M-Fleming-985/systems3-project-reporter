@@ -559,9 +559,13 @@ class MSProjectXMLParser:
         
         # First, build a map of ResourceUID -> Resource Name
         resources = {}
-        for ns in self.ns_patterns:
-            resource_xpath = f'.//{ns}Resource' if ns else './/Resource'
-            found_resources = root.findall(resource_xpath)
+        # Try different namespace patterns
+        for ns_pattern in self.ns_patterns:
+            if ns_pattern == 'ms:':
+                # Skip the prefix pattern for findall as it requires namespace declaration
+                continue
+            resource_xpath = f'.//{ns_pattern}Resource' if ns_pattern else './/Resource'
+            found_resources = root.findall(resource_xpath, self.namespace if ns_pattern.startswith('{') else {})
             if found_resources:
                 for resource in found_resources:
                     uid_elem = self._find_element(resource, 'UID')
@@ -571,9 +575,12 @@ class MSProjectXMLParser:
                 break
         
         # Then, build task -> resources map from Assignments
-        for ns in self.ns_patterns:
-            assign_xpath = f'.//{ns}Assignment' if ns else './/Assignment'
-            found_assignments = root.findall(assign_xpath)
+        for ns_pattern in self.ns_patterns:
+            if ns_pattern == 'ms:':
+                # Skip the prefix pattern for findall
+                continue
+            assign_xpath = f'.//{ns_pattern}Assignment' if ns_pattern else './/Assignment'
+            found_assignments = root.findall(assign_xpath, self.namespace if ns_pattern.startswith('{') else {})
             if found_assignments:
                 for assignment in found_assignments:
                     task_uid = self._find_element(assignment, 'TaskUID')

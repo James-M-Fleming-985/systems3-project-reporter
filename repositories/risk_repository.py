@@ -25,7 +25,11 @@ class RiskRepository:
         """
         if storage_dir is None:
             # Use persistent storage path from environment variable (Railway Volume)
-            base_data_dir = os.getenv("DATA_STORAGE_PATH", "data")
+            base_data_dir = os.getenv("DATA_STORAGE_PATH")
+            if base_data_dir is None:
+                # Use absolute path relative to this file's location
+                repo_dir = Path(__file__).resolve().parent.parent
+                base_data_dir = str(repo_dir / "data")
             storage_dir = os.path.join(base_data_dir, "risks")
         
         self.storage_dir = storage_dir
@@ -33,6 +37,7 @@ class RiskRepository:
         
         # Log storage location for debugging
         logger.info(f"RiskRepository initialized with storage_dir: {self.storage_dir}")
+        logger.info(f"DATA_STORAGE_PATH env var: {os.getenv('DATA_STORAGE_PATH', 'NOT SET')}")
         logger.info(f"DATA_STORAGE_PATH env var: {os.getenv('DATA_STORAGE_PATH', 'NOT SET')}")
 
     
@@ -89,7 +94,22 @@ class RiskRepository:
         filename = f"{safe_name}_risks.json"
         filepath = os.path.join(self.storage_dir, filename)
         
+        # Debug logging
+        print(f"🔍 RiskRepository.load_risks() called with program_name: '{program_name}'")
+        print(f"🔍 Constructed safe_name: '{safe_name}'")
+        print(f"🔍 Looking for filename: '{filename}'")
+        print(f"🔍 Full filepath: '{filepath}'")
+        print(f"🔍 File exists: {os.path.exists(filepath)}")
+        
+        # List actual files in directory
+        if os.path.exists(self.storage_dir):
+            actual_files = os.listdir(self.storage_dir)
+            print(f"🔍 Actual files in {self.storage_dir}: {actual_files}")
+        else:
+            print(f"🔍 Storage directory does not exist: {self.storage_dir}")
+        
         if not os.path.exists(filepath):
+            print(f"❌ Risk file not found: {filepath}")
             return None
         
         try:
