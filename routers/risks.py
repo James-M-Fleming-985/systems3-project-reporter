@@ -708,7 +708,9 @@ async def export_risks_pdf(program_name: str):
                 miti_para = Paragraph(
                     "<b>Mitigations:</b> None",
                     small_style
-                )            desc_miti_data = [[desc_para, miti_para]]
+                )
+            
+            desc_miti_data = [[desc_para, miti_para]]
             
             desc_miti_table = Table(
                 desc_miti_data,
