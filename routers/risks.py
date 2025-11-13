@@ -686,7 +686,7 @@ async def export_risks_pdf(program_name: str):
             # Description and Mitigations in 2 columns
             desc_text = risk.get('description', 'No description')
             desc_para = Paragraph(
-                f"<b>Desc:</b> {desc_text}", 
+                f"<b>Description:</b> {desc_text}",
                 small_style
             )
             
@@ -695,22 +695,20 @@ async def export_risks_pdf(program_name: str):
             if mitigations:
                 if isinstance(mitigations, list):
                     miti_text = "; ".join([
-                        f"{idx}. {m}" 
+                        f"{idx}. {m}"
                         for idx, m in enumerate(mitigations, 1)
                     ])
                 else:
                     miti_text = str(mitigations)
                 miti_para = Paragraph(
-                    f"<b>Miti:</b> {miti_text}", 
+                    f"<b>Mitigations:</b> {miti_text}",
                     small_style
                 )
             else:
                 miti_para = Paragraph(
-                    "<b>Miti:</b> None", 
+                    "<b>Mitigations:</b> None",
                     small_style
-                )
-            
-            desc_miti_data = [[desc_para, miti_para]]
+                )            desc_miti_data = [[desc_para, miti_para]]
             
             desc_miti_table = Table(
                 desc_miti_data,
