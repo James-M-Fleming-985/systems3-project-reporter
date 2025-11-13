@@ -131,14 +131,9 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Custom Program Metrics</h3>
-            <div class="flex gap-2">
-                <button id="uploadMetricsBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
-                    📊 Upload Data
-                </button>
-                <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
-                    + Add Metric
-                </button>
-            </div>
+            <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+                + Add Metric
+            </button>
         </div>
         <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program. Update values regularly to see trends.</p>
         
@@ -260,6 +255,13 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <p class="text-xs text-gray-500 mt-1">Set the date for this metric value (useful for backdating or future entries)</p>
                 </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Annotation / Callout (Optional)</label>
+                    <textarea id="updateMetricAnnotation" rows="2"
+                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Add a note that will appear on the trend chart (e.g., 'New equipment installed', 'Team training completed')"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">This will appear as an annotation on the trend chart at this data point</p>
+                </div>
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="cancelUpdateBtn"
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
@@ -315,83 +317,7 @@
     </div>
 </div>
 
-<!-- Upload Metrics Data Modal -->
-<div id="uploadMetricsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 mx-auto p-6 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Upload Metric Historical Data</h3>
-            <p class="text-sm text-gray-600 mb-4">Upload CSV or Excel file with historical metric data. The file should have columns for metric name, date, and value.</p>
-            
-            <!-- Step 1: File Upload -->
-            <div id="uploadStep1">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select File (CSV or Excel)</label>
-                    <input type="file" id="metricsFileInput" accept=".csv,.xlsx,.xls" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-xs text-gray-500 mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button id="cancelUploadBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
-                        Cancel
-                    </button>
-                    <button id="parseFileBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                        Next: Map Fields
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Step 2: Field Mapping -->
-            <div id="uploadStep2" class="hidden">
-                <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
-                    <p class="text-sm text-blue-800"><strong>Preview:</strong> First 5 rows from your file</p>
-                </div>
-                <div class="overflow-x-auto mb-4">
-                    <table class="min-w-full divide-y divide-gray-200 border">
-                        <thead id="previewTableHead" class="bg-gray-50">
-                            <!-- Will be populated dynamically -->
-                        </thead>
-                        <tbody id="previewTableBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Will be populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
-                    <p class="text-sm text-yellow-800 mb-3"><strong>Map your columns to metric fields:</strong></p>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Metric Name Column</label>
-                            <select id="mapMetricName" class="w-full px-3 py-2 border border-gray-300 rounded">
-                                <option value="">-- Select Column --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date Column</label>
-                            <select id="mapDate" class="w-full px-3 py-2 border border-gray-300 rounded">
-                                <option value="">-- Select Column --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Value Column</label>
-                            <select id="mapValue" class="w-full px-3 py-2 border border-gray-300 rounded">
-                                <option value="">-- Select Column --</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end gap-3">
-                    <button id="backToUploadBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
-                        Back
-                    </button>
-                    <button id="importDataBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
-                        Import Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 {% endblock %}
 
@@ -832,7 +758,9 @@ function showTrendChart(index) {
         mode: 'lines+markers',
         name: metric.name,
         line: { color: '#3b82f6', width: 3 },
-        marker: { size: 8 }
+        marker: { size: 8 },
+        text: sortedHistory.map(h => h.annotation || ''),
+        hovertemplate: '%{y}' + (metric.unit ? ' ' + metric.unit : '') + '<br>%{x}<br>%{text}<extra></extra>'
     }];
     
     const layout = {
@@ -844,7 +772,7 @@ function showTrendChart(index) {
             title: 'Date',
             tickangle: -45
         },
-        margin: { t: 10, b: 60, l: 60, r: 10 },
+        margin: { t: 40, b: 60, l: 60, r: 10 },
         shapes: [{
             type: 'line',
             x0: dates[0],
@@ -857,15 +785,49 @@ function showTrendChart(index) {
                 dash: 'dash'
             }
         }],
-        annotations: [{
-            x: dates[Math.floor(dates.length / 2)],
-            y: metric.target,
-            text: `Target (${metric.target}${metric.unit ? ' ' + metric.unit : ''})`,
-            showarrow: false,
-            yshift: 10,
-            font: { size: 10, color: '#22c55e' }
-        }]
+        annotations: []
     };
+    
+    // Add target line annotation
+    layout.annotations.push({
+        x: dates[Math.floor(dates.length / 2)],
+        y: metric.target,
+        text: `Target (${metric.target}${metric.unit ? ' ' + metric.unit : ''})`,
+        showarrow: false,
+        yshift: 10,
+        font: { size: 10, color: '#22c55e' }
+    });
+    
+    // Add user annotations for data points with callouts
+    // Smart positioning to avoid overlap
+    const annotatedPoints = sortedHistory
+        .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
+        .filter(h => h.annotation);
+    
+    annotatedPoints.forEach((point, idx) => {
+        // Alternate y-positioning to reduce overlap
+        const yshift = idx % 2 === 0 ? 20 : 35;
+        const align = idx % 3 === 0 ? 'left' : (idx % 3 === 1 ? 'center' : 'right');
+        
+        layout.annotations.push({
+            x: point.date,
+            y: point.value,
+            text: point.annotation,
+            showarrow: true,
+            arrowhead: 2,
+            arrowsize: 1,
+            arrowwidth: 1.5,
+            arrowcolor: '#6366f1',
+            ax: 0,
+            ay: -yshift - 20,
+            bgcolor: 'rgba(255, 255, 255, 0.9)',
+            bordercolor: '#6366f1',
+            borderwidth: 1,
+            borderpad: 4,
+            font: { size: 10, color: '#1f2937' },
+            align: align
+        });
+    });
     
     Plotly.newPlot('metricTrendChart', data, layout, {responsive: true});
     document.getElementById('trendChartModal').classList.remove('hidden');
@@ -972,8 +934,9 @@ function initializeModalControls() {
             const index = parseInt(document.getElementById('updateMetricIndex').value);
             const newValue = parseFloat(document.getElementById('updateMetricValue').value);
             const dateValue = document.getElementById('updateMetricDate').value;
+            const annotation = document.getElementById('updateMetricAnnotation').value.trim();
             
-            // Add to history with user-specified date
+            // Add to history with user-specified date and annotation
             if (!customMetrics[index].history) {
                 customMetrics[index].history = [];
             }
@@ -981,10 +944,17 @@ function initializeModalControls() {
             // Convert date to ISO string at noon UTC to avoid timezone issues
             const selectedDate = new Date(dateValue + 'T12:00:00Z');
             
-            customMetrics[index].history.push({
+            const historyEntry = {
                 value: newValue,
                 date: selectedDate.toISOString()
-            });
+            };
+            
+            // Add annotation if provided
+            if (annotation) {
+                historyEntry.annotation = annotation;
+            }
+            
+            customMetrics[index].history.push(historyEntry);
             
             // Update current value
             customMetrics[index].value = newValue;

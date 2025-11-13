@@ -2,14 +2,16 @@
 Risk Upload Router
 Handles risk file uploads and management.
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Body
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Body, Query
+from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from services.risk_parser import RiskParser
 from repositories.risk_repository import RiskRepository
 from datetime import datetime
 import logging
+import io
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -557,3 +559,150 @@ async def normalize_risk_ids(program_name: str):
     except Exception as e:
         logger.error(f"Error normalizing risk IDs: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/export/{program_name}")
+async def export_risks_pdf(program_name: str):
+    """Export risks to PDF with full details including mitigations"""
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER
+        
+        # Clean program name
+        clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+        clean_name = clean_name.split('-')[0].strip() if '-' in clean_name else clean_name
+        
+        # Get risks
+        risks = risk_repo.load_risks(clean_name)
+        
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_name}")
+        
+        # Create PDF in memory
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+        
+        # Container for PDF elements
+        elements = []
+        
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            textColor=colors.HexColor('#1e40af'),
+            spaceAfter=12,
+            alignment=TA_CENTER
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            textColor=colors.HexColor('#1e40af'),
+            spaceAfter=6,
+            spaceBefore=12
+        )
+        normal_style = styles['Normal']
+        normal_style.fontSize = 10
+        
+        # Title
+        elements.append(Paragraph(f"Risk Register: {clean_name}", title_style))
+        elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # Process each risk
+        for i, risk in enumerate(risks):
+            # Risk header table
+            header_data = [
+                ['Risk ID:', risk.get('id', 'N/A'), 'Severity:', risk.get('severity_normalized', 'N/A').upper()],
+                ['Status:', risk.get('status', 'N/A'), 'Owner:', risk.get('owner', 'N/A')]
+            ]
+            
+            header_table = Table(header_data, colWidths=[1*inch, 2.5*inch, 1*inch, 2*inch])
+            header_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e5e7eb')),
+                ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#e5e7eb')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            
+            elements.append(Paragraph(f"<b>{risk.get('title', 'Untitled Risk')}</b>", heading_style))
+            elements.append(header_table)
+            elements.append(Spacer(1, 0.1*inch))
+            
+            # Description
+            elements.append(Paragraph("<b>Description:</b>", normal_style))
+            elements.append(Paragraph(risk.get('description', 'No description available'), normal_style))
+            elements.append(Spacer(1, 0.1*inch))
+            
+            # Mitigations
+            mitigations = risk.get('mitigations', [])
+            if mitigations:
+                elements.append(Paragraph("<b>Mitigations:</b>", normal_style))
+                if isinstance(mitigations, list):
+                    for idx, mitigation in enumerate(mitigations, 1):
+                        elements.append(Paragraph(f"{idx}. {mitigation}", normal_style))
+                else:
+                    elements.append(Paragraph(str(mitigations), normal_style))
+                elements.append(Spacer(1, 0.1*inch))
+            
+            # Additional details table
+            details_data = [
+                ['Likelihood:', risk.get('likelihood', 'N/A')],
+                ['Impact:', risk.get('impact', 'N/A')],
+            ]
+            
+            if risk.get('category'):
+                details_data.append(['Category:', risk.get('category')])
+            if risk.get('date_identified'):
+                details_data.append(['Date Identified:', risk.get('date_identified')])
+            
+            details_table = Table(details_data, colWidths=[1.5*inch, 5*inch])
+            details_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            
+            elements.append(details_table)
+            
+            # Add page break between risks (except for last one)
+            if i < len(risks) - 1:
+                elements.append(PageBreak())
+        
+        # Build PDF
+        doc.build(elements)
+        
+        # Get PDF data
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        
+        # Return as download
+        filename = f"risks_{clean_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_data),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting risks to PDF: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")

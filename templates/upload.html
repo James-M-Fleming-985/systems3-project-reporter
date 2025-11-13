@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload MS Project XML - Systems³ Project Reporter</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
@@ -48,6 +49,16 @@
                     <span class="font-semibold">Set as Baseline</span> - Skip change detection and establish new baseline
                 </label>
             </div>
+        </div>
+
+        <!-- Upload Metrics Historical Data -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-xl font-semibold mb-2">Upload Metrics Historical Data</h2>
+            <p class="text-gray-600 mb-6">Import historical custom metric data from CSV or Excel files</p>
+            
+            <button id="uploadMetricsBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                📊 Upload Metrics Data
+            </button>
         </div>
 
         <!-- Progress -->
@@ -518,6 +529,369 @@
                 modal.remove();
                 if (onConfirm) onConfirm();
             });
+        }
+
+        // ==================== METRICS UPLOAD FUNCTIONALITY ====================
+        const uploadMetricsBtn = document.getElementById('uploadMetricsBtn');
+        let metricsUploadModal = null;
+        let parsedFileData = null;
+        let programName = localStorage.getItem('selectedProgram') || '';
+        
+        // Clean program name
+        programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
+        programName = programName.replace(/-\d+$/, '').trim();
+
+        if (uploadMetricsBtn) {
+            uploadMetricsBtn.addEventListener('click', showMetricsUploadModal);
+        }
+
+        function showMetricsUploadModal() {
+            if (!programName) {
+                showErrorModal('No Program Selected', 'Please select a program from the dashboard before uploading metrics data.');
+                return;
+            }
+
+            metricsUploadModal = document.createElement('div');
+            metricsUploadModal.id = 'metricsUploadModal';
+            metricsUploadModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+            metricsUploadModal.innerHTML = `
+                <div class="relative top-10 mx-auto p-6 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+                    <div class="mt-3">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Upload Metric Historical Data</h3>
+                        <p class="text-sm text-gray-600 mb-4">Upload CSV or Excel file with historical metric data. The file should have columns for metric name, date, value, and optionally annotations/callouts.</p>
+                        
+                        <!-- Step 1: File Upload -->
+                        <div id="metricsUploadStep1">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select File (CSV or Excel)</label>
+                                <input type="file" id="metricsFileInput" accept=".csv,.xlsx,.xls" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+                            </div>
+                            <div class="flex justify-end gap-3">
+                                <button id="cancelMetricsUploadBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
+                                    Cancel
+                                </button>
+                                <button id="parseMetricsFileBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                                    Next: Map Fields
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Field Mapping -->
+                        <div id="metricsUploadStep2" class="hidden">
+                            <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                                <p class="text-sm text-blue-800"><strong>Preview:</strong> First 5 rows from your file</p>
+                            </div>
+                            <div class="overflow-x-auto mb-4">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead id="metricsPreviewTableHead" class="bg-gray-50">
+                                        <!-- Will be populated dynamically -->
+                                    </thead>
+                                    <tbody id="metricsPreviewTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Will be populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
+                                <p class="text-sm text-yellow-800 mb-3"><strong>Map your columns to metric fields:</strong></p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Metric Name Column *</label>
+                                        <select id="mapMetricName" class="w-full px-3 py-2 border border-gray-300 rounded">
+                                            <option value="">-- Select Column --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Column *</label>
+                                        <select id="mapDate" class="w-full px-3 py-2 border border-gray-300 rounded">
+                                            <option value="">-- Select Column --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Value Column *</label>
+                                        <select id="mapValue" class="w-full px-3 py-2 border border-gray-300 rounded">
+                                            <option value="">-- Select Column --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Annotation/Callout Column (Optional)</label>
+                                        <select id="mapAnnotation" class="w-full px-3 py-2 border border-gray-300 rounded">
+                                            <option value="">-- None --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-2">* Required fields</p>
+                            </div>
+                            
+                            <div class="flex justify-end gap-3">
+                                <button id="backToMetricsUploadBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
+                                    Back
+                                </button>
+                                <button id="importMetricsDataBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+                                    Import Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(metricsUploadModal);
+
+            // Attach event listeners
+            document.getElementById('cancelMetricsUploadBtn').addEventListener('click', closeMetricsUploadModal);
+            document.getElementById('parseMetricsFileBtn').addEventListener('click', parseMetricsFile);
+            document.getElementById('backToMetricsUploadBtn').addEventListener('click', () => {
+                document.getElementById('metricsUploadStep1').classList.remove('hidden');
+                document.getElementById('metricsUploadStep2').classList.add('hidden');
+            });
+            document.getElementById('importMetricsDataBtn').addEventListener('click', importMetricsData);
+        }
+
+        function closeMetricsUploadModal() {
+            if (metricsUploadModal) {
+                metricsUploadModal.remove();
+                metricsUploadModal = null;
+            }
+            parsedFileData = null;
+        }
+
+        async function parseMetricsFile() {
+            const fileInput = document.getElementById('metricsFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            try {
+                parsedFileData = await parseFile(file);
+                showMetricsFieldMapping(parsedFileData);
+                document.getElementById('metricsUploadStep1').classList.add('hidden');
+                document.getElementById('metricsUploadStep2').classList.remove('hidden');
+            } catch (error) {
+                alert('Error parsing file: ' + error.message);
+            }
+        }
+
+        function parseFile(file) {
+            return new Promise((resolve, reject) => {
+                const fileName = file.name.toLowerCase();
+                
+                if (fileName.endsWith('.csv')) {
+                    parseCSV(file).then(resolve).catch(reject);
+                } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    parseExcel(file).then(resolve).catch(reject);
+                } else {
+                    reject(new Error('Unsupported file format. Please use CSV or Excel.'));
+                }
+            });
+        }
+
+        function parseCSV(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\\n').filter(line => line.trim());
+                        
+                        if (lines.length < 2) {
+                            reject(new Error('CSV file must have at least a header row and one data row'));
+                            return;
+                        }
+                        
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                        const rows = lines.slice(1).map(line => {
+                            const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                            const obj = {};
+                            headers.forEach((header, i) => {
+                                obj[header] = values[i] || '';
+                            });
+                            return obj;
+                        });
+                        
+                        resolve({ headers, rows });
+                    } catch (error) {
+                        reject(new Error('Error parsing CSV file: ' + error.message));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Error reading CSV file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function parseExcel(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                        
+                        if (jsonData.length < 2) {
+                            reject(new Error('Excel file must have at least a header row and one data row'));
+                            return;
+                        }
+                        
+                        const headers = jsonData[0];
+                        const rows = jsonData.slice(1).map(row => {
+                            const obj = {};
+                            headers.forEach((header, i) => {
+                                obj[header] = row[i] !== undefined ? String(row[i]) : '';
+                            });
+                            return obj;
+                        });
+                        
+                        resolve({ headers, rows });
+                    } catch (error) {
+                        reject(new Error('Error parsing Excel file: ' + error.message));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Error reading Excel file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function showMetricsFieldMapping(data) {
+            const { headers, rows } = data;
+            
+            // Populate preview table
+            const thead = document.getElementById('metricsPreviewTableHead');
+            const tbody = document.getElementById('metricsPreviewTableBody');
+            
+            thead.innerHTML = '<tr>' + headers.map(h => \`<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">\${h}</th>\`).join('') + '</tr>';
+            
+            const previewRows = rows.slice(0, 5);
+            tbody.innerHTML = previewRows.map(row => 
+                '<tr>' + headers.map(h => \`<td class="px-4 py-2 text-sm text-gray-900">\${row[h] || ''}</td>\`).join('') + '</tr>'
+            ).join('');
+            
+            // Populate mapping dropdowns
+            const mapMetricName = document.getElementById('mapMetricName');
+            const mapDate = document.getElementById('mapDate');
+            const mapValue = document.getElementById('mapValue');
+            const mapAnnotation = document.getElementById('mapAnnotation');
+            
+            [mapMetricName, mapDate, mapValue].forEach(select => {
+                select.innerHTML = '<option value="">-- Select Column --</option>' + 
+                    headers.map(h => \`<option value="\${h}">\${h}</option>\`).join('');
+            });
+            
+            // Annotation is optional
+            mapAnnotation.innerHTML = '<option value="">-- None --</option>' + 
+                headers.map(h => \`<option value="\${h}">\${h}</option>\`).join('');
+            
+            // Auto-detect columns based on common names
+            headers.forEach(header => {
+                const lower = header.toLowerCase();
+                if (lower.includes('metric') || lower.includes('name')) {
+                    mapMetricName.value = header;
+                } else if (lower.includes('date') || lower.includes('time') || lower.includes('week')) {
+                    mapDate.value = header;
+                } else if (lower.includes('value') || lower.includes('amount') || lower.includes('score') || lower.includes('count')) {
+                    mapValue.value = header;
+                } else if (lower.includes('annotation') || lower.includes('callout') || lower.includes('note') || lower.includes('comment')) {
+                    mapAnnotation.value = header;
+                }
+            });
+        }
+
+        function importMetricsData() {
+            const metricNameCol = document.getElementById('mapMetricName').value;
+            const dateCol = document.getElementById('mapDate').value;
+            const valueCol = document.getElementById('mapValue').value;
+            const annotationCol = document.getElementById('mapAnnotation').value;
+            
+            if (!metricNameCol || !dateCol || !valueCol) {
+                alert('Please select metric name, date, and value columns');
+                return;
+            }
+            
+            const { rows } = parsedFileData;
+            
+            // Load existing metrics
+            const storageKey = \`customMetrics_\${programName}\`;
+            let customMetrics = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            let importCount = 0;
+            let updateCount = 0;
+            
+            rows.forEach(row => {
+                const metricName = row[metricNameCol];
+                const dateStr = row[dateCol];
+                const valueStr = row[valueCol];
+                const annotation = annotationCol ? row[annotationCol] : '';
+                
+                if (!metricName || !dateStr || !valueStr) return;
+                
+                const value = parseFloat(valueStr);
+                if (isNaN(value)) return;
+                
+                let date;
+                try {
+                    date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return;
+                } catch (e) {
+                    return;
+                }
+                
+                // Find or create metric
+                let metric = customMetrics.find(m => m.name === metricName);
+                
+                if (!metric) {
+                    // Create new metric
+                    metric = {
+                        name: metricName,
+                        value: value,
+                        target: value * 1.1,
+                        targetDate: '',
+                        unit: '',
+                        lastUpdated: date.toISOString(),
+                        history: []
+                    };
+                    customMetrics.push(metric);
+                    importCount++;
+                }
+                
+                // Add to history if not duplicate
+                if (!metric.history) metric.history = [];
+                
+                const existingEntry = metric.history.find(h => 
+                    new Date(h.date).toDateString() === date.toDateString()
+                );
+                
+                if (!existingEntry) {
+                    const historyEntry = {
+                        value: value,
+                        date: date.toISOString()
+                    };
+                    
+                    // Add annotation if provided
+                    if (annotation && annotation.trim()) {
+                        historyEntry.annotation = annotation.trim();
+                    }
+                    
+                    metric.history.push(historyEntry);
+                    updateCount++;
+                    
+                    // Update current value if this is the latest date
+                    if (new Date(metric.lastUpdated) < date) {
+                        metric.value = value;
+                        metric.lastUpdated = date.toISOString();
+                    }
+                }
+            });
+            
+            // Save metrics
+            localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+            
+            closeMetricsUploadModal();
+            showSuccessModal('Import Complete', \`Metrics imported: \${importCount}\\nData points added: \${updateCount}\\n\\nGo to the Metrics tab on the dashboard to view the imported data.\`);
         }
     </script>
 </body>

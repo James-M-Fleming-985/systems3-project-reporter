@@ -99,25 +99,28 @@
     <table class="min-w-full divide-y divide-gray-200" id="risksTable">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(0)">
-                    Risk ID ↕
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <!-- Expand column -->
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(1)">
-                    Title ↕
+                    Risk ID ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(2)">
-                    Project ↕
+                    Title ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(3)">
-                    Severity ↕
+                    Project ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(4)">
-                    Likelihood ↕
+                    Severity ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(5)">
-                    Impact ↕
+                    Likelihood ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(6)">
+                    Impact ↕
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(7)">
                     Status ↕
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -131,7 +134,14 @@
         <tbody class="bg-white divide-y divide-gray-200">
             {% if standalone_risks %}
             {% for risk in standalone_risks %}
-            <tr class="hover:bg-gray-50">
+            <tr class="hover:bg-gray-50" data-risk-row="{{ loop.index0 }}">
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <button onclick="toggleRiskDetails({{ loop.index0 }})" class="text-blue-600 hover:text-blue-800 focus:outline-none" title="Expand to see full details">
+                        <svg id="expand-icon-{{ loop.index0 }}" class="h-5 w-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {{ risk.id }}
                 </td>
@@ -177,6 +187,40 @@
                     <button onclick="viewRiskDetails(event)" data-risk-id="{{ risk.id }}" class="text-blue-600 hover:text-blue-900 mr-3">View</button>
                     <button onclick="editRisk(event)" data-risk-id="{{ risk.id }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
                     <button onclick="deleteRisk(event)" data-risk-id="{{ risk.id }}" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+            </tr>
+            <!-- Expandable Details Row -->
+            <tr id="risk-details-{{ loop.index0 }}" class="hidden bg-blue-50">
+                <td colspan="10" class="px-6 py-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-2">📋 Full Description</h4>
+                            <p class="text-sm text-gray-700">{{ risk.description }}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-2">✅ Mitigations</h4>
+                            {% if risk.mitigations %}
+                                {% if risk.mitigations is string %}
+                                    <p class="text-sm text-gray-700">{{ risk.mitigations }}</p>
+                                {% else %}
+                                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                        {% for mitigation in risk.mitigations %}
+                                        <li>{{ mitigation }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-sm text-gray-500 italic">No mitigations specified</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-2">📅 Timeline</h4>
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">Identified:</span> {{ risk.date_identified or 'Not specified' }}<br>
+                                <span class="font-medium">Category:</span> {{ risk.category or 'Not specified' }}
+                            </p>
+                        </div>
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -378,6 +422,25 @@ programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yam
 
 // Remove trailing version numbers like -09, -10, etc.
 programName = programName.replace(/-\d+$/, '').trim();
+
+// Store risk data for copying
+const risksData = {{ standalone_risks | tojson | safe }};
+
+// Toggle risk details row
+function toggleRiskDetails(index) {
+    const detailsRow = document.getElementById(`risk-details-${index}`);
+    const icon = document.getElementById(`expand-icon-${index}`);
+    
+    if (detailsRow.classList.contains('hidden')) {
+        detailsRow.classList.remove('hidden');
+        icon.classList.add('rotate-90');
+    } else {
+        detailsRow.classList.add('hidden');
+        icon.classList.remove('rotate-90');
+    }
+}
+
+
 
 // Toast notification functions
 function showToast(message, type = 'success') {

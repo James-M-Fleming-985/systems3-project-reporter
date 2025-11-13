@@ -17,6 +17,9 @@ openpyxl>=3.1.0
 # PowerPoint Export
 python-pptx>=0.6.21
 
+# PDF Export
+reportlab>=4.0.0
+
 # Payment Processing
 stripe>=5.0.0
 python-dotenv>=1.0.0
