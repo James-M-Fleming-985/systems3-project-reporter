@@ -119,8 +119,11 @@ class ChartFormatterService:
                     else:
                         quadrants['open'].append(milestone_data)
                 elif milestone.status == 'IN_PROGRESS':
-                    # Treat in-progress as open since you don't update progress
-                    quadrants['open'].append(milestone_data)
+                    # IN_PROGRESS milestones that are past due go to delayed
+                    if target_date < today:
+                        quadrants['delayed'].append(milestone_data)
+                    else:
+                        quadrants['open'].append(milestone_data)
         
         return quadrants
     
