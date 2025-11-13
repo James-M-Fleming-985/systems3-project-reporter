@@ -138,10 +138,17 @@
     </div>
 
     <script>
+        console.log('=== UPLOAD PAGE LOADED ===');
+        console.log('Page URL:', window.location.href);
+        
         let selectedFile = null;
         let uploadedData = null;
         let changesData = [];
 
+        // Check if metrics section exists
+        const metricsSection = document.querySelector('.bg-white.rounded-lg.shadow-md.p-8.mb-8:nth-child(2)');
+        console.log('Metrics section found:', metricsSection);
+        
         // Drag and drop functionality
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -532,17 +539,24 @@
         }
 
         // ==================== METRICS UPLOAD FUNCTIONALITY ====================
+        console.log('Initializing metrics upload...');
         const uploadMetricsBtn = document.getElementById('uploadMetricsBtn');
+        console.log('Upload metrics button found:', uploadMetricsBtn);
         let metricsUploadModal = null;
         let parsedFileData = null;
         let programName = localStorage.getItem('selectedProgram') || '';
+        console.log('Selected program:', programName);
         
         // Clean program name
         programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
         programName = programName.replace(/-\d+$/, '').trim();
+        console.log('Cleaned program name:', programName);
 
         if (uploadMetricsBtn) {
+            console.log('Adding click listener to metrics upload button');
             uploadMetricsBtn.addEventListener('click', showMetricsUploadModal);
+        } else {
+            console.error('Upload metrics button NOT found in DOM!');
         }
 
         function showMetricsUploadModal() {

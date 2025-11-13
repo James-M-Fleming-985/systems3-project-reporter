@@ -666,7 +666,7 @@ async def export_risks_pdf(program_name: str):
             ]]
             
             header_table = Table(header_data, colWidths=[
-                1.2*inch, 1.3*inch, 1.8*inch, 1*inch, 1*inch
+                1.4*inch, 1.5*inch, 2.2*inch, 1.2*inch, 1.2*inch
             ])
             header_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), 
@@ -713,8 +713,8 @@ async def export_risks_pdf(program_name: str):
             desc_miti_data = [[desc_para, miti_para]]
             
             desc_miti_table = Table(
-                desc_miti_data, 
-                colWidths=[4*inch, 3.6*inch]
+                desc_miti_data,
+                colWidths=[4.5*inch, 4*inch]
             )
             desc_miti_table.setStyle(TableStyle([
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
