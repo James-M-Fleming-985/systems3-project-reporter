@@ -178,9 +178,13 @@ async def program_metrics(request: Request):
     
     logger.info(f"Final metrics with risks: {json.dumps(metrics, indent=2)}")
     
+    # Get program name from first project if available
+    program_name = projects[0].project_name if projects else "Program"
+    
     context = {
         "request": request,
         "metrics": metrics,
+        "program_name": program_name,
         "build_version": BUILD_VERSION
     }
     
@@ -243,9 +247,13 @@ async def change_management(request: Request):
     projects = project_repo.load_all_projects()
     changes = chart_service.format_change_data(projects)
     
+    # Get program name from first project if available
+    program_name = projects[0].project_name if projects else "Program"
+    
     context = {
         "request": request,
         "changes": changes,
+        "program_name": program_name,
         "build_version": BUILD_VERSION
     }
     

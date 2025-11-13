@@ -97,6 +97,9 @@ class MetricsCalculator:
         Calculate milestone health breakdown
         Categories: Completed, In Progress, Not Started, Late (overdue)
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         today = datetime.now().date()
         
         health = {
@@ -106,14 +109,20 @@ class MetricsCalculator:
             'late': 0
         }
         
+        logger.warning(f"🔍 Processing {len(tasks)} milestones for health calculation")
+        
         for task in tasks:
             status = task.get('status', 'NOT_STARTED')
             target_date_str = task.get('target_date')
+            milestone_name = task.get('name', 'Unknown')
+            
+            logger.warning(f"  Milestone '{milestone_name}': status='{status}', target_date='{target_date_str}'")
             
             if status == 'COMPLETED':
                 health['completed'] += 1
             elif status == 'IN_PROGRESS':
                 health['in_progress'] += 1
+                logger.warning(f"    ✅ Counted as IN_PROGRESS")
             elif status == 'NOT_STARTED':
                 # Check if it's late (past target date but not started)
                 if target_date_str:
@@ -141,6 +150,7 @@ class MetricsCalculator:
                     except:
                         pass
         
+        logger.warning(f"🎯 Final milestone health: {health}")
         return health
     
     def _calculate_schedule_trend(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
