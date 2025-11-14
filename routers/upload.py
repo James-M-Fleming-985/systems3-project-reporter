@@ -192,6 +192,8 @@ async def upload_xml(
         
         # SMART MERGE: Preserve manually edited milestone data when re-uploading
         milestones_to_save = []
+        seen_milestone_names = set()  # Track to prevent duplicates
+        
         if existing_project and not is_baseline_upload and hasattr(existing_project, 'milestones'):
             # Create lookup by milestone ID (most reliable) and name (fallback)
             existing_by_id = {getattr(m, 'id', None): m for m in existing_project.milestones if getattr(m, 'id', None)}
@@ -199,27 +201,66 @@ async def upload_xml(
             
             for new_milestone in new_project.milestones:
                 new_id = getattr(new_milestone, 'id', None)
+                milestone_name = new_milestone.name.strip()
                 
-                # Try to find existing milestone by ID first, then name
+                # Skip if we've already processed a milestone with this name
+                if milestone_name in seen_milestone_names:
+                    logger.warning(
+                        f"⚠️ DUPLICATE MILESTONE DETECTED: '{milestone_name}' "
+                        f"- skipping duplicate from XML"
+                    )
+                    continue
+                seen_milestone_names.add(milestone_name)
+                
+                # Try to find existing milestone with multiple strategies
                 existing = None
+                match_method = None
+                
+                # Strategy 1: Match by ID (most reliable)
                 if new_id and new_id in existing_by_id:
                     existing = existing_by_id[new_id]
-                elif new_milestone.name in existing_by_name:
-                    existing = existing_by_name[new_milestone.name]
+                    match_method = 'id'
+                
+                # Strategy 2: Match by name
+                elif milestone_name in existing_by_name:
+                    existing = existing_by_name[milestone_name]
+                    match_method = 'name'
+                
+                # Strategy 3: Match by date + parent (handles renamed milestones)
+                else:
+                    for existing_m in existing_project.milestones:
+                        if (existing_m.target_date == new_milestone.target_date and
+                            existing_m.parent_project == new_milestone.parent_project and
+                            new_milestone.target_date and new_milestone.parent_project):
+                            existing = existing_m
+                            match_method = 'date+parent'
+                            logger.warning(
+                                f"📝 Matched by date+parent: "
+                                f"'{existing_m.name}' ← '{milestone_name}'"
+                            )
+                            break
                 
                 if existing:
-                    # PRESERVE user edits: Use existing data for user-editable fields
-                    # REFRESH from XML: dates and percentages (these come from MS Project)
+                    # Log the match for debugging
+                    if match_method == 'date+parent':
+                        logger.info(
+                            f"Merging renamed milestone: "
+                            f"XML '{milestone_name}' → "
+                            f"Existing '{existing.name}'"
+                        )
+                    
+                    # PRESERVE user edits for certain fields
+                    # REFRESH from XML for MS Project data
                     merged_milestone = {
-                        'id': new_id,  # Keep ID from XML
-                        'name': existing.name,  # PRESERVE: User may have edited
-                        'target_date': new_milestone.target_date,  # REFRESH from XML
-                        'status': new_milestone.status,  # REFRESH from XML
-                        'completion_date': new_milestone.completion_date,  # REFRESH from XML
-                        'completion_percentage': new_milestone.completion_percentage,  # REFRESH from XML
-                        'notes': existing.notes,  # PRESERVE: User edits
-                        'parent_project': new_milestone.parent_project,  # REFRESH from XML
-                        'resources': existing.resources,  # PRESERVE: User edits
+                        'id': new_id,
+                        'name': existing.name,  # PRESERVE user edits
+                        'target_date': new_milestone.target_date,  # XML
+                        'status': new_milestone.status,  # XML
+                        'completion_date': new_milestone.completion_date,  # XML
+                        'completion_percentage': new_milestone.completion_percentage,  # XML
+                        'notes': existing.notes,  # PRESERVE user edits
+                        'parent_project': new_milestone.parent_project,  # XML
+                        'resources': existing.resources,  # PRESERVE user edits
                         'project': new_project.project_code
                     }
                     milestones_to_save.append(merged_milestone)
@@ -238,9 +279,19 @@ async def upload_xml(
                         'project': new_project.project_code
                     })
         else:
-            # First upload or baseline - use all milestones from XML as-is
-            milestones_to_save = [
-                {
+            # First upload or baseline - deduplicate and use milestones from XML
+            seen_names = set()
+            for m in new_project.milestones:
+                milestone_name = m.name.strip()
+                if milestone_name in seen_names:
+                    logger.warning(
+                        f"⚠️ DUPLICATE MILESTONE IN XML: '{milestone_name}' "
+                        f"- skipping duplicate"
+                    )
+                    continue
+                seen_names.add(milestone_name)
+                
+                milestones_to_save.append({
                     'id': getattr(m, 'id', None),
                     'name': m.name,
                     'target_date': m.target_date,
@@ -251,9 +302,30 @@ async def upload_xml(
                     'parent_project': m.parent_project,
                     'resources': m.resources,
                     'project': new_project.project_code
-                }
-                for m in new_project.milestones
-            ]
+                })
+        
+        # CLEANUP: Remove any existing duplicates from final merged data
+        final_milestones = []
+        final_seen_names = set()
+        duplicates_removed = 0
+        
+        for m in milestones_to_save:
+            m_name = m.get('name', '').strip()
+            if m_name in final_seen_names:
+                duplicates_removed += 1
+                logger.warning(
+                    f"⚠️ REMOVING DUPLICATE from saved data: '{m_name}'"
+                )
+                continue
+            final_seen_names.add(m_name)
+            final_milestones.append(m)
+        
+        if duplicates_removed > 0:
+            logger.warning(
+                f"🧹 Cleaned up {duplicates_removed} duplicate milestone(s)"
+            )
+        
+        milestones_to_save = final_milestones
         
         # Convert to dict for YAML serialization
         project_dict = {
