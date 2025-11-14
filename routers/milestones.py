@@ -168,23 +168,42 @@ async def update_milestone(data: MilestoneUpdate):
         
         # Save updated project data
         logger.warning("💾 Writing updated data to YAML file...")
-        with open(yaml_path, 'w', encoding='utf-8') as f:
-            yaml.safe_dump(
-                project_data, f,
-                default_flow_style=False,
-                allow_unicode=True
+        try:
+            with open(yaml_path, 'w', encoding='utf-8') as f:
+                yaml.safe_dump(
+                    project_data, f,
+                    default_flow_style=False,
+                    allow_unicode=True
+                )
+            logger.warning("✅ YAML file written successfully")
+        except Exception as e:
+            logger.error(f"❌ Error writing YAML: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to save changes: {str(e)}"
             )
         
         # Verify the write by reading back
         if updated_index is not None:
-            logger.warning("🔍 Verifying saved data...")
-            with open(yaml_path, 'r', encoding='utf-8') as f:
-                verify_data = yaml.safe_load(f)
-                saved_milestone = verify_data['milestones'][updated_index]
-                logger.warning(
-                    f"   Verified completion: "
-                    f"{saved_milestone.get('completion_percentage')}%"
-                )
+            try:
+                logger.warning("🔍 Verifying saved data...")
+                with open(yaml_path, 'r', encoding='utf-8') as f:
+                    verify_data = yaml.safe_load(f)
+                    if (verify_data and 'milestones' in verify_data and
+                            updated_index < len(verify_data['milestones'])):
+                        saved_milestone = verify_data['milestones'][
+                            updated_index
+                        ]
+                        logger.warning(
+                            f"   Verified completion: "
+                            f"{saved_milestone.get('completion_percentage')}%"
+                        )
+                    else:
+                        logger.warning(
+                            "⚠️ Could not verify - invalid index or data"
+                        )
+            except Exception as e:
+                logger.warning(f"⚠️ Verification failed (non-fatal): {e}")
         
         logger.info(
             f"Updated milestone '{updated_milestone['name']}' "

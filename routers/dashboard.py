@@ -86,20 +86,21 @@ async def milestone_tracker(request: Request):
     
     # Log milestone data being loaded for debugging
     for project in projects:
-        if project.get('project_code') == 'ZLD-P1':
-            milestones = project.get('milestones', [])
+        if hasattr(project, 'project_code') and project.project_code == 'ZLD-P1':
+            milestones = project.milestones if hasattr(project, 'milestones') else []
             znni_milestones = [
                 m for m in milestones
-                if 'ZnNi Vat Solution Qualification' in m.get('name', '')
+                if 'ZnNi Vat Solution Qualification' in (m.get('name', '') if isinstance(m, dict) else getattr(m, 'name', ''))
             ]
             if znni_milestones:
                 logger.warning(
                     "📖 Loading ZnNi Vat Solution Qualification milestones:"
                 )
                 for m in znni_milestones[:3]:  # First 3
+                    name = m.get('name', '') if isinstance(m, dict) else getattr(m, 'name', '')
+                    completion = m.get('completion_percentage', 0) if isinstance(m, dict) else getattr(m, 'completion_percentage', 0)
                     logger.warning(
-                        f"   '{m.get('name', '')}' = "
-                        f"{m.get('completion_percentage', 0)}%"
+                        f"   '{name}' = {completion}%"
                     )
     
     quadrants = chart_service.calculate_milestone_quadrants(projects)
