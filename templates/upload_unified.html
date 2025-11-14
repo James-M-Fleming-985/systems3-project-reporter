@@ -744,6 +744,15 @@ function showMetricsUploadModal() {
                         <p class="text-xs text-gray-600 mt-2">* Required fields</p>
                     </div>
                     
+                    <div class="bg-gray-50 border border-gray-200 rounded p-4 mb-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="overwriteDuplicates" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <strong>Overwrite existing data</strong> - Replace values for dates that already exist (default: skip duplicates)
+                            </span>
+                        </label>
+                    </div>
+                    
                     <div class="flex justify-end gap-3">
                         <button id="backToMetricsUploadBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
                             Back
@@ -967,6 +976,7 @@ function importMetricsData() {
     const dateCol = document.getElementById('mapDate').value;
     const valueCol = document.getElementById('mapValue').value;
     const annotationCol = document.getElementById('mapAnnotation').value;
+    const overwriteDuplicates = document.getElementById('overwriteDuplicates').checked;
     
     // Hide previous messages
     document.getElementById('metricsSuccess').classList.add('hidden');
@@ -978,6 +988,8 @@ function importMetricsData() {
         document.getElementById('metricsError').classList.remove('hidden');
         return;
     }
+    
+    console.log('Import mode:', overwriteDuplicates ? 'OVERWRITE' : 'MERGE (skip duplicates)');
     
     console.log('Import starting with mappings:', { metricNameCol, dateCol, valueCol, annotationCol });
     console.log('Parsed file data:', parsedFileData);
@@ -1057,6 +1069,9 @@ function importMetricsData() {
             importCount++;
         } else {
             console.log('Found existing metric:', metricName, 'with', metric.history ? metric.history.length : 0, 'history entries');
+            if (metric.history && metric.history.length > 0) {
+                console.log('Existing history dates:', metric.history.map(h => new Date(h.date).toDateString()));
+            }
         }
         
         // Add to history if not duplicate
@@ -1065,15 +1080,37 @@ function importMetricsData() {
             metric.history = [];
         }
         
-        const existingEntry = metric.history.find(h => 
-            new Date(h.date).toDateString() === date.toDateString()
-        );
+        const importDate = date.toDateString();
+        console.log('Checking for duplicate - Import date:', importDate);
+        
+        const existingEntry = metric.history.find(h => {
+            const historyDate = new Date(h.date).toDateString();
+            console.log('Comparing with history date:', historyDate, 'Match:', historyDate === importDate);
+            return historyDate === importDate;
+        });
         
         if (existingEntry) {
-            console.log('Skipping duplicate entry for', metricName, 'on', date.toDateString());
-            skippedCount++;
+            if (overwriteDuplicates) {
+                console.log('DUPLICATE FOUND - OVERWRITING entry for', metricName, 'on', importDate, 'old value:', existingEntry.value, 'new value:', value);
+                existingEntry.value = value;
+                if (annotation && annotation.trim()) {
+                    existingEntry.annotation = annotation.trim();
+                    console.log('Updated annotation:', annotation.trim());
+                }
+                updateCount++;
+                
+                // Update current value if this is the latest date
+                if (!metric.lastUpdated || new Date(metric.lastUpdated) < date) {
+                    console.log('Updating current value for', metricName, 'from', metric.value, 'to', value);
+                    metric.value = value;
+                    metric.lastUpdated = date.toISOString();
+                }
+            } else {
+                console.log('DUPLICATE FOUND - Skipping entry for', metricName, 'on', importDate, 'existing value:', existingEntry.value, 'new value:', value);
+                skippedCount++;
+            }
         } else {
-            console.log('Adding history entry for', metricName, 'on', date.toDateString(), 'value:', value);
+            console.log('NO DUPLICATE - Adding history entry for', metricName, 'on', importDate, 'value:', value);
             const historyEntry = {
                 value: value,
                 date: date.toISOString()
@@ -1110,7 +1147,13 @@ function importMetricsData() {
     if (importCount > 0 || updateCount > 0) {
         let message = '';
         if (importCount > 0) message += importCount + ' new metric(s) created<br>';
-        if (updateCount > 0) message += updateCount + ' data point(s) added<br>';
+        if (updateCount > 0) {
+            if (overwriteDuplicates) {
+                message += updateCount + ' data point(s) ' + (updateCount === 1 ? 'updated/added' : 'updated/added') + '<br>';
+            } else {
+                message += updateCount + ' data point(s) added<br>';
+            }
+        }
         if (skippedCount > 0) message += '<span class="text-green-600">' + skippedCount + ' duplicate(s) skipped</span>';
         
         document.getElementById('metricsSuccessMessage').innerHTML = message;
