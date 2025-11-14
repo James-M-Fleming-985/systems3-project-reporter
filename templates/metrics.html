@@ -839,11 +839,33 @@ function showTrendChart(index) {
             borderpad: 5,
             font: { size: 10, color: '#1f2937' },
             align: align,
-            xanchor: align
+            xanchor: align,
+            captureevents: true  // Allow annotations to be interactive
         });
     });
     
-    Plotly.newPlot('metricTrendChart', data, layout, {responsive: true});
+    // Configure Plotly with editable annotations
+    const config = {
+        responsive: true,
+        editable: true,  // Enable editing mode
+        displayModeBar: true,
+        modeBarButtonsToAdd: ['drawopenpath', 'eraseshape'],
+        displaylogo: false
+    };
+    
+    Plotly.newPlot('metricTrendChart', data, layout, config);
+    
+    // Add instructions for users
+    const chartDiv = document.getElementById('metricTrendChart');
+    const instructionDiv = document.createElement('div');
+    instructionDiv.className = 'text-xs text-gray-500 text-center mt-2 p-2 bg-blue-50 border border-blue-200 rounded';
+    instructionDiv.innerHTML = '💡 <strong>Tip:</strong> Click and drag the callout boxes to reposition them';
+    
+    // Insert instructions before the chart if not already present
+    if (!chartDiv.previousElementSibling?.classList?.contains('bg-blue-50')) {
+        chartDiv.parentNode.insertBefore(instructionDiv, chartDiv);
+    }
+    
     document.getElementById('trendChartModal').classList.remove('hidden');
 }
 
