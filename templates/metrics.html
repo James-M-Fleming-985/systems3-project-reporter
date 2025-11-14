@@ -743,6 +743,9 @@ function showTrendChart(index) {
         return;
     }
     
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    const annotationPositionsKey = `annotationPositions_${selectedProgram}_${metric.name}`;
+    
     document.getElementById('trendChartTitle').textContent = `${metric.name} - Trend Chart`;
     
     // Sort history by date
@@ -814,13 +817,37 @@ function showTrendChart(index) {
         .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
         .filter(h => h.annotation);
     
+    // Load saved annotation positions from localStorage
+    let savedPositions = {};
+    try {
+        const saved = localStorage.getItem(annotationPositionsKey);
+        if (saved) {
+            savedPositions = JSON.parse(saved);
+            console.log('Loaded saved annotation positions:', savedPositions);
+        }
+    } catch (e) {
+        console.warn('Failed to load annotation positions:', e);
+    }
+    
     annotatedPoints.forEach((point, idx) => {
-        // Calculate positions to avoid overlap - use alternating sides and heights
-        const totalAnnotations = annotatedPoints.length;
-        const yshiftBase = 40;
-        const yshift = yshiftBase + (idx % 3) * 25; // Stagger heights
-        const xshift = idx % 2 === 0 ? -60 : 60; // Alternate left/right
-        const align = idx % 2 === 0 ? 'right' : 'left';
+        // Check if we have saved position for this annotation
+        const savedPos = savedPositions[point.date];
+        
+        let ax, ay;
+        if (savedPos) {
+            // Use saved position
+            ax = savedPos.ax;
+            ay = savedPos.ay;
+            console.log('Using saved position for', point.date, ':', { ax, ay });
+        } else {
+            // Calculate default positions to avoid overlap - use alternating sides and heights
+            const yshiftBase = 40;
+            const yshift = yshiftBase + (idx % 3) * 25; // Stagger heights
+            ax = idx % 2 === 0 ? -60 : 60; // Alternate left/right
+            ay = -yshift;
+        }
+        
+        const align = ax < 0 ? 'right' : 'left';
         
         layout.annotations.push({
             x: point.date,
@@ -831,8 +858,8 @@ function showTrendChart(index) {
             arrowsize: 1,
             arrowwidth: 1.5,
             arrowcolor: '#6366f1',
-            ax: xshift,
-            ay: -yshift,
+            ax: ax,
+            ay: ay,
             bgcolor: 'rgba(255, 255, 255, 0.95)',
             bordercolor: '#6366f1',
             borderwidth: 1.5,
@@ -854,6 +881,34 @@ function showTrendChart(index) {
     };
     
     Plotly.newPlot('metricTrendChart', data, layout, config);
+    
+    // Listen for annotation changes and save positions
+    const chartDiv = document.getElementById('metricTrendChart');
+    chartDiv.on('plotly_relayout', function(eventData) {
+        // Check if annotations were updated
+        if (eventData && Object.keys(eventData).some(key => key.startsWith('annotations'))) {
+            console.log('Annotation positions changed:', eventData);
+            
+            // Get current layout
+            const currentLayout = chartDiv.layout;
+            if (currentLayout.annotations) {
+                // Save annotation positions
+                const positions = {};
+                currentLayout.annotations.forEach(ann => {
+                    // Save positions keyed by the x value (date) to match them up
+                    if (ann.x && ann.ax !== undefined && ann.ay !== undefined) {
+                        positions[ann.x] = {
+                            ax: ann.ax,
+                            ay: ann.ay
+                        };
+                    }
+                });
+                
+                localStorage.setItem(annotationPositionsKey, JSON.stringify(positions));
+                console.log('Saved annotation positions to localStorage:', positions);
+            }
+        }
+    });
     
     // Add instructions for users
     const chartDiv = document.getElementById('metricTrendChart');
