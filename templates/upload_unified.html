@@ -584,6 +584,29 @@ document.addEventListener('keydown', (e) => {
 
 // ==================== METRICS UPLOAD FUNCTIONALITY ====================
 console.log('Initializing metrics upload...');
+
+// Notification function
+function showNotification(title, message, type = 'info') {
+    const colors = {
+        success: 'bg-green-100 border-green-500 text-green-800',
+        error: 'bg-red-100 border-red-500 text-red-800',
+        warning: 'bg-yellow-100 border-yellow-500 text-yellow-800',
+        info: 'bg-blue-100 border-blue-500 text-blue-800'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 z-50 max-w-md p-4 border-l-4 rounded shadow-lg ' + (colors[type] || colors.info);
+    notification.innerHTML = '<div class="font-bold mb-1">' + title + '</div><div class="text-sm whitespace-pre-line">' + message + '</div>';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.3s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
 const uploadMetricsBtn = document.getElementById('uploadMetricsBtn');
 console.log('Upload metrics button found:', uploadMetricsBtn);
 let metricsUploadModal = null;
@@ -791,8 +814,15 @@ function parseExcel(file) {
         if (typeof XLSX === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-            script.onload = () => readExcelFile(file, resolve, reject);
-            script.onerror = () => reject(new Error('Failed to load Excel parser library'));
+            script.onload = () => {
+                // Check if library loaded successfully despite tracking protection
+                if (typeof XLSX === 'undefined') {
+                    reject(new Error('Excel parser library blocked by browser tracking protection. Please disable tracking protection for this site or use CSV format instead.'));
+                } else {
+                    readExcelFile(file, resolve, reject);
+                }
+            };
+            script.onerror = () => reject(new Error('Failed to load Excel parser library. Please use CSV format or disable tracking protection.'));
             document.head.appendChild(script);
         } else {
             readExcelFile(file, resolve, reject);
