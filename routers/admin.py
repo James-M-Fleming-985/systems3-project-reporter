@@ -17,6 +17,46 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 
 
+@router.post("/admin/reload-projects")
+async def reload_project_data():
+    """
+    Force reload all project data from YAML files.
+    Use this after running cleanup to refresh cached data.
+    """
+    try:
+        from main import project_repo
+        
+        logger.info("=== RELOADING PROJECT DATA ===")
+        
+        # Force reload by re-instantiating the repository
+        projects = project_repo.load_all_projects()
+        
+        logger.info(f"Reloaded {len(projects)} project(s)")
+        for project in projects:
+            logger.info(
+                f"  {project.project_code}: "
+                f"{len(project.milestones)} milestones"
+            )
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Reloaded {len(projects)} project(s)',
+            'projects': [
+                {
+                    'code': p.project_code,
+                    'name': p.project_name,
+                    'milestones': len(p.milestones),
+                    'risks': len(p.risks)
+                }
+                for p in projects
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Error reloading projects: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/admin/cleanup-duplicates")
 async def cleanup_duplicate_milestones():
     """
@@ -118,9 +158,20 @@ async def cleanup_duplicate_milestones():
             f"from {projects_with_duplicates} project(s) ==="
         )
         
+        # Auto-reload project data to refresh cache
+        if total_duplicates > 0:
+            logger.info("Auto-reloading project data...")
+            from main import project_repo
+            projects = project_repo.load_all_projects()
+            logger.info(f"Reloaded {len(projects)} project(s)")
+        
         return JSONResponse({
             'success': True,
-            'message': f'Removed {total_duplicates} duplicate milestone(s) from {projects_with_duplicates} project(s)',
+            'message': (
+                f'Removed {total_duplicates} duplicate milestone(s) '
+                f'from {projects_with_duplicates} project(s). '
+                f'Data reloaded.'
+            ),
             'projects_processed': len(project_dirs),
             'projects_with_duplicates': projects_with_duplicates,
             'total_duplicates_removed': total_duplicates,
