@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.130"
+BUILD_VERSION = "1.0.131"
 
 
 # Setup logging
@@ -122,7 +122,7 @@ async def health_check():
 
 
 # Import routers
-from routers import dashboard, upload, export, risks, milestones
+from routers import dashboard, upload, export, risks, milestones, admin
 
 # Include routers
 # Dashboard router has: /, /gantt, /milestones, /risks, /changes
@@ -135,6 +135,8 @@ app.include_router(export.router, tags=["export"])
 app.include_router(risks.router, tags=["risks"])
 # Milestones router has: /milestones/update
 app.include_router(milestones.router, tags=["milestones"])
+# Admin router has: /admin/cleanup-duplicates
+app.include_router(admin.router, tags=["admin"])
 
 # Optional: Subscription and Stripe routers (if dependencies available)
 try:

@@ -1,45 +1,45 @@
-project_name: ZnNi Customer Portal Development
-project_code: ZCP-P1
-status: IN_PROGRESS
-start_date: '2025-11-13'
-target_completion: '2025-12-31'
+changes: []
 completion_percentage: 25
 milestones:
-  - id: '1'
-    name: Test Milestone Completed
-    status: COMPLETED
-    target_date: '2025-11-01'
-    completion_date: '2025-11-01'
-    completion_percentage: 100
-    parent_project: Main Project
-    resources: John Doe
-    notes: ''
-  - id: '2'
-    name: Test Milestone In Progress
-    status: IN_PROGRESS
-    target_date: '2025-12-15'
-    completion_date: null
-    completion_percentage: 50
-    parent_project: Main Project
-    resources: Jane Smith
-    notes: ''
-  - id: '3'
-    name: Test Milestone Not Started
-    status: NOT_STARTED
-    target_date: '2025-12-31'
-    completion_date: null
-    completion_percentage: 0
-    parent_project: Main Project
-    resources: Bob Johnson
-    notes: ''
-  - id: '4'
-    name: Test Milestone Late
-    status: IN_PROGRESS
-    target_date: '2025-11-05'
-    completion_date: null
-    completion_percentage: 30
-    parent_project: Main Project
-    resources: Alice Brown
-    notes: ''
+- completion_date: '2025-11-01'
+  completion_percentage: 100
+  id: '1'
+  name: Test Milestone Completed
+  notes: ''
+  parent_project: Main Project
+  resources: John Doe
+  status: COMPLETED
+  target_date: '2025-11-01'
+- completion_date: null
+  completion_percentage: 50
+  id: '2'
+  name: Test Milestone In Progress
+  notes: ''
+  parent_project: Main Project
+  resources: Jane Smith
+  status: IN_PROGRESS
+  target_date: '2025-12-15'
+- completion_date: null
+  completion_percentage: 0
+  id: '3'
+  name: Test Milestone Not Started
+  notes: ''
+  parent_project: Main Project
+  resources: Bob Johnson
+  status: NOT_STARTED
+  target_date: '2025-12-31'
+- completion_date: null
+  completion_percentage: 30
+  id: '4'
+  name: Test Milestone Late
+  notes: ''
+  parent_project: Main Project
+  resources: Alice Brown
+  status: IN_PROGRESS
+  target_date: '2025-11-05'
+project_code: ZCP-P1
+project_name: ZnNi Customer Portal Development
 risks: []
-changes: []
+start_date: '2025-11-13'
+status: IN_PROGRESS
+target_completion: '2025-12-31'
