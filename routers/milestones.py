@@ -72,10 +72,27 @@ async def update_milestone(data: MilestoneUpdate):
         logger.warning(f"Total milestones in YAML: {len(project_data.get('milestones', []))}")
         logger.warning(f"First 5 milestone names: {[m['name'] for m in project_data.get('milestones', [])][:5]}")
         
-        # Find and update the milestone
+        # Check for duplicates
+        matching_indices = [
+            i for i, m in enumerate(project_data.get('milestones', []))
+            if m['name'].strip() == updated_milestone['name'].strip()
+        ]
+        if len(matching_indices) > 1:
+            logger.warning(
+                f"⚠️ FOUND {len(matching_indices)} DUPLICATE MILESTONES:"
+            )
+            for idx in matching_indices:
+                m = project_data['milestones'][idx]
+                logger.warning(
+                    f"   Index {idx}: completion="
+                    f"{m.get('completion_percentage', 0)}%, "
+                    f"status={m.get('status')}, date={m.get('target_date')}"
+                )
+        
+        # Find and update the milestone (UPDATE ALL DUPLICATES)
         updated = False
         match_type = None
-        updated_index = None  # Track which milestone was updated
+        updated_indices = []  # Track ALL updated milestones
         if 'milestones' in project_data:
             incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
@@ -116,7 +133,7 @@ async def update_milestone(data: MilestoneUpdate):
                     match_type = 'date_parent'
                 
                 if updated:
-                    updated_index = i  # Save the index
+                    updated_indices.append(i)  # Track this update
                     # Update milestone - always save incoming name (user edits)
                     new_completion = updated_milestone.get(
                         'completion_percentage', 0
@@ -143,9 +160,10 @@ async def update_milestone(data: MilestoneUpdate):
                     )
                     logger.warning(f"   Status: {updated_milestone['status']}")
                     logger.warning(f"   Match type: {match_type}")
-                    break
+                    # Don't break - continue to update ALL duplicates
+                    updated = False  # Reset to continue searching
         
-        if not updated:
+        if not updated_indices:
             # Search for similar names to help debug
             milestone_count = len(project_data.get('milestones', []))
             logger.warning(
@@ -166,6 +184,11 @@ async def update_milestone(data: MilestoneUpdate):
                 )
             )
         
+        logger.warning(
+            f"📝 Updated {len(updated_indices)} milestone(s) at "
+            f"indices: {updated_indices}"
+        )
+        
         # Save updated project data
         logger.warning("💾 Writing updated data to YAML file...")
         try:
@@ -184,24 +207,19 @@ async def update_milestone(data: MilestoneUpdate):
             )
         
         # Verify the write by reading back
-        if updated_index is not None:
+        if updated_indices:
             try:
                 logger.warning("🔍 Verifying saved data...")
                 with open(yaml_path, 'r', encoding='utf-8') as f:
                     verify_data = yaml.safe_load(f)
-                    if (verify_data and 'milestones' in verify_data and
-                            updated_index < len(verify_data['milestones'])):
-                        saved_milestone = verify_data['milestones'][
-                            updated_index
-                        ]
-                        logger.warning(
-                            f"   Verified completion: "
-                            f"{saved_milestone.get('completion_percentage')}%"
-                        )
-                    else:
-                        logger.warning(
-                            "⚠️ Could not verify - invalid index or data"
-                        )
+                    for idx in updated_indices[:3]:  # Check first 3
+                        if (verify_data and 'milestones' in verify_data and
+                                idx < len(verify_data['milestones'])):
+                            saved_milestone = verify_data['milestones'][idx]
+                            logger.warning(
+                                f"   Index {idx} verified: "
+                                f"{saved_milestone.get('completion_percentage')}%"
+                            )
             except Exception as e:
                 logger.warning(f"⚠️ Verification failed (non-fatal): {e}")
         
