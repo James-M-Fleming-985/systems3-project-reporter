@@ -614,10 +614,8 @@ let parsedFileData = null;
 let programName = localStorage.getItem('selectedProgram') || '';
 console.log('Selected program:', programName);
 
-// Clean program name
-programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
-programName = programName.replace(/-\d+$/, '').trim();
-console.log('Cleaned program name:', programName);
+// Do NOT clean the program name - use it exactly as stored to match the metrics page
+console.log('Using program name for storage key:', programName);
 
 if (uploadMetricsBtn) {
     console.log('Adding click listener to metrics upload button');
