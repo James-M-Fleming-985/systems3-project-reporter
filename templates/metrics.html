@@ -647,6 +647,10 @@ function renderCustomMetrics() {
         return;
     }
     
+    // Clear existing rows (except no metrics row) FIRST
+    const existingRows = tbody.querySelectorAll('tr:not(#noMetricsRow)');
+    existingRows.forEach(row => row.remove());
+    
     if (customMetrics.length === 0) {
         console.log('No custom metrics to display');
         if (noMetricsRow) {
@@ -660,10 +664,6 @@ function renderCustomMetrics() {
     if (noMetricsRow) {
         noMetricsRow.style.display = 'none';
     }
-    
-    // Clear existing rows (except no metrics row)
-    const existingRows = tbody.querySelectorAll('tr:not(#noMetricsRow)');
-    existingRows.forEach(row => row.remove());
     
     // Add metric rows
     customMetrics.forEach((metric, index) => {
@@ -1003,9 +1003,19 @@ function initializeModalControls() {
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', function() {
             const index = parseInt(deleteConfirmModal.dataset.deleteIndex);
+            console.log('Deleting metric at index:', index, 'Metric:', customMetrics[index]);
+            console.log('Metrics before delete:', customMetrics.length, customMetrics);
+            
             customMetrics.splice(index, 1);
+            
+            console.log('Metrics after delete:', customMetrics.length, customMetrics);
+            
             saveCustomMetrics();
+            console.log('Metrics saved to localStorage');
+            
             renderCustomMetrics();
+            console.log('Table re-rendered');
+            
             deleteConfirmModal.classList.add('hidden');
         });
     }
