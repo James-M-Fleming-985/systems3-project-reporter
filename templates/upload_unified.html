@@ -835,6 +835,22 @@ function readExcelFile(file, resolve, reject) {
 function showMetricsFieldMapping(data) {
     const { headers, rows } = data;
     
+    // Helper function to format cell values (especially dates)
+    function formatCellValue(value) {
+        if (!value) return '';
+        
+        // Check if it's an Excel serial date
+        const numVal = parseFloat(value);
+        if (!isNaN(numVal) && numVal > 100 && numVal < 100000) {
+            const excelEpoch = new Date(1899, 11, 30);
+            const date = new Date(excelEpoch.getTime() + numVal * 86400000);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString('en-GB'); // dd/mm/yyyy format
+            }
+        }
+        return value;
+    }
+    
     // Populate preview table
     const thead = document.getElementById('metricsPreviewTableHead');
     const tbody = document.getElementById('metricsPreviewTableBody');
@@ -843,7 +859,7 @@ function showMetricsFieldMapping(data) {
     
     const previewRows = rows.slice(0, 5);
     tbody.innerHTML = previewRows.map(row => 
-        '<tr>' + headers.map(h => '<td class="px-4 py-2 text-sm text-gray-900">' + (row[h] || '') + '</td>').join('') + '</tr>'
+        '<tr>' + headers.map(h => '<td class="px-4 py-2 text-sm text-gray-900">' + formatCellValue(row[h]) + '</td>').join('') + '</tr>'
     ).join('');
     
     // Populate mapping dropdowns
@@ -909,19 +925,24 @@ function importMetricsData() {
         
         let date;
         try {
-            // Check if dateStr is an Excel serial number (numeric > 1000)
+            // Check if dateStr is an Excel serial number (numeric)
             const numDate = parseFloat(dateStr);
-            if (!isNaN(numDate) && numDate > 1000) {
+            if (!isNaN(numDate) && numDate > 100) {
                 // Excel serial date: days since 1900-01-01 (with 1900 leap year bug)
-                const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899 (accounting for bug)
+                // Excel incorrectly treats 1900 as a leap year, so dates after Feb 28, 1900 are off by 1
+                const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899
                 date = new Date(excelEpoch.getTime() + numDate * 86400000);
             } else {
-                // Try parsing as text date
+                // Try parsing as text date (handles dd/mm/yyyy, yyyy-mm-dd, etc.)
                 date = new Date(dateStr);
             }
             
-            if (isNaN(date.getTime())) return;
+            if (isNaN(date.getTime())) {
+                console.warn('Failed to parse date:', dateStr);
+                return;
+            }
         } catch (e) {
+            console.error('Date parsing error:', e, dateStr);
             return;
         }
         
