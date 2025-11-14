@@ -933,25 +933,41 @@ function importMetricsData() {
         return;
     }
     
+    console.log('Import starting with mappings:', { metricNameCol, dateCol, valueCol, annotationCol });
+    console.log('Parsed file data:', parsedFileData);
+    
     const { rows } = parsedFileData;
+    console.log('Total rows to process:', rows.length);
     
     // Load existing metrics
     const storageKey = 'customMetrics_' + programName;
     let customMetrics = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    console.log('Existing metrics:', customMetrics.length);
     
     let importCount = 0;
     let updateCount = 0;
+    let skippedCount = 0;
     
-    rows.forEach(row => {
+    rows.forEach((row, idx) => {
         const metricName = row[metricNameCol];
         const dateStr = row[dateCol];
         const valueStr = row[valueCol];
         const annotation = annotationCol ? row[annotationCol] : '';
         
-        if (!metricName || !dateStr || !valueStr) return;
+        console.log('Processing row', idx, ':', { metricName, dateStr, valueStr, annotation });
+        
+        if (!metricName || !dateStr || !valueStr) {
+            console.warn('Skipping row', idx, '- missing required fields');
+            skippedCount++;
+            return;
+        }
         
         const value = parseFloat(valueStr);
-        if (isNaN(value)) return;
+        if (isNaN(value)) {
+            console.warn('Skipping row', idx, '- invalid value:', valueStr);
+            skippedCount++;
+            return;
+        }
         
         let date;
         try {
@@ -1026,21 +1042,34 @@ function importMetricsData() {
     // Save metrics
     localStorage.setItem(storageKey, JSON.stringify(customMetrics));
     
+    console.log('Import complete - Imported:', importCount, 'Updated:', updateCount, 'Skipped:', skippedCount);
+    console.log('Final metrics array:', customMetrics);
+    
     closeMetricsUploadModal();
     
-    // Show success notification
-    if (importCount > 0) {
-        showNotification(
-            '✅ Import Successful',
-            'Successfully imported ' + importCount + ' metric(s) with ' + updateCount + ' data point(s).\n\nView your data in the Metrics tab on the dashboard.',
-            'success'
-        );
+    // Show success notification with proper formatting
+    if (importCount > 0 || updateCount > 0) {
+        let message = 'Successfully imported:\n';
+        if (importCount > 0) message += '• ' + importCount + ' new metric(s)\n';
+        if (updateCount > 0) message += '• ' + updateCount + ' data point(s)\n';
+        if (skippedCount > 0) message += '\n' + skippedCount + ' row(s) skipped (invalid data)';
+        message += '\n\nView your data in the Metrics tab.';
+        
+        showNotification('✅ Metrics Imported Successfully', message, 'success');
     } else {
-        showNotification(
-            '⚠️ No Data Imported',
-            'No new data was imported. Please check your file format and field mappings.',
-            'warning'
-        );
+        let message = 'No new data was imported.\n\n';
+        if (skippedCount > 0) {
+            message += skippedCount + ' row(s) were skipped due to:\n';
+            message += '• Missing required fields\n';
+            message += '• Invalid date or value format\n';
+            message += '• Duplicate entries\n\n';
+        }
+        message += 'Please check:\n';
+        message += '• Column mappings are correct\n';
+        message += '• Data format matches expectations\n';
+        message += '• File contains valid data';
+        
+        showNotification('⚠️ No Data Imported', message, 'warning');
     }
 }
 </script>
