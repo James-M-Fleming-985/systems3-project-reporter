@@ -788,26 +788,39 @@ function showTrendChart(index) {
         annotations: []
     };
     
-    // Add target line annotation
+    // Add target line annotation - position it higher to avoid data overlap
     layout.annotations.push({
         x: dates[Math.floor(dates.length / 2)],
         y: metric.target,
         text: `Target (${metric.target}${metric.unit ? ' ' + metric.unit : ''})`,
         showarrow: false,
-        yshift: 10,
-        font: { size: 10, color: '#22c55e' }
+        yshift: 20,
+        font: { size: 10, color: '#22c55e', weight: 'bold' },
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        borderpad: 2
     });
     
+    // Fix x-axis to rotate date labels and add margin
+    layout.xaxis = {
+        title: 'Date',
+        tickangle: -45,
+        automargin: true
+    };
+    layout.margin = { b: 100, t: 60, l: 60, r: 30 };
+    
     // Add user annotations for data points with callouts
-    // Smart positioning to avoid overlap
+    // Smart positioning to prevent overlap
     const annotatedPoints = sortedHistory
         .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
         .filter(h => h.annotation);
     
     annotatedPoints.forEach((point, idx) => {
-        // Alternate y-positioning to reduce overlap
-        const yshift = idx % 2 === 0 ? 20 : 35;
-        const align = idx % 3 === 0 ? 'left' : (idx % 3 === 1 ? 'center' : 'right');
+        // Calculate positions to avoid overlap - use alternating sides and heights
+        const totalAnnotations = annotatedPoints.length;
+        const yshiftBase = 40;
+        const yshift = yshiftBase + (idx % 3) * 25; // Stagger heights
+        const xshift = idx % 2 === 0 ? -60 : 60; // Alternate left/right
+        const align = idx % 2 === 0 ? 'right' : 'left';
         
         layout.annotations.push({
             x: point.date,
@@ -818,14 +831,15 @@ function showTrendChart(index) {
             arrowsize: 1,
             arrowwidth: 1.5,
             arrowcolor: '#6366f1',
-            ax: 0,
-            ay: -yshift - 20,
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
+            ax: xshift,
+            ay: -yshift,
+            bgcolor: 'rgba(255, 255, 255, 0.95)',
             bordercolor: '#6366f1',
-            borderwidth: 1,
-            borderpad: 4,
+            borderwidth: 1.5,
+            borderpad: 5,
             font: { size: 10, color: '#1f2937' },
-            align: align
+            align: align,
+            xanchor: align
         });
     });
     

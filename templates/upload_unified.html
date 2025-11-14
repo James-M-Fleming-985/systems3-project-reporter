@@ -1157,11 +1157,10 @@ function importMetricsData() {
         document.getElementById('metricsSuccessMessage').innerHTML = message;
         document.getElementById('metricsSuccess').classList.remove('hidden');
         
-        // Auto-close and redirect after 2 seconds
+        // Just close the modal after 3 seconds, stay on upload page
         setTimeout(() => {
             closeMetricsUploadModal();
-            window.location.href = '/dashboard#metrics';
-        }, 2000);
+        }, 3000);
     } else {
         let message = '';
         if (skippedCount > 0) {
