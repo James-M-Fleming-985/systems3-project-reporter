@@ -75,6 +75,7 @@ async def update_milestone(data: MilestoneUpdate):
         # Find and update the milestone
         updated = False
         match_type = None
+        updated_index = None  # Track which milestone was updated
         if 'milestones' in project_data:
             incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
@@ -115,6 +116,7 @@ async def update_milestone(data: MilestoneUpdate):
                     match_type = 'date_parent'
                 
                 if updated:
+                    updated_index = i  # Save the index
                     # Update milestone - always save incoming name (user edits)
                     new_completion = updated_milestone.get(
                         'completion_percentage', 0
@@ -174,14 +176,15 @@ async def update_milestone(data: MilestoneUpdate):
             )
         
         # Verify the write by reading back
-        logger.warning("🔍 Verifying saved data...")
-        with open(yaml_path, 'r', encoding='utf-8') as f:
-            verify_data = yaml.safe_load(f)
-            saved_milestone = verify_data['milestones'][i]
-            logger.warning(
-                f"   Verified completion: "
-                f"{saved_milestone.get('completion_percentage')}%"
-            )
+        if updated_index is not None:
+            logger.warning("🔍 Verifying saved data...")
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                verify_data = yaml.safe_load(f)
+                saved_milestone = verify_data['milestones'][updated_index]
+                logger.warning(
+                    f"   Verified completion: "
+                    f"{saved_milestone.get('completion_percentage')}%"
+                )
         
         logger.info(
             f"Updated milestone '{updated_milestone['name']}' "
