@@ -62,6 +62,7 @@ async def cleanup_duplicate_milestones():
     """
     Remove duplicate milestones from all project YAML files.
     Keeps the first occurrence of each milestone (by name).
+    Forces data reload after cleanup.
     """
     try:
         logger.info("=== DUPLICATE CLEANUP STARTED ===")
