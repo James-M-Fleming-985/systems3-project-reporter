@@ -83,6 +83,25 @@ async def milestone_tracker(request: Request):
     """
     from main import BUILD_VERSION
     projects = project_repo.load_all_projects()
+    
+    # Log milestone data being loaded for debugging
+    for project in projects:
+        if project.get('project_code') == 'ZLD-P1':
+            milestones = project.get('milestones', [])
+            znni_milestones = [
+                m for m in milestones
+                if 'ZnNi Vat Solution Qualification' in m.get('name', '')
+            ]
+            if znni_milestones:
+                logger.warning(
+                    "📖 Loading ZnNi Vat Solution Qualification milestones:"
+                )
+                for m in znni_milestones[:3]:  # First 3
+                    logger.warning(
+                        f"   '{m.get('name', '')}' = "
+                        f"{m.get('completion_percentage', 0)}%"
+                    )
+    
     quadrants = chart_service.calculate_milestone_quadrants(projects)
     
     context = {

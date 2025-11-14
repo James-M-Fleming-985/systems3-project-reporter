@@ -115,32 +115,78 @@ async def update_milestone(data: MilestoneUpdate):
                     match_type = 'date_parent'
                 
                 if updated:
-                    # Update the milestone - always save the incoming name (allows user edits)
+                    # Update milestone - always save incoming name (user edits)
+                    new_completion = updated_milestone.get(
+                        'completion_percentage', 0
+                    )
+                    old_completion = milestone.get('completion_percentage', 0)
+                    
                     project_data['milestones'][i] = {
-                        'id': milestone.get('id'),  # Preserve the milestone ID
-                        'name': incoming_name,  # Always use edited name from user
+                        'id': milestone.get('id'),
+                        'name': incoming_name,
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
                         'resources': updated_milestone.get('resources'),
-                        'completion_percentage': updated_milestone.get('completion_percentage', 0),
+                        'completion_percentage': new_completion,
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
                     }
-                    logger.warning(f"✅ Saved milestone ID={milestone.get('id')} name: '{project_data['milestones'][i]['name']}' (match type: {match_type})")
+                    logger.warning(f"✅ Saved milestone at index {i}")
+                    logger.warning(f"   ID: {milestone.get('id')}")
+                    logger.warning(
+                        f"   Name: '{project_data['milestones'][i]['name']}'"
+                    )
+                    logger.warning(
+                        f"   Completion: {old_completion}% → {new_completion}%"
+                    )
+                    logger.warning(f"   Status: {updated_milestone['status']}")
+                    logger.warning(f"   Match type: {match_type}")
                     break
         
         if not updated:
             # Search for similar names to help debug
-            logger.warning(f"❌ NO MATCH FOUND after searching {len(project_data.get('milestones', []))} milestones")
-            similar = [m['name'] for m in project_data.get('milestones', []) if 'Kardex' in m['name'] or 'Gordano' in m['name']]
-            logger.warning(f"Milestones containing 'Kardex' or 'Gordano': {similar}")
-            raise HTTPException(status_code=404, detail=f"Milestone '{updated_milestone['name'].strip()}' not found in {len(project_data.get('milestones', []))} milestones")
+            milestone_count = len(project_data.get('milestones', []))
+            logger.warning(
+                f"❌ NO MATCH FOUND after searching {milestone_count}"
+            )
+            similar = [
+                m['name'] for m in project_data.get('milestones', [])
+                if 'Kardex' in m['name'] or 'Gordano' in m['name']
+            ]
+            logger.warning(
+                f"Milestones containing 'Kardex' or 'Gordano': {similar}"
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Milestone '{updated_milestone['name'].strip()}' "
+                    f"not found in {milestone_count} milestones"
+                )
+            )
         
         # Save updated project data
+        logger.warning("💾 Writing updated data to YAML file...")
         with open(yaml_path, 'w', encoding='utf-8') as f:
-            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+            yaml.safe_dump(
+                project_data, f,
+                default_flow_style=False,
+                allow_unicode=True
+            )
         
-        logger.info(f"Updated milestone '{updated_milestone['name']}' in project {project_code}")
+        # Verify the write by reading back
+        logger.warning("🔍 Verifying saved data...")
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            verify_data = yaml.safe_load(f)
+            saved_milestone = verify_data['milestones'][i]
+            logger.warning(
+                f"   Verified completion: "
+                f"{saved_milestone.get('completion_percentage')}%"
+            )
+        
+        logger.info(
+            f"Updated milestone '{updated_milestone['name']}' "
+            f"in project {project_code}"
+        )
         
         return JSONResponse({
             'success': True,
