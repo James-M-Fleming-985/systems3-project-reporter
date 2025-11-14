@@ -813,16 +813,16 @@ function parseExcel(file) {
         // Load XLSX library dynamically if not already loaded
         if (typeof XLSX === 'undefined') {
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.src = '/static/js/libs/xlsx.full.min.js';
             script.onload = () => {
-                // Check if library loaded successfully despite tracking protection
+                // Check if library loaded successfully
                 if (typeof XLSX === 'undefined') {
-                    reject(new Error('Excel parser library blocked by browser tracking protection. Please disable tracking protection for this site or use CSV format instead.'));
+                    reject(new Error('Excel parser library failed to load. Please try using CSV format instead.'));
                 } else {
                     readExcelFile(file, resolve, reject);
                 }
             };
-            script.onerror = () => reject(new Error('Failed to load Excel parser library. Please use CSV format or disable tracking protection.'));
+            script.onerror = () => reject(new Error('Failed to load Excel parser library. Please use CSV format instead.'));
             document.head.appendChild(script);
         } else {
             readExcelFile(file, resolve, reject);
@@ -1027,7 +1027,21 @@ function importMetricsData() {
     localStorage.setItem(storageKey, JSON.stringify(customMetrics));
     
     closeMetricsUploadModal();
-    showNotification('Import Complete', 'Metrics imported: ' + importCount + '\nData points added: ' + updateCount + '\n\nGo to the Metrics tab on the dashboard to view the imported data.', 'success');
+    
+    // Show success notification
+    if (importCount > 0) {
+        showNotification(
+            '✅ Import Successful',
+            'Successfully imported ' + importCount + ' metric(s) with ' + updateCount + ' data point(s).\n\nView your data in the Metrics tab on the dashboard.',
+            'success'
+        );
+    } else {
+        showNotification(
+            '⚠️ No Data Imported',
+            'No new data was imported. Please check your file format and field mappings.',
+            'warning'
+        );
+    }
 }
 </script>
 
