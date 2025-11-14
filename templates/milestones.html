@@ -801,9 +801,14 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
             })
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (response.ok && data.success) {
+            console.log('✅ Update successful, closing modal and showing notification');
             closeMilestoneModal();
             showNotification(
                 'success',
@@ -811,8 +816,13 @@ document.getElementById('editMilestoneForm').addEventListener('submit', async fu
                 `"${updatedMilestone.name}" has been updated with the latest changes.`
             );
             // Reload after a brief delay to show the success message
-            setTimeout(() => window.location.reload(), 1500);
+            console.log('⏱️ Scheduling reload in 1.5 seconds...');
+            setTimeout(() => {
+                console.log('🔄 Reloading page now...');
+                window.location.reload();
+            }, 1500);
         } else {
+            console.log('❌ Update failed:', data.detail);
             closeMilestoneModal();
             showNotification(
                 'error',
