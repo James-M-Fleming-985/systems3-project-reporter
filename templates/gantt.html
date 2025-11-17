@@ -82,15 +82,14 @@ if (selectedProgram) {
         console.log('🔍 GANTT DEBUG - Project has', matchedProject.milestones?.length, 'milestones');
         
         // Filter to only this project's milestones
-        // Match by milestone.project field (set during XML parsing)
+        // Match by ProjectCode field added in backend
         ganttData = allGanttData.filter(task => {
             // Check if this milestone belongs to the selected project
-            const belongsToProject = task.Resource === matchedProject.project_name ||
-                                   task.Resource.includes(matchedProject.project_name) ||
-                                   task.Resource === matchedProject.project_code;
+            const belongsToProject = task.ProjectCode === matchedProject.project_code ||
+                                   task.ProjectName === matchedProject.project_name;
             
             if (belongsToProject) {
-                console.log('  ✓ Including milestone:', task.Task, 'from', task.Resource);
+                console.log('  ✓ Including milestone:', task.Task, 'from project', task.ProjectCode);
             }
             return belongsToProject;
         });

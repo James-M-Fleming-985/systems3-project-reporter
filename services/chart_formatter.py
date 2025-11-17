@@ -69,7 +69,9 @@ class ChartFormatterService:
                     'Start': start_date,
                     'Finish': finish_date,
                     'Resource': resource_name,
-                    'Status': milestone.status
+                    'Status': milestone.status,
+                    'ProjectCode': project.project_code,  # Add for filtering
+                    'ProjectName': project.project_name   # Add for filtering
                 })
         
         return tasks
