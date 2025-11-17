@@ -80,8 +80,56 @@
 
 <!-- Summary -->
 <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-    <p class="text-sm text-blue-800">
+    <p class="text-sm text-blue-800" id="changeSummary">
         <strong>Total Changes:</strong> {{ changes|length }} schedule modifications recorded across all projects
     </p>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Get selected program from localStorage
+const selectedProgram = localStorage.getItem('selectedProgram');
+const selectedProjectCode = localStorage.getItem('selectedProjectCode');
+
+console.log('🔍 CHANGES DEBUG - Selected Program:', selectedProgram);
+console.log('🔍 CHANGES DEBUG - Selected Project Code:', selectedProjectCode);
+
+// Update page title
+if (selectedProgram) {
+    const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
+    document.getElementById('changesPageTitle').textContent = `📅 ${cleanName} Change Management`;
+}
+
+// Filter table rows by selected project
+if (selectedProgram || selectedProjectCode) {
+    const rows = document.querySelectorAll('tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const projectCell = row.querySelector('td:nth-child(2)');
+        if (projectCell) {
+            const projectText = projectCell.textContent.trim();
+            const matches = projectText === selectedProjectCode ||
+                          projectText === selectedProgram ||
+                          projectText.includes(selectedProjectCode) ||
+                          projectText.includes(selectedProgram);
+            
+            if (matches) {
+                row.style.display = '';
+                visibleCount++;
+                console.log('  ✓ Including change from project:', projectText);
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+    
+    // Update summary count
+    document.getElementById('changeSummary').innerHTML = 
+        `<strong>Total Changes:</strong> ${visibleCount} schedule modifications for ${selectedProgram}`;
+    
+    console.log('🎯 CHANGES DEBUG - Showing', visibleCount, 'changes for', selectedProgram);
+}
+</script>
 {% endblock %}
