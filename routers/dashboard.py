@@ -33,11 +33,32 @@ async def home(request: Request):
     FEATURE-WEB-001: Dashboard home page
     Shows project cards with summary metrics
     """
+    from repositories.risk_repository import RiskRepository
+    import re
+    
     projects = project_repo.load_all_projects()
+    risk_repo = RiskRepository()
     
     # Calculate summary metrics
     total_milestones = sum(len(p.milestones) for p in projects)
+    
+    # Count risks from TWO sources:
+    # 1. Risks embedded in project YAML files
     total_risks = sum(len(p.risks) for p in projects)
+    
+    # 2. Risks from RiskRepository (uploaded separately)
+    for project in projects:
+        # Clean the project name the same way as risk upload does
+        clean_name = project.project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+        clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+        
+        repo_risks = risk_repo.load_risks(clean_name)
+        if repo_risks:
+            total_risks += len(repo_risks)
+            # Also add to project object for display in cards
+            if not hasattr(project, '_repo_risks_count'):
+                project._repo_risks_count = len(repo_risks)
+    
     total_changes = sum(len(p.changes) for p in projects)
     
     # Import BUILD_VERSION from main
