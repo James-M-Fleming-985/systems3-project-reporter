@@ -182,3 +182,51 @@ async def cleanup_duplicate_milestones():
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/rename-project/{project_code}")
+async def rename_project(project_code: str, new_name: str):
+    """
+    Rename a project without re-uploading XML
+    Usage: POST /admin/rename-project/AMP-P1?new_name=Infrastructure%20Development
+    """
+    try:
+        # Find project YAML file
+        project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+        yaml_path = project_dir / "project_status.yaml"
+        
+        if not yaml_path.exists():
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Project {project_code} not found at {yaml_path}"
+            )
+        
+        # Load YAML
+        with open(yaml_path, 'r') as f:
+            project_data = yaml.safe_load(f)
+        
+        old_name = project_data.get('project_name', 'Unknown')
+        
+        # Update name
+        project_data['project_name'] = new_name
+        
+        # Save back
+        with open(yaml_path, 'w') as f:
+            yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+        
+        logger.info(
+            f"✅ Renamed project {project_code}: '{old_name}' → '{new_name}'"
+        )
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Project renamed successfully',
+            'old_name': old_name,
+            'new_name': new_name,
+            'project_code': project_code,
+            'yaml_path': str(yaml_path)
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to rename project: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

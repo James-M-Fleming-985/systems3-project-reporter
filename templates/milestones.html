@@ -249,16 +249,25 @@ console.log('🔍 MILESTONES DEBUG - All data:', allMilestonesData);
 // Filter milestones to only show selected project
 let allMilestones = allMilestonesData;
 if (selectedProgram || selectedProjectCode) {
+    console.log('🔍 MILESTONES DEBUG - Filtering milestones...');
+    console.log('🔍 Sample milestone from data:', allMilestonesData.open?.[0] || allMilestonesData.completed_past?.[0]);
+    
     // Filter each quadrant
     const filterByProject = (milestone) => {
         const milestoneProject = milestone.project || '';
-        const matches = milestoneProject === selectedProjectCode || 
-                       milestoneProject === selectedProgram ||
-                       milestoneProject.includes(selectedProjectCode) ||
-                       milestoneProject.includes(selectedProgram);
+        
+        // Try exact match first, then partial match
+        const exactMatch = milestoneProject === selectedProjectCode || 
+                          milestoneProject === selectedProgram;
+        const partialMatch = milestoneProject.includes(selectedProjectCode) ||
+                            milestoneProject.includes(selectedProgram);
+        
+        const matches = exactMatch || partialMatch;
         
         if (matches) {
             console.log('  ✓ Including milestone:', milestone.name, 'from project:', milestoneProject);
+        } else {
+            console.log('  ✗ Excluding milestone:', milestone.name, 'project:', milestoneProject, '!== selectedProjectCode:', selectedProjectCode);
         }
         return matches;
     };
@@ -276,6 +285,12 @@ if (selectedProgram || selectedProjectCode) {
                          allMilestones.delayed.length;
     
     console.log('🎯 MILESTONES DEBUG - Filtered to', totalFiltered, 'milestones for', selectedProgram);
+    
+    // If no milestones found, show warning but don't filter (show all)
+    if (totalFiltered === 0) {
+        console.warn('⚠️ MILESTONES DEBUG - No milestones found for project, showing all milestones');
+        allMilestones = allMilestonesData;
+    }
 } else {
     console.log('ℹ️ MILESTONES DEBUG - No program selected, showing all milestones');
 }
