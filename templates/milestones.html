@@ -235,8 +235,50 @@
 
 {% block scripts %}
 <script>
-// All milestones data from server
-const allMilestones = {{ quadrants | tojson | safe }};
+// ALL milestones data from server (all projects)
+const allMilestonesData = {{ quadrants | tojson | safe }};
+
+// Get selected program from localStorage
+const selectedProgram = localStorage.getItem('selectedProgram');
+const selectedProjectCode = localStorage.getItem('selectedProjectCode');
+
+console.log('🔍 MILESTONES DEBUG - Selected Program:', selectedProgram);
+console.log('🔍 MILESTONES DEBUG - Selected Project Code:', selectedProjectCode);
+console.log('🔍 MILESTONES DEBUG - All data:', allMilestonesData);
+
+// Filter milestones to only show selected project
+let allMilestones = allMilestonesData;
+if (selectedProgram || selectedProjectCode) {
+    // Filter each quadrant
+    const filterByProject = (milestone) => {
+        const milestoneProject = milestone.project || '';
+        const matches = milestoneProject === selectedProjectCode || 
+                       milestoneProject === selectedProgram ||
+                       milestoneProject.includes(selectedProjectCode) ||
+                       milestoneProject.includes(selectedProgram);
+        
+        if (matches) {
+            console.log('  ✓ Including milestone:', milestone.name, 'from project:', milestoneProject);
+        }
+        return matches;
+    };
+    
+    allMilestones = {
+        completed_past: (allMilestonesData.completed_past || []).filter(filterByProject),
+        open: (allMilestonesData.open || []).filter(filterByProject),
+        upcoming_future: (allMilestonesData.upcoming_future || []).filter(filterByProject),
+        delayed: (allMilestonesData.delayed || []).filter(filterByProject)
+    };
+    
+    const totalFiltered = allMilestones.completed_past.length + 
+                         allMilestones.open.length + 
+                         allMilestones.upcoming_future.length + 
+                         allMilestones.delayed.length;
+    
+    console.log('🎯 MILESTONES DEBUG - Filtered to', totalFiltered, 'milestones for', selectedProgram);
+} else {
+    console.log('ℹ️ MILESTONES DEBUG - No program selected, showing all milestones');
+}
 
 // Validate and log milestone data
 console.log('Loaded milestones:', allMilestones);
