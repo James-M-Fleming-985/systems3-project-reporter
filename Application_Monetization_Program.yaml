@@ -1,0 +1,528 @@
+program_name: "Application Monetization Program"
+program_code: "AMP-2026"
+description: "Deploy and monetize 4 applications to achieve 1000 paying subscribers by end of 2026"
+start_date: "2025-11-18"
+target_completion: "2026-12-31"
+status: "IN_PROGRESS"
+program_manager: "James Fleming"
+
+business_objectives:
+  - "Deploy 4 production-ready SaaS applications"
+  - "Achieve 1000 total paying subscribers across all applications"
+  - "Establish recurring revenue stream through Stripe subscriptions"
+  - "Implement growth loops and viral features"
+  - "Build sustainable business model with 80%+ retention"
+
+key_performance_indicators:
+  - name: "Total Subscribers"
+    target: 1000
+    unit: "subscribers"
+  - name: "Monthly Recurring Revenue (MRR)"
+    target: 20000
+    unit: "USD"
+  - name: "Average Revenue Per User (ARPU)"
+    target: 20
+    unit: "USD/month"
+  - name: "Churn Rate"
+    target: 5
+    unit: "percent"
+  - name: "Application Uptime"
+    target: 99.9
+    unit: "percent"
+
+projects:
+  # PROJECT 1: CAUSAL AFFECT
+  - project_name: "Causal Affect - Monetization Launch"
+    project_code: "AMP-001-CA"
+    description: "Add subscription model to live Causal Affect platform (v2.0.14 deployed on Railway)"
+    start_date: "2025-11-18"
+    target_completion: "2026-03-31"
+    status: "IN_PROGRESS"
+    subscriber_target: 300
+    pricing_tier: "$29/month"
+    current_state: "DEPLOYED - Production v2.0.14 with correlation analysis, drift forecasting, dashboard UI"
+    production_url: "https://causal-affect.railway.app"
+    
+    milestones:
+      # Phase 1: Add Monetization Features (Nov-Dec 2025)
+      - name: "User Authentication System (v2.1.0)"
+        description: "Ship to prod: JWT auth, signup/login, password reset, session management"
+        planned_date: "2025-12-01"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      - name: "Stripe Integration (v2.2.0)"
+        description: "Ship to prod: Payment processing, subscription management, webhooks, billing portal"
+        planned_date: "2025-12-08"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["User Authentication System (v2.1.0)"]
+        
+      - name: "Subscription Tiers (v2.3.0)"
+        description: "Ship to prod: Free tier (5 analyses/mo), Pro tier ($29/mo unlimited), Enterprise tier ($99/mo + API)"
+        planned_date: "2025-12-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Stripe Integration (v2.2.0)"]
+        
+      - name: "Marketing Landing Page (v2.4.0)"
+        description: "Ship to prod: SEO-optimized landing, pricing page, case studies, email capture"
+        planned_date: "2025-12-22"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      # Phase 2: Launch & Initial Growth (Jan-Feb 2026)
+      - name: "Monetization Go-Live"
+        description: "Enable paid subscriptions, launch Product Hunt, begin content marketing"
+        planned_date: "2026-01-15"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Subscription Tiers (v2.3.0)", "Marketing Landing Page (v2.4.0)"]
+        
+      - name: "First 10 Paying Subscribers"
+        description: "Validate pricing and value prop with initial customers"
+        planned_date: "2026-01-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Monetization Go-Live"]
+        
+      - name: "50 Subscribers Milestone"
+        description: "Scale marketing: paid ads, partnerships, referral program (v3.0 feature release)"
+        planned_date: "2026-02-28"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["First 10 Paying Subscribers"]
+        
+      # Phase 3: Scale to Target (Mar 2026)
+      - name: "Feature Iteration (v3.1-3.3)"
+        description: "Ship top 3 requested features based on user feedback to production"
+        planned_date: "2026-03-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["50 Subscribers Milestone"]
+        
+      - name: "300 Subscribers Target Achieved"
+        description: "PROJECT COMPLETE: $8,700 MRR achieved through sustained growth"
+        planned_date: "2026-03-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Feature Iteration (v3.1-3.3)"]
+
+    risks:
+      - id: "CA-R001"
+        title: "Low conversion rate from free to paid"
+        description: "Users may not see enough value to upgrade"
+        severity: "High"
+        probability: "Medium"
+        impact: "Revenue targets missed"
+        mitigation: "A/B test pricing, add high-value features to paid tier, implement product-led growth"
+        
+      - id: "CA-R002"
+        title: "High churn in first 3 months"
+        description: "Users cancel subscription after initial trial"
+        severity: "High"
+        probability: "Medium"
+        impact: "Growth stalls"
+        mitigation: "Improve onboarding, add email campaigns, implement success metrics"
+
+  # PROJECT 2: OPTI ROYAL
+  - project_name: "Opti Royal - Production Launch"
+    project_code: "AMP-002-OR"
+    description: "Ship Opti Royal optimization platform to production with freemium model"
+    start_date: "2026-02-01"
+    target_completion: "2026-06-30"
+    status: "NOT_STARTED"
+    subscriber_target: 250
+    pricing_tier: "$19/month"
+    current_state: "CODEBASE EXISTS - Needs consolidation and initial production deployment"
+    production_url: "TBD - will deploy to Railway"
+    
+    milestones:
+      # Phase 1: Ship MVP to Production (Feb-Mar 2026)
+      - name: "Initial Production Deploy (v1.0.0)"
+        description: "Ship MVP to Railway: core optimization features, basic UI, database"
+        planned_date: "2026-02-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      - name: "Auth + Stripe Integration (v1.1.0)"
+        description: "Ship to prod: Google/GitHub SSO, Stripe payments (reuse Causal Affect code)"
+        planned_date: "2026-03-01"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Initial Production Deploy (v1.0.0)"]
+        
+      - name: "Freemium Tiers Live (v1.2.0)"
+        description: "Ship to prod: Free tier (10 optimizations/mo), Pro tier ($19/mo unlimited)"
+        planned_date: "2026-03-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Auth + Stripe Integration (v1.1.0)"]
+        
+      - name: "Marketing Site Live (v1.3.0)"
+        description: "Ship to prod: Landing page, pricing page, case studies"
+        planned_date: "2026-03-31"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      # Phase 2: Launch & Growth (Apr-May 2026)
+      - name: "Public Launch"
+        description: "Enable registrations, launch Product Hunt/Reddit/HackerNews campaigns"
+        planned_date: "2026-04-15"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Freemium Tiers Live (v1.2.0)", "Marketing Site Live (v1.3.0)"]
+        
+      - name: "First 25 Paying Subscribers"
+        description: "Validate product-market fit, gather feedback for v2.0"
+        planned_date: "2026-04-30"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Public Launch"]
+        
+      - name: "100 Subscribers Milestone"
+        description: "Scale marketing: paid ads, affiliate program, community building"
+        planned_date: "2026-05-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["First 25 Paying Subscribers"]
+        
+      # Phase 3: Scale Features & Subscribers (Jun 2026)
+      - name: "API & Integrations (v2.0.0)"
+        description: "Ship to prod: Public API, Zapier integration, webhook support"
+        planned_date: "2026-06-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["100 Subscribers Milestone"]
+        
+      - name: "250 Subscribers Target Achieved"
+        description: "PROJECT COMPLETE: $4,750 MRR achieved, Enterprise tier ($99/mo) added"
+        planned_date: "2026-06-30"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["API & Integrations (v2.0.0)"]
+
+    risks:
+      - id: "OR-R001"
+        title: "Feature parity with competitors"
+        description: "Market has established optimization tools"
+        severity: "Medium"
+        probability: "High"
+        impact: "Difficulty acquiring customers"
+        mitigation: "Focus on unique value prop, better UX, faster performance"
+
+  # PROJECT 3: COMMUNICATION MANAGEMENT
+  - project_name: "Communication Variable Modelling (PROJECT-006)"
+    project_code: "AMP-003-CM"
+    description: "Build and ship PROJECT-006 to production as B2B communication intelligence platform"
+    start_date: "2026-01-01"
+    target_completion: "2026-09-30"
+    status: "NOT_STARTED"
+    subscriber_target: 200
+    pricing_tier: "$49/month"
+    current_state: "REQUIREMENTS COMPLETE - 6 features, 27 layers defined, needs implementation"
+    production_url: "TBD - will deploy to Railway"
+    
+    milestones:
+      # Phase 1: Build & Ship Stage 1a Core (Jan-Apr 2026)
+      - name: "Variable Ontology System (v0.1.0)"
+        description: "Build + ship to prod: Variable definitions, actor profiles, archetypes (Layers 001-003)"
+        planned_date: "2026-02-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      - name: "Actor Modeling Engine (v0.2.0)"
+        description: "Build + ship to prod: Profile CRUD, classification, cue estimation (Layers 004-008)"
+        planned_date: "2026-03-31"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Variable Ontology System (v0.1.0)"]
+        
+      - name: "Interaction Simulator MVP (v0.3.0)"
+        description: "Build + ship to prod: Basic simulation engine, outcome prediction (Layers 009-011)"
+        planned_date: "2026-04-30"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Actor Modeling Engine (v0.2.0)"]
+        
+      # Phase 2: Add Monetization & Launch (May-Jun 2026)
+      - name: "Stripe B2B Integration (v0.4.0)"
+        description: "Ship to prod: Team billing, seat management, usage tracking"
+        planned_date: "2026-05-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Interaction Simulator MVP (v0.3.0)"]
+        
+      - name: "Multi-Tenant Architecture (v0.5.0)"
+        description: "Ship to prod: Organization support, role management, data isolation"
+        planned_date: "2026-06-01"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Stripe B2B Integration (v0.4.0)"]
+        
+      - name: "Pricing Tiers Live (v1.0.0)"
+        description: "Ship to prod: Starter ($49/mo, 5 seats), Business ($149/mo, 25 seats), Enterprise (custom)"
+        planned_date: "2026-06-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Multi-Tenant Architecture (v0.5.0)"]
+        
+      # Phase 3: Pilot & Growth (Jul-Sep 2026)
+      - name: "Pilot Launch with 5 Organizations"
+        description: "Private beta with hand-selected customers, gather case studies"
+        planned_date: "2026-07-15"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Pricing Tiers Live (v1.0.0)"]
+        
+      - name: "Public Launch"
+        description: "Open registrations, LinkedIn campaigns, webinars, demo videos"
+        planned_date: "2026-08-01"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Pilot Launch with 5 Organizations"]
+        
+      - name: "First 50 Subscribers"
+        description: "Validate B2B pricing, gather feedback for v1.1"
+        planned_date: "2026-08-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Public Launch"]
+        
+      - name: "Analytics Dashboard (v1.1.0)"
+        description: "Ship to prod: Executive reporting, ROI calculator, export features"
+        planned_date: "2026-09-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["First 50 Subscribers"]
+        
+      - name: "200 Subscribers Target Achieved"
+        description: "PROJECT COMPLETE: $9,800 MRR achieved through direct sales + self-serve"
+        planned_date: "2026-09-30"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Analytics Dashboard (v1.1.0)"]
+
+    risks:
+      - id: "CM-R001"
+        title: "Long B2B sales cycle"
+        description: "Enterprise sales take 3-6 months to close"
+        severity: "High"
+        probability: "High"
+        impact: "Delayed revenue targets"
+        mitigation: "Focus on SMB market first, product-led growth, self-serve option"
+
+  # PROJECT 4: MIND INTEGRATION
+  - project_name: "Mind Integration Platform (PROJECT-005)"
+    project_code: "AMP-004-MI"
+    description: "Build and ship PROJECT-005 to production as AI-powered wellness platform"
+    start_date: "2026-05-01"
+    target_completion: "2026-12-31"
+    status: "NOT_STARTED"
+    subscriber_target: 250
+    pricing_tier: "$14/month"
+    current_state: "REQUIREMENTS COMPLETE - 6 systems, 18 features, 45 layers defined, needs implementation"
+    production_url: "TBD - will deploy to Railway with mobile support"
+    
+    milestones:
+      # Phase 1: Build & Ship Core Features (May-Jul 2026)
+      - name: "User Auth & Profiles (v0.1.0)"
+        description: "Build + ship to prod: Registration, privacy controls, HIPAA-compliant data handling"
+        planned_date: "2026-06-01"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: []
+        
+      - name: "LLM Reflection Engine (v0.2.0)"
+        description: "Build + ship to prod: GPT-4 integration, reflective inquiry, emotion detection"
+        planned_date: "2026-06-30"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["User Auth & Profiles (v0.1.0)"]
+        
+      - name: "Check-In System (v0.3.0)"
+        description: "Build + ship to prod: Daily check-ins, data collection, tracking dashboard"
+        planned_date: "2026-07-31"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["LLM Reflection Engine (v0.2.0)"]
+        
+      # Phase 2: Add Monetization & Mobile (Aug-Sep 2026)
+      - name: "Pattern Detection (v0.4.0)"
+        description: "Build + ship to prod: Semantic analysis, contradiction detection, insight generation"
+        planned_date: "2026-08-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Check-In System (v0.3.0)"]
+        
+      - name: "Stripe Mobile Subscriptions (v0.5.0)"
+        description: "Ship to prod: iOS/Android in-app purchases, subscription management"
+        planned_date: "2026-09-01"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Pattern Detection (v0.4.0)"]
+        
+      - name: "Subscription Model Live (v1.0.0)"
+        description: "Ship to prod: Free tier (limited), Premium ($14/mo unlimited), Annual ($120/yr)"
+        planned_date: "2026-09-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["Stripe Mobile Subscriptions (v0.5.0)"]
+        
+      # Phase 3: Launch & Growth (Oct-Dec 2026)
+      - name: "Beta Launch with 50 Users"
+        description: "Invite-only beta, focus groups, UX testing, content validation"
+        planned_date: "2026-10-15"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Subscription Model Live (v1.0.0)"]
+        
+      - name: "App Store Launch"
+        description: "Public launch: iOS App Store, Google Play Store, web app"
+        planned_date: "2026-10-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Beta Launch with 50 Users"]
+        
+      - name: "First 100 Subscribers"
+        description: "Validate wellness market fit, gather feedback for v1.1"
+        planned_date: "2026-11-30"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["App Store Launch"]
+        
+      - name: "Personalization Features (v1.1.0)"
+        description: "Ship to prod: AI recommendations, habit tracking, progress visualization"
+        planned_date: "2026-12-15"
+        completion_percentage: 0
+        category: "Feature Release"
+        dependencies: ["First 100 Subscribers"]
+        
+      - name: "250 Subscribers Target Achieved"
+        description: "PROJECT COMPLETE: $3,500 MRR achieved through app stores + direct"
+        planned_date: "2026-12-31"
+        completion_percentage: 0
+        category: "Growth Milestone"
+        dependencies: ["Personalization Features (v1.1.0)"]
+
+    risks:
+      - id: "MI-R001"
+        title: "Competitive wellness app market"
+        description: "Many established apps with large user bases"
+        severity: "High"
+        probability: "High"
+        impact: "User acquisition cost too high"
+        mitigation: "Unique positioning, niche focus, community-driven features"
+
+# PROGRAM-LEVEL MILESTONES
+program_milestones:
+  - name: "First Monetization Live (Causal Affect v2.3.0)"
+    description: "First application accepting paid subscriptions in production"
+    planned_date: "2025-12-22"
+    completion_percentage: 0
+    
+  - name: "First 10 Paying Customers Across Portfolio"
+    description: "Validate monetization model works across applications"
+    planned_date: "2026-01-31"
+    completion_percentage: 0
+    
+  - name: "100 Total Subscribers Milestone"
+    description: "Achieve first 100 paying subscribers across all live apps"
+    planned_date: "2026-03-31"
+    completion_percentage: 0
+    
+  - name: "All 4 Applications Live in Production"
+    description: "All applications deployed with monetization features enabled"
+    planned_date: "2026-10-31"
+    completion_percentage: 0
+    
+  - name: "500 Subscribers Milestone"
+    description: "Halfway to goal, validate scalability and unit economics"
+    planned_date: "2026-09-30"
+    completion_percentage: 0
+    
+  - name: "1000 Subscribers Target Achieved"
+    description: "PROGRAM SUCCESS: $26,750 MRR ($321K ARR) - Sustainable SaaS business"
+    planned_date: "2026-12-31"
+    completion_percentage: 0
+
+# PROGRAM-LEVEL RISKS
+program_risks:
+  - id: "PROG-R001"
+    title: "Resource constraints for parallel development"
+    description: "Limited development capacity across 4 projects"
+    severity: "High"
+    probability: "Medium"
+    impact: "Delays in deployment timeline"
+    mitigation: "Stagger project starts, reuse components, hire contractors for peak periods"
+    
+  - id: "PROG-R002"
+    title: "Market timing and competition"
+    description: "Competitors may launch similar features during our development"
+    severity: "Medium"
+    probability: "High"
+    impact: "Reduced differentiation"
+    mitigation: "Focus on unique value propositions, speed to market, continuous innovation"
+    
+  - id: "PROG-R003"
+    title: "Payment processing failures"
+    description: "Stripe integration issues or account limitations"
+    severity: "Critical"
+    probability: "Low"
+    impact: "Revenue collection stops"
+    mitigation: "Thorough testing, backup payment processor, compliance review"
+    
+  - id: "PROG-R004"
+    title: "Subscriber acquisition cost too high"
+    description: "CAC exceeds LTV, unsustainable unit economics"
+    severity: "Critical"
+    probability: "Medium"
+    impact: "Business model fails"
+    mitigation: "Organic growth focus, referral programs, product-led growth, reduce churn"
+
+success_criteria:
+  - criterion: "1000+ total paying subscribers by 2026-12-31"
+  - criterion: "All 4 applications deployed to production"
+  - criterion: "Average monthly churn rate < 5%"
+  - criterion: "Monthly Recurring Revenue (MRR) > $20,000"
+  - criterion: "99.9% uptime across all applications"
+  - criterion: "Positive unit economics (LTV > 3x CAC)"
+  - criterion: "Each application has active user base and growth trajectory"
+
+financial_model:
+  causal_affect:
+    arpu: 29
+    target_subscribers: 300
+    monthly_revenue: 8700
+  opti_royal:
+    arpu: 19
+    target_subscribers: 250
+    monthly_revenue: 4750
+  communication_management:
+    arpu: 49
+    target_subscribers: 200
+    monthly_revenue: 9800
+  mind_integration:
+    arpu: 14
+    target_subscribers: 250
+    monthly_revenue: 3500
+  total_mrr: 26750
+  annual_recurring_revenue: 321000
+
+deployment_stack:
+  hosting: "Railway (continuous deployment from Git)"
+  database: "PostgreSQL"
+  cache: "Redis"
+  cdn: "Cloudflare"
+  payment: "Stripe"
+  auth: "JWT + OAuth2 (Google/GitHub SSO)"
+  monitoring: "Sentry + Railway Logs"
+  analytics: "Mixpanel + Google Analytics"
+  email: "SendGrid"
+  ci_cd: "Railway auto-deploy on git push"
+  development_model: "Production-first continuous deployment"

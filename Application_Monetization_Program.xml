@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+  <Name>Application Monetization Program</Name>
+  <Title>AMP-2026: Production-First SaaS Development</Title>
+  <Author>James Fleming</Author>
+  <CreationDate>2025-11-18T00:00:00</CreationDate>
+  <StartDate>2025-11-18T00:00:00</StartDate>
+  <FinishDate>2026-12-31T00:00:00</FinishDate>
+  <CurrencySymbol>$</CurrencySymbol>
+  
+  <Tasks>
+    <!-- LEVEL 1: PROGRAM -->
+    <Task>
+      <UID>1</UID>
+      <ID>1</ID>
+      <Name>Application Monetization Program (AMP-2026)</Name>
+      <Notes>Production-first continuous deployment: Ship features to live apps, iterate based on real users, achieve 1000 paying subscribers. Goal: $26,750 MRR ($321K ARR)</Notes>
+      <OutlineLevel>1</OutlineLevel>
+      <Start>2025-11-18T00:00:00</Start>
+      <Finish>2026-12-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    
+    <!-- LEVEL 2: PROJECT 1 - CAUSAL AFFECT (ALREADY IN PRODUCTION) -->
+    <Task>
+      <UID>2</UID>
+      <ID>2</ID>
+      <Name>PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)</Name>
+      <Notes>DEPLOYED v2.0.14 on Railway. Add subscription model to live platform. Target: 300 subscribers at $29/month = $8,700 MRR</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2025-11-18T00:00:00</Start>
+      <Finish>2026-03-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    
+    <!-- Feature Releases to Production -->
+    <Task>
+      <UID>3</UID>
+      <ID>3</ID>
+      <Name>RELEASE: User Authentication System (v2.1.0)</Name>
+      <Notes>Ship to prod: JWT auth, signup/login, password reset, session management</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2025-11-18T00:00:00</Start>
+      <Finish>2025-12-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT104H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>4</UID>
+      <ID>4</ID>
+      <Name>RELEASE: Stripe Integration (v2.2.0)</Name>
+      <Notes>Ship to prod: Payment processing, subscription management, webhooks, billing portal</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2025-12-01T00:00:00</Start>
+      <Finish>2025-12-08T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT56H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>3</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>5</UID>
+      <ID>5</ID>
+      <Name>RELEASE: Subscription Tiers (v2.3.0)</Name>
+      <Notes>Ship to prod: Free tier (5 analyses/mo), Pro ($29/mo), Enterprise ($99/mo)</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2025-12-08T00:00:00</Start>
+      <Finish>2025-12-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT56H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>4</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>6</UID>
+      <ID>6</ID>
+      <Name>RELEASE: Marketing Landing Page (v2.4.0)</Name>
+      <Notes>Ship to prod: SEO-optimized landing, pricing page, case studies</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2025-12-15T00:00:00</Start>
+      <Finish>2025-12-22T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT56H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <!-- Growth Milestones -->
+    <Task>
+      <UID>7</UID>
+      <ID>7</ID>
+      <Name>MILESTONE: Monetization Go-Live</Name>
+      <Notes>Enable paid subscriptions, Product Hunt launch, begin marketing</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2025-12-22T00:00:00</Start>
+      <Finish>2026-01-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT192H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>5</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+      <PredecessorLink>
+        <PredecessorUID>6</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>8</UID>
+      <ID>8</ID>
+      <Name>MILESTONE: First 10 Paying Subscribers</Name>
+      <Notes>Validate pricing and value proposition with real customers</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-01-15T00:00:00</Start>
+      <Finish>2026-01-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT128H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>7</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>9</UID>
+      <ID>9</ID>
+      <Name>MILESTONE: 50 Subscribers</Name>
+      <Notes>Scale marketing: paid ads, partnerships, referral program (v3.0)</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-01-31T00:00:00</Start>
+      <Finish>2026-02-28T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT224H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>8</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>10</UID>
+      <ID>10</ID>
+      <Name>RELEASE: Feature Iteration (v3.1-3.3)</Name>
+      <Notes>Ship top 3 requested features based on user feedback</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-02-28T00:00:00</Start>
+      <Finish>2026-03-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>9</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>11</UID>
+      <ID>11</ID>
+      <Name>TARGET: 300 Subscribers Achieved</Name>
+      <Notes>PROJECT COMPLETE: $8,700 MRR through sustained growth</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-03-15T00:00:00</Start>
+      <Finish>2026-03-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT128H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>10</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <!-- LEVEL 2: PROJECT 2 - OPTI ROYAL (CODE EXISTS) -->
+    <Task>
+      <UID>12</UID>
+      <ID>12</ID>
+      <Name>PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)</Name>
+      <Notes>Ship existing codebase to production. Target: 250 subscribers at $19/month = $4,750 MRR</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-02-01T00:00:00</Start>
+      <Finish>2026-06-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    
+    <Task>
+      <UID>13</UID>
+      <ID>13</ID>
+      <Name>RELEASE: Initial Production Deploy (v1.0.0)</Name>
+      <Notes>Ship MVP to Railway: core optimization, basic UI, database</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-02-01T00:00:00</Start>
+      <Finish>2026-02-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT112H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>14</UID>
+      <ID>14</ID>
+      <Name>RELEASE: Auth + Stripe (v1.1.0)</Name>
+      <Notes>Ship to prod: Google/GitHub SSO, Stripe (reuse Causal Affect code)</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-02-15T00:00:00</Start>
+      <Finish>2026-03-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT112H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>13</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>15</UID>
+      <ID>15</ID>
+      <Name>RELEASE: Freemium Tiers (v1.2.0)</Name>
+      <Notes>Ship to prod: Free (10 optimizations/mo), Pro ($19/mo unlimited)</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-03-01T00:00:00</Start>
+      <Finish>2026-03-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT112H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>14</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>16</UID>
+      <ID>16</ID>
+      <Name>RELEASE: Marketing Site (v1.3.0)</Name>
+      <Notes>Ship to prod: Landing page, pricing, case studies</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-03-15T00:00:00</Start>
+      <Finish>2026-03-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT128H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>17</UID>
+      <ID>17</ID>
+      <Name>MILESTONE: Public Launch</Name>
+      <Notes>Enable registrations, Product Hunt/Reddit/HackerNews campaigns</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-03-31T00:00:00</Start>
+      <Finish>2026-04-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>15</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+      <PredecessorLink>
+        <PredecessorUID>16</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>18</UID>
+      <ID>18</ID>
+      <Name>MILESTONE: First 25 Paying Subscribers</Name>
+      <Notes>Validate product-market fit, gather feedback</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-04-15T00:00:00</Start>
+      <Finish>2026-04-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>17</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>19</UID>
+      <ID>19</ID>
+      <Name>MILESTONE: 100 Subscribers</Name>
+      <Notes>Scale marketing: paid ads, affiliate program, community</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-04-30T00:00:00</Start>
+      <Finish>2026-05-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT248H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>18</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>20</UID>
+      <ID>20</ID>
+      <Name>RELEASE: API &amp; Integrations (v2.0.0)</Name>
+      <Notes>Ship to prod: Public API, Zapier, webhooks</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-05-31T00:00:00</Start>
+      <Finish>2026-06-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>19</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>21</UID>
+      <ID>21</ID>
+      <Name>TARGET: 250 Subscribers Achieved</Name>
+      <Notes>PROJECT COMPLETE: $4,750 MRR, Enterprise tier added</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-06-15T00:00:00</Start>
+      <Finish>2026-06-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>20</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <!-- LEVEL 2: PROJECT 3 - COMMUNICATION VARIABLE MODELLING -->
+    <Task>
+      <UID>22</UID>
+      <ID>22</ID>
+      <Name>PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)</Name>
+      <Notes>Build and ship to production. Target: 200 subscribers at $49/month = $9,800 MRR</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-01-01T00:00:00</Start>
+      <Finish>2026-09-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    
+    <Task>
+      <UID>23</UID>
+      <ID>23</ID>
+      <Name>RELEASE: Variable Ontology System (v0.1.0)</Name>
+      <Notes>Build + ship to prod: Variable definitions, actor profiles, archetypes</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-01-01T00:00:00</Start>
+      <Finish>2026-02-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT360H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>24</UID>
+      <ID>24</ID>
+      <Name>RELEASE: Actor Modeling Engine (v0.2.0)</Name>
+      <Notes>Build + ship to prod: Profile CRUD, classification, cue estimation</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-02-15T00:00:00</Start>
+      <Finish>2026-03-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT352H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>23</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>25</UID>
+      <ID>25</ID>
+      <Name>RELEASE: Interaction Simulator MVP (v0.3.0)</Name>
+      <Notes>Build + ship to prod: Basic simulation, outcome prediction</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-03-31T00:00:00</Start>
+      <Finish>2026-04-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT240H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>24</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>26</UID>
+      <ID>26</ID>
+      <Name>RELEASE: Stripe B2B Integration (v0.4.0)</Name>
+      <Notes>Ship to prod: Team billing, seat management, usage tracking</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-04-30T00:00:00</Start>
+      <Finish>2026-05-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>25</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>27</UID>
+      <ID>27</ID>
+      <Name>RELEASE: Multi-Tenant Architecture (v0.5.0)</Name>
+      <Notes>Ship to prod: Organization support, roles, data isolation</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-05-15T00:00:00</Start>
+      <Finish>2026-06-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT136H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>26</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>28</UID>
+      <ID>28</ID>
+      <Name>RELEASE: Pricing Tiers Live (v1.0.0)</Name>
+      <Notes>Ship to prod: Starter ($49/mo), Business ($149/mo), Enterprise</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-06-01T00:00:00</Start>
+      <Finish>2026-06-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT112H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>27</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>29</UID>
+      <ID>29</ID>
+      <Name>MILESTONE: Pilot Launch (5 Organizations)</Name>
+      <Notes>Private beta, case studies, gather feedback</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-06-15T00:00:00</Start>
+      <Finish>2026-07-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT240H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>28</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>30</UID>
+      <ID>30</ID>
+      <Name>MILESTONE: Public Launch</Name>
+      <Notes>Open registrations, LinkedIn campaigns, webinars</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-07-15T00:00:00</Start>
+      <Finish>2026-08-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT136H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>29</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>31</UID>
+      <ID>31</ID>
+      <Name>MILESTONE: First 50 Subscribers</Name>
+      <Notes>Validate B2B pricing, gather v1.1 feedback</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-08-01T00:00:00</Start>
+      <Finish>2026-08-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT240H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>30</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>32</UID>
+      <ID>32</ID>
+      <Name>RELEASE: Analytics Dashboard (v1.1.0)</Name>
+      <Notes>Ship to prod: Executive reporting, ROI calculator, exports</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-08-31T00:00:00</Start>
+      <Finish>2026-09-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>31</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>33</UID>
+      <ID>33</ID>
+      <Name>TARGET: 200 Subscribers Achieved</Name>
+      <Notes>PROJECT COMPLETE: $9,800 MRR through direct sales + self-serve</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-09-15T00:00:00</Start>
+      <Finish>2026-09-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>32</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <!-- LEVEL 2: PROJECT 4 - MIND INTEGRATION -->
+    <Task>
+      <UID>34</UID>
+      <ID>34</ID>
+      <Name>PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)</Name>
+      <Notes>Build and ship to production. Target: 250 subscribers at $14/month = $3,500 MRR</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-05-01T00:00:00</Start>
+      <Finish>2026-12-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    
+    <Task>
+      <UID>35</UID>
+      <ID>35</ID>
+      <Name>RELEASE: User Auth &amp; Profiles (v0.1.0)</Name>
+      <Notes>Build + ship to prod: Registration, privacy, HIPAA compliance</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-05-01T00:00:00</Start>
+      <Finish>2026-06-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT248H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>36</UID>
+      <ID>36</ID>
+      <Name>RELEASE: LLM Reflection Engine (v0.2.0)</Name>
+      <Notes>Build + ship to prod: GPT-4 integration, inquiry, emotion detection</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-06-01T00:00:00</Start>
+      <Finish>2026-06-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT232H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>35</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>37</UID>
+      <ID>37</ID>
+      <Name>RELEASE: Check-In System (v0.3.0)</Name>
+      <Notes>Build + ship to prod: Daily check-ins, data collection, tracking</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-06-30T00:00:00</Start>
+      <Finish>2026-07-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT248H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>36</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>38</UID>
+      <ID>38</ID>
+      <Name>RELEASE: Pattern Detection (v0.4.0)</Name>
+      <Notes>Build + ship to prod: Semantic analysis, contradictions, insights</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-07-31T00:00:00</Start>
+      <Finish>2026-08-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>37</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>39</UID>
+      <ID>39</ID>
+      <Name>RELEASE: Stripe Mobile Subscriptions (v0.5.0)</Name>
+      <Notes>Ship to prod: iOS/Android in-app purchases, subscription mgmt</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-08-15T00:00:00</Start>
+      <Finish>2026-09-01T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT136H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>38</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>40</UID>
+      <ID>40</ID>
+      <Name>RELEASE: Subscription Model Live (v1.0.0)</Name>
+      <Notes>Ship to prod: Free (limited), Premium ($14/mo), Annual ($120/yr)</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-09-01T00:00:00</Start>
+      <Finish>2026-09-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT112H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>39</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>41</UID>
+      <ID>41</ID>
+      <Name>MILESTONE: Beta Launch (50 Users)</Name>
+      <Notes>Invite-only beta, focus groups, UX testing</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-09-15T00:00:00</Start>
+      <Finish>2026-10-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT240H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>40</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>42</UID>
+      <ID>42</ID>
+      <Name>MILESTONE: App Store Launch</Name>
+      <Notes>Public launch: iOS App Store, Google Play, web app</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-10-15T00:00:00</Start>
+      <Finish>2026-10-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT128H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>41</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>43</UID>
+      <ID>43</ID>
+      <Name>MILESTONE: First 100 Subscribers</Name>
+      <Notes>Validate wellness market fit, gather v1.1 feedback</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-10-31T00:00:00</Start>
+      <Finish>2026-11-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT240H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>42</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>44</UID>
+      <ID>44</ID>
+      <Name>RELEASE: Personalization Features (v1.1.0)</Name>
+      <Notes>Ship to prod: AI recommendations, habit tracking, progress viz</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-11-30T00:00:00</Start>
+      <Finish>2026-12-15T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT120H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>43</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>45</UID>
+      <ID>45</ID>
+      <Name>TARGET: 250 Subscribers Achieved</Name>
+      <Notes>PROJECT COMPLETE: $3,500 MRR through app stores + direct</Notes>
+      <OutlineLevel>3</OutlineLevel>
+      <Start>2026-12-15T00:00:00</Start>
+      <Finish>2026-12-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT128H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>44</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <!-- PROGRAM-LEVEL MILESTONES -->
+    <Task>
+      <UID>46</UID>
+      <ID>46</ID>
+      <Name>PROGRAM: First Monetization Live (Causal Affect v2.3.0)</Name>
+      <Notes>First application accepting paid subscriptions</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2025-12-22T00:00:00</Start>
+      <Finish>2025-12-22T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>5</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>47</UID>
+      <ID>47</ID>
+      <Name>PROGRAM: First 10 Paying Customers Across Portfolio</Name>
+      <Notes>Validate monetization model works</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-01-31T00:00:00</Start>
+      <Finish>2026-01-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>8</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>48</UID>
+      <ID>48</ID>
+      <Name>PROGRAM: 100 Total Subscribers</Name>
+      <Notes>First 100 paying subscribers across all live apps</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-03-31T00:00:00</Start>
+      <Finish>2026-03-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>49</UID>
+      <ID>49</ID>
+      <Name>PROGRAM: 500 Subscribers Milestone</Name>
+      <Notes>Validate scalability and unit economics</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-09-30T00:00:00</Start>
+      <Finish>2026-09-30T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+    </Task>
+    
+    <Task>
+      <UID>50</UID>
+      <ID>50</ID>
+      <Name>PROGRAM: All 4 Applications Live</Name>
+      <Notes>All applications deployed with monetization enabled</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-10-31T00:00:00</Start>
+      <Finish>2026-10-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>42</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+    
+    <Task>
+      <UID>51</UID>
+      <ID>51</ID>
+      <Name>PROGRAM SUCCESS: 1000 Subscribers Achieved</Name>
+      <Notes>$26,750 MRR ($321K ARR) - Sustainable SaaS business established!</Notes>
+      <OutlineLevel>2</OutlineLevel>
+      <Start>2026-12-31T00:00:00</Start>
+      <Finish>2026-12-31T00:00:00</Finish>
+      <PercentComplete>0</PercentComplete>
+      <Duration>PT0H</Duration>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>11</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+      <PredecessorLink>
+        <PredecessorUID>21</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+      <PredecessorLink>
+        <PredecessorUID>33</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+      <PredecessorLink>
+        <PredecessorUID>45</PredecessorUID>
+        <Type>1</Type>
+      </PredecessorLink>
+    </Task>
+  </Tasks>
+</Project>
