@@ -49,7 +49,16 @@
 // Gantt chart data from backend
 // ALL projects data from backend
 const allGanttData = {{ gantt_data | tojson }};
-const allProjects = {{ projects | tojson }};
+// Create simplified project list for filtering
+const allProjects = [
+    {% for project in projects %}
+    {
+        project_name: "{{ project.project_name }}",
+        project_code: "{{ project.project_code }}",
+        milestone_count: {{ project.milestones|length }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
 
 // Get selected program from localStorage
 const selectedProgram = localStorage.getItem('selectedProgram');
