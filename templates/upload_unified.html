@@ -389,11 +389,15 @@ async function uploadProjectFile() {
         if (response.ok) {
             document.getElementById('projectSuccess').classList.remove('hidden');
             document.getElementById('projectSuccessMessage').textContent = 
-                `${data.project_name} uploaded successfully! ${data.changes_detected || 0} changes detected.`;
+                `${data.project_name} uploaded successfully! ${data.milestone_count || 0} milestones loaded. Redirecting to dashboard...`;
             
-            // Refresh after 2 seconds
+            // Store the newly uploaded project in localStorage so dashboard selects it
+            localStorage.setItem('selectedProgram', data.project_name);
+            localStorage.setItem('selectedProjectCode', data.project_code);
+            
+            // Redirect to dashboard after 2 seconds
             setTimeout(() => {
-                window.location.href = '/dashboard';
+                window.location.href = '/dashboard/';
             }, 2000);
         } else {
             throw new Error(data.detail || 'Upload failed');
