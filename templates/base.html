@@ -69,19 +69,19 @@
                     <a href="/dashboard" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Portfolio Dashboard
                     </a>
-                    <a href="/dashboard/gantt" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/gantt{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Gantt Chart
                     </a>
-                    <a href="/dashboard/milestones" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/milestones{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Milestones
                     </a>
-                    <a href="/dashboard/metrics" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/metrics{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Metrics
                     </a>
-                    <a href="/dashboard/risks" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/risks{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Risks
                     </a>
-                    <a href="/dashboard/changes" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/changes{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Changes
                     </a>
                     <a href="/upload" class="hover:bg-blue-700 px-3 py-2 rounded transition bg-blue-700">
@@ -125,23 +125,12 @@
 
         // Load saved title on page load
         window.addEventListener('DOMContentLoaded', function() {
-            const savedTitle = localStorage.setItem('appTitle');
+            const savedTitle = localStorage.getItem('appTitle');
             if (savedTitle) {
                 const titleElement = document.getElementById('appTitle');
                 if (titleElement) {
                     titleElement.textContent = savedTitle;
                 }
-            }
-            
-            // Add project query param to all navigation links if present in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const projectCode = urlParams.get('project');
-            if (projectCode) {
-                document.querySelectorAll('nav a[href^="/dashboard"]').forEach(link => {
-                    const url = new URL(link.href, window.location.origin);
-                    url.searchParams.set('project', projectCode);
-                    link.href = url.toString();
-                });
             }
         });
     </script>

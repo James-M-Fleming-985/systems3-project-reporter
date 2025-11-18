@@ -21,7 +21,7 @@
 
 <!-- Gantt Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%; min-height:700px; max-height:2000px; overflow-y:auto; overflow-x:hidden;"></div>
+    <div id="ganttChart" style="width:100%;"></div>
 </div>
 
 <!-- Legend -->
@@ -191,10 +191,10 @@ function getLayout() {
         ? 'Project Timeline - Milestone Detail View' 
         : 'Program Roadmap - Project Overview';
     
-    // Count unique projects to set appropriate height
-    const uniqueProjects = new Set(ganttData.map(t => t.Resource));
-    const projectCount = uniqueProjects.size;
-    const chartHeight = Math.max(500, projectCount * 50);  // 50px per project, minimum 500px
+    // Calculate dynamic height based on milestone count to minimize whitespace
+    const milestoneCount = ganttData.length;
+    // Dynamic height: minimum 400px, add 15px per milestone, max 1500px
+    const chartHeight = Math.min(1500, Math.max(400, 400 + (milestoneCount * 15)));
     
     // Create annotations for completion percentages
     const annotations = completionAnnotations.map(annot => ({
@@ -268,12 +268,9 @@ function getLayout() {
 // Plotly configuration
 const config = {
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: false,  // Hide modebar to prevent compressed image
     displaylogo: false,
-    modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-    modeBarButtonsToAdd: ['pan2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-    scrollZoom: true,  // Enable scroll to zoom
-    modeBarPosition: 'top'
+    scrollZoom: false  // Disable scroll zoom to allow normal page scrolling
 };
 
 // Function to render the chart
