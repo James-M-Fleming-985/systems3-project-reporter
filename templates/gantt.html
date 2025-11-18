@@ -21,7 +21,7 @@
 
 <!-- Gantt Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%;"></div>
+    <div id="ganttChart" style="width:100%; height:700px; overflow:auto;"></div>
 </div>
 
 <!-- Legend -->
@@ -227,50 +227,43 @@ function getLayout() {
             title: 'Date',
             type: 'date',
             tickformat: '%Y-%m-%d',
-            tickangle: -45,  // Rotate x-axis labels to 45 degrees
-            rangeslider: {
-                visible: true,  // Add range slider for zooming timeline
-                thickness: 0.05
-            }
+            tickangle: -45,
+            fixedrange: false  // Allow horizontal zooming
         },
         yaxis: {
             title: {
                 text: currentView === 'detail' ? 'Milestones' : 'Projects',
-                standoff: 20  // Move y-axis title away from axis to avoid nested appearance
+                standoff: 20
             },
             automargin: true,
             autorange: true,
-            fixedrange: false  // Allow vertical scrolling/zooming
+            fixedrange: false  // Allow vertical zooming
         },
         barmode: 'overlay',
-        bargap: 0.2,
-        height: chartHeight,  // Dynamic height based on project count
+        bargap: 0.5,  // Increased gap to make bars thinner
+        height: chartHeight,
         margin: {
-            l: 250,  // Increased for longer project names
-            r: 120,  // Increased for percentage labels
+            l: 250,
+            r: 120,
             t: 80,
-            b: 150  // Increased bottom margin for range slider
+            b: 100  // Reduced - no rangeslider needed
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
         paper_bgcolor: 'white',
-        annotations: annotations,  // Add completion percentage annotations
-        dragmode: 'pan',  // Enable panning by default
-        modebar: {
-            orientation: 'v',
-            bgcolor: 'rgba(255,255,255,0.9)',
-            color: '#444',
-            activecolor: '#1976d2'
-        }
+        annotations: annotations,
+        dragmode: 'pan'
     };
 }
 
 // Plotly configuration
 const config = {
     responsive: true,
-    displayModeBar: false,  // Hide modebar to prevent compressed image
+    displayModeBar: true,  // Show modebar for zoom controls
     displaylogo: false,
-    scrollZoom: false  // Disable scroll zoom to allow normal page scrolling
+    modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+    modeBarButtonsToAdd: ['pan2d'],
+    scrollZoom: true  // Enable scroll to zoom
 };
 
 // Function to render the chart
