@@ -46,61 +46,12 @@
 
 {% block scripts %}
 <script>
-// Gantt chart data from backend
-// ALL projects data from backend
-const allGanttData = {{ gantt_data | tojson }};
-// Create simplified project list for filtering
-const allProjects = [
-    {% for project in projects %}
-    {
-        project_name: "{{ project.project_name }}",
-        project_code: "{{ project.project_code }}",
-        milestone_count: {{ project.milestones|length }}
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-];
+// Gantt chart data from backend (pre-filtered to selected project)
+const ganttData = {{ gantt_data | tojson }};
+const projectName = "{{ project.project_name }}";
+const projectCode = "{{ project.project_code }}";
 
-// Get selected program from localStorage
-const selectedProgram = localStorage.getItem('selectedProgram');
-const selectedProjectCode = localStorage.getItem('selectedProjectCode');
-
-console.log('🔍 GANTT DEBUG - Selected Program:', selectedProgram);
-console.log('🔍 GANTT DEBUG - Selected Project Code:', selectedProjectCode);
-console.log('🔍 GANTT DEBUG - Total milestones in allGanttData:', allGanttData.length);
-
-// Filter ganttData to only show milestones for the selected project
-let ganttData = allGanttData;
-if (selectedProgram) {
-    // Find the matching project
-    const matchedProject = allProjects.find(p => 
-        p.project_name === selectedProgram || 
-        p.project_code === selectedProjectCode
-    );
-    
-    if (matchedProject) {
-        console.log('✅ GANTT DEBUG - Matched Project:', matchedProject.project_name, '(', matchedProject.project_code, ')');
-        console.log('🔍 GANTT DEBUG - Project has', matchedProject.milestones?.length, 'milestones');
-        
-        // Filter to only this project's milestones
-        // Match by ProjectCode field added in backend
-        ganttData = allGanttData.filter(task => {
-            // Check if this milestone belongs to the selected project
-            const belongsToProject = task.ProjectCode === matchedProject.project_code ||
-                                   task.ProjectName === matchedProject.project_name;
-            
-            if (belongsToProject) {
-                console.log('  ✓ Including milestone:', task.Task, 'from project', task.ProjectCode);
-            }
-            return belongsToProject;
-        });
-        
-        console.log('🎯 GANTT DEBUG - Filtered to', ganttData.length, 'milestones for', selectedProgram);
-    } else {
-        console.warn('⚠️ GANTT DEBUG - No matching project found for:', selectedProgram);
-    }
-} else {
-    console.log('ℹ️ GANTT DEBUG - No program selected, showing all', ganttData.length, 'milestones');
-}
+console.log('📊 GANTT - Rendering', ganttData.length, 'milestones for', projectName);
 
 // Global state
 let currentView = 'roadmap';  // Default to roadmap view
@@ -332,15 +283,9 @@ function renderChart() {
     Plotly.newPlot(chartDiv, traces, layout, config);
 }
 
-// Update page title with program name (selectedProgram already declared above)
-if (selectedProgram) {
-    // Remove file extension and clean up the name
-    const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
-    document.getElementById('ganttPageTitle').textContent = `📅 ${cleanName} - Program Roadmap`;
-    document.getElementById('ganttPageSubtitle').textContent = `Interactive timeline view of ${ganttData.length} milestones`;
-} else {
-    document.getElementById('ganttPageSubtitle').textContent = `Interactive timeline view of ${ganttData.length} milestones across all programs`;
-}
+// Update page title with program name
+document.getElementById('ganttPageTitle').textContent = `📅 ${projectName} - Program Roadmap`;
+document.getElementById('ganttPageSubtitle').textContent = `Interactive timeline view of ${ganttData.length} milestones`;
 
 // Initial render
 renderChart();

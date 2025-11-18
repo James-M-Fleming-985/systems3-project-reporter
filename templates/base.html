@@ -125,12 +125,23 @@
 
         // Load saved title on page load
         window.addEventListener('DOMContentLoaded', function() {
-            const savedTitle = localStorage.getItem('appTitle');
+            const savedTitle = localStorage.setItem('appTitle');
             if (savedTitle) {
                 const titleElement = document.getElementById('appTitle');
                 if (titleElement) {
                     titleElement.textContent = savedTitle;
                 }
+            }
+            
+            // Add project query param to all navigation links if present in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectCode = urlParams.get('project');
+            if (projectCode) {
+                document.querySelectorAll('nav a[href^="/dashboard"]').forEach(link => {
+                    const url = new URL(link.href, window.location.origin);
+                    url.searchParams.set('project', projectCode);
+                    link.href = url.toString();
+                });
             }
         });
     </script>

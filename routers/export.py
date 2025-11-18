@@ -1,46 +1,46 @@
 """
 Export Router - Handle PowerPoint export requests
+
+ARCHITECTURE: Uses project_context middleware to ensure
+single project scope - prevents data mixing between projects
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from datetime import datetime
-import os
 
-from repositories.project_repository import ProjectRepository
 from services.powerpoint_exporter import PowerPointExporter
-from pathlib import Path
+from middleware.project_context import get_selected_project
 
 router = APIRouter(tags=["export"])
 
-# Initialize services
-BASE_DIR = Path(__file__).resolve().parent.parent
-# Use persistent storage path (same as upload.py, main.py, and dashboard.py)
-DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
-project_repo = ProjectRepository(data_dir=DATA_DIR)
-
 
 @router.get("/export/powerpoint")
-async def export_to_powerpoint():
+async def export_to_powerpoint(request: Request):
     """
-    Export all projects to PowerPoint presentation
+    Export selected project to PowerPoint presentation
+    
+    SINGLE PROJECT SCOPE: Only exports selected project
     
     Returns:
         PPTX file download
     """
     try:
-        # Load all projects
-        projects = project_repo.load_all_projects()
+        # Get selected project ONLY
+        project = get_selected_project(request)
         
-        if not projects:
-            return {"error": "No projects found to export"}
+        if not project:
+            return {
+                "error": "Please select a project from the dashboard first"
+            }
         
-        # Create PowerPoint
+        # Create PowerPoint for ONLY this project
         exporter = PowerPointExporter()
-        pptx_buffer = exporter.create_presentation(projects)
+        pptx_buffer = exporter.create_presentation([project])
         
-        # Generate filename with timestamp
+        # Generate filename with project name and timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"Systems3_Project_Report_{timestamp}.pptx"
+        safe_name = project.project_name.replace(' ', '_').replace('/', '-')
+        filename = f"{safe_name}_Report_{timestamp}.pptx"
         
         # Return as downloadable file
         return StreamingResponse(

@@ -338,37 +338,23 @@ try {
 }
 </script>
 <script>
-console.log('=== MAIN SCRIPT BLOCK STARTING ===');
+// Backend provides pre-filtered data for selected project
+const projectName = "{{ project.project_name }}";
+const projectCode = "{{ project.project_code }}";
+const metricsData = {{ metrics | tojson | safe }};
+
+console.log('📊 METRICS - Rendering metrics for', projectName);
+
 // All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for selected program on page load
-    const selectedProgram = localStorage.getItem('selectedProgram');
-    const selectedProgramCode = localStorage.getItem('selectedProgramCode');
-    const noProgramDiv = document.getElementById('noProgramSelected');
-    const metricsDiv = document.getElementById('metricsContent');
+    // Update UI with project name
     const programNameSpan = document.getElementById('selectedProgramNameMetrics');
-    
-    console.log('=== Metrics Page Debug ===');
-    console.log('Selected program from localStorage:', selectedProgram);
-    console.log('Selected program code:', selectedProgramCode);
-    console.log('All localStorage keys:', Object.keys(localStorage));
-    console.log('All localStorage:', JSON.stringify(localStorage));
-    
-    if (selectedProgram && selectedProgram !== 'null' && selectedProgram.trim() !== '') {
-        console.log('✅ Program selected, showing metrics content');
-        // Show metrics content
-        if (noProgramDiv) noProgramDiv.classList.add('hidden');
-        if (metricsDiv) metricsDiv.classList.remove('hidden');
-        if (programNameSpan) programNameSpan.textContent = selectedProgram;
-        
-        // Load metrics data
-        loadMetricsData(selectedProgram);
-    } else {
-        console.log('❌ No program selected, showing warning');
-        // Show "no program selected" message
-        if (noProgramDiv) noProgramDiv.classList.remove('hidden');
-        if (metricsDiv) metricsDiv.classList.add('hidden');
+    if (programNameSpan) {
+        programNameSpan.textContent = projectName;
     }
+    
+    // Load metrics data (already provided by backend)
+    loadMetricsData(projectName);
     
     // Initialize modal controls
     initializeModalControls();

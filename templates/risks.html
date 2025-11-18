@@ -413,15 +413,16 @@
 </div>
 
 <script>
-// Get program name from localStorage (set by project selector in dashboard)
-let programName = localStorage.getItem('selectedProgram') || 'ZnNi Line Development Plan-09.xml';
+// Backend provides pre-filtered data for selected project
+const projectName = "{{ project.project_name }}";
+const projectCode = "{{ project.project_code }}";
 
-// Clean program name (remove file extensions and version numbers)
-// Remove extensions
-programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
+// Clean program name for API calls (remove file extensions and version numbers)
+let programName = projectName
+    .replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim()
+    .replace(/-\d+$/, '').trim();
 
-// Remove trailing version numbers like -09, -10, etc.
-programName = programName.replace(/-\d+$/, '').trim();
+console.log('📊 RISKS - Rendering risks for', projectName);
 
 // Store risk data for copying
 const risksData = {{ standalone_risks | tojson | safe }};
@@ -785,12 +786,7 @@ function downloadRisks(format) {
 }
 
 // Update page title with program name
-const selectedProgram = localStorage.getItem('selectedProgram');
-if (selectedProgram) {
-    // Remove file extension and clean up the name
-    const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
-    document.getElementById('risksPageTitle').textContent = `⚠️ ${cleanName} - Risk Analysis`;
-    document.getElementById('risksPageSubtitle').textContent = `Active risks grouped by severity`;
-}
+document.getElementById('risksPageTitle').textContent = `⚠️ ${projectName} - Risk Analysis`;
+document.getElementById('risksPageSubtitle').textContent = `Active risks grouped by severity`;
 </script>
 {% endblock %}

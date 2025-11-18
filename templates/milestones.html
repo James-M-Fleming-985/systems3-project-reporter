@@ -235,64 +235,17 @@
 
 {% block scripts %}
 <script>
-// ALL milestones data from server (all projects)
-const allMilestonesData = {{ quadrants | tojson | safe }};
+// Milestones data from server (pre-filtered to selected project)
+const allMilestones = {{ quadrants | tojson | safe }};
+const projectName = "{{ project.project_name }}";
+const projectCode = "{{ project.project_code }}";
 
-// Get selected program from localStorage
-const selectedProgram = localStorage.getItem('selectedProgram');
-const selectedProjectCode = localStorage.getItem('selectedProjectCode');
+const totalMilestones = allMilestones.completed_past.length + 
+                       allMilestones.open.length + 
+                       allMilestones.upcoming_future.length + 
+                       allMilestones.delayed.length;
 
-console.log('🔍 MILESTONES DEBUG - Selected Program:', selectedProgram);
-console.log('🔍 MILESTONES DEBUG - Selected Project Code:', selectedProjectCode);
-console.log('🔍 MILESTONES DEBUG - All data:', allMilestonesData);
-
-// Filter milestones to only show selected project
-let allMilestones = allMilestonesData;
-if (selectedProgram || selectedProjectCode) {
-    console.log('🔍 MILESTONES DEBUG - Filtering milestones...');
-    console.log('🔍 Sample milestone from data:', allMilestonesData.open?.[0] || allMilestonesData.completed_past?.[0]);
-    
-    // Filter each quadrant
-    const filterByProject = (milestone) => {
-        const milestoneProject = milestone.project || '';
-        
-        // Try exact match first, then partial match
-        const exactMatch = milestoneProject === selectedProjectCode || 
-                          milestoneProject === selectedProgram;
-        const partialMatch = milestoneProject.includes(selectedProjectCode) ||
-                            milestoneProject.includes(selectedProgram);
-        
-        const matches = exactMatch || partialMatch;
-        
-        if (matches) {
-            console.log('  ✓ Including milestone:', milestone.name, 'from project:', milestoneProject);
-        } else {
-            console.log('  ✗ Excluding milestone:', milestone.name, 'project:', milestoneProject, '!== selectedProjectCode:', selectedProjectCode);
-        }
-        return matches;
-    };
-    
-    allMilestones = {
-        completed_past: (allMilestonesData.completed_past || []).filter(filterByProject),
-        open: (allMilestonesData.open || []).filter(filterByProject),
-        upcoming_future: (allMilestonesData.upcoming_future || []).filter(filterByProject),
-        delayed: (allMilestonesData.delayed || []).filter(filterByProject)
-    };
-    
-    const totalFiltered = allMilestones.completed_past.length + 
-                         allMilestones.open.length + 
-                         allMilestones.upcoming_future.length + 
-                         allMilestones.delayed.length;
-    
-    console.log('🎯 MILESTONES DEBUG - Filtered to', totalFiltered, 'milestones for', selectedProgram);
-    
-    // If no milestones found, show warning but don't filter (show all)
-    if (totalFiltered === 0) {
-        console.warn('⚠️ MILESTONES DEBUG - No milestones found for project, showing all milestones');
-        allMilestones = allMilestonesData;
-    }
-} else {
-    console.log('ℹ️ MILESTONES DEBUG - No program selected, showing all milestones');
+console.log('📊 MILESTONES - Rendering', totalMilestones, 'milestones for', projectName);
 }
 
 // Validate and log milestone data

@@ -169,15 +169,26 @@ async def program_metrics(request: Request):
     """
     FEATURE-WEB-006: Program metrics dashboard
     Displays KPIs and health metrics for selected program
+    
+    SINGLE PROJECT SCOPE: Only shows metrics for selected project
     """
     from main import BUILD_VERSION
     from services.metrics_calculator import MetricsCalculator
     from repositories.risk_repository import RiskRepository
     import json
     
-    # Load projects and calculate metrics
-    projects = project_repo.load_all_projects()
-    logger.warning(f"Loaded {len(projects)} projects for metrics calculation")
+    # Get selected project ONLY
+    project = get_selected_project(request)
+    if not project:
+        return templates.TemplateResponse("select_project.html", {
+            "request": request,
+            "message": "Please select a project from the dashboard first",
+            "build_version": BUILD_VERSION
+        })
+    
+    # Calculate metrics for ONLY this project
+    projects = [project]
+    logger.info(f"📊 Metrics: {project.project_name}")
     
     metrics_calculator = MetricsCalculator()
     metrics = metrics_calculator.calculate_program_metrics(projects)
@@ -248,13 +259,11 @@ async def program_metrics(request: Request):
     
     logger.info(f"Final metrics with risks: {json.dumps(metrics, indent=2)}")
     
-    # Get program name from first project if available
-    program_name = projects[0].project_name if projects else "Program"
-    
     context = {
         "request": request,
         "metrics": metrics,
-        "program_name": program_name,
+        "project": project,
+        "program_name": project.project_name,
         "build_version": BUILD_VERSION
     }
     
@@ -267,38 +276,44 @@ async def risk_analysis(request: Request):
     """
     FEATURE-WEB-004: Risk analysis dashboard
     Groups risks by severity with visualizations
+    
+    SINGLE PROJECT SCOPE: Only shows risks for selected project
     """
     from main import BUILD_VERSION
     from repositories.risk_repository import RiskRepository
+    import re
     
-    projects = project_repo.load_all_projects()
-    risk_data = chart_service.format_risk_data(projects)
+    # Get selected project ONLY
+    project = get_selected_project(request)
+    if not project:
+        return templates.TemplateResponse("select_project.html", {
+            "request": request,
+            "message": "Please select a project from the dashboard first",
+            "build_version": BUILD_VERSION
+        })
+    
+    # Format risk data for ONLY this project
+    risk_data = chart_service.format_risk_data([project])
     
     # Also load standalone risk data from RiskRepository
     risk_repo = RiskRepository()
     standalone_risks = []
     
-    if projects:
-        # Load risks for the first project's program (clean the name the same way as risk upload)
-        program_name = getattr(projects[0], 'project_name', None)
-        if program_name:
-            import re
-            # Use the SAME cleaning logic as risk upload (from routers/risks.py)
-            # Remove extensions
-            clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
-            # Remove trailing version numbers like -09, -10, etc.
-            clean_name = re.sub(r'-\d+$', '', clean_name).strip()
-            
-            logger.warning(f"🔍 Risks page: Loading risks for program: original='{program_name}', cleaned='{clean_name}'")
-            loaded_risks = risk_repo.load_risks(clean_name)
-            if loaded_risks:
-                logger.warning(f"✅ Risks page: Loaded {len(loaded_risks)} risks for '{clean_name}'")
-                standalone_risks = loaded_risks
-            else:
-                logger.warning(f"❌ Risks page: No risks found for cleaned name '{clean_name}'")
+    # Load risks for this project (clean the name the same way as risk upload)
+    program_name = project.project_name
+    # Use the SAME cleaning logic as risk upload (from routers/risks.py)
+    clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+    
+    logger.info(f"📊 Risks: {project.project_name} (cleaned: '{clean_name}')")
+    loaded_risks = risk_repo.load_risks(clean_name)
+    if loaded_risks:
+        logger.info(f"Loaded {len(loaded_risks)} risks from repository")
+        standalone_risks = loaded_risks
     
     context = {
         "request": request,
+        "project": project,
         "risk_data": risk_data,
         "standalone_risks": standalone_risks,
         "build_version": BUILD_VERSION
@@ -312,18 +327,30 @@ async def change_management(request: Request):
     """
     FEATURE-WEB-005: Change management log
     Displays schedule changes sorted by date
+    
+    SINGLE PROJECT SCOPE: Only shows changes for selected project
     """
     from main import BUILD_VERSION
-    projects = project_repo.load_all_projects()
-    changes = chart_service.format_change_data(projects)
     
-    # Get program name from first project if available
-    program_name = projects[0].project_name if projects else "Program"
+    # Get selected project ONLY
+    project = get_selected_project(request)
+    if not project:
+        return templates.TemplateResponse("select_project.html", {
+            "request": request,
+            "message": "Please select a project from the dashboard first",
+            "build_version": BUILD_VERSION
+        })
+    
+    # Format changes for ONLY this project
+    changes = chart_service.format_change_data([project])
+    
+    logger.info(f"📊 Changes: {project.project_name} - {len(changes)} changes")
     
     context = {
         "request": request,
+        "project": project,
         "changes": changes,
-        "program_name": program_name,
+        "program_name": project.project_name,
         "build_version": BUILD_VERSION
     }
     
