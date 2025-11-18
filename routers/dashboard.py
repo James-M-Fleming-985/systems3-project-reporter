@@ -1,6 +1,9 @@
 """
 Dashboard Router - Main application routes
 Adapted from tpl-fastapi-crud router.py.jinja
+
+ARCHITECTURE: All routes use project_context middleware to ensure
+single project scope - prevents data mixing between projects
 """
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -11,18 +14,20 @@ import logging
 
 from repositories.project_repository import ProjectRepository
 from services.chart_formatter import ChartFormatterService
+from middleware.project_context import (
+    get_selected_project,
+    get_all_projects,
+    get_selected_project_code
+)
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["dashboard"])
 
-# Initialize repository and services
+# Initialize services
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-# Use persistent storage path (same as upload.py and main.py)
-DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
-project_repo = ProjectRepository(data_dir=DATA_DIR)
 chart_service = ChartFormatterService()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
@@ -31,12 +36,13 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 async def home(request: Request):
     """
     FEATURE-WEB-001: Dashboard home page
-    Shows project cards with summary metrics
+    Shows ALL project cards with summary metrics (project selector)
     """
     from repositories.risk_repository import RiskRepository
     import re
     
-    projects = project_repo.load_all_projects()
+    # Dashboard shows ALL projects (this is the project selector page)
+    projects = get_all_projects()
     risk_repo = RiskRepository()
     
     # Calculate summary metrics
@@ -49,7 +55,11 @@ async def home(request: Request):
     # 2. Risks from RiskRepository (uploaded separately)
     for project in projects:
         # Clean the project name the same way as risk upload does
-        clean_name = project.project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+        clean_name = (project.project_name
+                     .replace('.xml', '')
+                     .replace('.xlsx', '')
+                     .replace('.yaml', '')
+                     .strip())
         clean_name = re.sub(r'-\d+$', '', clean_name).strip()
         
         repo_risks = risk_repo.load_risks(clean_name)
@@ -81,14 +91,32 @@ async def gantt_chart(request: Request):
     """
     FEATURE-WEB-002: Gantt chart visualization (CRITICAL FEATURE)
     User requirement: "Gantt charts is really the only thing specified"
+    
+    SINGLE PROJECT SCOPE: Only shows milestones for selected project
     """
     from main import BUILD_VERSION
-    projects = project_repo.load_all_projects()
-    gantt_data = chart_service.format_gantt_data(projects)
+    
+    # Get selected project ONLY
+    project = get_selected_project(request)
+    if not project:
+        # No project selected - show project selector message
+        return templates.TemplateResponse("select_project.html", {
+            "request": request,
+            "message": "Please select a project from the dashboard first",
+            "build_version": BUILD_VERSION
+        })
+    
+    # Format data for ONLY this project
+    gantt_data = chart_service.format_gantt_data([project])
+    
+    logger.info(
+        f"📊 Gantt: {project.project_name} - "
+        f"{len(gantt_data)} milestones"
+    )
     
     context = {
         "request": request,
-        "projects": projects,
+        "project": project,  # Single project
         "gantt_data": gantt_data,
         "build_version": BUILD_VERSION
     }
@@ -101,33 +129,34 @@ async def milestone_tracker(request: Request):
     """
     FEATURE-WEB-003: Milestone quadrant tracker
     Categorizes milestones by status and timeline
+    
+    SINGLE PROJECT SCOPE: Only shows milestones for selected project
     """
     from main import BUILD_VERSION
-    projects = project_repo.load_all_projects()
     
-    # Log milestone data being loaded for debugging
-    for project in projects:
-        if hasattr(project, 'project_code') and project.project_code == 'ZLD-P1':
-            milestones = project.milestones if hasattr(project, 'milestones') else []
-            znni_milestones = [
-                m for m in milestones
-                if 'ZnNi Vat Solution Qualification' in (m.get('name', '') if isinstance(m, dict) else getattr(m, 'name', ''))
-            ]
-            if znni_milestones:
-                logger.warning(
-                    "📖 Loading ZnNi Vat Solution Qualification milestones:"
-                )
-                for m in znni_milestones[:3]:  # First 3
-                    name = m.get('name', '') if isinstance(m, dict) else getattr(m, 'name', '')
-                    completion = m.get('completion_percentage', 0) if isinstance(m, dict) else getattr(m, 'completion_percentage', 0)
-                    logger.warning(
-                        f"   '{name}' = {completion}%"
-                    )
+    # Get selected project ONLY
+    project = get_selected_project(request)
+    if not project:
+        return templates.TemplateResponse("select_project.html", {
+            "request": request,
+            "message": "Please select a project from the dashboard first",
+            "build_version": BUILD_VERSION
+        })
     
-    quadrants = chart_service.calculate_milestone_quadrants(projects)
+    # Calculate quadrants for ONLY this project
+    quadrants = chart_service.calculate_milestone_quadrants([project])
+    
+    logger.info(
+        f"📊 Milestones: {project.project_name} - "
+        f"Completed: {len(quadrants['completed_past'])}, "
+        f"Open: {len(quadrants['open'])}, "
+        f"Upcoming: {len(quadrants['upcoming_future'])}, "
+        f"Delayed: {len(quadrants['delayed'])}"
+    )
     
     context = {
         "request": request,
+        "project": project,  # Single project
         "quadrants": quadrants,
         "build_version": BUILD_VERSION
     }
