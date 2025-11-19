@@ -395,9 +395,9 @@ async function uploadProjectFile() {
             localStorage.setItem('selectedProgram', data.project_name);
             localStorage.setItem('selectedProjectCode', data.project_code);
             
-            // Redirect to dashboard after 2 seconds
+            // Redirect to gantt with project parameter after 2 seconds
             setTimeout(() => {
-                window.location.href = '/dashboard/';
+                window.location.href = `/dashboard/gantt?project=${encodeURIComponent(data.project_code)}`;
             }, 2000);
         } else {
             throw new Error(data.detail || 'Upload failed');
