@@ -30,8 +30,13 @@ class ChangeDetectionService:
         """
         changes = []
         
-        # Create lookup dict for old milestones
-        old_milestones = {m.name: m for m in old_project.milestones}
+        # Create lookup dicts for old milestones
+        old_by_name = {m.name: m for m in old_project.milestones}
+        old_by_id = {
+            getattr(m, 'id', None): m
+            for m in old_project.milestones
+            if getattr(m, 'id', None)
+        }
         
         # Create lookup dict for existing documented changes
         existing_changes = {
@@ -39,9 +44,30 @@ class ChangeDetectionService:
         }
         
         for new_milestone in new_project.milestones:
-            if new_milestone.name in old_milestones:
-                old_milestone = old_milestones[new_milestone.name]
-                
+            old_milestone = None
+            new_id = getattr(new_milestone, 'id', None)
+            
+            # Strategy 1: Match by ID (reliable for renamed milestones)
+            if new_id and new_id in old_by_id:
+                old_milestone = old_by_id[new_id]
+            
+            # Strategy 2: Match by name (fallback)
+            elif new_milestone.name in old_by_name:
+                old_milestone = old_by_name[new_milestone.name]
+            
+            # Strategy 3: Match by date+parent
+            else:
+                for old_m in old_project.milestones:
+                    if (old_m.target_date == new_milestone.target_date
+                            and old_m.parent_project ==
+                            new_milestone.parent_project
+                            and new_milestone.target_date
+                            and new_milestone.parent_project):
+                        # Match by location, no change to detect
+                        old_milestone = old_m
+                        break
+            
+            if old_milestone:
                 # Check if target date changed
                 if old_milestone.target_date != new_milestone.target_date:
                     old_date = datetime.strptime(

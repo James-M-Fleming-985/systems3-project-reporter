@@ -249,11 +249,23 @@ async def upload_xml(
                             f"Existing '{existing.name}'"
                         )
                     
+                    # SMART NAME HANDLING:
+                    # - If matched by ID or date+parent, use XML name (handles MS Project renames)
+                    # - If matched by name, preserve existing name (protects manual edits)
+                    use_xml_name = match_method in ['id', 'date+parent']
+                    final_name = milestone_name if use_xml_name else existing.name
+                    
+                    if use_xml_name and milestone_name != existing.name:
+                        logger.info(
+                            f"📝 Updating milestone name: "
+                            f"'{existing.name}' → '{milestone_name}'"
+                        )
+                    
                     # PRESERVE user edits for certain fields
                     # REFRESH from XML for MS Project data
                     merged_milestone = {
                         'id': new_id,
-                        'name': existing.name,  # PRESERVE user edits
+                        'name': final_name,  # Use XML name for renamed milestones
                         'target_date': new_milestone.target_date,  # XML
                         'status': new_milestone.status,  # XML
                         'completion_date': new_milestone.completion_date,  # XML
