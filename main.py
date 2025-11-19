@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.143"
+BUILD_VERSION = "1.0.145"
 
 
 # Setup logging
@@ -82,6 +82,13 @@ async def startup_event():
     
     # Ensure data directory exists
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Initialize data from XML if needed (Railway deployment)
+    try:
+        from init_data import init_data_from_xml
+        init_data_from_xml()
+    except Exception as e:
+        logger.warning(f"Data initialization warning: {e}")
     
     try:
         project_repo = ProjectRepository(data_dir=DATA_DIR)
