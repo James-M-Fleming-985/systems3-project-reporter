@@ -1,0 +1,470 @@
+project_name: Application Monetization Program
+project_code: AMP-P1
+status: IN_PROGRESS
+start_date: '2025-11-19'
+target_completion: '2025-11-19'
+completion_percentage: 0
+milestones:
+- id: null
+  name: 'RELEASE: User Authentication System (v2.1.0)'
+  target_date: '2025-12-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: JWT auth, signup/login, password reset, session management'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Stripe Integration (v2.2.0)'
+  target_date: '2025-12-08'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Payment processing, subscription management, webhooks, billing
+    portal'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Subscription Tiers (v2.3.0)'
+  target_date: '2025-12-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Free tier (5 analyses/mo), Pro ($29/mo), Enterprise ($99/mo)'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Marketing Landing Page (v2.4.0)'
+  target_date: '2025-12-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: SEO-optimized landing, pricing page, case studies'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: Monetization Go-Live'
+  target_date: '2026-01-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Enable paid subscriptions, Product Hunt launch, begin marketing
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: First 10 Paying Subscribers'
+  target_date: '2026-01-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate pricing and value proposition with real customers
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: 50 Subscribers'
+  target_date: '2026-02-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Scale marketing: paid ads, partnerships, referral program (v3.0)'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Feature Iteration (v3.1-3.3)'
+  target_date: '2026-03-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Ship top 3 requested features based on user feedback
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'TARGET: 300 Subscribers Achieved'
+  target_date: '2026-03-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'PROJECT COMPLETE: $8,700 MRR through sustained growth'
+  parent_project: 'PROJECT 1: Causal Affect - Monetization Launch (AMP-001-CA)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Initial Production Deploy (v1.0.0)'
+  target_date: '2026-02-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship MVP to Railway: core optimization, basic UI, database'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Auth + Stripe (v1.1.0)'
+  target_date: '2026-03-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Google/GitHub SSO, Stripe (reuse Causal Affect code)'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Freemium Tiers (v1.2.0)'
+  target_date: '2026-03-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Free (10 optimizations/mo), Pro ($19/mo unlimited)'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Marketing Site (v1.3.0)'
+  target_date: '2026-03-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Landing page, pricing, case studies'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: Public Launch'
+  target_date: '2026-04-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Enable registrations, Product Hunt/Reddit/HackerNews campaigns
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: First 25 Paying Subscribers'
+  target_date: '2026-04-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate product-market fit, gather feedback
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: 100 Subscribers'
+  target_date: '2026-05-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Scale marketing: paid ads, affiliate program, community'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: API & Integrations (v2.0.0)'
+  target_date: '2026-06-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Public API, Zapier, webhooks'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'TARGET: 250 Subscribers Achieved'
+  target_date: '2026-06-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'PROJECT COMPLETE: $4,750 MRR, Enterprise tier added'
+  parent_project: 'PROJECT 2: Opti Royal - Production Launch (AMP-002-OR)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Variable Ontology System (v0.1.0)'
+  target_date: '2026-02-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Variable definitions, actor profiles, archetypes'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Actor Modeling Engine (v0.2.0)'
+  target_date: '2026-03-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Profile CRUD, classification, cue estimation'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Interaction Simulator MVP (v0.3.0)'
+  target_date: '2026-04-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Basic simulation, outcome prediction'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Stripe B2B Integration (v0.4.0)'
+  target_date: '2026-05-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Team billing, seat management, usage tracking'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Multi-Tenant Architecture (v0.5.0)'
+  target_date: '2026-06-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Organization support, roles, data isolation'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Pricing Tiers Live (v1.0.0)'
+  target_date: '2026-06-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Starter ($49/mo), Business ($149/mo), Enterprise'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: Pilot Launch (5 Organizations)'
+  target_date: '2026-07-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Private beta, case studies, gather feedback
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: Public Launch'
+  target_date: '2026-08-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Open registrations, LinkedIn campaigns, webinars
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: First 50 Subscribers'
+  target_date: '2026-08-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate B2B pricing, gather v1.1 feedback
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Analytics Dashboard (v1.1.0)'
+  target_date: '2026-09-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Executive reporting, ROI calculator, exports'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'TARGET: 200 Subscribers Achieved'
+  target_date: '2026-09-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'PROJECT COMPLETE: $9,800 MRR through direct sales + self-serve'
+  parent_project: 'PROJECT 3: Communication Variable Modelling - PROJECT-006 (AMP-003-CM)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: User Auth & Profiles (v0.1.0)'
+  target_date: '2026-06-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Registration, privacy, HIPAA compliance'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: LLM Reflection Engine (v0.2.0)'
+  target_date: '2026-06-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: GPT-4 integration, inquiry, emotion detection'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Check-In System (v0.3.0)'
+  target_date: '2026-07-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Daily check-ins, data collection, tracking'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Pattern Detection (v0.4.0)'
+  target_date: '2026-08-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Build + ship to prod: Semantic analysis, contradictions, insights'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Stripe Mobile Subscriptions (v0.5.0)'
+  target_date: '2026-09-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: iOS/Android in-app purchases, subscription mgmt'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Subscription Model Live (v1.0.0)'
+  target_date: '2026-09-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: Free (limited), Premium ($14/mo), Annual ($120/yr)'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: Beta Launch (50 Users)'
+  target_date: '2026-10-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Invite-only beta, focus groups, UX testing
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: App Store Launch'
+  target_date: '2026-10-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Public launch: iOS App Store, Google Play, web app'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'MILESTONE: First 100 Subscribers'
+  target_date: '2026-11-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate wellness market fit, gather v1.1 feedback
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'RELEASE: Personalization Features (v1.1.0)'
+  target_date: '2026-12-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'Ship to prod: AI recommendations, habit tracking, progress viz'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'TARGET: 250 Subscribers Achieved'
+  target_date: '2026-12-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: 'PROJECT COMPLETE: $3,500 MRR through app stores + direct'
+  parent_project: 'PROJECT 4: Mind Integration Platform - PROJECT-005 (AMP-004-MI)'
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM: First Monetization Live (Causal Affect v2.3.0)'
+  target_date: '2025-12-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: First application accepting paid subscriptions
+  parent_project: null
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM: First 10 Paying Customers Across Portfolio'
+  target_date: '2026-01-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate monetization model works
+  parent_project: null
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM: 100 Total Subscribers'
+  target_date: '2026-03-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: First 100 paying subscribers across all live apps
+  parent_project: null
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM: 500 Subscribers Milestone'
+  target_date: '2026-09-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: Validate scalability and unit economics
+  parent_project: null
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM: All 4 Applications Live'
+  target_date: '2026-10-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: All applications deployed with monetization enabled
+  parent_project: null
+  resources: null
+  project: AMP-P1
+- id: null
+  name: 'PROGRAM SUCCESS: 1000 Subscribers Achieved'
+  target_date: '2026-12-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: $26,750 MRR ($321K ARR) - Sustainable SaaS business established!
+  parent_project: null
+  resources: null
+  project: AMP-P1
+risks: []
+changes: []
