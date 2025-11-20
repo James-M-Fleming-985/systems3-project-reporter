@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.154"  # 2025-11-20 - Add view selection UI
+BUILD_VERSION = "1.0.155"  # 2025-11-20 - Integrate AI-generated services properly
 
 
 # Setup logging
