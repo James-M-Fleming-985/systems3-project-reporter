@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.153"  # 2025-11-20 - Fix missing router refs
+BUILD_VERSION = "1.0.154"  # 2025-11-20 - Add view selection UI
 
 
 # Setup logging
