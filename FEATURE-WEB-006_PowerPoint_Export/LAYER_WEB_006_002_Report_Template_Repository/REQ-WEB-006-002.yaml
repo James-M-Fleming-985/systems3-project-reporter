@@ -1,0 +1,131 @@
+# ====================================================================================
+# LAYER REQUIREMENT: Report Template Repository
+# ====================================================================================
+
+metadata:
+  requirement_id: "REQ-WEB-006-002"
+  requirement_title: "Report Template Repository"
+  layer_id: "LAYER-WEB-006-002"
+  layer_name: "Report Template Repository"
+  layer_folder: "LAYER_WEB_006_002_Report_Template_Repository"
+  parent_feature: "FEATURE-WEB-006_PowerPoint_Report_Builder"
+  parent_feature_file: "../FEATURE-WEB-006_PowerPoint_Report_Builder.yaml"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-11-20"
+  updated_date: "2025-11-20"
+  owner: "AI Code Generator"
+
+traceability:
+  parent_feature_requirements:
+    - "FEAT-REQ-001: Template Selection capability - users choose from predefined templates"
+    - "FEAT-REQ-004: Custom template management (Phase 2)"
+  parent_system_requirements:
+    - "COMP-WEB-004: PowerPoint Report Builder Service"
+  derivation_rationale: |
+    Repository pattern for managing report templates. Provides CRUD operations for predefined
+    and custom templates, with YAML file persistence.
+
+requirement:
+  title: "Report Template Repository"
+  description: |
+    Repository class that manages report templates. Loads predefined templates from YAML files,
+    provides CRUD operations, and validates template structure. Supports both system-provided
+    and user-created custom templates.
+  rationale: |
+    Centralized template management enables reusability and consistency. Repository pattern
+    abstracts storage details from business logic.
+
+specification:
+  structure:
+    entry_point: "src/repositories/report_template_repository.py"
+    modules:
+      - "report_template_repository.py - Main repository class"
+      - "__init__.py - Module exports"
+  
+  classes:
+    - name: "ReportTemplateRepository"
+      purpose: "Manage report templates and saved configurations"
+      methods:
+        - name: "__init__(templates_dir: Path, configs_dir: Path)"
+          purpose: "Initialize repository with templates and configurations directories"
+        - name: "get_all_templates() -> List[ReportTemplate]"
+          purpose: "Return all available templates"
+        - name: "get_template_by_id(template_id: str) -> Optional[ReportTemplate]"
+          purpose: "Get specific template by ID"
+        - name: "save_template(template: ReportTemplate) -> bool"
+          purpose: "Save custom template to YAML file"
+        - name: "delete_template(template_id: str) -> bool"
+          purpose: "Delete custom template (predefined cannot be deleted)"
+        - name: "validate_template(template: ReportTemplate) -> ValidationResult"
+          purpose: "Validate template structure and slide URLs"
+        - name: "save_configuration(config: ReportConfig, config_name: str) -> bool"
+          purpose: "Save user's report configuration for reuse"
+        - name: "load_configuration(config_name: str) -> Optional[ReportConfig]"
+          purpose: "Load previously saved configuration"
+        - name: "get_all_configurations() -> List[Dict[str, str]]"
+          purpose: "Return list of saved configurations with metadata"
+        - name: "delete_configuration(config_name: str) -> bool"
+          purpose: "Delete saved configuration"
+        - name: "_load_predefined_templates() -> List[ReportTemplate]"
+          purpose: "Load system templates on init"
+  
+  data_storage:
+    templates:
+      location: "templates/report_templates/"
+      format: "YAML files (one per template)"
+      naming: "template_{template_id}.yaml"
+      predefined_templates:
+        - "template_executive_summary.yaml"
+        - "template_detailed_status.yaml"
+        - "template_risks_focused.yaml"
+    
+    configurations:
+      location: "user_data/report_configurations/"
+      format: "YAML files (one per saved config)"
+      naming: "config_{sanitized_name}_{user_id}.yaml"
+      metadata_included: ["config_name", "created_at", "last_used", "template_id"]
+  
+  implementation_details:
+    libraries: ["pyyaml", "pathlib", "pydantic"]
+    patterns: ["Repository Pattern", "Singleton (optional)"]
+
+interfaces:
+  public_methods:
+    - "get_all_templates()"
+    - "get_template_by_id()"
+    - "save_template()"
+    - "delete_template()"
+    - "save_configuration()"
+    - "load_configuration()"
+    - "get_all_configurations()"
+    - "delete_configuration()"
+
+testing:
+  unit_tests:
+    - "test_load_predefined_templates"
+    - "test_get_template_by_id_found"
+    - "test_get_template_by_id_not_found"
+    - "test_save_custom_template"
+    - "test_cannot_delete_predefined_template"
+    - "test_validate_template_structure"
+    - "test_save_configuration"
+    - "test_load_configuration"
+    - "test_list_saved_configurations"
+    - "test_delete_configuration"
+    - "test_configuration_sanitizes_filename"
+
+dependencies:
+  internal: ["models.report_config (ReportTemplate)"]
+  external: ["pyyaml>=6.0", "pydantic>=2.0.0"]
+
+acceptance_criteria:
+  - criterion: \"Loads 3 predefined templates on initialization\"
+  - criterion: \"Returns None for non-existent template_id\"
+  - criterion: \"Saves custom templates to YAML with correct structure\"
+  - criterion: \"Prevents deletion of predefined templates\"
+  - criterion: \"Validates template slide URLs against valid dashboard routes\"
+  - criterion: \"Saves report configurations with sanitized filenames\"
+  - criterion: \"Loads saved configurations correctly with all settings preserved\"
+  - criterion: \"Lists all saved configurations with metadata (name, created_at, last_used)\"

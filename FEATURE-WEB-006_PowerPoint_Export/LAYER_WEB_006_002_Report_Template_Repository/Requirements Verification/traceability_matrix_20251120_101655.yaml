@@ -1,0 +1,205 @@
+matrix_metadata:
+  timestamp: '20251120_101655'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: \"Loads 3 predefined templates on initialization\"
+  description: \"Loads 3 predefined templates on initialization\"
+  test_files: &id001
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: \"Returns None for non-existent template_id\"
+  description: \"Returns None for non-existent template_id\"
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: \"Saves custom templates to YAML with correct structure\"
+  description: \"Saves custom templates to YAML with correct structure\"
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: \"Prevents deletion of predefined templates\"
+  description: \"Prevents deletion of predefined templates\"
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: \"Validates template slide URLs against valid dashboard routes\"
+  description: \"Validates template slide URLs against valid dashboard routes\"
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: \"Saves report configurations with sanitized filenames\"
+  description: \"Saves report configurations with sanitized filenames\"
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: \"Loads saved configurations correctly with all settings preserved\"
+  description: \"Loads saved configurations correctly with all settings preserved\"
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-008
+  requirement: \"Lists all saved configurations with metadata (name, created_at, last_used)\"
+  description: \"Lists all saved configurations with metadata (name, created_at, last_used)\"
+  test_files: *id001
+  test_methods:
+  - test_ac_008
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py
+  lines: 329
+  methods:
+  - name: __init__
+    lines: 14-26
+  - name: _load_predefined_templates
+    lines: 27-82
+  - name: _load_custom_templates
+    lines: 83-97
+  - name: _save_custom_templates
+    lines: 98-108
+  - name: get_template
+    lines: 109-124
+  - name: save_template
+    lines: 125-154
+  - name: _validate_slides
+    lines: 155-182
+  - name: delete_template
+    lines: 183-203
+  - name: __init__
+    lines: 207-216
+  - name: save_configuration
+    lines: 217-247
+  - name: _sanitize_filename
+    lines: 248-270
+  - name: load_configuration
+    lines: 271-298
+  - name: list_configurations
+    lines: 299-309
+  classes:
+  - name: TemplateRepository
+    type: class
+    lines: 11-203
+  - name: ConfigurationManager
+    type: class
+    lines: 204-329
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  - AC-008
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  test_count: 0
+  implementation_files:
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py
+  methods_tested:
+  - __init__
+  - _load_predefined_templates
+  - _load_custom_templates
+  - _save_custom_templates
+  - get_template
+  - save_template
+  - _validate_slides
+  - delete_template
+  - __init__
+  - save_configuration
+  - _sanitize_filename
+  - load_configuration
+  - list_configurations
+  classes_tested:
+  - TemplateRepository
+  - ConfigurationManager
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py:14-26
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py:27-82
+  method_name: _load_predefined_templates
+  requirement: AC-001
+  test: test__load_predefined_templates
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py:83-97
+  method_name: _load_custom_templates
+  requirement: AC-001
+  test: test__load_custom_templates
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py:98-108
+  method_name: _save_custom_templates
+  requirement: AC-001
+  test: test__save_custom_templates
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/src/implementation.py:109-124
+  method_name: get_template
+  requirement: AC-001
+  test: test_get_template
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_002_Report_Template_Repository/tests/test_generated_20251120_101617.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 8
+  requirements_traced: 8
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

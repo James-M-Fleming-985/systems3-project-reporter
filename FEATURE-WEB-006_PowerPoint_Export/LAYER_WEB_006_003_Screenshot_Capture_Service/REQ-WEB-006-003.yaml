@@ -1,0 +1,106 @@
+# ====================================================================================
+# LAYER REQUIREMENT: Screenshot Capture Service
+# ====================================================================================
+
+metadata:
+  requirement_id: "REQ-WEB-006-003"
+  requirement_title: "Screenshot Capture Service"
+  layer_id: "LAYER-WEB-006-003"
+  layer_name: "Screenshot Capture Service"
+  layer_folder: "LAYER_WEB_006_003_Screenshot_Capture_Service"
+  parent_feature: "FEATURE-WEB-006_PowerPoint_Report_Builder"
+  parent_feature_file: "../FEATURE-WEB-006_PowerPoint_Report_Builder.yaml"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-11-20"
+  updated_date: "2025-11-20"
+  owner: "AI Code Generator"
+
+traceability:
+  parent_feature_requirements:
+    - "FEAT-REQ-002: Screenshot capture of live dashboard views"
+    - "FEAT-REQ-005: Pixel-perfect chart reproduction"
+  parent_system_requirements:
+    - "COMP-WEB-003: Screenshot Capture Service"
+  derivation_rationale: |
+    Core capture engine using Playwright headless browser. Produces pixel-perfect screenshots
+    of dashboard views with proper wait strategies for chart rendering.
+
+requirement:
+  title: "Screenshot Capture Service"
+  description: |
+    Async service using Playwright to capture dashboard views as PNG images. Handles browser
+    lifecycle, viewport configuration, element hiding, and timeout management.
+  rationale: |
+    Headless browser ensures exact visual reproduction of charts. Async patterns enable
+    parallel capture of multiple views for performance.
+
+specification:
+  structure:
+    entry_point: "src/services/screenshot_service.py"
+    modules:
+      - "screenshot_service.py - Main capture service"
+      - "__init__.py - Module exports"
+  
+  classes:
+    - name: "ScreenshotService"
+      purpose: "Capture dashboard views using Playwright"
+      methods:
+        - name: "__init__(base_url: str, viewport: ViewportSize)"
+          purpose: "Initialize service with configuration"
+        - name: "async capture_view(url: str, output_path: Path) -> Path"
+          purpose: "Capture single view and save as PNG"
+        - name: "async capture_multiple_views(slide_configs: List[SlideConfig]) -> Dict[str, Path]"
+          purpose: "Capture multiple views in parallel"
+        - name: "async _wait_for_charts() -> None"
+          purpose: "Wait for Plotly.js charts to finish rendering"
+        - name: "async _hide_elements(hide_selectors: List[str]) -> None"
+          purpose: "Hide navigation/UI elements before capture"
+        - name: "cleanup_temp_files() -> None"
+          purpose: "Delete temporary screenshot files"
+  
+  technical_details:
+    browser: "Chromium (via Playwright)"
+    viewport: "1920x1080 (configurable)"
+    wait_strategy: "networkidle + 1000ms for chart rendering"
+    output_format: "PNG (lossless, high quality)"
+    timeout: "30 seconds per page"
+  
+  implementation_details:
+    libraries: ["playwright>=1.40.0", "pillow>=10.0.0"]
+    patterns: ["Async/await", "Context manager for browser lifecycle"]
+    error_handling:
+      - "Timeout after 30s"
+      - "Retry once on network failure"
+      - "Return placeholder image if capture fails"
+
+interfaces:
+  public_methods:
+    - "async capture_view()"
+    - "async capture_multiple_views()"
+    - "cleanup_temp_files()"
+
+testing:
+  unit_tests:
+    - "test_capture_view_with_mock_playwright"
+    - "test_viewport_configuration"
+    - "test_timeout_handling"
+    - "test_element_hiding"
+    - "test_parallel_capture"
+  integration_tests:
+    - "test_capture_real_dashboard_view"
+    - "test_capture_gantt_chart"
+    - "test_chart_rendering_complete"
+
+dependencies:
+  internal: ["models.report_config (SlideConfig, ViewportSize)"]
+  external: ["playwright>=1.40.0", "pillow>=10.0.0"]
+
+acceptance_criteria:
+  - criterion: \"Captures screenshot within 5 seconds per view\"
+  - criterion: \"Screenshots are 1920x1080 by default\"
+  - criterion: \"Charts are fully rendered (verified by visual inspection)\"
+  - criterion: \"Navigation elements are hidden when requested\"
+  - criterion: \"Parallel capture reduces total time (3 views in ~7s vs ~15s)\"
+  - criterion: \"Graceful failure with placeholder image on timeout\"

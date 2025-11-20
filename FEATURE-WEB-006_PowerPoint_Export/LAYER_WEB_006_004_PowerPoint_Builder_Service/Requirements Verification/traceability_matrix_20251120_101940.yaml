@@ -1,0 +1,206 @@
+matrix_metadata:
+  timestamp: '20251120_101940'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: \"Generated PPTX files open in PowerPoint/LibreOffice\"
+  description: \"Generated PPTX files open in PowerPoint/LibreOffice\"
+  test_files: &id001
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: \"Title slide contains report title and metadata\"
+  description: \"Title slide contains report title and metadata\"
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: \"Content slides have proper image sizing\"
+  description: \"Content slides have proper image sizing\"
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: \"Slide count matches number of screenshots + 1\"
+  description: \"Slide count matches number of screenshots + 1\"
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: \"Company template (if uploaded) is used as base presentation\"
+  description: \"Company template (if uploaded) is used as base presentation\"
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: \"Company branding (logo, colors, fonts) is preserved from template\"
+  description: \"Company branding (logo, colors, fonts) is preserved from template\"
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: \"Falls back to default template if no company template uploaded\"
+  description: \"Falls back to default template if no company template uploaded\"
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-008
+  requirement: \"Rejects invalid templates with clear error messages\"
+  description: \"Rejects invalid templates with clear error messages\"
+  test_files: *id001
+  test_methods:
+  - test_ac_008
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-009
+  requirement: \"File generation completes in < 3 seconds\"
+  description: \"File generation completes in < 3 seconds\"
+  test_files: *id001
+  test_methods:
+  - test_ac_009
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py
+  lines: 245
+  methods:
+  - name: __init__
+    lines: 21-26
+  - name: generate_presentation
+    lines: 27-66
+  - name: _load_template
+    lines: 67-82
+  - name: _validate_template
+    lines: 83-93
+  - name: _create_title_slide
+    lines: 94-130
+  - name: _create_content_slide
+    lines: 131-144
+  - name: _add_image_to_slide
+    lines: 145-180
+  - name: _save_to_bytes
+    lines: 181-187
+  - name: get_slide_count
+    lines: 188-193
+  - name: preserve_branding
+    lines: 194-222
+  - name: create_default_template
+    lines: 223-233
+  classes:
+  - name: PowerPointBuilderService
+    type: class
+    lines: 15-245
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  - AC-008
+  - AC-009
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  test_count: 0
+  implementation_files:
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py
+  methods_tested:
+  - __init__
+  - generate_presentation
+  - _load_template
+  - _validate_template
+  - _create_title_slide
+  - _create_content_slide
+  - _add_image_to_slide
+  - _save_to_bytes
+  - get_slide_count
+  - preserve_branding
+  - create_default_template
+  classes_tested:
+  - PowerPointBuilderService
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py:21-26
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py:27-66
+  method_name: generate_presentation
+  requirement: AC-001
+  test: test_generate_presentation
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py:67-82
+  method_name: _load_template
+  requirement: AC-001
+  test: test__load_template
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py:83-93
+  method_name: _validate_template
+  requirement: AC-001
+  test: test__validate_template
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/src/implementation.py:94-130
+  method_name: _create_title_slide
+  requirement: AC-001
+  test: test__create_title_slide
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_004_PowerPoint_Builder_Service/tests/test_generated_20251120_101900.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 9
+  requirements_traced: 9
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

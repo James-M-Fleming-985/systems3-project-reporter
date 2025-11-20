@@ -1,0 +1,167 @@
+matrix_metadata:
+  timestamp: '20251120_101758'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: \"Captures screenshot within 5 seconds per view\"
+  description: \"Captures screenshot within 5 seconds per view\"
+  test_files: &id001
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: \"Screenshots are 1920x1080 by default\"
+  description: \"Screenshots are 1920x1080 by default\"
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: \"Charts are fully rendered (verified by visual inspection)\"
+  description: \"Charts are fully rendered (verified by visual inspection)\"
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: \"Navigation elements are hidden when requested\"
+  description: \"Navigation elements are hidden when requested\"
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: \"Parallel capture reduces total time (3 views in ~7s vs ~15s)\"
+  description: \"Parallel capture reduces total time (3 views in ~7s vs ~15s)\"
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: \"Graceful failure with placeholder image on timeout\"
+  description: \"Graceful failure with placeholder image on timeout\"
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py
+  lines: 214
+  methods:
+  - name: __init__
+    lines: 23-27
+  - name: capture_screenshot
+    lines: 28-85
+  - name: capture_screenshots_parallel
+    lines: 86-153
+  - name: _create_driver
+    lines: 154-167
+  - name: _hide_navigation_elements
+    lines: 168-186
+  - name: _create_placeholder_image
+    lines: 187-196
+  - name: __del__
+    lines: 197-203
+  - name: capture_dashboard_screenshot
+    lines: 204-209
+  - name: capture_multiple_screenshots
+    lines: 210-220
+  classes:
+  - name: ScreenshotService
+    type: class
+    lines: 20-214
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  test_count: 0
+  implementation_files:
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py
+  methods_tested:
+  - __init__
+  - capture_screenshot
+  - capture_screenshots_parallel
+  - _create_driver
+  - _hide_navigation_elements
+  - _create_placeholder_image
+  - __del__
+  - capture_dashboard_screenshot
+  - capture_multiple_screenshots
+  classes_tested:
+  - ScreenshotService
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py:23-27
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py:28-85
+  method_name: capture_screenshot
+  requirement: AC-001
+  test: test_capture_screenshot
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py:86-153
+  method_name: capture_screenshots_parallel
+  requirement: AC-001
+  test: test_capture_screenshots_parallel
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py:154-167
+  method_name: _create_driver
+  requirement: AC-001
+  test: test__create_driver
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/src/implementation.py:168-186
+  method_name: _hide_navigation_elements
+  requirement: AC-001
+  test: test__hide_navigation_elements
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_003_Screenshot_Capture_Service/tests/test_generated_20251120_101728.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 6
+  requirements_traced: 6
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

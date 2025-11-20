@@ -1,0 +1,186 @@
+# ====================================================================================
+# LAYER REQUIREMENT: Export Route Handler
+# ====================================================================================
+
+metadata:
+  requirement_id: "REQ-WEB-006-005"
+  requirement_title: "Export Route Handler"
+  layer_id: "LAYER-WEB-006-005"
+  layer_name: "Export Route Handler"
+  layer_folder: "LAYER_WEB_006_005_Export_Route_Handler"
+  parent_feature: "FEATURE-WEB-006_PowerPoint_Report_Builder"
+  parent_feature_file: "../FEATURE-WEB-006_PowerPoint_Report_Builder.yaml"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-11-20"
+  updated_date: "2025-11-20"
+  owner: "AI Code Generator"
+
+traceability:
+  parent_feature_requirements:
+    - "FEAT-REQ-007: API endpoints for report generation"
+    - "FEAT-REQ-008: File download response"
+  parent_system_requirements:
+    - "COMP-WEB-005: Dashboard Web Routes"
+  derivation_rationale: |
+    FastAPI routes that orchestrate the full export workflow. Coordinates calls to
+    repository, screenshot service, and PowerPoint builder. Manages responses and errors.
+
+requirement:
+  title: "Export Route Handler"
+  description: |
+    FastAPI router with endpoints for template listing, report generation, and async
+    export. Orchestrates service calls and manages file download responses.
+  rationale: |
+    API layer provides clean interface for UI. Separation of concerns enables testing
+    of business logic independent of HTTP concerns.
+
+specification:
+  structure:
+    entry_point: "src/routers/export.py"
+    modules:
+      - "export.py - Export routes"
+      - "__init__.py - Module exports"
+  
+  routes:
+    # Template Management
+    - method: "GET"
+      path: "/api/templates"
+      handler: "get_templates()"
+      description: "List all available report templates"
+      response: "List[ReportTemplate]"
+    
+    # Configuration Management
+    - method: "GET"
+      path: "/api/configurations"
+      handler: "get_configurations()"
+      description: "List all saved report configurations for current user"
+      response: "List[ConfigurationMetadata]"
+    
+    - method: "POST"
+      path: "/api/configurations"
+      handler: "save_configuration(config: ReportConfig, config_name: str)"
+      description: "Save report configuration for reuse"
+      response: "JSON with success and config_id"
+    
+    - method: "GET"
+      path: "/api/configurations/{config_name}"
+      handler: "load_configuration(config_name: str)"
+      description: "Load previously saved configuration"
+      response: "ReportConfig"
+    
+    - method: "DELETE"
+      path: "/api/configurations/{config_name}"
+      handler: "delete_configuration(config_name: str)"
+      description: "Delete saved configuration"
+      response: "JSON with success"
+    
+    # Company Template Management
+    - method: "POST"
+      path: "/api/templates/company"
+      handler: "async upload_company_template(file: UploadFile, template_name: str)"
+      description: "Upload company branded PowerPoint template"
+      response: "JSON with success and validation results"
+      max_file_size: "50MB"
+      allowed_formats: [".pptx"]
+    
+    - method: "GET"
+      path: "/api/templates/company"
+      handler: "get_company_templates()"
+      description: "List all uploaded company templates"
+      response: "List[CompanyTemplateMetadata]"
+    
+    - method: "PUT"
+      path: "/api/templates/company/default"
+      handler: "set_default_company_template(template_name: str)"
+      description: "Set default company template for reports"
+      response: "JSON with success"
+    
+    # Report Export
+    - method: "POST"
+      path: "/api/export"
+      handler: "async export_report(config: ReportConfig)"
+      description: "Generate and download PowerPoint"
+      response: "FileResponse (PPTX)"
+      timeout: "30 seconds"
+    
+    - method: "POST"
+      path: "/api/export/async"
+      handler: "async export_report_async(config: ReportConfig)"
+      description: "Start async export (returns job_id)"
+      response: "JSON with job_id"
+    
+    - method: "GET"
+      path: "/api/export/status/{job_id}"
+      handler: "get_export_status(job_id: str)"
+      description: "Check async export status"
+      response: "JSON with status"
+  
+  integration_flow: |
+    1. Validate ReportConfig (Pydantic)
+    2. Load template from ReportTemplateRepository
+    3. Capture screenshots via ScreenshotService
+    4. Build PowerPoint via PowerPointBuilderService
+    5. Return FileResponse
+  
+  implementation_details:
+    libraries: ["fastapi>=0.104.1", "uvicorn>=0.24.0"]
+    patterns: ["Dependency Injection", "Async/await"]
+    error_handling:
+      - "400: Invalid config"
+      - "404: Template not found"
+      - "500: Generation failed"
+      - "503: Too many concurrent requests"
+
+interfaces:
+  endpoints:
+    - "GET /api/templates"
+    - "POST /api/export"
+    - "POST /api/export/async"
+    - "GET /api/export/status/{job_id}"
+
+testing:
+  unit_tests:
+    - "test_get_templates_returns_list"
+    - "test_save_configuration"
+    - "test_load_configuration"
+    - "test_list_saved_configurations"
+    - "test_delete_configuration"
+    - "test_upload_company_template"
+    - "test_reject_invalid_template_format"
+    - "test_get_company_templates"
+    - "test_set_default_template"
+    - "test_export_with_valid_config"
+    - "test_export_with_invalid_config"
+    - "test_export_template_not_found"
+    - "test_async_export_creates_job"
+  integration_tests:
+    - "test_end_to_end_export"
+    - "test_file_download_headers"
+    - "test_concurrent_exports"
+
+dependencies:
+  internal:
+    - "models.report_config"
+    - "repositories.report_template_repository"
+    - "services.screenshot_service"
+    - "services.powerpoint_builder_service"
+  external: ["fastapi>=0.104.1"]
+
+acceptance_criteria:
+  - criterion: \"GET /api/templates returns 3+ templates\"
+  - criterion: \"GET /api/configurations returns user's saved configs\"
+  - criterion: \"POST /api/configurations saves config successfully\"
+  - criterion: \"GET /api/configurations/{name} loads saved config\"
+  - criterion: \"DELETE /api/configurations/{name} removes config\"
+  - criterion: \"POST /api/templates/company accepts .pptx files < 50MB\"
+  - criterion: \"POST /api/templates/company validates template structure\"
+  - criterion: \"GET /api/templates/company lists uploaded templates\"
+  - criterion: \"PUT /api/templates/company/default sets default template\"
+  - criterion: \"POST /api/export downloads PPTX file\"
+  - criterion: \"Invalid config returns 400 with error details\"
+  - criterion: \"Template not found returns 404\"
+  - criterion: \"File has correct Content-Type and Content-Disposition headers\"
+  - criterion: \"Async export returns job_id immediately\"
+  - criterion: \"Status endpoint shows progress (pending → processing → completed)\"

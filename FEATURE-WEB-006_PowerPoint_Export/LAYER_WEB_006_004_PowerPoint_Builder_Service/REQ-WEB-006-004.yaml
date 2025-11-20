@@ -1,0 +1,136 @@
+# ====================================================================================
+# LAYER REQUIREMENT: PowerPoint Builder Service
+# ====================================================================================
+
+metadata:
+  requirement_id: "REQ-WEB-006-004"
+  requirement_title: "PowerPoint Builder Service"
+  layer_id: "LAYER-WEB-006-004"
+  layer_name: "PowerPoint Builder Service"
+  layer_folder: "LAYER_WEB_006_004_PowerPoint_Builder_Service"
+  parent_feature: "FEATURE-WEB-006_PowerPoint_Report_Builder"
+  parent_feature_file: "../FEATURE-WEB-006_PowerPoint_Report_Builder.yaml"
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-11-20"
+  updated_date: "2025-11-20"
+  owner: "AI Code Generator"
+
+traceability:
+  parent_feature_requirements:
+    - "FEAT-REQ-003: PowerPoint assembly with professional formatting"
+    - "FEAT-REQ-006: Branding customization (Phase 2)"
+  parent_system_requirements:
+    - "COMP-WEB-004: PowerPoint Report Builder Service"
+  derivation_rationale: |
+    Assembles captured screenshots into PowerPoint presentation. Handles slide layout,
+    formatting, branding, and file generation.
+
+requirement:
+  title: "PowerPoint Builder Service"
+  description: |
+    Service that creates PowerPoint presentations from screenshot images. Provides title slide,
+    content slides with proper layout, optional branding, and file saving.
+  rationale: |
+    python-pptx enables programmatic PowerPoint generation. Service encapsulates all
+    presentation logic for testability and reusability.
+
+specification:
+  structure:
+    entry_point: "src/services/powerpoint_builder_service.py"
+    modules:
+      - "powerpoint_builder_service.py - Main builder service"
+      - "__init__.py - Module exports"
+  
+  classes:
+    - name: "PowerPointBuilderService"
+      purpose: "Assemble PowerPoint from screenshots using company template as base"
+      methods:
+        - name: "__init__(company_templates_dir: Path)"
+          purpose: "Initialize service with company templates directory"
+        - name: "create_presentation(config: ReportConfig, screenshots: Dict[str, Path]) -> Path"
+          purpose: "Create complete presentation and save"
+        - name: "upload_company_template(template_file: UploadFile, template_name: str) -> bool"
+          purpose: "Upload and validate company PowerPoint template (.pptx)"
+        - name: "get_available_company_templates() -> List[str]"
+          purpose: "List all uploaded company templates"
+        - name: "set_default_company_template(template_name: str) -> bool"
+          purpose: "Set which company template to use by default"
+        - name: "_load_company_template(template_name: str) -> Presentation"
+          purpose: "Load company template as base for new presentation"
+        - name: "_add_title_slide(prs: Presentation, config: ReportConfig) -> Slide"
+          purpose: "Add title slide using template's master slide"
+        - name: "_add_screenshot_slide(prs: Presentation, image_path: Path, title: str) -> Slide"
+          purpose: "Add content slide with screenshot using template layout"
+        - name: "_validate_company_template(prs: Presentation) -> bool"
+          purpose: "Verify uploaded template has required master slides"
+        - name: "_format_slide_title(slide: Slide, title: str) -> None"
+          purpose: "Format title text box"
+  
+  presentation_format:
+    base_template: "Company uploaded template OR default system template"
+    slide_size: "Inherited from company template (typically 16:9)"
+    title_slide_layout: "Uses company template's Title Slide master"
+    content_slide_layout: "Uses company template's Title + Content master"
+    fonts: "Inherited from company template"
+    colors: "Inherited from company template (logo, theme colors)"
+    
+  company_template_requirements:
+    file_format: ".pptx (PowerPoint 2007+)"
+    required_master_slides:
+      - "Title Slide (for report title page)"
+      - "Title and Content (for screenshot slides)"
+    optional_master_slides:
+      - "Section Header"
+      - "Blank"
+    validation:
+      - "Template must open without errors"
+      - "Template must have at least 2 master slides"
+      - "Template file size < 50MB"
+  
+  template_storage:
+    location: "templates/company_templates/"
+    naming: "{company_name}_{template_name}.pptx"
+    default: "default_template.pptx (system-provided fallback)"
+  
+  implementation_details:
+    libraries: ["python-pptx>=0.6.21", "Pillow>=10.0.0"]
+    patterns: ["Builder Pattern", "Service Layer"]
+
+interfaces:
+  public_methods:
+    - "create_presentation()"
+    - "upload_company_template()"
+    - "get_available_company_templates()"
+    - "set_default_company_template()"
+
+testing:
+  unit_tests:
+    - "test_create_presentation_structure"
+    - "test_add_title_slide"
+    - "test_add_screenshot_slide"
+    - "test_slide_dimensions"
+    - "test_upload_company_template"
+    - "test_validate_company_template"
+    - "test_reject_invalid_template"
+    - "test_use_company_template_as_base"
+    - "test_fallback_to_default_template"
+  integration_tests:
+    - "test_generate_complete_pptx"
+    - "test_pptx_file_validity"
+
+dependencies:
+  internal: ["models.report_config (ReportConfig, BrandingConfig)"]
+  external: ["python-pptx>=0.6.21", "Pillow>=10.0.0"]
+
+acceptance_criteria:
+  - criterion: \"Generated PPTX files open in PowerPoint/LibreOffice\"
+  - criterion: \"Title slide contains report title and metadata\"
+  - criterion: \"Content slides have proper image sizing\"
+  - criterion: \"Slide count matches number of screenshots + 1\"
+  - criterion: \"Company template (if uploaded) is used as base presentation\"
+  - criterion: \"Company branding (logo, colors, fonts) is preserved from template\"
+  - criterion: \"Falls back to default template if no company template uploaded\"
+  - criterion: \"Rejects invalid templates with clear error messages\"
+  - criterion: \"File generation completes in < 3 seconds\"

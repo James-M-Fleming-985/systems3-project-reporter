@@ -1,0 +1,602 @@
+# ====================================================================================
+# FEATURE REQUIREMENTS: PowerPoint Report Builder
+# ====================================================================================
+# FEATURE ID: FEATURE-WEB-006
+# VERSION: 2.0.0
+# LAST UPDATED: 2025-11-20
+# OWNER: Project Reporter Team
+# ====================================================================================
+# User-configurable report builder that allows template selection and custom
+# report generation from dashboard views via screenshot capture and PowerPoint assembly
+# ====================================================================================
+
+metadata:
+  requirement_id: "FEATURE-WEB-006"
+  requirement_name: "PowerPoint Report Builder"
+  feature_id: "FEATURE-WEB-006"
+  feature_name: "PowerPoint Report Builder"
+  feature_code: "REPORT_BUILDER"
+  version: "2.0.0"
+  status: "Active"
+  created_date: "2025-11-20"
+  last_modified: "2025-11-20"
+  owner: "Project Reporter Team"
+  priority: "MUST HAVE"
+  target_date: "2025-11-25"
+  
+  traceability:
+    parent_system: "SYSTEM-003-WEB"
+    parent_system_file: "../SYSTEM_REQUIREMENTS_WEB.yaml"
+    parent_system_requirements:
+      - "SYS-REQ-001: Web-based dashboard with interactive visualizations"
+      - "SYS-REQ-006: Export dashboard to PowerPoint presentation"
+      - "COMP-WEB-004: PowerPoint Report Builder Service"
+    
+    derivation_rationale: |
+      This feature implements the critical export capability (SYS-REQ-006) that allows
+      users to generate PowerPoint presentations from dashboard views. Based on user
+      feedback that "just clicking a button" is insufficient, this feature provides
+      template selection and configuration options while maintaining simplicity.
+      
+      The screenshot-based approach (vs programmatic slide building) ensures pixel-perfect
+      capture of complex Plotly.js charts and maintains visual consistency between
+      dashboard and presentation.
+
+# ====================================================================================
+# FEATURE OVERVIEW
+# ====================================================================================
+
+overview:
+  description: |
+    User-configurable PowerPoint report builder that allows users to select from
+    predefined templates or customize which dashboard views to include. The system
+    captures live screenshots of selected views and assembles them into a professionally
+    formatted PowerPoint presentation with proper branding, titles, and layout.
+    
+    Key Innovation: Unlike traditional "one-click" export, this provides user control
+    over content selection while avoiding complexity of full drag-and-drop builders.
+    Template-based approach balances flexibility with ease of use.
+  
+  business_value:
+    - "Saves 2-3 hours per week in manual PowerPoint creation"
+    - "Ensures consistent presentation format across team"
+    - "Captures exact visual state of dashboard (pixel-perfect charts)"
+    - "Reduces errors from manual data transcription"
+    - "Enables quick executive reporting with predefined templates"
+    - "Reusable configurations eliminate repetitive setup work"
+    - "Company branding templates ensure brand consistency across all reports"
+  
+  user_story: |
+    As a Project Manager,
+    I want to select which sections to include in my PowerPoint report AND save that configuration,
+    So that I can create custom presentations for different audiences (executives vs technical teams)
+    without spending hours manually creating slides or repeating the same setup.
+    
+    As a Company Administrator,
+    I want to upload our company's branded PowerPoint template,
+    So that all exported reports automatically use our corporate branding (logo, colors, fonts)
+    without manual formatting.
+  
+  acceptance_criteria:
+    - "User can select from 3+ predefined report templates"
+    - "User can save custom report configurations with meaningful names"
+    - "User can load and reuse previously saved configurations"
+    - "User can upload company PowerPoint template (.pptx with master slides)"
+    - "All generated reports use the selected company template's branding"
+    - "User can see preview of what will be included before generating"
+    - "Report generation completes in < 10 seconds"
+    - "PowerPoint contains title slide + selected view screenshots"
+    - "All charts and visualizations are pixel-perfect captures"
+    - "Generated file downloads automatically with descriptive filename"
+    - "Error messages are user-friendly if generation fails"
+
+# ====================================================================================
+# KEY CAPABILITIES
+# ====================================================================================
+
+key_capabilities:
+  phase_1_mvp:
+    - capability: "Template Selection"
+      description: "Users choose from predefined templates (Executive Summary, Detailed Status, Risk-Focused)"
+      user_benefit: "Quick report generation for common use cases"
+    
+    - capability: "Save/Load Configurations"
+      description: "Save custom report configurations with names like 'Weekly Executive Report' or 'Monthly Risk Review'"
+      user_benefit: "Eliminates repetitive setup - configure once, reuse many times"
+    
+    - capability: "Company Template Upload"
+      description: "Upload branded PowerPoint template (.pptx) with master slides, company logo, colors, fonts"
+      user_benefit: "Automatic brand consistency - all reports use corporate template without manual formatting"
+    
+    - capability: "Screenshot Capture"
+      description: "Headless browser captures live dashboard views as PNG images"
+      user_benefit: "Exact visual reproduction of charts and data"
+    
+    - capability: "PowerPoint Assembly"
+      description: "Automated creation of presentation using company template as base"
+      user_benefit: "Professional, branded formatting without manual work"
+    
+    - capability: "File Download"
+      description: "Automatic download of generated PPTX file with timestamped name"
+      user_benefit: "Immediate access to report, organized file naming"
+  
+  phase_2_enhancements:
+    - capability: "Custom Template Builder"
+      description: "Drag-and-drop interface to create custom report layouts"
+      user_benefit: "Full control over slide order and content"
+    
+    - capability: "Configuration Sharing"
+      description: "Share saved configurations with team members"
+      user_benefit: "Team-wide consistency in reporting formats"
+    
+    - capability: "Multiple Company Templates"
+      description: "Support multiple company templates (e.g., internal vs client-facing)"
+      user_benefit: "Different branding for different audiences"
+
+# ====================================================================================
+# SHARED INTERFACES - FASTAPI RESPONSE STRUCTURE
+# ====================================================================================
+
+shared_interfaces:
+  response_structure: "FastAPI Web Response (JSON + File Download)"
+  
+  parent_system_reference:
+    file: "../SYSTEM_REQUIREMENTS_WEB.yaml"
+    section: "shared_interfaces.api_response_structure"
+  
+  implementation_requirement: |
+    CRITICAL RULES:
+    1. All API endpoints return JSON responses with standard structure
+    2. File downloads use FastAPI FileResponse with proper media types
+    3. Error responses follow FastAPI HTTPException pattern
+    4. Async/await patterns for I/O operations (Playwright, file writing)
+    
+    Standard JSON Response:
+    {
+      "status": "success" | "error",
+      "message": "Human-readable message",
+      "data": { ... },
+      "timestamp": "ISO 8601 timestamp"
+    }
+    
+    File Download Response:
+    - Uses FileResponse from fastapi.responses
+    - Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation
+    - Content-Disposition: attachment; filename="Report_20251120_143022.pptx"
+  
+  verification:
+    - "GET /api/templates returns JSON with template list"
+    - "POST /api/export returns FileResponse with PPTX"
+    - "GET /api/export/status/{job_id} returns JSON with progress"
+    - "All errors return HTTPException with status_code and detail"
+
+# ====================================================================================
+# LAYER ARCHITECTURE
+# ====================================================================================
+# Use: python build_feature.py --init-layers FEATURE-WEB-006_PowerPoint_Report_Builder.yaml
+# ====================================================================================
+
+layers:
+  # ---------------------------------------------------------------------------------
+  # LAYER 1: Report Configuration Model
+  # ---------------------------------------------------------------------------------
+  - layer_id: "LAYER-WEB-006-001"
+    name: "Report Configuration Model"
+    responsibility: "Pydantic models for report templates, user selections, and configuration"
+    technology: "Pydantic v2, Python dataclasses"
+    requirement_file: "REQ-WEB-006-001.yaml"
+    requirements:
+      - REQ-WEB-006-001
+    
+    interfaces:
+      - "ReportTemplate: Defines template structure (name, slides, layout)"
+      - "ReportConfig: User selections (template_id, custom_options, branding)"
+      - "SlideConfig: Individual slide configuration (view_url, title, filters)"
+      - "ReportMetadata: Generated report metadata (timestamp, author, version)"
+    
+    validation_rules:
+      - "Template must have at least 1 slide"
+      - "View URLs must be valid dashboard routes"
+      - "Slide titles must be non-empty strings"
+      - "Custom branding fields are optional but validated if provided"
+    
+    traceability_note: |
+      Implements data structures for user report configuration. Ensures type safety
+      and validation before report generation begins.
+  
+  # ---------------------------------------------------------------------------------
+  # LAYER 2: Report Template Repository
+  # ---------------------------------------------------------------------------------
+  - layer_id: "LAYER-WEB-006-002"
+    name: "Report Template Repository"
+    responsibility: "Manage predefined and custom report templates (load, save, validate)"
+    technology: "YAML file storage, Pydantic validation"
+    requirement_file: "REQ-WEB-006-002.yaml"
+    requirements:
+      - REQ-WEB-006-002
+    
+    interfaces:
+      - "get_all_templates() -> List[ReportTemplate]"
+      - "get_template_by_id(template_id: str) -> ReportTemplate"
+      - "save_custom_template(template: ReportTemplate) -> bool"
+      - "delete_template(template_id: str) -> bool"
+      - "validate_template(template: ReportTemplate) -> ValidationResult"
+    
+    data_storage:
+      location: "templates/report_templates/"
+      format: "YAML files (one per template)"
+      naming: "template_{template_id}.yaml"
+    
+    predefined_templates:
+      - id: "executive_summary"
+        name: "Executive Summary"
+        slides: ["title", "gantt", "milestones_summary", "risks_high"]
+        description: "High-level overview for executives (4 slides)"
+      
+      - id: "detailed_status"
+        name: "Detailed Status Report"
+        slides: ["title", "gantt", "milestones", "risks", "changes"]
+        description: "Complete project status for team review (6 slides)"
+      
+      - id: "risks_focused"
+        name: "Risk Management Report"
+        slides: ["title", "risks", "milestones", "changes"]
+        description: "Risk-focused report for risk review meetings (5 slides)"
+    
+    traceability_note: |
+      Provides template management capabilities. Predefined templates enable
+      quick report generation, while custom templates support specific user needs.
+  
+  # ---------------------------------------------------------------------------------
+  # LAYER 3: Screenshot Capture Service
+  # ---------------------------------------------------------------------------------
+  - layer_id: "LAYER-WEB-006-003"
+    name: "Screenshot Capture Service"
+    responsibility: "Headless browser automation for capturing dashboard views as PNG images"
+    technology: "Playwright (headless Chromium), asyncio"
+    requirement_file: "REQ-WEB-006-003.yaml"
+    requirements:
+      - REQ-WEB-006-003
+    
+    interfaces:
+      - "capture_view(url: str, output_path: Path, viewport: ViewportSize) -> Path"
+      - "capture_multiple_views(view_configs: List[SlideConfig]) -> Dict[str, Path]"
+      - "set_page_timeout(timeout_ms: int) -> None"
+      - "cleanup_temp_files() -> None"
+    
+    technical_details:
+      browser: "Chromium (via Playwright)"
+      viewport: "1920x1080 (standard HD)"
+      wait_strategy: "networkidle + 1000ms for chart rendering"
+      element_hiding: "Hide navigation, remove no-print elements"
+      output_format: "PNG (lossless, high quality)"
+    
+    error_handling:
+      - "Timeout if page doesn't load in 30s"
+      - "Retry once on network failure"
+      - "Return placeholder image if capture fails"
+      - "Log detailed error for debugging"
+    
+    dependencies:
+      - "playwright>=1.40.0"
+      - "pillow>=10.0.0 (image manipulation)"
+    
+    traceability_note: |
+      Core capture engine that produces pixel-perfect screenshots of dashboard views.
+      Handles async browser automation and ensures charts are fully rendered before capture.
+  
+  # ---------------------------------------------------------------------------------
+  # LAYER 4: PowerPoint Builder Service
+  # ---------------------------------------------------------------------------------
+  - layer_id: "LAYER-WEB-006-004"
+    name: "PowerPoint Builder Service"
+    responsibility: "Assemble screenshots into professionally formatted PowerPoint presentation"
+    technology: "python-pptx, Pillow (image processing)"
+    requirement_file: "REQ-WEB-006-004.yaml"
+    requirements:
+      - REQ-WEB-006-004
+    
+    interfaces:
+      - "create_presentation(config: ReportConfig) -> Presentation"
+      - "add_title_slide(prs: Presentation, title: str, subtitle: str) -> Slide"
+      - "add_screenshot_slide(prs: Presentation, image_path: Path, title: str) -> Slide"
+      - "apply_branding(prs: Presentation, branding: BrandingConfig) -> None"
+      - "save_presentation(prs: Presentation, output_path: Path) -> Path"
+    
+    presentation_format:
+      slide_size: "16:9 (10 inches x 7.5 inches)"
+      title_slide_layout: "Centered title + subtitle + metadata"
+      content_slide_layout: "Title bar (0.7in) + full-width screenshot"
+      fonts: "Calibri (title), Arial (body)"
+      colors: "Blue (#1E40AF) for titles, Gray (#374151) for text"
+    
+    slide_structure:
+      title_slide:
+        - "Report title (user-provided or template default)"
+        - "Subtitle: Generated date/time + project count"
+        - "Optional: Company logo (bottom right)"
+      
+      content_slides:
+        - "Slide title (0.5in from top, 24pt bold)"
+        - "Screenshot image (full width, proportional height)"
+        - "Optional: Footer with page numbers"
+    
+    dependencies:
+      - "python-pptx>=0.6.21"
+      - "Pillow>=10.0.0 (image resizing)"
+    
+    traceability_note: |
+      Assembles captured screenshots into cohesive presentation. Handles formatting,
+      layout, branding, and file generation.
+  
+  # ---------------------------------------------------------------------------------
+  # LAYER 5: Export Route Handler
+  # ---------------------------------------------------------------------------------
+  - layer_id: "LAYER-WEB-006-005"
+    name: "Export Route Handler"
+    responsibility: "FastAPI endpoints for report generation, template management, and file download"
+    technology: "FastAPI, async/await, BackgroundTasks"
+    requirement_file: "REQ-WEB-006-005.yaml"
+    requirements:
+      - REQ-WEB-006-005
+    
+    routes:
+      - method: "GET"
+        path: "/api/templates"
+        description: "List all available report templates"
+        response: "JSON array of ReportTemplate objects"
+        auth_required: false
+      
+      - method: "POST"
+        path: "/api/export"
+        description: "Generate PowerPoint report and download"
+        request_body: "ReportConfig (template_id, custom_options)"
+        response: "FileResponse with PPTX file"
+        async: true
+        timeout: "30 seconds"
+      
+      - method: "POST"
+        path: "/api/export/async"
+        description: "Start async report generation (returns job_id)"
+        request_body: "ReportConfig"
+        response: "JSON with job_id for status polling"
+        background_task: true
+      
+      - method: "GET"
+        path: "/api/export/status/{job_id}"
+        description: "Check async report generation status"
+        response: "JSON with status (pending|processing|completed|failed)"
+      
+      - method: "POST"
+        path: "/api/templates"
+        description: "Save custom template (Phase 2)"
+        request_body: "ReportTemplate"
+        response: "JSON with template_id"
+        auth_required: true
+    
+    integration_flow:
+      synchronous_export:
+        - "1. Validate ReportConfig"
+        - "2. Load template from TemplateRepository"
+        - "3. Capture screenshots via ScreenshotService"
+        - "4. Build PowerPoint via PowerPointBuilder"
+        - "5. Return FileResponse with PPTX"
+      
+      asynchronous_export:
+        - "1. Validate ReportConfig"
+        - "2. Create job_id and return immediately"
+        - "3. Run generation in BackgroundTask"
+        - "4. Store result in temp storage"
+        - "5. Client polls /status/{job_id} until complete"
+    
+    error_handling:
+      - "400 Bad Request: Invalid template_id or config"
+      - "404 Not Found: Template not found"
+      - "500 Internal Server Error: Screenshot or PowerPoint generation failed"
+      - "503 Service Unavailable: Too many concurrent exports"
+    
+    traceability_note: |
+      API layer that orchestrates the full export workflow. Handles user requests,
+      coordinates service calls, and manages response delivery.
+
+# ====================================================================================
+# TEST STRATEGY
+# ====================================================================================
+
+test_strategy:
+  unit_tests:
+    - layer: "LAYER-WEB-006-001 (Models)"
+      tests:
+        - "Test ReportTemplate validation (valid/invalid structures)"
+        - "Test ReportConfig validation (required fields, optional fields)"
+        - "Test SlideConfig URL validation"
+        - "Test Pydantic serialization/deserialization"
+    
+    - layer: "LAYER-WEB-006-002 (Repository)"
+      tests:
+        - "Test load predefined templates"
+        - "Test save custom template (mock file I/O)"
+        - "Test get_template_by_id (found/not found)"
+        - "Test template validation"
+    
+    - layer: "LAYER-WEB-006-003 (Screenshot)"
+      tests:
+        - "Test capture_view with mock Playwright"
+        - "Test viewport size configuration"
+        - "Test timeout handling"
+        - "Test error recovery (retry logic)"
+    
+    - layer: "LAYER-WEB-006-004 (PowerPoint)"
+      tests:
+        - "Test create_presentation (mock python-pptx)"
+        - "Test add_title_slide"
+        - "Test add_screenshot_slide"
+        - "Test slide layout dimensions"
+    
+    - layer: "LAYER-WEB-006-005 (Routes)"
+      tests:
+        - "Test GET /api/templates returns template list"
+        - "Test POST /api/export with valid config (mock services)"
+        - "Test POST /api/export with invalid config (400 error)"
+        - "Test async export job creation"
+  
+  integration_tests:
+    - "End-to-end report generation with real browser (Playwright)"
+    - "Test screenshot capture of all dashboard views"
+    - "Test PowerPoint file generation and structure validation"
+    - "Test file download response headers"
+    - "Test concurrent export requests (load test)"
+  
+  e2e_tests:
+    - "User selects 'Executive Summary' template → downloads PPTX"
+    - "User selects 'Detailed Status' template → verifies all 6 slides present"
+    - "User provides invalid template_id → receives 404 error"
+    - "User triggers export while offline → receives appropriate error"
+
+# ====================================================================================
+# CODE GENERATION CONSTRAINTS
+# ====================================================================================
+
+code_generation_constraints:
+  architecture:
+    - "Follow FastAPI async patterns (async def for I/O operations)"
+    - "Use dependency injection for services (Depends())"
+    - "Maintain separation: routes → services → repositories"
+    - "No business logic in route handlers"
+    - "Services are stateless and testable"
+  
+  error_handling:
+    - "Validate all user inputs with Pydantic"
+    - "Use try/except for I/O operations"
+    - "Return user-friendly error messages (no stack traces)"
+    - "Log detailed errors for debugging"
+    - "Graceful degradation (placeholder if screenshot fails)"
+  
+  testing:
+    - "Use pytest-asyncio for async tests"
+    - "Mock Playwright browser in unit tests"
+    - "Mock file I/O in unit tests"
+    - "Provide fixtures for test data (templates, configs)"
+    - "Integration tests use real Playwright but headless mode"
+  
+  performance:
+    - "Screenshot capture in parallel (asyncio.gather)"
+    - "Timeout after 30 seconds per screenshot"
+    - "Limit concurrent exports to 3 (prevent resource exhaustion)"
+    - "Clean up temp files after generation"
+  
+  documentation:
+    - "Docstrings for all public functions"
+    - "Type hints for all function parameters and returns"
+    - "OpenAPI schema for all routes (auto-generated by FastAPI)"
+    - "README with usage examples"
+  
+  code_output_formatting:
+    - "CRITICAL: Output ONLY raw Python code - NO markdown fences, NO ```python blocks"
+    - "CRITICAL: Do NOT wrap code in markdown code blocks (no ``` or ```python)"
+    - "Start files directly with imports or comments - NO preamble text"
+    - "End files with the last line of code - NO explanatory text after"
+    - "Use Python # comments for explanations within code"
+    - "Example CORRECT format: 'from typing import List\\nimport asyncio\\n\\nclass MyClass:'"
+    - "Example WRONG format: '```python\\nfrom typing import List\\n```'"
+  
+  code_completeness:
+    - "CRITICAL: Generate COMPLETE implementations - NO truncation"
+    - "CRITICAL: If approaching token limits, prioritize complete functions over partial code"
+    - "Break large files into smaller modules if needed to avoid truncation"
+    - "Each function must have complete implementation (no '# TODO' or '# Implementation here')"
+    - "Each method must have full logic (no '...' or 'pass' placeholders in production code)"
+    - "If file is too large, suggest breaking into smaller files (e.g., models.py → base_models.py + config_models.py)"
+    - "Prefer concise, working implementations over verbose incomplete ones"
+    - "Use helper functions to reduce duplication and keep methods short"
+  
+  file_generation_strategy:
+    - "Generate one complete file at a time"
+    - "Verify each file is complete before moving to next"
+    - "If warned about token limits, reduce verbosity but maintain completeness"
+    - "Prioritize working code over extensive comments"
+    - "Use descriptive names to reduce need for comments"
+
+# ====================================================================================
+# DEPENDENCIES
+# ====================================================================================
+
+dependencies:
+  python_packages:
+    - "fastapi>=0.104.1"
+    - "uvicorn[standard]>=0.24.0"
+    - "pydantic>=2.0.0"
+    - "python-pptx>=0.6.21"
+    - "playwright>=1.40.0"
+    - "Pillow>=10.0.0"
+    - "pyyaml>=6.0"
+    - "pytest>=7.4.3"
+    - "pytest-asyncio>=0.21.0"
+    - "httpx>=0.25.2 (for testing)"
+  
+  external_tools:
+    - "Playwright browsers (install via: playwright install chromium)"
+
+# ====================================================================================
+# ESTIMATED EFFORT
+# ====================================================================================
+
+estimated_effort:
+  total_hours: "6-8 hours"
+  breakdown:
+    - "LAYER-001 (Models): 1 hour"
+    - "LAYER-002 (Repository): 1 hour"
+    - "LAYER-003 (Screenshot): 1.5 hours"
+    - "LAYER-004 (PowerPoint): 1.5 hours"
+    - "LAYER-005 (Routes): 1 hour"
+    - "Integration + Testing: 1-2 hours"
+  
+  phase_1_mvp: "4-5 hours (Layers 1-5, basic functionality)"
+  phase_2_enhancements: "2-3 hours (custom templates, branding)"
+
+# ====================================================================================
+# SUCCESS CRITERIA
+# ====================================================================================
+
+success_criteria:
+  mvp_complete:
+    - "User can view 3 predefined templates via GET /api/templates"
+    - "User can generate report by POST /api/export with template_id"
+    - "Generated PPTX downloads with proper filename"
+    - "PPTX contains title slide + all configured view screenshots"
+    - "Screenshots are pixel-perfect (1920x1080 viewport)"
+    - "Report generation completes in < 10 seconds"
+    - "All unit tests pass (95%+ coverage)"
+    - "Integration test generates valid PPTX file"
+  
+  quality_metrics:
+    - "API response time < 500ms (excluding generation time)"
+    - "Screenshot capture time < 2s per view"
+    - "PowerPoint assembly time < 3s"
+    - "Zero memory leaks (Playwright cleanup verified)"
+    - "Error rate < 1% in production"
+
+# ====================================================================================
+# ROLLOUT PLAN
+# ====================================================================================
+
+rollout_plan:
+  phase_1_mvp:
+    - "Build layers 1-5 using build_feature.py"
+    - "Deploy to staging environment"
+    - "User acceptance testing with 3 team members"
+    - "Fix critical bugs"
+    - "Deploy to production"
+  
+  phase_2_enhancements:
+    - "Add custom template builder UI"
+    - "Add template save/load functionality"
+    - "Add branding customization (logo upload)"
+    - "Beta test with 10 users"
+    - "Iterate based on feedback"
+  
+  phase_3_advanced:
+    - "Add scheduled/automated reports"
+    - "Add email delivery"
+    - "Add report history/archive"
+    - "Add collaboration (share templates)"

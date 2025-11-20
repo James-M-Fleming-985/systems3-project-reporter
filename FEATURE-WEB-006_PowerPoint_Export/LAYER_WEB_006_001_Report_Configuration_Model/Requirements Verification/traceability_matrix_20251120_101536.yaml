@@ -1,0 +1,216 @@
+matrix_metadata:
+  timestamp: '20251120_101536'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: All configuration models use Pydantic BaseModel
+  description: All configuration models use Pydantic BaseModel
+  test_files: &id001
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: All fields have appropriate type hints
+  description: All fields have appropriate type hints
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Validation rules are implemented for all constraints
+  description: Validation rules are implemented for all constraints
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Models can be serialized to/from JSON
+  description: Models can be serialized to/from JSON
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: OpenAPI schema is auto-generated for API documentation
+  description: OpenAPI schema is auto-generated for API documentation
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: All unit tests pass with 100% coverage
+  description: All unit tests pass with 100% coverage
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: Example usage code in docstrings runs without errors
+  description: Example usage code in docstrings runs without errors
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py
+  lines: 286
+  methods:
+  - name: validate_template_path
+    lines: 25-30
+  - name: validate_theme_name
+    lines: 31-36
+  - name: validate_slide_type
+    lines: 54-59
+  - name: validate_file_format
+    lines: 77-83
+  - name: validate_source_type
+    lines: 101-107
+  - name: validate_connection_string
+    lines: 108-113
+  - name: validate_field_name
+    lines: 132-137
+  - name: validate_rule_type
+    lines: 138-144
+  - name: validate_name
+    lines: 187-192
+  - name: validate_slides
+    lines: 193-198
+  - name: validate_data_sources
+    lines: 199-204
+  - name: validate_slide_indices
+    lines: 205-211
+  - name: to_json
+    lines: 212-216
+  - name: from_json
+    lines: 217-220
+  - name: validate_data
+    lines: 221-247
+  classes:
+  - name: TemplateSettings
+    type: class
+    lines: 8-36
+  - name: SlideConfiguration
+    type: class
+    lines: 37-59
+  - name: ExportSettings
+    type: class
+    lines: 60-83
+  - name: DataSourceMapping
+    type: class
+    lines: 84-113
+  - name: ValidationRule
+    type: class
+    lines: 114-144
+  - name: ReportConfiguration
+    type: class
+    lines: 145-286
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  test_count: 0
+  implementation_files:
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py
+  methods_tested:
+  - validate_template_path
+  - validate_theme_name
+  - validate_slide_type
+  - validate_file_format
+  - validate_source_type
+  - validate_connection_string
+  - validate_field_name
+  - validate_rule_type
+  - validate_name
+  - validate_slides
+  - validate_data_sources
+  - validate_slide_indices
+  - to_json
+  - from_json
+  - validate_data
+  classes_tested:
+  - TemplateSettings
+  - SlideConfiguration
+  - ExportSettings
+  - DataSourceMapping
+  - ValidationRule
+  - ReportConfiguration
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py:25-30
+  method_name: validate_template_path
+  requirement: AC-001
+  test: test_validate_template_path
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py:31-36
+  method_name: validate_theme_name
+  requirement: AC-001
+  test: test_validate_theme_name
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py:54-59
+  method_name: validate_slide_type
+  requirement: AC-001
+  test: test_validate_slide_type
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py:77-83
+  method_name: validate_file_format
+  requirement: AC-001
+  test: test_validate_file_format
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  verified: true
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/src/implementation.py:101-107
+  method_name: validate_source_type
+  requirement: AC-001
+  test: test_validate_source_type
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_001_Report_Configuration_Model/tests/test_generated_20251120_101452.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 7
+  requirements_traced: 7
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

@@ -1,0 +1,226 @@
+matrix_metadata:
+  timestamp: '20251120_102133'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: \"GET /api/templates returns 3+ templates\"
+  description: \"GET /api/templates returns 3+ templates\"
+  test_files: &id001
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/tests/test_generated_20251120_102040.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: \"GET /api/configurations returns user's saved configs\"
+  description: \"GET /api/configurations returns user's saved configs\"
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: \"POST /api/configurations saves config successfully\"
+  description: \"POST /api/configurations saves config successfully\"
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: \"GET /api/configurations/{name} loads saved config\"
+  description: \"GET /api/configurations/{name} loads saved config\"
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: \"DELETE /api/configurations/{name} removes config\"
+  description: \"DELETE /api/configurations/{name} removes config\"
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: \"POST /api/templates/company accepts .pptx files < 50MB\"
+  description: \"POST /api/templates/company accepts .pptx files < 50MB\"
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: \"POST /api/templates/company validates template structure\"
+  description: \"POST /api/templates/company validates template structure\"
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-008
+  requirement: \"GET /api/templates/company lists uploaded templates\"
+  description: \"GET /api/templates/company lists uploaded templates\"
+  test_files: *id001
+  test_methods:
+  - test_ac_008
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-009
+  requirement: \"PUT /api/templates/company/default sets default template\"
+  description: \"PUT /api/templates/company/default sets default template\"
+  test_files: *id001
+  test_methods:
+  - test_ac_009
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-010
+  requirement: \"POST /api/export downloads PPTX file\"
+  description: \"POST /api/export downloads PPTX file\"
+  test_files: *id001
+  test_methods:
+  - test_ac_010
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-011
+  requirement: \"Invalid config returns 400 with error details\"
+  description: \"Invalid config returns 400 with error details\"
+  test_files: *id001
+  test_methods:
+  - test_ac_011
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-012
+  requirement: \"Template not found returns 404\"
+  description: \"Template not found returns 404\"
+  test_files: *id001
+  test_methods:
+  - test_ac_012
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-013
+  requirement: \"File has correct Content-Type and Content-Disposition headers\"
+  description: \"File has correct Content-Type and Content-Disposition headers\"
+  test_files: *id001
+  test_methods:
+  - test_ac_013
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-014
+  requirement: \"Async export returns job_id immediately\"
+  description: \"Async export returns job_id immediately\"
+  test_files: *id001
+  test_methods:
+  - test_ac_014
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-015
+  requirement: \"Status endpoint shows progress (pending → processing → completed)\"
+  description: \"Status endpoint shows progress (pending → processing → completed)\"
+  test_files: *id001
+  test_methods:
+  - test_ac_015
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/src/implementation.py
+  lines: 319
+  methods:
+  - name: validate_template_id
+    lines: 42-48
+  classes:
+  - name: Configuration
+    type: class
+    lines: 35-48
+  - name: ExportRequest
+    type: class
+    lines: 49-53
+  - name: JobStatus
+    type: class
+    lines: 54-319
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  - AC-008
+  - AC-009
+  - AC-010
+  - AC-011
+  - AC-012
+  - AC-013
+  - AC-014
+  - AC-015
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/tests/test_generated_20251120_102040.py
+  test_count: 0
+  implementation_files:
+  - systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/src/implementation.py
+  methods_tested:
+  - validate_template_id
+  classes_tested:
+  - Configuration
+  - ExportRequest
+  - JobStatus
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/src/implementation.py:42-48
+  method_name: validate_template_id
+  requirement: AC-001
+  test: test_validate_template_id
+  test_file: systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/LAYER_WEB_006_005_Export_Route_Handler/tests/test_generated_20251120_102040.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 15
+  requirements_traced: 15
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

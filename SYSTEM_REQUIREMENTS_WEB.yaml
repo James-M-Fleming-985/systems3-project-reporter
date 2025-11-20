@@ -115,15 +115,18 @@ system_components:
       - "playwright (or selenium alternative)"
   
   - component_id: "COMP-WEB-004"
-    name: "PowerPoint Assembly Service"
-    responsibility: "Create PowerPoint from screenshot images"
+    name: "PowerPoint Report Builder Service"
+    responsibility: "User-configurable report builder with template selection and screenshot-based PowerPoint generation"
     interfaces:
-      - "create_presentation() -> Presentation"
-      - "add_image_slide(image_path: Path, title: str) -> Slide"
-      - "add_title_slide(title: str, subtitle: str) -> Slide"
-      - "save_presentation(output_path: Path) -> Path"
+      - "generate_custom_report(report_config: ReportConfig, output_path: Path) -> Path"
+      - "capture_dashboard_views(view_list: List[str]) -> Dict[str, Path]"
+      - "assemble_presentation(screenshots: Dict[str, Path], config: ReportConfig) -> Presentation"
+      - "get_available_templates() -> List[ReportTemplate]"
+      - "save_custom_template(template: ReportTemplate) -> bool"
     dependencies:
       - "python-pptx"
+      - "playwright"
+      - "Pillow"
   
   # WEB PRESENTATION LAYER
   - component_id: "COMP-WEB-005"

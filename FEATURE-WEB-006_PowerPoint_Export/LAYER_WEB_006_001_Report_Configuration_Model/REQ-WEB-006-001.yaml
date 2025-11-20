@@ -1,0 +1,300 @@
+# ====================================================================================
+# LAYER REQUIREMENT: Report Configuration Model
+# ====================================================================================
+
+metadata:
+  requirement_id: "REQ-WEB-006-001"
+  requirement_title: "Report Configuration Model"
+  layer_id: "LAYER-WEB-006-001"
+  layer_name: "Report Configuration Model"
+  layer_folder: "LAYER_WEB_006_001_Report_Configuration_Model"
+  
+  parent_feature: "FEATURE-WEB-006_PowerPoint_Report_Builder"
+  parent_feature_file: "../FEATURE-WEB-006_PowerPoint_Report_Builder.yaml"
+  
+  version: "1.0.0"
+  status: "Active"
+  priority: "MUST HAVE"
+  created_date: "2025-11-20"
+  updated_date: "2025-11-20"
+  owner: "AI Code Generator"
+  target_date: "2025-11-22"
+  
+  change_log:
+    - version: "1.0.0"
+      date: "2025-11-20"
+      changes: "Initial version - created for report builder feature"
+      author: "AI-derived"
+
+# ====================================================================================
+# TRACEABILITY
+# ====================================================================================
+traceability:
+  parent_feature_requirements:
+    - "FEAT-REQ-001: Template Selection capability"
+    - "FEAT-REQ-002: Report configuration and validation"
+    - "FEAT-REQ-003: User can preview report structure before generation"
+  
+  parent_system_requirements:
+    - "SYS-REQ-006: Export dashboard to PowerPoint presentation"
+    - "COMP-WEB-004: PowerPoint Report Builder Service"
+  
+  parent_project_requirements:
+    - "PRJ-REQ-001: Enable efficient project status reporting"
+  
+  derivation_rationale: |
+    This layer provides the foundational data models for report configuration. It defines
+    the structure for report templates, user selections, and slide configurations. These
+    models ensure type safety throughout the report generation pipeline and enable
+    validation of user inputs before expensive operations (screenshot capture, PowerPoint
+    generation) begin.
+
+# ====================================================================================
+# REQUIREMENT DEFINITION
+# ====================================================================================
+requirement:
+  title: "Report Configuration Model"
+  
+  description: |
+    Pydantic models that define the structure of report templates, user configurations,
+    and individual slide settings. These models provide:
+    - Type-safe data structures for all configuration objects
+    - Automatic validation of user inputs
+    - Serialization/deserialization for API requests
+    - Clear documentation of configuration schema
+  
+  rationale: |
+    Strong typing and validation at the model layer prevents errors downstream. By
+    catching invalid configurations early, we avoid wasting resources on screenshot
+    capture or PowerPoint generation that will ultimately fail. Pydantic's automatic
+    JSON schema generation also provides OpenAPI documentation for the API.
+
+# ====================================================================================
+# SPECIFICATION
+# ====================================================================================
+specification:
+  structure:
+    entry_point: "src/models/report_config.py"
+    modules:
+      - "report_config.py - Main configuration models"
+      - "__init__.py - Module exports"
+  
+  classes:
+    - name: "ViewportSize"
+      purpose: "Define viewport dimensions for screenshot capture"
+      fields:
+        - "width: int = 1920"
+        - "height: int = 1080"
+      validation:
+        - "width must be between 800 and 3840"
+        - "height must be between 600 and 2160"
+    
+    - name: "SlideConfig"
+      purpose: "Configuration for individual slide in report"
+      fields:
+        - "view_url: str"
+        - "title: str"
+        - "filters: Optional[Dict[str, Any]] = None"
+        - "hide_elements: Optional[List[str]] = None"
+      validation:
+        - "view_url must be valid dashboard route (/gantt, /milestones, etc.)"
+        - "title must be non-empty string"
+        - "hide_elements are CSS selectors (optional)"
+      methods:
+        - name: "get_full_url"
+          signature: "get_full_url(base_url: str) -> str"
+          purpose: "Construct full URL with query parameters from filters"
+    
+    - name: "ReportTemplate"
+      purpose: "Define structure of report template"
+      fields:
+        - "template_id: str"
+        - "name: str"
+        - "description: str"
+        - "slides: List[SlideConfig]"
+        - "created_by: Optional[str] = None"
+        - "created_at: Optional[datetime] = None"
+        - "is_predefined: bool = False"
+      validation:
+        - "template_id must be lowercase alphanumeric + underscores"
+        - "name must be non-empty"
+        - "slides must contain at least 1 slide"
+      methods:
+        - name: "validate_slide_urls"
+          signature: "validate_slide_urls(valid_routes: List[str]) -> bool"
+          purpose: "Verify all slide URLs are valid dashboard routes"
+    
+    - name: "BrandingConfig"
+      purpose: "Customization options for presentation branding"
+      fields:
+        - "logo_path: Optional[str] = None"
+        - "primary_color: str = '#1E40AF'"
+        - "secondary_color: str = '#374151'"
+        - "font_title: str = 'Calibri'"
+        - "font_body: str = 'Arial'"
+      validation:
+        - "Colors must be valid hex codes (#RRGGBB)"
+        - "Logo path must exist if provided"
+    
+    - name: "ReportConfig"
+      purpose: "User's report generation request"
+      fields:
+        - "template_id: str"
+        - "report_title: Optional[str] = None"
+        - "report_subtitle: Optional[str] = None"
+        - "custom_slides: Optional[List[SlideConfig]] = None"
+        - "branding: Optional[BrandingConfig] = None"
+        - "viewport: ViewportSize = ViewportSize()"
+      validation:
+        - "template_id must exist in template repository"
+        - "custom_slides override template slides if provided"
+      methods:
+        - name: "get_effective_slides"
+          signature: "get_effective_slides(template: ReportTemplate) -> List[SlideConfig]"
+          purpose: "Return custom_slides if provided, else template.slides"
+    
+    - name: "ReportMetadata"
+      purpose: "Metadata for generated report"
+      fields:
+        - "report_id: str"
+        - "generated_at: datetime"
+        - "template_used: str"
+        - "slide_count: int"
+        - "file_size_bytes: int"
+        - "generation_time_seconds: float"
+  
+  implementation_details:
+    libraries:
+      - "pydantic>=2.0.0"
+      - "datetime (standard library)"
+      - "typing (standard library)"
+    
+    patterns:
+      - "Pydantic BaseModel for all configuration classes"
+      - "Field validators for complex validation rules"
+      - "Config class for JSON schema customization"
+    
+    error_handling:
+      - error_type: "ValidationError"
+        handling: "Pydantic automatically raises ValidationError with detailed messages"
+      - error_type: "ValueError"
+        handling: "Custom validators raise ValueError for business logic violations"
+
+# ====================================================================================
+# INTERFACES
+# ====================================================================================
+interfaces:
+  public_classes:
+    - "ReportTemplate"
+    - "ReportConfig"
+    - "SlideConfig"
+    - "BrandingConfig"
+    - "ReportMetadata"
+    - "ViewportSize"
+  
+  example_usage: |
+    # Create a report configuration
+    from models.report_config import ReportConfig, SlideConfig
+    
+    config = ReportConfig(
+        template_id="executive_summary",
+        report_title="Q4 2025 Status",
+        report_subtitle="Executive Review"
+    )
+    
+    # Create custom slide configuration
+    custom_slide = SlideConfig(
+        view_url="/gantt",
+        title="Project Timeline",
+        filters={"section": "infrastructure"}
+    )
+    
+    # Validate configuration
+    try:
+        config_dict = config.model_dump()
+        # Configuration is valid
+    except ValidationError as e:
+        # Handle validation errors
+        print(e.errors())
+
+# ====================================================================================
+# TESTING REQUIREMENTS
+# ====================================================================================
+testing:
+  unit_tests:
+    - test_name: "test_viewport_size_validation"
+      description: "Verify viewport dimensions are within valid ranges"
+      assertions:
+        - "Valid dimensions (1920x1080) pass validation"
+        - "Too small (100x100) raises ValidationError"
+        - "Too large (10000x10000) raises ValidationError"
+    
+    - test_name: "test_slide_config_url_validation"
+      description: "Verify slide URLs are valid dashboard routes"
+      assertions:
+        - "Valid routes (/gantt, /milestones) pass"
+        - "Invalid routes (/invalid) raise ValidationError"
+        - "Empty URL raises ValidationError"
+    
+    - test_name: "test_report_template_validation"
+      description: "Verify template structure is valid"
+      assertions:
+        - "Template with at least 1 slide is valid"
+        - "Template with 0 slides raises ValidationError"
+        - "Template_id with spaces raises ValidationError"
+    
+    - test_name: "test_branding_config_colors"
+      description: "Verify color hex codes are valid"
+      assertions:
+        - "Valid hex (#1E40AF) passes"
+        - "Invalid hex (blue) raises ValidationError"
+        - "Short hex (#FFF) is normalized to #FFFFFF"
+    
+    - test_name: "test_report_config_serialization"
+      description: "Verify Pydantic serialization/deserialization"
+      assertions:
+        - "Config can be dumped to JSON"
+        - "Config can be loaded from JSON"
+        - "Nested objects (SlideConfig) serialize correctly"
+  
+  integration_tests:
+    - "Test ReportConfig with real template data"
+    - "Test custom_slides override template slides"
+    - "Test branding config with actual files"
+
+# ====================================================================================
+# DEPENDENCIES
+# ====================================================================================
+dependencies:
+  internal: []
+  
+  external:
+    - package: "pydantic"
+      version: ">=2.0.0"
+      purpose: "Data validation and schema generation"
+    
+    - package: "python-dateutil"
+      version: ">=2.8.0"
+      purpose: "Date parsing and manipulation"
+
+# ====================================================================================
+# ACCEPTANCE CRITERIA
+# ====================================================================================
+acceptance_criteria:
+  - criterion: "All configuration models use Pydantic BaseModel"
+  - criterion: "All fields have appropriate type hints"
+  - criterion: "Validation rules are implemented for all constraints"
+  - criterion: "Models can be serialized to/from JSON"
+  - criterion: "OpenAPI schema is auto-generated for API documentation"
+  - criterion: "All unit tests pass with 100% coverage"
+  - criterion: "Example usage code in docstrings runs without errors"
+
+# ====================================================================================
+# IMPLEMENTATION NOTES
+# ====================================================================================
+implementation_notes:
+  - "Use Pydantic v2 features (Field, field_validator)"
+  - "Provide detailed error messages in validators"
+  - "Include example values in Field() documentation"
+  - "Use ConfigDict for JSON schema customization"
+  - "Export all public classes in __init__.py"

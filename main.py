@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.148"
+BUILD_VERSION = "1.0.149"  # Last updated: 2025-11-20 - PowerPoint Export Feature
 
 
 # Setup logging
@@ -136,7 +136,7 @@ from routers import dashboard, upload, export, risks, milestones, admin
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 # Upload router has: /upload, /upload/xml, /upload/confirm, /changes/{project_code}/update
 app.include_router(upload.router, tags=["upload"])
-# Export router has: /export/powerpoint
+# Export router has: /export/powerpoint (legacy)
 app.include_router(export.router, tags=["export"])
 # Risks router has: /risks/upload, /risks/programs, /risks/{program_name}
 app.include_router(risks.router, tags=["risks"])
@@ -144,6 +144,15 @@ app.include_router(risks.router, tags=["risks"])
 app.include_router(milestones.router, tags=["milestones"])
 # Admin router has: /admin/cleanup-duplicates
 app.include_router(admin.router, tags=["admin"])
+
+# PowerPoint Reports router (enhanced with screenshots and templates)
+try:
+    from routers import powerpoint_reports
+    app.include_router(powerpoint_reports.router, tags=["powerpoint-reports"])
+    logger.info("✅ Enhanced PowerPoint Reports feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Enhanced PowerPoint Reports disabled: {e}")
+    logger.warning("   Using legacy /export/powerpoint endpoint only")
 
 # Optional: Subscription and Stripe routers (if dependencies available)
 try:
