@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.152"  # 2025-11-20 - Fix PowerPoint API routes
+BUILD_VERSION = "1.0.153"  # 2025-11-20 - Fix missing router refs
 
 
 # Setup logging

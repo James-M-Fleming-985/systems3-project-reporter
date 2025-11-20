@@ -291,7 +291,7 @@ async def generate_report_background(
         export_jobs[job_id].error = str(e)
 
 
-@router.post("/export")
+@api_router.post("/export")
 async def export_to_powerpoint(
     export_request: ExportRequest,
     request: Request,
