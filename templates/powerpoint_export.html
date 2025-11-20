@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}PowerPoint Export - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">📊 PowerPoint Export</h1>
+        <p class="text-gray-600">Export your project dashboards to professional PowerPoint presentations</p>
+    </div>
+
+    <!-- Template Selection -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">1. Select Report Template</h2>
+        <div id="templateList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Templates will be loaded here -->
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="text-gray-600 mt-4">Loading templates...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Configuration -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">2. Configure Export</h2>
+        
+        <div class="space-y-4">
+            <!-- Selected Template Display -->
+            <div id="selectedTemplateInfo" class="hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <div class="ml-3 flex-1">
+                            <h3 class="text-sm font-medium text-blue-900" id="selectedTemplateName">Selected Template</h3>
+                            <p class="text-sm text-blue-700 mt-1" id="selectedTemplateDescription">Description</p>
+                            <p class="text-xs text-blue-600 mt-2">Slides: <span id="selectedTemplateSlideCount">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Project</label>
+                <select id="projectSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Projects</option>
+                    {% if selected_project %}
+                    <option value="{{ selected_project.project_code }}" selected>{{ selected_project.project_name }} ({{ selected_project.project_code }})</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Export Options -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Viewport Width</label>
+                    <input type="number" id="viewportWidth" value="1920" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Viewport Height</label>
+                    <input type="number" id="viewportHeight" value="1080" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="hideNavigation" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="hideNavigation" class="ml-2 text-sm text-gray-700">Hide navigation in screenshots</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Button -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">3. Generate Report</h2>
+        <button id="exportButton" onclick="exportReport()" disabled class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+            <span id="exportButtonText">Select a template to continue</span>
+        </button>
+        
+        <!-- Progress -->
+        <div id="exportProgress" class="hidden mt-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-blue-900 font-medium">Generating PowerPoint presentation...</span>
+                </div>
+                <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-sm text-blue-700 mt-2" id="progressText">Preparing export...</p>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="exportSuccess" class="hidden mt-4">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-medium text-green-900">Export Successful!</h3>
+                        <p class="text-sm text-green-700 mt-1">Your PowerPoint presentation is ready</p>
+                        <a id="downloadLink" href="#" class="inline-block mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Download Presentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="exportError" class="hidden mt-4">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-medium text-red-900">Export Failed</h3>
+                        <p class="text-sm text-red-700 mt-1" id="errorMessage">An error occurred</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedTemplate = null;
+let templates = null;
+
+// Load templates on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadTemplates();
+});
+
+async function loadTemplates() {
+    try {
+        const response = await fetch('/api/reports/templates');
+        const data = await response.json();
+        templates = data;
+        
+        const templateList = document.getElementById('templateList');
+        templateList.innerHTML = '';
+        
+        // Render predefined templates
+        if (data.predefined && data.predefined.length > 0) {
+            data.predefined.forEach(template => {
+                templateList.appendChild(createTemplateCard(template, 'predefined'));
+            });
+        }
+        
+        // Render custom templates
+        if (data.custom && data.custom.length > 0) {
+            data.custom.forEach(template => {
+                templateList.appendChild(createTemplateCard(template, 'custom'));
+            });
+        }
+        
+        if (templateList.children.length === 0) {
+            templateList.innerHTML = '<p class="text-gray-500 text-center col-span-2 py-8">No templates available</p>';
+        }
+    } catch (error) {
+        console.error('Failed to load templates:', error);
+        document.getElementById('templateList').innerHTML = 
+            '<p class="text-red-500 text-center col-span-2 py-8">Failed to load templates. Please refresh the page.</p>';
+    }
+}
+
+function createTemplateCard(template, type) {
+    const card = document.createElement('div');
+    card.className = 'border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition template-card';
+    card.onclick = () => selectTemplate(template);
+    
+    card.innerHTML = `
+        <div class="flex items-start justify-between mb-2">
+            <h3 class="font-semibold text-gray-900">${template.name}</h3>
+            <span class="px-2 py-1 text-xs rounded ${type === 'predefined' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
+                ${type === 'predefined' ? 'Built-in' : 'Custom'}
+            </span>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">${template.description || 'No description'}</p>
+        <div class="flex items-center text-sm text-gray-500">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            ${template.slides ? template.slides.length : 0} slides
+        </div>
+    `;
+    
+    return card;
+}
+
+function selectTemplate(template) {
+    selectedTemplate = template;
+    
+    // Update UI
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+    event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
+    
+    // Show selected template info
+    document.getElementById('selectedTemplateInfo').classList.remove('hidden');
+    document.getElementById('selectedTemplateName').textContent = template.name;
+    document.getElementById('selectedTemplateDescription').textContent = template.description || 'No description';
+    document.getElementById('selectedTemplateSlideCount').textContent = template.slides ? template.slides.length : 0;
+    
+    // Enable export button
+    document.getElementById('exportButton').disabled = false;
+    document.getElementById('exportButtonText').textContent = 'Generate PowerPoint Report';
+}
+
+async function exportReport() {
+    if (!selectedTemplate) {
+        alert('Please select a template');
+        return;
+    }
+    
+    // Hide previous messages
+    document.getElementById('exportSuccess').classList.add('hidden');
+    document.getElementById('exportError').classList.add('hidden');
+    
+    // Show progress
+    document.getElementById('exportProgress').classList.remove('hidden');
+    document.getElementById('exportButton').disabled = true;
+    
+    try {
+        // Get configuration
+        const projectCode = document.getElementById('projectSelect').value;
+        const viewportWidth = parseInt(document.getElementById('viewportWidth').value);
+        const viewportHeight = parseInt(document.getElementById('viewportHeight').value);
+        const hideNavigation = document.getElementById('hideNavigation').checked;
+        
+        // Build view URLs from template slides
+        const views = selectedTemplate.slides.map(slide => {
+            let url = slide.dashboard_url;
+            if (projectCode && !url.includes('project=')) {
+                url += (url.includes('?') ? '&' : '?') + 'project=' + projectCode;
+            }
+            return url;
+        });
+        
+        // Make export request
+        const response = await fetch('/api/reports/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                template_id: selectedTemplate.id,
+                views: views,
+                viewport_width: viewportWidth,
+                viewport_height: viewportHeight,
+                hide_navigation: hideNavigation
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Export failed: ${response.statusText}`);
+        }
+        
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${selectedTemplate.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Show success
+        document.getElementById('exportProgress').classList.add('hidden');
+        document.getElementById('exportSuccess').classList.remove('hidden');
+        document.getElementById('exportButton').disabled = false;
+        
+    } catch (error) {
+        console.error('Export failed:', error);
+        document.getElementById('exportProgress').classList.add('hidden');
+        document.getElementById('exportError').classList.remove('hidden');
+        document.getElementById('errorMessage').textContent = error.message;
+        document.getElementById('exportButton').disabled = false;
+    }
+}
+</script>
+
+{% endblock %}

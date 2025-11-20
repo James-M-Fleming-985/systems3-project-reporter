@@ -13,6 +13,7 @@ import asyncio
 
 from middleware.project_context import get_selected_project
 from repositories.project_repository import ProjectRepository
+from fastapi.responses import HTMLResponse
 
 # Import our new PowerPoint modules
 import sys
@@ -50,7 +51,13 @@ from builder_service import PowerPointBuilderService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/reports", tags=["powerpoint-reports"])
+# Setup templates
+BASE_DIR = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = BASE_DIR / "templates"
+from fastapi.templating import Jinja2Templates
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+router = APIRouter(tags=["powerpoint-reports"])
 
 
 # Pydantic models for API
@@ -95,7 +102,23 @@ ppt_builder = PowerPointBuilderService()
 export_jobs: Dict[str, ExportStatus] = {}
 
 
-@router.get("/templates")
+# UI Route
+@router.get("/powerpoint-export", response_class=HTMLResponse)
+async def powerpoint_export_page(request: Request):
+    """PowerPoint Export UI Page"""
+    from fastapi.responses import HTMLResponse
+    selected_project = get_selected_project(request)
+    return templates.TemplateResponse(
+        "powerpoint_export.html",
+        {
+            "request": request,
+            "selected_project": selected_project
+        }
+    )
+
+
+# API Routes
+@router.get("/api/reports/templates")
 async def list_templates():
     """List all available report templates"""
     try:
