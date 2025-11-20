@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.151"  # 2025-11-20 - Add PowerPoint Export UI
+BUILD_VERSION = "1.0.152"  # 2025-11-20 - Fix PowerPoint API routes
 
 
 # Setup logging
@@ -148,7 +148,8 @@ app.include_router(admin.router, tags=["admin"])
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:
     from routers import powerpoint_reports
-    app.include_router(powerpoint_reports.router, tags=["powerpoint-reports"])
+    app.include_router(powerpoint_reports.ui_router)
+    app.include_router(powerpoint_reports.api_router)
     logger.info("✅ Enhanced PowerPoint Reports feature enabled")
 except ImportError as e:
     logger.warning(f"⚠️  Enhanced PowerPoint Reports disabled: {e}")

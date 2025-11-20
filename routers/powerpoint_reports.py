@@ -57,7 +57,9 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 from fastapi.templating import Jinja2Templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-router = APIRouter(tags=["powerpoint-reports"])
+# Create two routers: one for UI, one for API
+ui_router = APIRouter(tags=["powerpoint-ui"])
+api_router = APIRouter(prefix="/api/reports", tags=["powerpoint-api"])
 
 
 # Pydantic models for API
@@ -103,7 +105,7 @@ export_jobs: Dict[str, ExportStatus] = {}
 
 
 # UI Route
-@router.get("/powerpoint-export", response_class=HTMLResponse)
+@ui_router.get("/powerpoint-export", response_class=HTMLResponse)
 async def powerpoint_export_page(request: Request):
     """PowerPoint Export UI Page"""
     from fastapi.responses import HTMLResponse
@@ -118,7 +120,7 @@ async def powerpoint_export_page(request: Request):
 
 
 # API Routes
-@router.get("/api/reports/templates")
+@api_router.get("/templates")
 async def list_templates():
     """List all available report templates"""
     try:
@@ -131,7 +133,7 @@ async def list_templates():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/configurations")
+@api_router.get("/configurations")
 async def list_configurations():
     """List all saved report configurations"""
     try:
@@ -142,7 +144,7 @@ async def list_configurations():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/configurations")
+@api_router.post("/configurations")
 async def save_configuration(config: ConfigurationSaveRequest):
     """Save a report configuration for reuse"""
     try:
@@ -158,7 +160,7 @@ async def save_configuration(config: ConfigurationSaveRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/configurations/{name}")
+@api_router.get("/configurations/{name}")
 async def load_configuration(name: str):
     """Load a saved report configuration"""
     try:
@@ -173,7 +175,7 @@ async def load_configuration(name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/configurations/{name}")
+@api_router.delete("/configurations/{name}")
 async def delete_configuration(name: str):
     """Delete a saved configuration"""
     try:
@@ -184,7 +186,7 @@ async def delete_configuration(name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/templates/company")
+@api_router.post("/templates/company")
 async def upload_company_template(file: UploadFile = File(...)):
     """Upload a company-branded PowerPoint template"""
     try:
@@ -215,7 +217,7 @@ async def upload_company_template(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/templates/company")
+@api_router.get("/templates/company")
 async def list_company_templates():
     """List all uploaded company templates"""
     try:
@@ -335,7 +337,7 @@ async def export_to_powerpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/export/{job_id}/status")
+@api_router.get("/export/{job_id}/status")
 async def get_export_status(job_id: str):
     """Get status of export job"""
     if job_id not in export_jobs:
@@ -344,7 +346,7 @@ async def get_export_status(job_id: str):
     return export_jobs[job_id]
 
 
-@router.get("/export/{job_id}/download")
+@api_router.get("/export/{job_id}/download")
 async def download_report(job_id: str):
     """Download completed PowerPoint report"""
     if job_id not in export_jobs:
