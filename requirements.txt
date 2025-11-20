@@ -16,6 +16,7 @@ openpyxl>=3.1.0
 
 # PowerPoint Export
 python-pptx>=0.6.21
+playwright>=1.40.0
 
 # PDF Export
 reportlab>=4.0.0

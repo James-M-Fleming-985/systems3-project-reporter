@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.149"  # Last updated: 2025-11-20 - PowerPoint Export Feature
+BUILD_VERSION = "1.0.150"  # 2025-11-20 - Add Playwright dependency
 
 
 # Setup logging
