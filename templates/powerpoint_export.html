@@ -3,6 +3,24 @@
 {% block title %}PowerPoint Export - Systems³ Project Reporter{% endblock %}
 
 {% block content %}
+<style>
+.slide-preview {
+    cursor: grab;
+    user-select: none;
+}
+.slide-preview:active {
+    cursor: grabbing;
+}
+.slide-preview.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+.drag-handle {
+    cursor: grab;
+    display: inline-block;
+}
+</style>
+
 <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
@@ -312,22 +330,29 @@ function showPreviewModal(viewPath, title) {
 
 // Drag and drop handlers
 function handleDragStart(e) {
-    console.log('Drag start');
+    console.log('🎯 Drag start - element:', this.dataset.viewPath);
     draggedElement = this;
-    this.classList.add('opacity-50', 'scale-95');
+    this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', this.dataset.viewPath);
+    
+    // Add visual feedback immediately
+    setTimeout(() => {
+        this.style.opacity = '0.5';
+    }, 0);
 }
 
 function handleDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    console.log('🔄 Drag over');
     return false;
 }
 
 function handleDragEnter(e) {
     const target = e.target.closest('.slide-preview');
     if (target && target !== draggedElement) {
+        console.log('➡️ Drag enter:', target.dataset.viewPath);
         target.classList.add('border-blue-500', 'border-dashed', 'bg-blue-50');
     }
 }
@@ -335,6 +360,7 @@ function handleDragEnter(e) {
 function handleDragLeave(e) {
     const target = e.target.closest('.slide-preview');
     if (target && target !== draggedElement) {
+        console.log('⬅️ Drag leave:', target.dataset.viewPath);
         target.classList.remove('border-blue-500', 'border-dashed', 'bg-blue-50');
     }
 }
@@ -343,7 +369,7 @@ function handleDrop(e) {
     e.stopPropagation();
     e.preventDefault();
     
-    console.log('Drop event');
+    console.log('💧 Drop event');
     
     const target = e.target.closest('.slide-preview');
     if (draggedElement && target && draggedElement !== target) {
@@ -351,7 +377,7 @@ function handleDrop(e) {
         const draggedIndex = allSlides.indexOf(draggedElement);
         const targetIndex = allSlides.indexOf(target);
         
-        console.log('Moving slide from', draggedIndex, 'to', targetIndex);
+        console.log('📦 Moving slide from position', draggedIndex, 'to', targetIndex);
         
         if (draggedIndex < targetIndex) {
             target.parentNode.insertBefore(draggedElement, target.nextSibling);
@@ -367,6 +393,10 @@ function handleDrop(e) {
                 slideNumber.textContent = `Slide ${idx + 2}`;
             }
         });
+        
+        console.log('✅ Slide reordered successfully');
+    } else {
+        console.log('❌ Drop failed - target:', target, 'draggedElement:', draggedElement);
     }
     
     // Clean up all visual indicators
@@ -378,8 +408,9 @@ function handleDrop(e) {
 }
 
 function handleDragEnd(e) {
-    console.log('Drag end');
-    this.classList.remove('opacity-50', 'scale-95');
+    console.log('🏁 Drag end');
+    this.classList.remove('dragging');
+    this.style.opacity = '1';
     document.querySelectorAll('.slide-preview').forEach(slide => {
         slide.classList.remove('border-blue-500', 'border-dashed', 'bg-blue-50');
     });
