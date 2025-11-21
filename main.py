@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.156"  # 2025-11-21 - Preview canvas + drag-drop ordering
+BUILD_VERSION = "1.0.157"  # 2025-11-21 - Fix drag-drop + add click preview
 
 
 # Setup logging
