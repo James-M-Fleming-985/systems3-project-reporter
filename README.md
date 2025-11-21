@@ -33,3 +33,15 @@ Use build_feature.py with FEATURE_REQUIREMENTS_INDEX.yaml:
 ```bash
 python build_feature.py "SYSTEM-003_ZnNi_Report_Generation/FEATURE-003-001_Data_Reader_Parser/FEATURE_REQUIREMENTS_INDEX.yaml"
 ```
+
+## 🤖 For AI Agents
+
+**IMPORTANT**: Before deploying to Railway, **always** follow the checklist in:
+📋 `.github/AGENT_DEPLOYMENT_INSTRUCTIONS.md`
+
+This ensures:
+- ✅ BUILD_VERSION is updated in main.py
+- ✅ Changes are committed with semantic versioning
+- ✅ Changes are pushed to origin main (not just committed!)
+- ✅ Railway deployment is verified via health endpoint
+
