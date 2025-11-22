@@ -39,6 +39,84 @@ architecture_change_rationale: |
   - Simpler code = less AI errors
   - Screenshot approach simpler than programmatic slide building
 
+# ====================================================================================
+# SHARED INTERFACES - CRITICAL FOR FEATURE CONSISTENCY
+# ====================================================================================
+# ALL features in SYSTEM-003-WEB MUST use this standardized response structure.
+# This ensures consistent communication between features and API orchestrators.
+# ====================================================================================
+
+shared_interfaces:
+  api_response_structure:
+    standard: "Pydantic dataclass with success bool"
+    deployment_model: "FastAPI Web Application"
+    
+    required_fields:
+      - name: "success"
+        type: "bool"
+        description: "Whether operation succeeded (true/false)"
+        required: true
+      
+      - name: "data"
+        type: "Optional[Dict[str, Any]]"
+        description: "Successful result payload (None if error)"
+        required: true
+      
+      - name: "error"
+        type: "Optional[str]"
+        description: "Error message if failed (None if success)"
+        required: true
+      
+      - name: "timestamp"
+        type: "str"
+        description: "ISO format timestamp of response generation"
+        required: true
+    
+    implementation: |
+      ```python
+      from dataclasses import dataclass
+      from typing import Optional, Dict, Any
+      from datetime import datetime
+      
+      @dataclass
+      class FeatureResponse:
+          success: bool
+          data: Optional[Dict[str, Any]] = None
+          error: Optional[str] = None
+          timestamp: str = None
+          
+          def __post_init__(self):
+              if self.timestamp is None:
+                  self.timestamp = datetime.now().isoformat()
+      ```
+    
+    http_status_mapping:
+      - "200 OK: Success with data (success=true)"
+      - "201 Created: Resource created successfully (success=true)"
+      - "400 Bad Request: Validation error (success=false, error=message)"
+      - "404 Not Found: Resource not found (success=false, error=message)"
+      - "500 Internal Server Error: Server error (success=false, error=message)"
+    
+    usage_note: |
+      ALL features in SYSTEM-003-WEB depend on this exact structure to:
+      1. Return consistent JSON responses from FastAPI endpoints
+      2. Enable unified error handling
+      3. Support integration testing
+      4. Allow feature orchestration
+      
+      CRITICAL: Import FeatureResponse from shared module OR duplicate exactly.
+      This structure is already implemented in FEATURE-WEB-006.
+    
+    enforcement:
+      - "All new features MUST use FeatureResponse dataclass"
+      - "All FastAPI endpoints MUST return FeatureResponse or raise HTTPException"
+      - "Integration tests verify response structure consistency"
+      - "AI code generator includes this structure in all prompts"
+
+# ====================================================================================
+# ARCHITECTURE
+# ====================================================================================
+
 architecture:
   stack:
     backend: "FastAPI (Python 3.12+)"

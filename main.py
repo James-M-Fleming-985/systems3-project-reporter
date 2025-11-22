@@ -131,6 +131,14 @@ async def health_check():
 # Import routers
 from routers import dashboard, upload, export, risks, milestones, admin
 
+# Canvas Editor (Phase 2 - AI Generated)
+try:
+    from routers import canvas_editor
+    app.include_router(canvas_editor.router)
+    logger.info("✅ Canvas Editor Phase 2 enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Canvas Editor Phase 2 disabled: {e}")
+
 # Include routers
 # Dashboard router has: /, /gantt, /milestones, /risks, /changes
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

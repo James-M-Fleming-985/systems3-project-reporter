@@ -1,0 +1,237 @@
+matrix_metadata:
+  timestamp: '20251122_114805'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: ImageTransform model correctly validates scale, position, and crop
+    parameters
+  description: ImageTransform model correctly validates scale, position, and crop
+    parameters
+  test_files: &id001
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Coordinate conversion from canvas pixels to PowerPoint EMUs is accurate
+  description: Coordinate conversion from canvas pixels to PowerPoint EMUs is accurate
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Transform serialization to dict produces correct JSON structure
+  description: Transform serialization to dict produces correct JSON structure
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Final dimensions calculation accounts for both crop and scale
+  description: Final dimensions calculation accounts for both crop and scale
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: Validators reject invalid transform parameters with clear error messages
+  description: Validators reject invalid transform parameters with clear error messages
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-006
+  requirement: Transform history maintains correct undo/redo state
+  description: Transform history maintains correct undo/redo state
+  test_files: *id001
+  test_methods:
+  - test_ac_006
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-007
+  requirement: Transform interpolation produces smooth transitions
+  description: Transform interpolation produces smooth transitions
+  test_files: *id001
+  test_methods:
+  - test_ac_007
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py
+  lines: 276
+  methods:
+  - name: __post_init__
+    lines: 33-36
+  - name: validate
+    lines: 37-71
+  - name: to_dict
+    lines: 72-83
+  - name: get_final_dimensions
+    lines: 84-96
+  - name: pixels_to_emus
+    lines: 108-112
+  - name: emus_to_pixels
+    lines: 113-117
+  - name: convert_transform
+    lines: 118-137
+  - name: validate_scale
+    lines: 142-151
+  - name: validate_position
+    lines: 152-159
+  - name: validate_crop
+    lines: 160-174
+  - name: validate_rotation
+    lines: 175-182
+  - name: __init__
+    lines: 186-189
+  - name: add
+    lines: 190-198
+  - name: undo
+    lines: 199-205
+  - name: redo
+    lines: 206-212
+  - name: get_current
+    lines: 213-218
+  - name: clear
+    lines: 219-224
+  - name: lerp
+    lines: 229-233
+  - name: interpolate
+    lines: 234-262
+  - name: generate_frames
+    lines: 263-273
+  classes:
+  - name: TransformType
+    type: class
+    lines: 8-14
+  - name: ValidationError
+    type: class
+    lines: 15-20
+  - name: ImageTransform
+    type: class
+    lines: 21-96
+  - name: CoordinateConverter
+    type: class
+    lines: 97-137
+  - name: TransformValidator
+    type: class
+    lines: 138-182
+  - name: TransformHistory
+    type: class
+    lines: 183-224
+  - name: TransformInterpolator
+    type: class
+    lines: 225-276
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  - AC-006
+  - AC-007
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py
+  methods_tested:
+  - __post_init__
+  - validate
+  - to_dict
+  - get_final_dimensions
+  - pixels_to_emus
+  - emus_to_pixels
+  - convert_transform
+  - validate_scale
+  - validate_position
+  - validate_crop
+  - validate_rotation
+  - __init__
+  - add
+  - undo
+  - redo
+  - get_current
+  - clear
+  - lerp
+  - interpolate
+  - generate_frames
+  classes_tested:
+  - TransformType
+  - ValidationError
+  - ImageTransform
+  - CoordinateConverter
+  - TransformValidator
+  - TransformHistory
+  - TransformInterpolator
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py:33-36
+  method_name: __post_init__
+  requirement: AC-001
+  test: test___post_init__
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py:37-71
+  method_name: validate
+  requirement: AC-001
+  test: test_validate
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py:72-83
+  method_name: to_dict
+  requirement: AC-001
+  test: test_to_dict
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py:84-96
+  method_name: get_final_dimensions
+  requirement: AC-001
+  test: test_get_final_dimensions
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/src/implementation.py:108-112
+  method_name: pixels_to_emus
+  requirement: AC-001
+  test: test_pixels_to_emus
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators/tests/test_generated_20251122_114722.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 7
+  requirements_traced: 7
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

@@ -1,0 +1,19 @@
+feature_id: FEATURE-WEB-006-PHASE-2
+feature_name: Canvas Editor for PowerPoint Slide Customization
+test_pyramid_timestamp: '20251122_115605'
+layer_tests:
+  unit_tests: 3
+  layer_count: 3
+feature_tests:
+  integration_tests:
+    location: tests/integration/
+    count: 7
+    status: COMPLETED
+  e2e_tests:
+    location: tests/e2e/
+    count: 7
+    status: COMPLETED
+integration_scenarios: []
+e2e_scenarios: []
+test_coverage_goal: 90%
+status: PYRAMID_STRUCTURE_DEFINED

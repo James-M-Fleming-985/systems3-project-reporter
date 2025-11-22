@@ -1,0 +1,159 @@
+matrix_metadata:
+  timestamp: '20251122_115224'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Canvas CRUD operations work correctly
+  description: Canvas CRUD operations work correctly
+  test_files: &id001
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: WebSocket real-time updates function properly
+  description: WebSocket real-time updates function properly
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: API response time under 200ms for read operations
+  description: API response time under 200ms for read operations
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: Proper authentication and authorization
+  description: Proper authentication and authorization
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py
+  lines: 540
+  methods:
+  - name: __init__
+    lines: 44-99
+  - name: __init__
+    lines: 101-105
+  - name: create_access_token
+    lines: 106-116
+  - name: verify_token
+    lines: 117-135
+  - name: __init__
+    lines: 137-147
+  - name: disconnect
+    lines: 148-195
+  - name: get_current_user
+    lines: 196-206
+  classes:
+  - name: CanvasElement
+    type: class
+    lines: 9-19
+  - name: Canvas
+    type: class
+    lines: 20-30
+  - name: CanvasUpdate
+    type: class
+    lines: 31-42
+  - name: InMemoryDatabase
+    type: class
+    lines: 43-99
+  - name: User
+    type: class
+    lines: 100-135
+  - name: ConnectionManager
+    type: class
+    lines: 136-540
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py
+  methods_tested:
+  - __init__
+  - __init__
+  - create_access_token
+  - verify_token
+  - __init__
+  - disconnect
+  - get_current_user
+  classes_tested:
+  - CanvasElement
+  - Canvas
+  - CanvasUpdate
+  - InMemoryDatabase
+  - User
+  - ConnectionManager
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py:44-99
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py:101-105
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py:106-116
+  method_name: create_access_token
+  requirement: AC-001
+  test: test_create_access_token
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py:117-135
+  method_name: verify_token
+  requirement: AC-001
+  test: test_verify_token
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/src/implementation.py:137-147
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/tests/test_generated_20251122_115112.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 4
+  requirements_traced: 4
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

@@ -1,5 +1,16 @@
 # Agent Deployment Instructions - Systems³ Project Reporter
 
+## Overview
+
+This guide covers **deployment to Railway**. For **AI code generation** and requirements process, see:
+
+📋 `/workspaces/control_tower/REQUIREMENTS_DRIVEN_DEVELOPMENT_PROCESS.md`
+
+**CRITICAL**: Both processes are mandatory:
+
+1. **Requirements Process** (before coding) - Ensures AI generates quality code
+2. **Deployment Process** (after coding) - Ensures reliable Railway deployments
+
 ## Railway Deployment Checklist
 
 **CRITICAL**: Follow this checklist for EVERY deployment to Railway. These steps are MANDATORY.

@@ -1,0 +1,153 @@
+matrix_metadata:
+  timestamp: '20251122_115014'
+  layer_id: UNKNOWN
+  feature_name: UNKNOWN
+  traceability_type: Bidirectional
+  completeness: 100%
+requirement_to_test_mapping:
+- requirement_id: AC-001
+  requirement: Image resize maintains aspect ratio when requested
+  description: Image resize maintains aspect ratio when requested
+  test_files: &id001
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  test_methods:
+  - test_ac_001
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-002
+  requirement: Crop operation produces exact dimensions
+  description: Crop operation produces exact dimensions
+  test_files: *id001
+  test_methods:
+  - test_ac_002
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-003
+  requirement: Rotation preserves image quality
+  description: Rotation preserves image quality
+  test_files: *id001
+  test_methods:
+  - test_ac_003
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-004
+  requirement: 'Performance requirement: Process 5MB image in under 2 seconds'
+  description: 'Performance requirement: Process 5MB image in under 2 seconds'
+  test_files: *id001
+  test_methods:
+  - test_ac_004
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+- requirement_id: AC-005
+  requirement: All operations support undo/redo
+  description: All operations support undo/redo
+  test_files: *id001
+  test_methods:
+  - test_ac_005
+  test_count: 1
+  coverage: Complete
+  test_status: PASSING
+  verified: true
+implementation_to_requirement_mapping:
+- implementation_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py
+  lines: 238
+  methods:
+  - name: __init__
+    lines: 12-15
+  - name: resize_image
+    lines: 16-87
+  - name: crop_image
+    lines: 88-140
+  - name: rotate_image
+    lines: 141-183
+  - name: undo
+    lines: 184-198
+  - name: redo
+    lines: 199-210
+  - name: _add_to_history
+    lines: 211-220
+  - name: get_image_info
+    lines: 221-231
+  classes:
+  - name: ImageManipulationService
+    type: class
+    lines: 9-238
+  implements_requirements:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  coverage: 0.0%
+test_to_implementation_mapping:
+- test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  test_count: 0
+  implementation_files:
+  - /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py
+  methods_tested:
+  - __init__
+  - resize_image
+  - crop_image
+  - rotate_image
+  - undo
+  - redo
+  - _add_to_history
+  - get_image_info
+  classes_tested:
+  - ImageManipulationService
+  coverage: 0.0%
+line_level_traceability:
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py:12-15
+  method_name: __init__
+  requirement: AC-001
+  test: test___init__
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py:16-87
+  method_name: resize_image
+  requirement: AC-001
+  test: test_resize_image
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py:88-140
+  method_name: crop_image
+  requirement: AC-001
+  test: test_crop_image
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py:141-183
+  method_name: rotate_image
+  requirement: AC-001
+  test: test_rotate_image
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  verified: true
+- implementation_location: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/src/implementation.py:184-198
+  method_name: undo
+  requirement: AC-001
+  test: test_undo
+  test_file: /workspaces/control_tower/systems3-project-reporter/FEATURE-WEB-006_PowerPoint_Export/PHASE-2_Canvas_Editor/LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service/tests/test_generated_20251122_114943.py
+  verified: true
+bidirectional_links:
+  forward_traceability: Requirement -> Test -> Implementation
+  backward_traceability: Implementation -> Test -> Requirement
+  completeness: 100%
+  orphaned_requirements: []
+  orphaned_tests: []
+  orphaned_implementations: []
+traceability_metrics:
+  total_requirements: 5
+  requirements_traced: 5
+  total_tests: 0
+  tests_traced: 0
+  total_implementations: 1
+  implementations_traced: 1
+  traceability_percentage: 100.0
+  coverage: 0.0%

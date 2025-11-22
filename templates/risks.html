@@ -496,8 +496,16 @@ function sortTable(columnIndex) {
     const rows = Array.from(tbody.getElementsByTagName('tr'));
     
     rows.sort((a, b) => {
-        const aValue = a.getElementsByTagName('td')[columnIndex].textContent.trim();
-        const bValue = b.getElementsByTagName('td')[columnIndex].textContent.trim();
+        const aCells = a.getElementsByTagName('td');
+        const bCells = b.getElementsByTagName('td');
+        
+        // Safety check - ensure cells exist
+        if (!aCells[columnIndex] || !bCells[columnIndex]) {
+            return 0;
+        }
+        
+        const aValue = aCells[columnIndex].textContent.trim();
+        const bValue = bCells[columnIndex].textContent.trim();
         return aValue.localeCompare(bValue);
     });
     

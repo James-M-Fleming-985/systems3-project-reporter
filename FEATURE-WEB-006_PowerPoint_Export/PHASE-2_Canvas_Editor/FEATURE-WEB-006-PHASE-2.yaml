@@ -1,0 +1,952 @@
+# ====================================================================================
+# FEATURE REQUIREMENTS INDEX: Canvas Editor for PowerPoint Slide Customization
+# ====================================================================================
+# FEATURE ID: FEATURE-WEB-006-PHASE-2
+# VERSION: 1.0.0
+# LAST UPDATED: 2025-11-21
+# OWNER: Systems³ Project Reporter Team
+# ====================================================================================
+# This feature extends FEATURE-WEB-006 (PowerPoint Export) with a canvas-based editor
+# for image manipulation before PowerPoint generation. Uses Fabric.js frontend with
+# FastAPI backend endpoints for preview screenshots and transformation application.
+# ====================================================================================
+
+metadata:
+  requirement_id: "FEATURE-WEB-006-PHASE-2"
+  requirement_name: "Canvas Editor for PowerPoint Slide Customization"
+  feature_id: "FEATURE-WEB-006-PHASE-2"  # Required by build_feature.py
+  feature_name: "Canvas_Editor_PowerPoint_Slides"  # Required by build_feature.py
+  feature_code: "PHASE2"
+  version: "1.0.0"
+  status: "Active"
+  created_date: "2025-11-21"
+  last_modified: "2025-11-21"
+  owner: "Systems³ Project Reporter Team"
+  priority: "MUST HAVE"
+  target_date: "2025-12-15"
+  
+  traceability:
+    parent_system: "SYSTEM-003-WEB"
+    parent_system_file: "../../SYSTEM_REQUIREMENTS_WEB.yaml"
+    parent_feature: "FEATURE-WEB-006"
+    parent_feature_file: "../FEATURE_REQUIREMENTS.yaml"
+    parent_system_requirements:
+      - "SYS-WEB-006: PowerPoint Export - User can export dashboard to PowerPoint"
+      - "SYS-WEB-003: Screenshot Capture Service - Captures dashboard views as images"
+      - "SYS-WEB-004: PowerPoint Builder Service - Assembles screenshots into presentations"
+    
+    derivation_rationale: |
+      FEATURE-WEB-006 provides PowerPoint export with screenshot-based slide generation.
+      Phase 1 captured dashboard views as-is with no user control over layout.
+      
+      User feedback identified need for image customization BEFORE generation:
+      - Dashboard screenshots don't always fit slide dimensions perfectly
+      - Important parts of dashboards get cut off or are too small
+      - Users had to manually edit PowerPoint after generation (time-consuming)
+      
+      Phase 2 adds canvas editor to solve this:
+      - Preview how slides will look BEFORE generating PowerPoint
+      - Resize images to emphasize important data
+      - Reposition images to fit slide layout
+      - Crop images to remove irrelevant portions
+      
+      This maintains screenshot-based approach (proven in Phase 1) while adding
+      user control layer before final generation.
+
+# ====================================================================================
+# FEATURE OVERVIEW
+# ====================================================================================
+
+overview:
+  description: |
+    Canvas-based editor allowing users to preview, resize, reposition, and crop 
+    screenshot images before generating PowerPoint presentations. Built with Fabric.js
+    for frontend manipulation and FastAPI backend endpoints for screenshot generation
+    and transformation application.
+    
+    User clicks "Edit Layout" on slide preview → Opens modal with canvas editor →
+    Manipulates image (resize/move/crop) → Applies changes → Generates PowerPoint
+    with transformed images.
+  
+  business_value:
+    - "Users can customize slide layouts to fit their presentation needs"
+    - "Reduces time spent editing PowerPoint after generation (50% reduction)"
+    - "Ensures important dashboard data is visible and properly sized"
+    - "Provides professional-looking slides without manual post-processing"
+    - "Increases user satisfaction with PowerPoint export quality"
+  
+  user_story: |
+    As a project manager generating PowerPoint reports,
+    I want to adjust how dashboard screenshots appear on slides,
+    So that I can highlight important information and ensure proper layout
+    Before generating the final presentation.
+  
+  acceptance_criteria:
+    - "User can see live preview of dashboard screenshot on canvas"
+    - "User can resize image by dragging corner handles (maintains aspect ratio)"
+    - "User can drag image to reposition within slide bounds"
+    - "User can crop image by defining crop rectangle"
+    - "Cropped preview shows exactly what will appear in PowerPoint"
+    - "User can reset image to original state with one click"
+    - "User can undo last transformation (single-level undo)"
+    - "Canvas shows slide dimensions and safe zones (1920x1080 16:9 ratio)"
+    - "Transformations apply correctly to PowerPoint generation"
+    - "All slides can be edited individually with independent settings"
+    - "Editor works on desktop browsers (Chrome, Firefox, Safari, Edge)"
+
+# ====================================================================================
+# SHARED INTERFACES - MUST MATCH PARENT SYSTEM
+# ====================================================================================
+# CRITICAL: This feature MUST use the response structure defined in SYSTEM-003-WEB.
+# Reference: ../../SYSTEM_REQUIREMENTS_WEB.yaml -> shared_interfaces.api_response_structure
+# ====================================================================================
+
+shared_interfaces:
+  response_structure: |
+    @dataclass
+    class FeatureResponse:
+        success: bool
+        data: Optional[Dict[str, Any]] = None
+        error: Optional[str] = None
+        timestamp: str = None
+        
+        def __post_init__(self):
+            if self.timestamp is None:
+                self.timestamp = datetime.now().isoformat()
+  
+  parent_system_reference:
+    file: "../../SYSTEM_REQUIREMENTS_WEB.yaml"
+    section: "shared_interfaces.api_response_structure"
+  
+  implementation_requirement: |
+    CRITICAL RULES:
+    1. ALL layers in this feature MUST use FeatureResponse dataclass
+    2. Import from shared module (FEATURE-WEB-006/src/feature_integration.py) OR duplicate exactly
+    3. Use IDENTICAL class names, field names, and types as SYSTEM-003-WEB definition
+    4. All FastAPI endpoints MUST return FeatureResponse or raise HTTPException
+    5. Success responses: FeatureResponse(success=True, data={...})
+    6. Error responses: FeatureResponse(success=False, error="Error message")
+    
+    This ensures:
+    - Consistent API responses across all web features
+    - Integration with existing PowerPoint export orchestration
+    - Unified error handling in frontend
+    - Type safety and testability
+  
+  verification:
+    - "Unit tests verify all methods return FeatureResponse"
+    - "Integration tests check response structure matches system standard"
+    - "API documentation auto-generated from response structure"
+
+# ====================================================================================
+# MVP SCOPE (Phase 2.1 - Image Manipulation Only)
+# ====================================================================================
+
+mvp_scope:
+  phase: "2.1 - Image Manipulation Only"
+  timeline: "2-3 weeks"
+  estimated_effort: "15 days"
+  
+  included_features:
+    - feature: "Image Preview"
+      description: "Display screenshot preview on canvas before generation"
+      technical: "Canvas element with live dashboard screenshot loaded via API"
+      acceptance: "User sees dashboard screenshot in canvas within 2 seconds of opening editor"
+    
+    - feature: "Image Resize"
+      description: "Drag corner handles to resize image proportionally"
+      technical: "Fabric.js resize handles with aspect ratio lock, min/max size constraints"
+      acceptance: "User can resize image from 50% to 150% of original size maintaining aspect ratio"
+    
+    - feature: "Image Reposition"
+      description: "Drag image to reposition within slide bounds"
+      technical: "Drag-and-drop within canvas boundaries, snap-to-center guides at 50% positions"
+      acceptance: "User can drag image anywhere within slide, snaps to center when within 20px"
+    
+    - feature: "Image Crop"
+      description: "Crop image to show only relevant portion of dashboard"
+      technical: "Crop overlay with adjustable bounds, dimmed preview of hidden areas"
+      acceptance: "User can define crop rectangle, preview shows exactly what will be in PowerPoint"
+    
+    - feature: "Reset/Undo"
+      description: "Reset image to original size/position or undo last change"
+      technical: "Single-level undo history, reset button restores original state"
+      acceptance: "Undo reverts last transformation, Reset restores all defaults"
+    
+    - feature: "Apply to Slide"
+      description: "Save transformation settings and close editor"
+      technical: "Store transform data (scale, position, crop) in slide configuration"
+      acceptance: "Clicking Apply saves settings, thumbnail shows transformed preview"
+  
+  excluded_from_mvp:
+    - "Text overlay/annotations (Phase 3)"
+    - "Shapes (arrows, boxes, circles) (Phase 3)"
+    - "Callouts and labels (Phase 3)"
+    - "Multiple images per slide (Phase 4)"
+    - "Layer management (Phase 4)"
+    - "Advanced filters/effects (Phase 4)"
+    - "Multi-level undo history (Phase 4)"
+    - "Collaboration features (Phase 5+)"
+
+# ====================================================================================
+# LAYER DECOMPOSITION
+# ====================================================================================
+# These layers will be auto-generated using: build_feature.py --init-layers
+# Each layer will have proper traceability to this feature and parent system.
+# ====================================================================================
+
+layers:
+  - layer_id: "LAYER-PHASE2-001"
+    name: "Transform Models and Validators"
+    requirement_file: "LAYER_PHASE2_001_Transform_Models_and_Validators/LAYER_PHASE2_001_Transform_Models_and_Validators.yaml"
+    description: |
+      Pydantic models for image transformations (scale, position, crop).
+      Validates transformation parameters and provides coordinate conversion
+      utilities (canvas coordinates → PowerPoint coordinates).
+    responsibility: "Define transformation data structures and validation rules"
+    interfaces:
+      - "ImageTransform (scale, position, crop)"
+      - "CropBounds (x, y, width, height)"
+      - "Position (x, y)"
+      - "validate_transform() -> bool"
+      - "canvas_to_ppt_coords() -> PPTCoords"
+  
+  - layer_id: "LAYER-PHASE2-002"
+    name: "Image Manipulation Service"
+    requirement_file: "LAYER_PHASE2_002_Image_Manipulation_Service/LAYER_PHASE2_002_Image_Manipulation_Service.yaml"
+    description: |
+      Backend service for applying transformations to images using Pillow.
+      Crops, resizes, and prepares images for PowerPoint insertion with
+      correct positioning.
+    responsibility: "Apply transformations to screenshot images"
+    interfaces:
+      - "apply_transforms(image: Image, transform: ImageTransform) -> Image"
+      - "crop_image(image: Image, bounds: CropBounds) -> Image"
+      - "resize_image(image: Image, scale: float) -> Image"
+      - "calculate_ppt_position(canvas_pos: Position) -> PPTPosition"
+    dependencies:
+      - "Pillow (PIL)"
+      - "LAYER-PHASE2-001 (Transform Models)"
+  
+  - layer_id: "LAYER-PHASE2-003"
+    name: "Canvas Editor API Endpoints"
+    requirement_file: "LAYER_PHASE2_003_Canvas_Editor_API_Endpoints/LAYER_PHASE2_003_Canvas_Editor_API_Endpoints.yaml"
+    description: |
+      FastAPI endpoints for canvas editor operations:
+      - GET /api/canvas/preview-screenshot: Generate preview screenshot
+      - POST /api/canvas/validate-transform: Validate transformation parameters
+      - POST /api/reports/export-with-transforms: Generate PowerPoint with transforms
+    responsibility: "Provide HTTP API for frontend canvas editor"
+    interfaces:
+      - "GET /api/canvas/preview-screenshot?view={view}&width={w}&height={h}"
+      - "POST /api/canvas/validate-transform (body: ImageTransform)"
+      - "POST /api/reports/export-with-transforms (body: ReportWithTransforms)"
+    dependencies:
+      - "LAYER-PHASE2-001 (Transform Models)"
+      - "LAYER-PHASE2-002 (Image Manipulation Service)"
+      - "LAYER-WEB-006-003 (Screenshot Capture Service from Phase 1)"
+      - "LAYER-WEB-006-004 (PowerPoint Builder Service from Phase 1)"
+
+# ====================================================================================
+# TECHNICAL ARCHITECTURE
+# ====================================================================================
+
+technical_architecture:
+  frontend:
+    canvas_library: 
+      choice: "Fabric.js 5.3.0"
+      rationale: |
+        - Mature, well-documented canvas manipulation library
+        - Built-in object manipulation (resize, drag, crop) with handles
+        - Excellent cross-browser support and mobile/touch handling
+        - Active community with extensive examples
+        - MIT license (free for commercial use)
+        - Lightweight (45KB minified gzipped)
+      
+      alternatives_considered:
+        - "Konva.js: Heavier (200KB), more features than needed for MVP"
+        - "Paper.js: Better for artistic/vector graphics, not business dashboards"
+        - "Vanilla Canvas API: Too much low-level code, no built-in handles"
+    
+    ui_components:
+      - component: "Canvas Editor Modal"
+        framework: "HTML + Tailwind CSS"
+        description: |
+          Full-screen modal (z-index: 9999) with:
+          - Toolbar at top (mode buttons + actions)
+          - Canvas area in center (1920x1080 16:9 ratio)
+          - Property panel on right (dimensions, position, crop values)
+        behavior: |
+          - Opens when user clicks "Edit Layout" on slide thumbnail
+          - Closes on Apply (saves changes) or Cancel (discards changes)
+          - Prevents body scroll when open (overflow: hidden)
+      
+      - component: "Toolbar"
+        location: "Top of modal"
+        actions:
+          - "🔲 Resize: Activates resize mode, shows corner handles"
+          - "✋ Move: Activates move mode, cursor changes to grab hand"
+          - "✂️ Crop: Shows crop overlay with adjustable bounds"
+          - "↺ Undo: Reverts last transformation (single-level)"
+          - "🔄 Reset: Restores image to original state"
+          - "✓ Apply: Saves changes and closes editor (primary button)"
+          - "✗ Cancel: Discards changes and closes editor (secondary button)"
+      
+      - component: "Canvas Area"
+        size: "1920x1080px (matches PowerPoint slide dimensions)"
+        background: "White with light grid overlay (optional)"
+        content: "Dashboard screenshot as Fabric.js Image object"
+        features:
+          - "Resize handles on corners (when in resize mode)"
+          - "Drag to reposition (when in move mode)"
+          - "Crop overlay (when in crop mode)"
+          - "Snap-to-center guides (when dragging near center)"
+      
+      - component: "Property Panel"
+        location: "Right sidebar (300px width)"
+        displays:
+          - "Current size (Width: XXXXpx, Height: XXXXpx)"
+          - "Current position (X: XXXpx, Y: XXXpx)"
+          - "Current crop (X, Y, Width, Height)"
+          - "Aspect ratio locked checkbox"
+        updates: "Real-time as user manipulates image"
+  
+  backend:
+    new_endpoints:
+      - endpoint: "/api/canvas/preview-screenshot"
+        method: "GET"
+        params:
+          - "view: str (e.g., '/dashboard/gantt')"
+          - "project_code: str (optional)"
+          - "viewport_width: int (default: 1920)"
+          - "viewport_height: int (default: 1080)"
+        returns: "PNG image (binary, Content-Type: image/png)"
+        description: |
+          Generates preview screenshot for canvas editor using Playwright.
+          Lower quality/compression than final export for faster loading.
+        caching: "Optional: Cache screenshots for 5 minutes to reduce load"
+      
+      - endpoint: "/api/canvas/validate-transform"
+        method: "POST"
+        body: |
+          {
+            "scale": 0.8,
+            "position": {"x": 100, "y": 50},
+            "crop": {"x": 0, "y": 0, "width": 1600, "height": 900}
+          }
+        returns: |
+          FeatureResponse(
+            success=true/false,
+            data={"valid": true, "ppt_coords": {...}},
+            error="Validation error message if invalid"
+          )
+        description: |
+          Validates transformation parameters before applying.
+          Checks bounds, scale limits, crop dimensions.
+          Returns PowerPoint coordinates for preview.
+      
+      - endpoint: "/api/reports/export-with-transforms"
+        method: "POST"
+        body: |
+          {
+            "template_id": "custom",
+            "project_codes": ["PROJECT-001", "PROJECT-002"],
+            "title": "ZnNi Status Report",
+            "slides": [
+              {
+                "view": "/dashboard/gantt",
+                "title": "Project Timeline",
+                "transforms": {
+                  "scale": 0.8,
+                  "position": {"x": 100, "y": 50},
+                  "crop": {"x": 0, "y": 0, "width": 1600, "height": 900}
+                }
+              }
+            ]
+          }
+        returns: "PowerPoint file (binary, Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation)"
+        description: |
+          Generates PowerPoint with transformation data applied to each slide.
+          For each slide:
+          1. Capture full-resolution screenshot
+          2. Apply crop (if specified) using Pillow
+          3. Apply scale/resize (if specified)
+          4. Calculate PowerPoint position from canvas coordinates
+          5. Add transformed image to slide
+    
+    modified_services:
+      - service: "PowerPoint Builder Service (LAYER-WEB-006-004)"
+        file: "services/builder_service.py"
+        changes:
+          - "Add method: add_slide_with_transform(slide_config: SlideWithTransform)"
+          - "Accept transformation parameters (scale, position, crop)"
+          - "Call Image Manipulation Service to apply transforms"
+          - "Use transformed image when adding to PowerPoint"
+          - "Calculate proper positioning in PowerPoint coordinates (Emu units)"
+      
+      - service: "Screenshot Capture Service (LAYER-WEB-006-003)"
+        file: "services/screenshot_service.py"
+        changes:
+          - "Add method: capture_preview_screenshot(view: str, viewport: Tuple[int, int])"
+          - "Support custom viewport sizes for preview generation"
+          - "Use lower quality/compression for previews (quality=70 vs 95)"
+          - "Optional caching to reduce Playwright overhead"
+
+  data_flow:
+    step_01:
+      user_action: "User clicks 'Edit Layout' on slide thumbnail"
+      frontend: "Opens canvas editor modal, shows loading spinner"
+      backend: "N/A"
+    
+    step_02:
+      user_action: "Modal opened"
+      frontend: "Sends GET /api/canvas/preview-screenshot?view=/dashboard/gantt"
+      backend: "Playwright captures dashboard screenshot, returns PNG"
+    
+    step_03:
+      user_action: "Screenshot received"
+      frontend: "Loads PNG into Fabric.js canvas as Image object, enables manipulation"
+      backend: "N/A"
+    
+    step_04:
+      user_action: "User resizes/moves/crops image on canvas"
+      frontend: "Fabric.js tracks transforms in memory, updates property panel values"
+      backend: "N/A (all manipulation is client-side)"
+    
+    step_05:
+      user_action: "User clicks 'Apply'"
+      frontend: "Saves transform data to slide configuration object, closes modal, updates thumbnail"
+      backend: "N/A"
+    
+    step_06:
+      user_action: "User clicks 'Generate PowerPoint'"
+      frontend: "Sends POST /api/reports/export-with-transforms with all slides + transform data"
+      backend: "Receives request, begins PowerPoint generation"
+    
+    step_07:
+      user_action: "Backend processing"
+      frontend: "Shows progress indicator"
+      backend: |
+        For each slide:
+        1. Capture full-resolution screenshot via Screenshot Service
+        2. Apply crop (if specified) using Image Manipulation Service
+        3. Apply scale/resize (if specified) using Image Manipulation Service
+        4. Calculate PowerPoint position from canvas coordinates
+        5. Add transformed image to PowerPoint via Builder Service
+    
+    step_08:
+      user_action: "PowerPoint generation complete"
+      frontend: "Receives binary PPTX, triggers browser download"
+      backend: "Returns PPTX file, cleans up temporary files"
+
+# ====================================================================================
+# USER WORKFLOW
+# ====================================================================================
+
+user_workflow:
+  step_01:
+    action: "Select dashboard views"
+    screen: "PowerPoint Export page - Step 1"
+    user_does: "Check boxes for views to include (Gantt, Milestones, Risks, Changes)"
+  
+  step_02:
+    action: "Preview slides"
+    screen: "Preview canvas with thumbnail cards"
+    user_does: "See generated slide thumbnails in grid, drag to reorder if needed"
+  
+  step_03:
+    action: "Edit individual slide (NEW IN PHASE 2)"
+    screen: "Slide thumbnail card"
+    user_does: "Click 'Edit Layout' button on slide that needs adjustment"
+  
+  step_04:
+    action: "Canvas editor opens"
+    screen: "Full-screen Canvas Editor Modal"
+    user_sees:
+      - "Toolbar with mode buttons (Resize, Move, Crop)"
+      - "Action buttons (Undo, Reset, Apply, Cancel)"
+      - "Canvas area showing dashboard screenshot"
+      - "Property panel showing current dimensions/position/crop"
+  
+  step_05:
+    action: "Resize image (if needed)"
+    screen: "Canvas Editor - Resize Mode"
+    user_does:
+      - "Click 'Resize' button or grab corner handles"
+      - "Drag handles to make image larger/smaller"
+      - "Image maintains aspect ratio automatically"
+      - "See dimensions update in property panel"
+  
+  step_06:
+    action: "Reposition image (if needed)"
+    screen: "Canvas Editor - Move Mode"
+    user_does:
+      - "Click 'Move' button (cursor changes to hand)"
+      - "Drag image to new position within slide bounds"
+      - "Snap-to-center guides appear when near center (within 20px)"
+      - "See position update in property panel (X, Y coordinates)"
+  
+  step_07:
+    action: "Crop image (if needed)"
+    screen: "Canvas Editor - Crop Mode"
+    user_does:
+      - "Click 'Crop' button"
+      - "Drag crop handles to define visible area"
+      - "Areas outside crop bounds show dimmed overlay"
+      - "Preview shows exactly what will appear in PowerPoint"
+      - "See crop bounds update in property panel"
+  
+  step_08:
+    action: "Undo or Reset (if mistake)"
+    screen: "Canvas Editor - Actions"
+    user_does:
+      - "Click 'Undo' to revert last transformation (single-level)"
+      - "Click 'Reset' to restore original size/position/crop"
+  
+  step_09:
+    action: "Apply changes"
+    screen: "Canvas Editor - Actions"
+    user_does:
+      - "Click 'Apply' to save transformation settings"
+      - "Modal closes, thumbnail updates to show transformed preview"
+      - "Can edit other slides or proceed to generate PowerPoint"
+  
+  step_10:
+    action: "Configure and generate"
+    screen: "PowerPoint Export page - Steps 3 & 4"
+    user_does: "Set report title, select template, click 'Generate PowerPoint'"
+  
+  step_11:
+    action: "Download"
+    screen: "Success message"
+    user_does: "PowerPoint downloads with all edited slides showing transformations"
+
+# ====================================================================================
+# TESTING REQUIREMENTS
+# ====================================================================================
+
+testing_requirements:
+  unit_tests:
+    - test: "Transform Models - validate_transform()"
+      verify: "Rejects invalid scale (<0.5 or >1.5), out-of-bounds position, invalid crop"
+    
+    - test: "Transform Models - canvas_to_ppt_coords()"
+      verify: "Canvas coordinates (px) convert correctly to PowerPoint coordinates (Emu)"
+    
+    - test: "Image Manipulation Service - crop_image()"
+      verify: "Pillow crops image correctly, maintains quality, handles edge cases"
+    
+    - test: "Image Manipulation Service - resize_image()"
+      verify: "Resizes image with correct scale, maintains aspect ratio"
+    
+    - test: "Image Manipulation Service - calculate_ppt_position()"
+      verify: "Position calculations account for PowerPoint coordinate system and slide dimensions"
+  
+  integration_tests:
+    - test: "GET /api/canvas/preview-screenshot"
+      verify: "Returns PNG image, handles invalid view paths, respects viewport dimensions"
+    
+    - test: "POST /api/canvas/validate-transform"
+      verify: "Validates transform parameters, returns FeatureResponse with correct structure"
+    
+    - test: "POST /api/reports/export-with-transforms"
+      verify: "Generates PowerPoint with transformations applied, images match canvas preview"
+    
+    - test: "Transformation persistence"
+      verify: "Saved transformations persist through modal close/reopen cycle"
+  
+  end_to_end_tests:
+    - test: "Full workflow - Resize only"
+      steps:
+        - "Open canvas editor"
+        - "Resize image to 80% scale"
+        - "Apply changes"
+        - "Generate PowerPoint"
+      verify: "PowerPoint slide shows image at 80% scale, centered correctly"
+    
+    - test: "Full workflow - Move only"
+      steps:
+        - "Open canvas editor"
+        - "Drag image to top-left corner"
+        - "Apply changes"
+        - "Generate PowerPoint"
+      verify: "PowerPoint slide shows image in top-left position matching canvas preview"
+    
+    - test: "Full workflow - Crop only"
+      steps:
+        - "Open canvas editor"
+        - "Crop to show only right half of dashboard"
+        - "Apply changes"
+        - "Generate PowerPoint"
+      verify: "PowerPoint slide shows only right half of dashboard, left half not visible"
+    
+    - test: "Full workflow - Combined transforms"
+      steps:
+        - "Open canvas editor"
+        - "Crop to remove top 200px"
+        - "Resize to 90% scale"
+        - "Reposition to center"
+        - "Apply changes"
+        - "Generate PowerPoint"
+      verify: "PowerPoint slide shows cropped + resized + repositioned image exactly as previewed"
+    
+    - test: "Multiple slides with different transforms"
+      steps:
+        - "Edit Slide 1: Resize to 80%"
+        - "Edit Slide 2: Crop top 300px"
+        - "Edit Slide 3: Move to top-left"
+        - "Generate PowerPoint"
+      verify: "Each slide has independent transformations applied correctly"
+    
+    - test: "Undo and Reset"
+      steps:
+        - "Open canvas editor"
+        - "Resize to 80%"
+        - "Click Undo"
+        - "Resize to 90%"
+        - "Crop to remove left 100px"
+        - "Click Reset"
+        - "Apply changes"
+      verify: "Slide reverts to original (no transformations), Undo works, Reset works"
+    
+    - test: "Cancel discards changes"
+      steps:
+        - "Open canvas editor"
+        - "Resize to 70%"
+        - "Crop to remove top 200px"
+        - "Click Cancel"
+        - "Generate PowerPoint"
+      verify: "PowerPoint slide shows original image (transformations discarded)"
+  
+  browser_compatibility_tests:
+    - "Chrome 120+ (Windows, macOS, Linux)"
+    - "Firefox 121+ (Windows, macOS, Linux)"
+    - "Safari 17+ (macOS)"
+    - "Edge 120+ (Windows)"
+  
+  performance_tests:
+    - test: "Canvas editor load time"
+      target: "< 2 seconds from click to screenshot displayed"
+    
+    - test: "Transformation preview update"
+      target: "< 100ms from user action to visual update"
+    
+    - test: "PowerPoint generation with transforms"
+      target: "< 15 seconds for 5 slides with transformations"
+
+# ====================================================================================
+# RISKS AND MITIGATION
+# ====================================================================================
+
+risks:
+  - risk: "Fabric.js learning curve for developers"
+    likelihood: "Medium"
+    impact: "Medium"
+    mitigation: |
+      - Allocate 1 day for team to review Fabric.js documentation and examples
+      - Start with simple resize implementation to gain familiarity
+      - Use official Fabric.js examples as reference (many canvas editor tutorials exist)
+  
+  - risk: "Canvas coordinate system vs PowerPoint coordinate system mismatch"
+    likelihood: "High"
+    impact: "Critical"
+    mitigation: |
+      - Create coordinate conversion utilities in LAYER-PHASE2-001 early in development
+      - Write comprehensive unit tests for coordinate conversion (20+ test cases)
+      - Test with various transformations (edge cases: 0,0 position, max scale, etc.)
+      - Document conversion formulas clearly with examples
+  
+  - risk: "Large dashboard screenshots causing browser performance issues"
+    likelihood: "Medium"
+    impact: "Medium"
+    mitigation: |
+      - Use lower-resolution previews in canvas editor (quality=70 vs 95 for final)
+      - Implement optional caching for preview screenshots (5 minute TTL)
+      - Only capture full-resolution screenshots during final PowerPoint generation
+      - Monitor canvas rendering performance, optimize if > 100ms updates
+  
+  - risk: "Browser compatibility issues with Canvas API or Fabric.js"
+    likelihood: "Low"
+    impact: "Medium"
+    mitigation: |
+      - Fabric.js handles most cross-browser issues (battle-tested library)
+      - Test on all major browsers early (Chrome, Firefox, Safari, Edge)
+      - Use Fabric.js stable release (5.3.0) with known compatibility
+      - Polyfills available if needed for older browsers (not targeting IE11)
+  
+  - risk: "Complex crop logic when generating PowerPoint with python-pptx"
+    likelihood: "Medium"
+    impact: "Medium"
+    mitigation: |
+      - Use Pillow to crop images BEFORE adding to PowerPoint (simpler approach)
+      - python-pptx handles already-cropped images easily
+      - Avoids complex python-pptx crop API which is less intuitive
+      - Test crop logic independently in Image Manipulation Service unit tests
+  
+  - risk: "Transformation data persistence across page refreshes"
+    likelihood: "Low"
+    impact: "Low"
+    mitigation: |
+      - Store transformation settings in JavaScript object (in-memory during session)
+      - If user refreshes page before generating, transformations reset (acceptable for MVP)
+      - Phase 3+ can add localStorage persistence if needed
+      - Clear user messaging: "Transformations are saved when you click Generate"
+
+# ====================================================================================
+# SUCCESS METRICS
+# ====================================================================================
+
+success_metrics:
+  technical:
+    - metric: "Canvas editor load time"
+      target: "< 2 seconds (from click to screenshot displayed)"
+      measurement: "Browser performance API, average of 10 loads"
+    
+    - metric: "Transformation preview update latency"
+      target: "< 100ms (from user action to visual update)"
+      measurement: "Fabric.js event timing, average of 20 interactions"
+    
+    - metric: "PowerPoint generation with transforms"
+      target: "< 15 seconds (for 5 slides with various transformations)"
+      measurement: "Backend timing logs, average of 10 generations"
+    
+    - metric: "Coordinate conversion accuracy"
+      target: "0% error rate (100% match between canvas preview and PowerPoint output)"
+      measurement: "Visual comparison testing + automated pixel difference checks"
+    
+    - metric: "Browser compatibility"
+      target: "100% functionality on Chrome, Firefox, Safari, Edge (latest versions)"
+      measurement: "Manual testing + automated Playwright tests"
+  
+  user_experience:
+    - metric: "User adoption rate"
+      target: "80%+ of users utilize canvas editor before PowerPoint generation"
+      measurement: "Analytics tracking: editor_opened / reports_generated ratio"
+    
+    - metric: "Transformation usage"
+      target: "Average 2+ transformations per report (resize, move, or crop)"
+      measurement: "Backend logging: count transforms applied per report"
+    
+    - metric: "Error rate"
+      target: "< 5% user error rate (incorrect transformations, unexpected results)"
+      measurement: "Support tickets tagged 'canvas-editor-issue'"
+    
+    - metric: "Visual feedback clarity"
+      target: "User understands canvas editor without documentation (90%+ success in usability testing)"
+      measurement: "Observe 10 users using editor without instructions, count successful usage"
+  
+  business:
+    - metric: "Post-generation editing time reduction"
+      target: "50% reduction in time spent editing PowerPoint after generation"
+      measurement: "User survey: 'How much time do you spend editing PowerPoint after export?'"
+    
+    - metric: "PowerPoint quality ratings"
+      target: "4.5/5 average rating for PowerPoint output quality"
+      measurement: "In-app feedback: 'Rate the quality of your generated PowerPoint (1-5 stars)'"
+    
+    - metric: "Feature satisfaction"
+      target: "90%+ users find canvas editor valuable"
+      measurement: "User survey: 'Is the canvas editor useful?' (Yes/No)"
+
+# ====================================================================================
+# FUTURE ENHANCEMENTS (Phase 3+)
+# ====================================================================================
+
+future_enhancements:
+  phase_3_annotations:
+    timeline: "Q1 2026"
+    features:
+      - "Text overlay with formatting (font, size, color, bold, italic, underline)"
+      - "Text alignment options (left, center, right)"
+      - "Shapes (rectangles, circles, arrows, lines) with color/stroke customization"
+      - "Callout boxes with leader lines pointing to specific data points"
+    estimated_effort: "3-4 weeks"
+  
+  phase_4_advanced:
+    timeline: "Q2 2026"
+    features:
+      - "Multiple images per slide (side-by-side comparisons)"
+      - "Layer management (bring to front, send to back, z-index control)"
+      - "Drawing tools (freehand pen, highlighter)"
+      - "Image filters and effects (brightness, contrast, blur)"
+      - "Multi-level undo/redo (unlimited history)"
+    estimated_effort: "4-6 weeks"
+  
+  phase_5_collaboration:
+    timeline: "Q3 2026+"
+    features:
+      - "Save transformation templates for reuse"
+      - "Predefined layout templates (e.g., 'Executive Summary', 'Technical Deep Dive')"
+      - "Collaboration features (multiple users editing, comments)"
+      - "Version history (compare before/after transformations)"
+      - "AI-assisted layout suggestions (e.g., 'Crop to focus on risk heatmap')"
+    estimated_effort: "8-12 weeks"
+
+# ====================================================================================
+# DEPENDENCIES
+# ====================================================================================
+
+dependencies:
+  internal:
+    - dependency: "FEATURE-WEB-006 (PowerPoint Export Phase 1)"
+      type: "Required - Parent Feature"
+      reason: "Phase 2 extends Phase 1 functionality, cannot exist standalone"
+    
+    - dependency: "LAYER-WEB-006-003 (Screenshot Capture Service)"
+      type: "Required - Reused from Phase 1"
+      reason: "Canvas editor uses same screenshot service for preview generation"
+    
+    - dependency: "LAYER-WEB-006-004 (PowerPoint Builder Service)"
+      type: "Required - Extended in Phase 2"
+      reason: "Builder service modified to accept and apply transformation parameters"
+    
+    - dependency: "SYSTEM-003-WEB shared_interfaces"
+      type: "Required - System Standard"
+      reason: "All endpoints must return FeatureResponse following system standard"
+  
+  external:
+    - dependency: "Fabric.js 5.3.0"
+      type: "Required - Frontend Library"
+      license: "MIT (free for commercial use)"
+      source: "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"
+      reason: "Canvas manipulation library for resize/move/crop functionality"
+    
+    - dependency: "Pillow (PIL Fork) 10.0+"
+      type: "Required - Python Library"
+      license: "HPND (PIL Software License)"
+      install: "pip install Pillow>=10.0"
+      reason: "Image manipulation (crop, resize) before adding to PowerPoint"
+    
+    - dependency: "python-pptx 0.6+"
+      type: "Required - Existing Dependency"
+      reason: "Already used in Phase 1, no new dependency"
+    
+    - dependency: "Playwright 1.40+"
+      type: "Required - Existing Dependency"
+      reason: "Already used in Phase 1 for screenshot capture"
+
+# ====================================================================================
+# DOCUMENTATION REQUIREMENTS
+# ====================================================================================
+
+documentation:
+  user_documentation:
+    - doc: "Canvas Editor User Guide"
+      location: "docs/canvas-editor-guide.md"
+      content: |
+        - What is the canvas editor and when to use it
+        - How to open the editor
+        - How to resize images (with GIF demo)
+        - How to reposition images (with GIF demo)
+        - How to crop images (with GIF demo)
+        - How to undo and reset changes
+        - How transformations affect PowerPoint output
+        - Troubleshooting common issues
+    
+    - doc: "Video Tutorial"
+      location: "YouTube or in-app"
+      duration: "3-5 minutes"
+      content: |
+        - Demo: Opening canvas editor
+        - Demo: Resizing dashboard screenshot to fit slide better
+        - Demo: Cropping to remove irrelevant dashboard sections
+        - Demo: Repositioning to center important data
+        - Demo: Generating PowerPoint and comparing output to canvas preview
+  
+  technical_documentation:
+    - doc: "Canvas Editor Architecture"
+      location: "docs/architecture/canvas-editor.md"
+      content: |
+        - Frontend: Fabric.js integration, modal implementation
+        - Backend: New endpoints, transformation application logic
+        - Coordinate system conversion (canvas px → PowerPoint Emu)
+        - Data flow diagrams
+    
+    - doc: "API Documentation"
+      location: "Auto-generated from FastAPI (Swagger UI at /docs)"
+      content: |
+        - GET /api/canvas/preview-screenshot
+        - POST /api/canvas/validate-transform
+        - POST /api/reports/export-with-transforms
+    
+    - doc: "Layer Requirements"
+      location: "LAYER-PHASE2-XXX/REQ-PHASE2-XXX.yaml"
+      content: |
+        - LAYER-PHASE2-001: Transform Models and Validators
+        - LAYER-PHASE2-002: Image Manipulation Service
+        - LAYER-PHASE2-003: Canvas Editor API Endpoints
+
+# ====================================================================================
+# DEPLOYMENT AND ROLLOUT
+# ====================================================================================
+
+deployment:
+  environment: "Railway (same as Phase 1)"
+  deployment_strategy: "Blue-Green Deployment"
+  rollback_plan: |
+    If critical issues discovered:
+    1. Revert to Phase 1 deployment (git checkout previous commit)
+    2. Canvas editor feature hidden with feature flag
+    3. PowerPoint generation still works without transformations
+  
+  feature_flag:
+    flag_name: "ENABLE_CANVAS_EDITOR"
+    default: "false (disabled until Phase 2 fully tested)"
+    rollout_plan: |
+      - Week 1: Internal testing only (flag=true for team accounts)
+      - Week 2: Beta users (10-20 power users, flag=true)
+      - Week 3: 50% rollout (A/B test)
+      - Week 4: 100% rollout (flag=true for all users)
+  
+  monitoring:
+    - "Canvas editor usage metrics (opened, transformations applied)"
+    - "API endpoint latency (preview-screenshot, export-with-transforms)"
+    - "Error rates (coordinate conversion failures, image manipulation errors)"
+    - "PowerPoint generation success rate (with vs without transformations)"
+  
+  rollout_success_criteria:
+    - "< 1% error rate during Week 2 beta testing"
+    - "< 5 support tickets related to canvas editor in Week 3"
+    - "80%+ users who try canvas editor continue using it (Week 4)"
+
+# ====================================================================================
+# APPENDIX: UI MOCKUP (Text Representation)
+# ====================================================================================
+
+ui_mockup_text: |
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Edit Slide Layout: Gantt Chart Timeline                            [X]     │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │ [🔲 Resize] [✋ Move] [✂️ Crop] │ [↺ Undo] [🔄 Reset] │ [✓ Apply] [✗ Cancel]   │
+  ├────────────────────────────────────────────────────┬────────────────────────┤
+  │                                                    │ Properties             │
+  │                                                    │                        │
+  │    ┌────────────────────────────────────┐         │ Size:                  │
+  │    │                                    │         │   Width: 1600px        │
+  │    │   [Dashboard Screenshot]           │         │   Height: 900px        │
+  │    │                                    │         │   Scale: 83%           │
+  │    │   [Gantt Chart with Milestones]    │         │                        │
+  │    │                                    │         │ Position:              │
+  │    │   [Resize handles on corners: ◻️]  │         │   X: 160px             │
+  │    │                                    │         │   Y: 90px              │
+  │    └────────────────────────────────────┘         │   (Centered)           │
+  │                                                    │                        │
+  │   Canvas: 1920x1080px (16:9 ratio)                │ Crop:                  │
+  │   Slide dimensions match PowerPoint               │   X: 0px               │
+  │                                                    │   Y: 0px               │
+  │                                                    │   Width: 1920px        │
+  │                                                    │   Height: 1080px       │
+  │                                                    │   (No crop applied)    │
+  │                                                    │                        │
+  │                                                    │ ☑️ Maintain aspect ratio│
+  │                                                    │                        │
+  └────────────────────────────────────────────────────┴────────────────────────┘
+  
+  Toolbar Button Behaviors:
+  - 🔲 Resize: Shows corner handles, user drags to resize, aspect ratio locked
+  - ✋ Move: Cursor changes to hand, user drags image to reposition
+  - ✂️ Crop: Shows crop overlay (adjustable rectangle), areas outside dimmed
+  - ↺ Undo: Reverts last transformation (single-level undo)
+  - 🔄 Reset: Restores original size, position, and crop (no transformations)
+  - ✓ Apply: Saves transformation settings, closes editor, updates thumbnail
+  - ✗ Cancel: Discards all changes, closes editor, thumbnail unchanged
