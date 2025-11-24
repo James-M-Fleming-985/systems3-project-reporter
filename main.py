@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.159"  # 2025-11-24 - Fix dependencies
+BUILD_VERSION = "1.0.160"  # 2025-11-24 - Better error handling
 
 
 # Setup logging
@@ -136,8 +136,11 @@ try:
     from routers import canvas_editor
     app.include_router(canvas_editor.router)
     logger.info("✅ Canvas Editor Phase 2 enabled")
-except ImportError as e:
+except Exception as e:
     logger.warning(f"⚠️  Canvas Editor Phase 2 disabled: {e}")
+    logger.warning(f"   Error type: {type(e).__name__}")
+    import traceback
+    logger.warning(f"   Traceback: {traceback.format_exc()}")
 
 # Include routers
 # Dashboard router has: /, /gantt, /milestones, /risks, /changes
