@@ -208,24 +208,33 @@ async def upload_xml(
                 if existing_risk.risk_id not in existing_risk_ids:
                     yaml_risks.append(existing_risk)
         
-        # SMART MERGE: Preserve manually edited milestone data when re-uploading
+        # SMART MERGE: Preserve manually edited milestone data
         milestones_to_save = []
         seen_milestone_names = set()  # Track to prevent duplicates
         
-        if existing_project and not is_baseline_upload and hasattr(existing_project, 'milestones'):
-            # Create lookup by milestone ID (most reliable) and name (fallback)
-            existing_by_id = {getattr(m, 'id', None): m for m in existing_project.milestones if getattr(m, 'id', None)}
-            existing_by_name = {m.name: m for m in existing_project.milestones}
+        if existing_project and not is_baseline_upload and hasattr(
+            existing_project, 'milestones'
+        ):
+            # Create lookup by milestone ID and name
+            existing_by_id = {
+                getattr(m, 'id', None): m
+                for m in existing_project.milestones
+                if getattr(m, 'id', None)
+            }
+            existing_by_name = {
+                m.name: m for m in existing_project.milestones
+            }
             
             for new_milestone in new_project.milestones:
                 new_id = getattr(new_milestone, 'id', None)
                 milestone_name = new_milestone.name.strip()
                 
-                # Skip if we've already processed a milestone with this name
+                # Skip if already processed (duplicate in XML)
                 if milestone_name in seen_milestone_names:
                     logger.warning(
-                        f"⚠️ DUPLICATE MILESTONE DETECTED: '{milestone_name}' "
-                        f"- skipping duplicate from XML"
+                        f"⚠️ DUPLICATE in XML: '{milestone_name}' "
+                        f"at line {new_project.milestones.index(new_milestone)} "
+                        f"- skipping duplicate"
                     )
                     continue
                 seen_milestone_names.add(milestone_name)
