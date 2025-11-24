@@ -689,3 +689,48 @@ async def update_change_reason(
             'success': False,
             'error': str(e)
         }, status_code=400)
+
+
+@router.post("/clear-cache/{project_code}")
+async def clear_project_cache(project_code: str):
+    """Clear cached project data - force fresh baseline on next upload"""
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"🗑️ Clearing cache for project: {project_code}")
+        
+        # Delete the project YAML file
+        project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+        yaml_path = project_dir / "project_status.yaml"
+        
+        if yaml_path.exists():
+            yaml_path.unlink()
+            logger.info(f"✅ Deleted: {yaml_path}")
+            
+            # Also clear from in-memory cache
+            project_repo._projects = [
+                p for p in project_repo._projects
+                if p.project_code != project_code
+            ]
+            
+            return JSONResponse({
+                'success': True,
+                'message': (
+                    f'Cache cleared for {project_code}. '
+                    'Next upload will be treated as baseline.'
+                )
+            })
+        else:
+            return JSONResponse({
+                'success': False,
+                'message': f'No cached data found for {project_code}'
+            }, status_code=404)
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to clear cache: {e}")
+        return JSONResponse({
+            'success': False,
+            'error': str(e)
+        }, status_code=500)
+

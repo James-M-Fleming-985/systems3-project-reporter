@@ -142,6 +142,12 @@
                         <p class="text-gray-600 mt-1">Skip change detection and establish this as the new baseline for future comparisons.</p>
                     </label>
                 </div>
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <button onclick="clearProjectCache()" class="text-sm text-red-600 hover:text-red-800 font-semibold">
+                        🗑️ Clear Cached Project Data
+                    </button>
+                    <p class="text-xs text-gray-500 mt-1">Use this if changes aren't being detected. Next upload will be treated as baseline.</p>
+                </div>
             </div>
             
             <!-- Progress -->
@@ -419,6 +425,36 @@ function resetProjectUpload() {
     document.getElementById('projectUploadBtn').disabled = true;
     document.getElementById('projectBaselineCheckbox').checked = false;
     projectFileInput.value = '';
+}
+
+async function clearProjectCache() {
+    // Get selected project from localStorage or prompt user
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    
+    if (!selectedProgram) {
+        alert('Please select a project from the dashboard first');
+        return;
+    }
+    
+    if (!confirm(`Clear cached data for ${selectedProgram}?\n\nThis will delete all saved milestone and change data. Your next upload will be treated as a baseline.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/upload/clear-cache/${selectedProgram}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ ${result.message}`);
+        } else {
+            alert(`❌ ${result.message || result.error}`);
+        }
+    } catch (error) {
+        alert(`❌ Failed to clear cache: ${error.message}`);
+    }
 }
 
 // Risk Upload Logic

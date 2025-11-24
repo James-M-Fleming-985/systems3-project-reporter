@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.176"  # Fix: Update dates when changes detected
+BUILD_VERSION = "1.0.177"  # Add clear cache button for duplicate fix
 
 
 # Setup logging
