@@ -569,9 +569,11 @@ async function exportReport() {
 let selectedSlideForEdit = null;
 
 document.getElementById('editLayoutBtn')?.addEventListener('click', () => {
-    if (selectedSlideForEdit) {
-        openCanvasEditor(selectedSlideForEdit);
+    if (!selectedSlideForEdit) {
+        alert('Please click on a slide thumbnail first to select which slide you want to edit.');
+        return;
     }
+    openCanvasEditor(selectedSlideForEdit);
 });
 
 function openCanvasEditor(slideData) {
@@ -590,10 +592,13 @@ function openCanvasEditor(slideData) {
             </div>
             <div class="p-6">
                 <div class="mb-4 bg-gray-100 rounded-lg p-4">
-                    <div class="relative" style="max-height: 400px; overflow: hidden;">
-                        <img src="${slideData.preview}" class="w-full h-auto border-2 border-gray-300 rounded shadow-lg" id="canvasImage" style="transition: transform 0.2s ease; transform-origin: center;" onerror="this.parentElement.innerHTML='<div class=\"text-center text-gray-500 py-20\">Preview not available</div>'">
+                    <div class="relative bg-white rounded-lg overflow-hidden" style="height: 400px;">
+                        <iframe src="${slideData.viewPath}" id="canvasFrame" class="w-full h-full border-2 border-gray-300 rounded" style="transform-origin: center; transition: transform 0.2s;"></iframe>
+                        <div class="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-lg shadow text-xs font-semibold">
+                            ${slideData.title}
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2 text-center">Live preview - adjust controls below to see changes</p>
+                    <p class="text-xs text-gray-500 mt-2 text-center">💡 Adjust controls below - changes will apply when you generate the PowerPoint</p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div>
@@ -659,11 +664,11 @@ function updateTransform(property, value) {
     currentTransform[property] = parseFloat(value);
     document.getElementById(property + 'Value').textContent = value;
     
-    // Apply visual transform to preview
-    const img = document.getElementById('canvasImage');
-    if (img) {
-        img.style.transform = `scale(${currentTransform.scale}) translate(${currentTransform.positionX}px, ${currentTransform.positionY}px)`;
-        img.style.clipPath = `inset(${currentTransform.cropTop}% ${currentTransform.cropRight}% ${currentTransform.cropBottom}% ${currentTransform.cropLeft}%)`;
+    // Apply visual transform to preview iframe
+    const frame = document.getElementById('canvasFrame');
+    if (frame) {
+        frame.style.transform = `scale(${currentTransform.scale}) translate(${currentTransform.positionX}px, ${currentTransform.positionY}px)`;
+        frame.style.clipPath = `inset(${currentTransform.cropTop}% ${currentTransform.cropRight}% ${currentTransform.cropBottom}% ${currentTransform.cropLeft}%)`;
     }
 }
 
