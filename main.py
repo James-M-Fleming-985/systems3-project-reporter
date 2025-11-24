@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.167"  # 2025-11-24 - Fix textBaseline bug
+BUILD_VERSION = "1.0.168"  # Fix Fabric.js textBaseline onload override
 
 
 # Setup logging
