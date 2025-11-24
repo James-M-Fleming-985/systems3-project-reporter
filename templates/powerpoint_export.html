@@ -667,17 +667,17 @@ function initFabricCanvas(viewUrl) {
         selection: true
     });
     
-    // Show loading message
+    // Show loading message (textBaseline inherited from prototype override)
     const loadingText = new fabric.Text('Loading dashboard preview...', {
         left: 960,
         top: 540,
         originX: 'center',
         originY: 'center',
         fill: '#9ca3af',
-        fontSize: 24,
-        textBaseline: 'middle'
+        fontSize: 24
     });
     fabricCanvas.add(loadingText);
+    console.log('📝 Loading text created, textBaseline:', loadingText.textBaseline);
     
     // Create iframe to capture screenshot
     const iframe = document.createElement('iframe');
@@ -702,6 +702,7 @@ function initFabricCanvas(viewUrl) {
                     </svg>
                 `);
                 
+                console.log('🖼️ Loading placeholder SVG...');
                 fabricCanvas.remove(loadingText);
                 
                 fabric.Image.fromURL(placeholderUrl, function(img) {
@@ -723,7 +724,8 @@ function initFabricCanvas(viewUrl) {
                     fabricCanvas.add(canvasImage);
                     fabricCanvas.setActiveObject(canvasImage);
                     fabricCanvas.renderAll();
-                });
+                    console.log('✅ Canvas image loaded and ready');
+                }, { crossOrigin: 'anonymous' });
                 
                 document.body.removeChild(iframe);
             } catch (e) {
