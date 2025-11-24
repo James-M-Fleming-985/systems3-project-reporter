@@ -126,11 +126,29 @@ async def upload_xml(
         
         # Only detect changes if NOT a baseline upload
         if existing_project and not is_baseline_upload:
+            logger.info("🔍 Checking for milestone date changes...")
+            logger.info(
+                f"   Old: {len(existing_project.milestones)} milestones"
+            )
+            logger.info(
+                f"   New: {len(new_project.milestones)} milestones"
+            )
+            
             # Detect changes
             changes = change_detector.detect_milestone_changes(
                 existing_project,
                 new_project
             )
+            
+            logger.info(f"📊 DETECTED {len(changes)} DATE CHANGES")
+            
+            if changes:
+                for c in changes:
+                    logger.info(
+                        f"   • {c['milestone_name']}: "
+                        f"{c['old_date']} → {c['new_date']} "
+                        f"({c['days_diff']:+d} days)"
+                    )
             
             detected_changes = [
                 {
