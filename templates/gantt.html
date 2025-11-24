@@ -236,7 +236,7 @@ function getLayout() {
                 standoff: 20
             },
             automargin: true,
-            autorange: true,
+            autorange: 'reversed',  // Reversed puts first item at top
             fixedrange: false  // Allow vertical zooming
         },
         barmode: 'overlay',
@@ -246,7 +246,7 @@ function getLayout() {
             l: 250,
             r: 120,
             t: 80,
-            b: 100  // Reduced - no rangeslider needed
+            b: 80  // Reduced from 100 to minimize bottom whitespace
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',

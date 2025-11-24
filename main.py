@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.173"  # Add screenshot API for canvas real preview
+BUILD_VERSION = "1.0.174"  # Fix Gantt whitespace, canvas works all views
 
 
 # Setup logging
