@@ -689,28 +689,43 @@ function initFabricCanvas(viewUrl) {
     document.body.appendChild(iframe);
     
     iframe.onload = function() {
-        setTimeout(() => {
+        setTimeout(async () => {
             try {
-                // Try to capture using html2canvas approach
-                // For now, use a placeholder image
-                const placeholderUrl = 'data:image/svg+xml,' + encodeURIComponent(`
-                    <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="1920" height="1080" fill="#e5e7eb" stroke="#9ca3af" stroke-width="8"/>
-                        <text x="960" y="480" font-size="64" font-weight="bold" text-anchor="middle" fill="#1f2937">Dashboard Preview</text>
-                        <text x="960" y="560" font-size="40" text-anchor="middle" fill="#4b5563">${viewUrl.split('/').pop()}</text>
-                        <text x="960" y="640" font-size="24" text-anchor="middle" fill="#6b7280">Click and drag to reposition • Use corners to resize</text>
-                    </svg>
-                `);
+                // Use backend screenshot API to capture actual dashboard
+                console.log('📸 Requesting screenshot from backend for:', viewUrl);
                 
-                console.log('🖼️ Loading placeholder SVG...');
+                let imageUrl;
+                try {
+                    const response = await fetch(`/api/screenshot?url=${encodeURIComponent(viewUrl)}`);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        imageUrl = URL.createObjectURL(blob);
+                        console.log('✅ Screenshot captured from backend');
+                    } else {
+                        throw new Error('Screenshot API failed');
+                    }
+                } catch (screenshotError) {
+                    console.warn('⚠️ Backend screenshot failed, using placeholder:', screenshotError);
+                    // Fallback to placeholder
+                    imageUrl = 'data:image/svg+xml,' + encodeURIComponent(`
+                        <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="1920" height="1080" fill="#e5e7eb" stroke="#9ca3af" stroke-width="8"/>
+                            <text x="960" y="480" font-size="64" font-weight="bold" text-anchor="middle" fill="#1f2937">Dashboard Preview</text>
+                            <text x="960" y="560" font-size="40" text-anchor="middle" fill="#4b5563">${viewUrl.split('/').pop()}</text>
+                            <text x="960" y="640" font-size="24" text-anchor="middle" fill="#6b7280">Click and drag to reposition • Use corners to resize</text>
+                            <text x="960" y="700" font-size="20" text-anchor="middle" fill="#9ca3af">(Real screenshot capture in progress...)</text>
+                        </svg>
+                    `);
+                }
+                
+                console.log('🖼️ Loading dashboard image...');
                 console.log('📐 Canvas dimensions:', fabricCanvas.width, 'x', fabricCanvas.height);
                 console.log('🎨 Canvas object count before:', fabricCanvas.getObjects().length);
-                console.log('📝 SVG URL length:', placeholderUrl.length);
                 
                 fabricCanvas.remove(loadingText);
                 console.log('🗑️ Loading text removed');
                 
-                fabric.Image.fromURL(placeholderUrl, function(img) {
+                fabric.Image.fromURL(imageUrl, function(img) {
                     console.log('🔄 fromURL callback fired');
                     if (!img) {
                         console.error('❌ Failed to load SVG image - img is null/undefined');

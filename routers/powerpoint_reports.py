@@ -243,3 +243,31 @@ async def list_company_templates():
     except Exception as e:
         logger.error(f"Failed to list company templates: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/screenshot")
+async def capture_single_screenshot(url: str):
+    """Capture a single screenshot for canvas editor preview"""
+    try:
+        logger.info(f"📸 Capturing screenshot for canvas editor: {url}")
+        
+        # Capture screenshot using the existing service
+        screenshot_bytes = await screenshot_service.capture_screenshot_async(
+            url=url,
+            width=1920,
+            height=1080,
+            wait_time=2
+        )
+        
+        logger.info(f"✅ Screenshot captured: {len(screenshot_bytes)} bytes")
+        
+        # Return as image
+        return StreamingResponse(
+            io.BytesIO(screenshot_bytes),
+            media_type="image/png",
+            headers={"Cache-Control": "no-cache"}
+        )
+    except Exception as e:
+        logger.error(f"❌ Failed to capture screenshot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
