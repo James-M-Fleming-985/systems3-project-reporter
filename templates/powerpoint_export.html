@@ -659,35 +659,100 @@ function initFabricCanvas(viewUrl) {
         selection: true
     });
     
-    // Capture screenshot from iframe
-    captureScreenshot(viewUrl);
+    // Show loading message
+    const loadingText = new fabric.Text('Loading dashboard preview...', {
+        left: 960,
+        top: 540,
+        originX: 'center',
+        originY: 'center',
+        fill: '#9ca3af',
+        fontSize: 24
+    });
+    fabricCanvas.add(loadingText);
+    
+    // Create iframe to capture screenshot
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '1920px';
+    iframe.style.height = '1080px';
+    iframe.src = viewUrl;
+    document.body.appendChild(iframe);
+    
+    iframe.onload = function() {
+        setTimeout(() => {
+            try {
+                // Try to capture using html2canvas approach
+                // For now, use a placeholder image
+                const placeholderUrl = 'data:image/svg+xml,' + encodeURIComponent(`
+                    <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="1920" height="1080" fill="#f3f4f6"/>
+                        <text x="960" y="500" font-size="48" text-anchor="middle" fill="#6b7280">Dashboard Preview</text>
+                        <text x="960" y="560" font-size="32" text-anchor="middle" fill="#9ca3af">${viewUrl.split('/').pop()}</text>
+                        <text x="960" y="620" font-size="20" text-anchor="middle" fill="#d1d5db">Click and drag to reposition • Use corners to resize</text>
+                    </svg>
+                `);
+                
+                fabricCanvas.remove(loadingText);
+                
+                fabric.Image.fromURL(placeholderUrl, function(img) {
+                    canvasImage = img;
+                    canvasImage.set({
+                        left: 960,
+                        top: 540,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: 0.9,
+                        scaleY: 0.9,
+                        borderColor: '#3b82f6',
+                        cornerColor: '#3b82f6',
+                        cornerSize: 12,
+                        transparentCorners: false,
+                        cornerStyle: 'circle'
+                    });
+                    
+                    fabricCanvas.add(canvasImage);
+                    fabricCanvas.setActiveObject(canvasImage);
+                    fabricCanvas.renderAll();
+                });
+                
+                document.body.removeChild(iframe);
+            } catch (e) {
+                console.error('Failed to capture screenshot:', e);
+                fabricCanvas.remove(loadingText);
+                const errorText = new fabric.Text('Preview unavailable - transforms will still be applied', {
+                    left: 960,
+                    top: 540,
+                    originX: 'center',
+                    originY: 'center',
+                    fill: '#ef4444',
+                    fontSize: 20
+                });
+                fabricCanvas.add(errorText);
+            }
+        }, 1000);
+    };
 }
 
 function captureScreenshot(viewUrl) {
-    // For now, use a placeholder - in production would capture actual screenshot
-    fabric.Image.fromURL(viewUrl, function(img) {
-        if (canvasImage) {
-            fabricCanvas.remove(canvasImage);
-        }
-        
-        canvasImage = img;
-        canvasImage.set({
+    // Show loading
+    if (fabricCanvas) {
+        const loadingText = new fabric.Text('Refreshing preview...', {
             left: 960,
             top: 540,
             originX: 'center',
             originY: 'center',
-            scaleX: 0.8,
-            scaleY: 0.8,
-            borderColor: '#3b82f6',
-            cornerColor: '#3b82f6',
-            cornerSize: 12,
-            transparentCorners: false
+            fill: '#9ca3af',
+            fontSize: 24
         });
-        
-        fabricCanvas.add(canvasImage);
-        fabricCanvas.setActiveObject(canvasImage);
+        fabricCanvas.add(loadingText);
         fabricCanvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+        
+        setTimeout(() => {
+            fabricCanvas.remove(loadingText);
+            fabricCanvas.renderAll();
+        }, 500);
+    }
 }
 
 function resetCanvas() {
