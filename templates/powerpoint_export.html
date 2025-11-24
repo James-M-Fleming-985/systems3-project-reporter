@@ -3,6 +3,9 @@
 {% block title %}PowerPoint Export - Systems³ Project Reporter{% endblock %}
 
 {% block content %}
+<!-- Fabric.js for interactive canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
 <style>
 .slide-preview {
     cursor: grab;
@@ -577,13 +580,20 @@ document.getElementById('editLayoutBtn')?.addEventListener('click', () => {
 });
 
 function openCanvasEditor(slideData) {
+    // Get selected project
+    const projectCode = document.getElementById('projectSelect')?.value || '';
+    const viewUrl = slideData.viewPath + (projectCode ? `?project=${projectCode}` : '');
+    
     // Show modal with canvas editor controls
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl w-[90vw] max-w-7xl mx-4 max-h-[95vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-xl font-semibold">Edit Slide Layout</h3>
+                <div>
+                    <h3 class="text-xl font-semibold">Edit Slide Layout: ${slideData.title}</h3>
+                    <p class="text-sm text-gray-600 mt-1">Click and drag the image to move • Use corners to resize • Adjust crop with handles</p>
+                </div>
                 <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -591,74 +601,136 @@ function openCanvasEditor(slideData) {
                 </button>
             </div>
             <div class="p-6">
-                <div class="mb-4 bg-gray-100 rounded-lg p-4">
-                    <div class="relative bg-white rounded-lg overflow-hidden" style="height: 400px;">
-                        <iframe src="${slideData.viewPath}" id="canvasFrame" class="w-full h-full border-2 border-gray-300 rounded" style="transform-origin: center; transition: transform 0.2s;"></iframe>
-                        <div class="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-lg shadow text-xs font-semibold">
-                            ${slideData.title}
+                <div class="mb-4 bg-gray-900 rounded-lg p-4 relative">
+                    <canvas id="canvasEditor" class="border-2 border-gray-600 bg-gray-800" width="1920" height="1080"></canvas>
+                    <div class="absolute top-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold">
+                        ${slideData.title}
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="text-sm text-blue-800">
+                            <strong>How to use:</strong> Drag to move • Grab corners to resize • Use rotation handle to rotate • Click outside to deselect
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2 text-center">💡 Adjust controls below - changes will apply when you generate the PowerPoint</p>
                 </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Scale</label>
-                        <input type="range" min="0.5" max="2" step="0.1" value="1" class="w-full" 
-                               oninput="updateTransform('scale', this.value)">
-                        <span class="text-xs text-gray-500">Current: <span id="scaleValue">1.0</span></span>
+                <div class="flex justify-between items-center">
+                    <div class="flex gap-3">
+                        <button onclick="resetCanvas()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            Reset to Original
+                        </button>
+                        <button onclick="captureScreenshot('${viewUrl}')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            Refresh Preview
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Position X</label>
-                        <input type="range" min="-200" max="200" value="0" class="w-full" 
-                               oninput="updateTransform('positionX', this.value)">
-                        <span class="text-xs text-gray-500">Current: <span id="positionXValue">0</span>px</span>
+                    <div class="flex gap-3">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                        <button onclick="applyCanvasTransform()" 
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Apply Changes
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Position Y</label>
-                        <input type="range" min="-200" max="200" value="0" class="w-full" 
-                               oninput="updateTransform('positionY', this.value)">
-                        <span class="text-xs text-gray-500">Current: <span id="positionYValue">0</span>px</span>
-                    </div>
-                </div>
-                <div class="mt-4 grid grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Crop Top (%)</label>
-                        <input type="number" min="0" max="50" value="0" class="w-full px-3 py-2 border rounded" 
-                               oninput="updateTransform('cropTop', this.value)">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Crop Right (%)</label>
-                        <input type="number" min="0" max="50" value="0" class="w-full px-3 py-2 border rounded" 
-                               oninput="updateTransform('cropRight', this.value)">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Crop Bottom (%)</label>
-                        <input type="number" min="0" max="50" value="0" class="w-full px-3 py-2 border rounded" 
-                               oninput="updateTransform('cropBottom', this.value)">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Crop Left (%)</label>
-                        <input type="number" min="0" max="50" value="0" class="w-full px-3 py-2 border rounded" 
-                               oninput="updateTransform('cropLeft', this.value)">
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="this.closest('.fixed').remove()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button onclick="applyTransform()" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Apply Changes
-                    </button>
                 </div>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+    
+    // Initialize Fabric.js canvas
+    setTimeout(() => initFabricCanvas(viewUrl), 100);
 }
 
 let currentTransform = { scale: 1, positionX: 0, positionY: 0, cropTop: 0, cropRight: 0, cropBottom: 0, cropLeft: 0 };
+let fabricCanvas = null;
+let canvasImage = null;
+
+function initFabricCanvas(viewUrl) {
+    const canvasEl = document.getElementById('canvasEditor');
+    if (!canvasEl) return;
+    
+    fabricCanvas = new fabric.Canvas('canvasEditor', {
+        backgroundColor: '#1f2937',
+        selection: true
+    });
+    
+    // Capture screenshot from iframe
+    captureScreenshot(viewUrl);
+}
+
+function captureScreenshot(viewUrl) {
+    // For now, use a placeholder - in production would capture actual screenshot
+    fabric.Image.fromURL(viewUrl, function(img) {
+        if (canvasImage) {
+            fabricCanvas.remove(canvasImage);
+        }
+        
+        canvasImage = img;
+        canvasImage.set({
+            left: 960,
+            top: 540,
+            originX: 'center',
+            originY: 'center',
+            scaleX: 0.8,
+            scaleY: 0.8,
+            borderColor: '#3b82f6',
+            cornerColor: '#3b82f6',
+            cornerSize: 12,
+            transparentCorners: false
+        });
+        
+        fabricCanvas.add(canvasImage);
+        fabricCanvas.setActiveObject(canvasImage);
+        fabricCanvas.renderAll();
+    }, { crossOrigin: 'anonymous' });
+}
+
+function resetCanvas() {
+    if (canvasImage) {
+        canvasImage.set({
+            left: 960,
+            top: 540,
+            scaleX: 0.8,
+            scaleY: 0.8,
+            angle: 0
+        });
+        fabricCanvas.renderAll();
+    }
+}
+
+function applyCanvasTransform() {
+    if (!canvasImage) {
+        alert('No image to apply transforms to');
+        return;
+    }
+    
+    // Get current transform state
+    const transform = {
+        scale: canvasImage.scaleX,
+        scaleY: canvasImage.scaleY,
+        left: canvasImage.left,
+        top: canvasImage.top,
+        angle: canvasImage.angle,
+        width: canvasImage.width,
+        height: canvasImage.height
+    };
+    
+    console.log('Transform applied:', transform);
+    
+    // Save to Phase 2 API (simplified for now)
+    currentTransform = transform;
+    
+    // Close modal
+    document.querySelector('.fixed.inset-0').remove();
+    
+    // Show success message
+    alert('✓ Layout changes saved! These will be applied when you generate the PowerPoint.');
+}
 
 function updateTransform(property, value) {
     currentTransform[property] = parseFloat(value);

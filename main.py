@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.163"  # 2025-11-24 - Canvas shows live iframe
+BUILD_VERSION = "1.0.164"  # 2025-11-24 - Fabric.js canvas editor
 
 
 # Setup logging
