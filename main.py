@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.169"  # Remove textBaseline property, use prototype
+BUILD_VERSION = "1.0.170"  # Scale canvas to fit modal viewport
 
 
 # Setup logging
