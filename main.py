@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.158"  # 2025-11-22 - Canvas Editor Phase 2 API integration
+BUILD_VERSION = "1.0.159"  # 2025-11-24 - Fix dependencies
 
 
 # Setup logging
