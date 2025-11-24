@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.177"  # Add clear cache button for duplicate fix
+BUILD_VERSION = "1.0.178"  # Fix canvas screenshot URL (use full URL)
 
 
 # Setup logging
