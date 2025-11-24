@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.165"  # 2025-11-24 - Fix canvas black screen
+BUILD_VERSION = "1.0.166"  # 2025-11-24 - Fix Fabric.js CDN and errors
 
 
 # Setup logging

@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- Fabric.js for interactive canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
 <style>
 .slide-preview {
@@ -666,7 +666,8 @@ function initFabricCanvas(viewUrl) {
         originX: 'center',
         originY: 'center',
         fill: '#9ca3af',
-        fontSize: 24
+        fontSize: 24,
+        textBaseline: 'middle'
     });
     fabricCanvas.add(loadingText);
     
