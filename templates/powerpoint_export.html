@@ -101,11 +101,11 @@
                 <h2 class="text-xl font-semibold">2. Preview & Adjust Slide Layout</h2>
                 <p class="text-sm text-gray-600 mt-1">Drag slides to reorder them. Click to see a larger preview or edit layout.</p>
             </div>
-            <button id="editLayoutBtn" class="hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm flex items-center gap-2">
+            <button id="editLayoutBtn" class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2 cursor-not-allowed" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
-                Edit Layout
+                Edit Layout (select slide first)
             </button>
         </div>
         
@@ -286,13 +286,23 @@ function updatePreviewCanvas() {
         previewCard.addEventListener('click', function(e) {
             e.stopPropagation();
             // Enable edit button and store selected slide
+            const previewImg = slidePreview.querySelector('img');
             selectedSlideForEdit = {
                 viewPath: viewPath,
                 title: title,
-                preview: '/dashboard' + viewPath + '?screenshot=true',
+                preview: previewImg ? previewImg.src : '',
                 index: index
             };
-            document.getElementById('editLayoutBtn').classList.remove('hidden');
+            const btn = document.getElementById('editLayoutBtn');
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+            btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'cursor-pointer');
+            btn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edit "${title}"
+            `;
             showPreviewModal(viewPath, title);
         });
         
@@ -579,8 +589,11 @@ function openCanvasEditor(slideData) {
                 </button>
             </div>
             <div class="p-6">
-                <div class="mb-4">
-                    <img src="${slideData.preview}" class="w-full border border-gray-300 rounded" id="canvasImage">
+                <div class="mb-4 bg-gray-100 rounded-lg p-4">
+                    <div class="relative" style="max-height: 400px; overflow: hidden;">
+                        <img src="${slideData.preview}" class="w-full h-auto border-2 border-gray-300 rounded shadow-lg" id="canvasImage" style="transition: transform 0.2s ease; transform-origin: center;" onerror="this.parentElement.innerHTML='<div class=\"text-center text-gray-500 py-20\">Preview not available</div>'">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Live preview - adjust controls below to see changes</p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div>

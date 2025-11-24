@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.160"  # 2025-11-24 - Better error handling
+BUILD_VERSION = "1.0.162"  # 2025-11-24 - Fix canvas preview image
 
 
 # Setup logging
