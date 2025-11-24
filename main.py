@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.178"  # Fix canvas screenshot URL (use full URL)
+BUILD_VERSION = "1.0.179"  # Fix screenshot API params (resolution tuple)
 
 
 # Setup logging

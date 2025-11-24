@@ -254,9 +254,8 @@ async def capture_single_screenshot(url: str):
         # Capture screenshot using the existing service
         screenshot_bytes = await screenshot_service.capture_screenshot_async(
             url=url,
-            width=1920,
-            height=1080,
-            wait_time=2
+            resolution=(1920, 1080),
+            hide_navigation=False
         )
         
         logger.info(f"✅ Screenshot captured: {len(screenshot_bytes)} bytes")
