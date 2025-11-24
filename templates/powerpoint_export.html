@@ -609,8 +609,8 @@ function openCanvasEditor(slideData) {
                 </button>
             </div>
             <div class="p-6">
-                <div class="mb-4 bg-white rounded-lg p-4 relative border border-gray-200" style="max-width: 100%; overflow: hidden;">
-                    <canvas id="canvasEditor" class="border border-gray-300 bg-white" width="1920" height="1080" style="width: 100%; height: auto; display: block;"></canvas>
+                <div class="mb-4 bg-white rounded-lg p-4 relative border border-gray-300" style="max-width: 100%; overflow: hidden;">
+                    <canvas id="canvasEditor" class="w-full h-auto block" width="1920" height="1080" style="border: 1px solid #d1d5db;"></canvas>
                     <div class="absolute top-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold">
                         ${slideData.title}
                     </div>
@@ -695,17 +695,31 @@ function initFabricCanvas(viewUrl) {
                 // For now, use a placeholder image
                 const placeholderUrl = 'data:image/svg+xml,' + encodeURIComponent(`
                     <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="1920" height="1080" fill="#f3f4f6"/>
-                        <text x="960" y="500" font-size="48" text-anchor="middle" fill="#6b7280">Dashboard Preview</text>
-                        <text x="960" y="560" font-size="32" text-anchor="middle" fill="#9ca3af">${viewUrl.split('/').pop()}</text>
-                        <text x="960" y="620" font-size="20" text-anchor="middle" fill="#d1d5db">Click and drag to reposition • Use corners to resize</text>
+                        <rect width="1920" height="1080" fill="#e5e7eb" stroke="#9ca3af" stroke-width="8"/>
+                        <text x="960" y="480" font-size="64" font-weight="bold" text-anchor="middle" fill="#1f2937">Dashboard Preview</text>
+                        <text x="960" y="560" font-size="40" text-anchor="middle" fill="#4b5563">${viewUrl.split('/').pop()}</text>
+                        <text x="960" y="640" font-size="24" text-anchor="middle" fill="#6b7280">Click and drag to reposition • Use corners to resize</text>
                     </svg>
                 `);
                 
                 console.log('🖼️ Loading placeholder SVG...');
+                console.log('📐 Canvas dimensions:', fabricCanvas.width, 'x', fabricCanvas.height);
+                console.log('🎨 Canvas object count before:', fabricCanvas.getObjects().length);
+                console.log('📝 SVG URL length:', placeholderUrl.length);
+                
                 fabricCanvas.remove(loadingText);
+                console.log('🗑️ Loading text removed');
                 
                 fabric.Image.fromURL(placeholderUrl, function(img) {
+                    console.log('🔄 fromURL callback fired');
+                    if (!img) {
+                        console.error('❌ Failed to load SVG image - img is null/undefined');
+                        return;
+                    }
+                    console.log('📊 SVG loaded successfully!');
+                    console.log('   - Image dimensions:', img.width, 'x', img.height);
+                    console.log('   - Image element:', img.getElement());
+                    
                     canvasImage = img;
                     canvasImage.set({
                         left: 960,
@@ -721,15 +735,28 @@ function initFabricCanvas(viewUrl) {
                         cornerStyle: 'circle'
                     });
                     
+                    console.log('🎯 Image configured at:', canvasImage.left, canvasImage.top);
+                    console.log('📏 Image scale:', canvasImage.scaleX, canvasImage.scaleY);
+                    
                     fabricCanvas.add(canvasImage);
+                    console.log('➕ Image added to canvas');
+                    console.log('🎨 Canvas object count after:', fabricCanvas.getObjects().length);
+                    
                     fabricCanvas.setActiveObject(canvasImage);
+                    console.log('🔵 Image set as active object');
+                    
                     fabricCanvas.renderAll();
-                    console.log('✅ Canvas image loaded and ready');
+                    console.log('✅ Canvas rendered - image should be visible now!');
+                }, function(img, isError) {
+                    console.error('❌ Error loading SVG:', isError ? 'ERROR' : 'UNKNOWN');
+                    console.error('   - Image object:', img);
                 }, { crossOrigin: 'anonymous' });
                 
                 document.body.removeChild(iframe);
             } catch (e) {
-                console.error('Failed to capture screenshot:', e);
+                console.error('❌ Exception in canvas initialization:', e);
+                console.error('   - Error message:', e.message);
+                console.error('   - Stack trace:', e.stack);
                 fabricCanvas.remove(loadingText);
                 const errorText = new fabric.Text('Preview unavailable - transforms will still be applied', {
                     left: 960,

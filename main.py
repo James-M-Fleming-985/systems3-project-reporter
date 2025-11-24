@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.171"  # White canvas to match PowerPoint background
+BUILD_VERSION = "1.0.172"  # Comprehensive error logging for canvas debug
 
 
 # Setup logging
