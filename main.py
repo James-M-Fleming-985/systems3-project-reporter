@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.170"  # Scale canvas to fit modal viewport
+BUILD_VERSION = "1.0.171"  # White canvas to match PowerPoint background
 
 
 # Setup logging

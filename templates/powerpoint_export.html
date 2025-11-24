@@ -609,8 +609,8 @@ function openCanvasEditor(slideData) {
                 </button>
             </div>
             <div class="p-6">
-                <div class="mb-4 bg-gray-900 rounded-lg p-4 relative" style="max-width: 100%; overflow: hidden;">
-                    <canvas id="canvasEditor" class="border-2 border-gray-600 bg-gray-800" width="1920" height="1080" style="width: 100%; height: auto; display: block;"></canvas>
+                <div class="mb-4 bg-white rounded-lg p-4 relative border border-gray-200" style="max-width: 100%; overflow: hidden;">
+                    <canvas id="canvasEditor" class="border border-gray-300 bg-white" width="1920" height="1080" style="width: 100%; height: auto; display: block;"></canvas>
                     <div class="absolute top-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold">
                         ${slideData.title}
                     </div>
@@ -663,7 +663,7 @@ function initFabricCanvas(viewUrl) {
     if (!canvasEl) return;
     
     fabricCanvas = new fabric.Canvas('canvasEditor', {
-        backgroundColor: '#1f2937',
+        backgroundColor: '#ffffff',
         selection: true
     });
     
@@ -673,7 +673,7 @@ function initFabricCanvas(viewUrl) {
         top: 540,
         originX: 'center',
         originY: 'center',
-        fill: '#9ca3af',
+        fill: '#6b7280',
         fontSize: 24
     });
     fabricCanvas.add(loadingText);
