@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.182"  # Add Dockerfile with Playwright installation
+BUILD_VERSION = "1.0.183"  # Fix Dockerfile Playwright installation command
 
 
 # Setup logging
