@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.188"  # Use persistent volume for Playwright browsers
+BUILD_VERSION = "1.0.189"  # Use official Playwright Docker image with browsers
 
 
 # Setup logging
