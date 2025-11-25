@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.186"  # Remove Dockerfile, back to Procfile (working)
+BUILD_VERSION = "1.0.187"  # Add startup script to install Playwright browsers
 
 
 # Setup logging
