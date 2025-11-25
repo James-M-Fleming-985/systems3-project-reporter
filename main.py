@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.191"  # Use Python script for PORT handling in Docker
+BUILD_VERSION = "1.0.192"  # Use uvicorn.run() directly in railway_start.py
 
 
 # Setup logging
