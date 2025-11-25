@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.194"  # Remove nixpacks.toml and Procfile - use Dockerfile only
+BUILD_VERSION = "1.0.179"  # Fix screenshot API params (resolution tuple)
 
 
 # Setup logging
