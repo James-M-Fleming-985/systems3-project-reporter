@@ -2,6 +2,7 @@ import asyncio
 from typing import Dict, List, Optional, Tuple
 import logging
 import io
+import os
 
 from playwright.async_api import (
     async_playwright,
@@ -12,6 +13,11 @@ from playwright.async_api import (
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+# Set Playwright to use persistent volume on Railway
+if os.getenv('RAILWAY_ENVIRONMENT'):
+    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/data/playwright-browsers'
+    logger.info(f"🎭 Playwright browsers path: {os.environ['PLAYWRIGHT_BROWSERS_PATH']}")
 
 
 class ScreenshotService:
