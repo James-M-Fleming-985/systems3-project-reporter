@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.185"  # Use ENTRYPOINT instead of CMD for PORT variable
+BUILD_VERSION = "1.0.186"  # Remove Dockerfile, back to Procfile (working)
 
 
 # Setup logging
