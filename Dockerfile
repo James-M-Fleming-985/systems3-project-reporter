@@ -17,5 +17,5 @@ RUN mkdir -p /data/projects
 # Expose port
 EXPOSE 8080
 
-# Railway sets PORT environment variable, use it
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info
+# Use shell form to allow environment variable expansion
+CMD ["/bin/bash", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info"]
