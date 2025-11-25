@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.180"  # Add Playwright browser installation to Railway deployment
+BUILD_VERSION = "1.0.181"  # Force rebuild with Playwright browser install
 
 
 # Setup logging
