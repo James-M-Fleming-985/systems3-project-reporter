@@ -11,11 +11,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Make startup script executable
+RUN chmod +x railway_start.py
+
 # Create data directory for Railway persistent volume
 RUN mkdir -p /data/projects
 
 # Expose port
 EXPOSE 8080
 
-# Use shell form to allow environment variable expansion
-CMD ["/bin/bash", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info"]
+# Use Python script to handle PORT variable properly
+CMD ["python3", "railway_start.py"]

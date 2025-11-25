@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.190"  # Fix Dockerfile CMD for PORT variable expansion
+BUILD_VERSION = "1.0.191"  # Use Python script for PORT handling in Docker
 
 
 # Setup logging
