@@ -796,5 +796,20 @@ function downloadRisks(format) {
 // Update page title with program name
 document.getElementById('risksPageTitle').textContent = `⚠️ ${projectName} - Risk Analysis`;
 document.getElementById('risksPageSubtitle').textContent = `Active risks grouped by severity`;
+
+// Auto-expand all risks if 'expand=true' parameter is present (for PowerPoint screenshots)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('expand') === 'true') {
+    // Wait for page to fully load
+    setTimeout(() => {
+        const allRiskRows = document.querySelectorAll('[id^="risk-details-"]');
+        allRiskRows.forEach((row, index) => {
+            row.classList.remove('hidden');
+            const icon = document.getElementById(`expand-icon-${index}`);
+            if (icon) icon.classList.add('rotate-90');
+        });
+        console.log('📋 Auto-expanded all risk details for screenshot');
+    }, 500);
+}
 </script>
 {% endblock %}

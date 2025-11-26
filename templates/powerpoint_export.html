@@ -47,19 +47,19 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Gantt Chart -->
             <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card">
-                <input type="checkbox" name="view" value="/dashboard/gantt" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
+                <input type="checkbox" name="view" value="/dashboard/gantt?full=true" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
                 <div>
                     <div class="font-semibold text-gray-900">📅 Gantt Chart</div>
-                    <div class="text-sm text-gray-600 mt-1">Project timeline visualization</div>
+                    <div class="text-sm text-gray-600 mt-1">Complete roadmap with all projects</div>
                 </div>
             </label>
 
             <!-- Milestones -->
             <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card">
-                <input type="checkbox" name="view" value="/dashboard/milestones" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
+                <input type="checkbox" name="view" value="/dashboard/milestones?view=month" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
                 <div>
                     <div class="font-semibold text-gray-900">🎯 Milestones</div>
-                    <div class="text-sm text-gray-600 mt-1">Key project milestones tracker</div>
+                    <div class="text-sm text-gray-600 mt-1">Month view with progress cards</div>
                 </div>
             </label>
 
@@ -74,10 +74,10 @@
 
             <!-- Risks -->
             <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card">
-                <input type="checkbox" name="view" value="/dashboard/risks" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
+                <input type="checkbox" name="view" value="/dashboard/risks?expand=true" class="mt-1 mr-3 w-5 h-5 text-blue-600" checked>
                 <div>
                     <div class="font-semibold text-gray-900">⚠️ Risks</div>
-                    <div class="text-sm text-gray-600 mt-1">Risk analysis and management</div>
+                    <div class="text-sm text-gray-600 mt-1">Risk table with mitigation details</div>
                 </div>
             </label>
 

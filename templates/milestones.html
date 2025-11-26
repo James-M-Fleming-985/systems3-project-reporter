@@ -866,8 +866,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('milestonePageSubtitle').textContent = `Milestones organized by status and timeline`;
     }
     
-    // Restore saved view or default to status view
-    const savedView = localStorage.getItem('currentMilestoneView') || 'status';
+    // Check URL parameter first, then localStorage, then default to status view
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlView = urlParams.get('view');
+    const savedView = urlView || localStorage.getItem('currentMilestoneView') || 'status';
     switchView(savedView);
 });
 </script>
