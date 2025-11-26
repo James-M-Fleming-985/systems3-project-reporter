@@ -621,7 +621,7 @@ function openCanvasEditor(slideData) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <div class="text-sm text-blue-800">
-                            <strong>How to use:</strong> Drag to move • Corners to resize • Rotation handle to rotate • Click "Enable Crop Mode" then resize the purple rectangle to crop
+                            <strong>How to use:</strong> Drag to move • Corners to resize • Rotation handle to rotate • Click "Enable Crop Mode" then click and drag to select the area you want to keep
                         </div>
                     </div>
                 </div>
@@ -831,6 +831,8 @@ function resetCanvas() {
 
 let cropMode = false;
 let cropRect = null;
+let isDrawingCrop = false;
+let cropStartPoint = null;
 
 function toggleCropMode() {
     cropMode = !cropMode;
@@ -850,85 +852,143 @@ function toggleCropMode() {
 function enableCropMode() {
     if (!canvasImage) return;
     
-    // Make image non-movable/non-scalable during crop
+    // Make image non-interactive during crop
     canvasImage.set({
+        selectable: false,
+        evented: false,
+        hoverCursor: 'crosshair'
+    });
+    
+    fabricCanvas.defaultCursor = 'crosshair';
+    fabricCanvas.selection = false;
+    
+    // Add mouse event handlers for drawing crop rectangle
+    fabricCanvas.on('mouse:down', startCropDraw);
+    fabricCanvas.on('mouse:move', updateCropDraw);
+    fabricCanvas.on('mouse:up', finishCropDraw);
+    
+    fabricCanvas.renderAll();
+    console.log('🔲 Crop mode enabled - click and drag to select area to keep');
+}
+
+function startCropDraw(e) {
+    if (!cropMode) return;
+    
+    const pointer = fabricCanvas.getPointer(e.e);
+    cropStartPoint = { x: pointer.x, y: pointer.y };
+    isDrawingCrop = true;
+    
+    // Create initial crop rectangle
+    cropRect = new fabric.Rect({
+        left: pointer.x,
+        top: pointer.y,
+        width: 0,
+        height: 0,
+        fill: 'rgba(139, 92, 246, 0.2)',
+        stroke: '#8b5cf6',
+        strokeWidth: 3,
+        strokeDashArray: [5, 5],
         selectable: false,
         evented: false
     });
     
-    // Create a transparent crop rectangle overlay
-    cropRect = new fabric.Rect({
-        left: canvasImage.left,
-        top: canvasImage.top,
-        width: canvasImage.width * canvasImage.scaleX,
-        height: canvasImage.height * canvasImage.scaleY,
-        fill: 'rgba(0, 0, 0, 0.3)',
-        stroke: '#8b5cf6',
-        strokeWidth: 3,
-        strokeDashArray: [5, 5],
-        cornerColor: '#8b5cf6',
-        cornerSize: 12,
-        transparentCorners: false,
-        lockRotation: true
-    });
-    
     fabricCanvas.add(cropRect);
-    fabricCanvas.setActiveObject(cropRect);
-    fabricCanvas.renderAll();
+}
+
+function updateCropDraw(e) {
+    if (!isDrawingCrop || !cropRect) return;
     
-    console.log('🔲 Crop mode enabled - resize the purple rectangle to crop');
+    const pointer = fabricCanvas.getPointer(e.e);
+    
+    // Calculate rectangle dimensions
+    const width = pointer.x - cropStartPoint.x;
+    const height = pointer.y - cropStartPoint.y;
+    
+    // Update rectangle size (handle negative values for dragging backwards)
+    if (width < 0) {
+        cropRect.set({ left: pointer.x, width: Math.abs(width) });
+    } else {
+        cropRect.set({ width: width });
+    }
+    
+    if (height < 0) {
+        cropRect.set({ top: pointer.y, height: Math.abs(height) });
+    } else {
+        cropRect.set({ height: height });
+    }
+    
+    fabricCanvas.renderAll();
+}
+
+function finishCropDraw(e) {
+    if (!isDrawingCrop) return;
+    isDrawingCrop = false;
+    
+    // If crop rectangle is too small, remove it
+    if (cropRect && (cropRect.width < 10 || cropRect.height < 10)) {
+        fabricCanvas.remove(cropRect);
+        cropRect = null;
+        cropStartPoint = null;
+    }
 }
 
 function disableCropMode() {
+    // Remove mouse event handlers
+    fabricCanvas.off('mouse:down', startCropDraw);
+    fabricCanvas.off('mouse:move', updateCropDraw);
+    fabricCanvas.off('mouse:up', finishCropDraw);
+    
+    fabricCanvas.defaultCursor = 'default';
+    fabricCanvas.selection = true;
+    
     if (cropRect) {
-        // Calculate crop percentages based on crop rectangle
-        const imgBounds = {
-            left: canvasImage.left,
-            top: canvasImage.top,
-            width: canvasImage.width * canvasImage.scaleX,
-            height: canvasImage.height * canvasImage.scaleY
-        };
-        
         const cropBounds = cropRect.getBoundingRect();
+        const imgBounds = canvasImage.getBoundingRect();
         
-        // Calculate crop percentages
-        const cropLeft = ((cropBounds.left - imgBounds.left) / imgBounds.width) * 100;
-        const cropTop = ((cropBounds.top - imgBounds.top) / imgBounds.height) * 100;
-        const cropRight = ((imgBounds.left + imgBounds.width - cropBounds.left - cropBounds.width) / imgBounds.width) * 100;
-        const cropBottom = ((imgBounds.top + imgBounds.height - cropBounds.top - cropBounds.height) / imgBounds.height) * 100;
+        // Calculate what percentage of the image to crop from each edge
+        // The crop rectangle shows what to KEEP, so we crop everything outside it
+        const cropLeft = Math.max(0, ((cropBounds.left - imgBounds.left) / imgBounds.width) * 100);
+        const cropTop = Math.max(0, ((cropBounds.top - imgBounds.top) / imgBounds.height) * 100);
+        const cropRight = Math.max(0, ((imgBounds.left + imgBounds.width - cropBounds.left - cropBounds.width) / imgBounds.width) * 100);
+        const cropBottom = Math.max(0, ((imgBounds.top + imgBounds.height - cropBounds.top - cropBounds.height) / imgBounds.height) * 100);
         
         // Store crop values
-        currentTransform.cropTop = Math.max(0, cropTop);
-        currentTransform.cropLeft = Math.max(0, cropLeft);
-        currentTransform.cropRight = Math.max(0, cropRight);
-        currentTransform.cropBottom = Math.max(0, cropBottom);
+        currentTransform.cropTop = cropTop;
+        currentTransform.cropLeft = cropLeft;
+        currentTransform.cropRight = cropRight;
+        currentTransform.cropBottom = cropBottom;
+        
+        console.log('✂️ Crop values:', { cropTop, cropLeft, cropRight, cropBottom });
         
         // Apply crop to image using clipPath
-        const cropWidth = canvasImage.width * (1 - (currentTransform.cropLeft + currentTransform.cropRight) / 100);
-        const cropHeight = canvasImage.height * (1 - (currentTransform.cropTop + currentTransform.cropBottom) / 100);
+        const cropWidth = canvasImage.width * (1 - (cropLeft + cropRight) / 100);
+        const cropHeight = canvasImage.height * (1 - (cropTop + cropBottom) / 100);
         
         canvasImage.clipPath = new fabric.Rect({
-            left: -(canvasImage.width / 2) + (canvasImage.width * currentTransform.cropLeft / 100),
-            top: -(canvasImage.height / 2) + (canvasImage.height * currentTransform.cropTop / 100),
+            left: -(canvasImage.width / 2) + (canvasImage.width * cropLeft / 100),
+            top: -(canvasImage.height / 2) + (canvasImage.height * cropTop / 100),
             width: cropWidth,
             height: cropHeight,
             absolutePositioned: false
         });
         
-        // Remove crop rectangle and restore image interactivity
+        // Remove crop rectangle
         fabricCanvas.remove(cropRect);
         cropRect = null;
+        cropStartPoint = null;
         
-        canvasImage.set({
-            selectable: true,
-            evented: true
-        });
-        
-        fabricCanvas.setActiveObject(canvasImage);
-        fabricCanvas.renderAll();
-        
-        console.log('✂️ Crop applied:', currentTransform);
+        console.log('✂️ Crop applied');
     }
+    
+    // Restore image interactivity
+    canvasImage.set({
+        selectable: true,
+        evented: true,
+        hoverCursor: 'move'
+    });
+    
+    fabricCanvas.setActiveObject(canvasImage);
+    fabricCanvas.renderAll();
 }
 
 function applyCanvasTransform() {
