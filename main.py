@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.200"  # Add missing run.py to git
+BUILD_VERSION = "1.0.201"  # Add public folder for favicon bundling
 
 
 # Setup logging
@@ -56,8 +56,15 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Mount public folder for frontend bundling
+PUBLIC_DIR = BASE_DIR / "public"
+PUBLIC_DIR.mkdir(exist_ok=True)
+if PUBLIC_DIR.exists():
+    app.mount("/public", StaticFiles(directory=str(PUBLIC_DIR)), name="public")
+
 # Setup Jinja2 templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
 
 # Export version for use in routers
 def get_template_context(request: Request, **kwargs):
