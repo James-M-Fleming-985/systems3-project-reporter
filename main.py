@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.202"  # Add Playwright test endpoint and better error logging
+BUILD_VERSION = "1.0.203"  # Fix screenshot URL conversion to localhost
 
 
 # Setup logging

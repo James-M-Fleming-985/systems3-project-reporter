@@ -246,10 +246,31 @@ async def list_company_templates():
 
 
 @api_router.get("/screenshot")
-async def capture_single_screenshot(url: str):
+async def capture_single_screenshot(url: str, request: Request):
     """Capture a single screenshot for canvas editor preview"""
     try:
         logger.info(f"📸 Capturing screenshot for canvas editor: {url}")
+        
+        # Convert external Railway URL to localhost for internal access
+        # This allows the container to screenshot itself
+        import os
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        
+        # If URL points to the same host we're running on, use localhost
+        request_host = request.headers.get('host', '')
+        if parsed.netloc and (
+            parsed.netloc == request_host or
+            'railway.app' in parsed.netloc
+        ):
+            # Use the actual PORT the app is running on
+            port = os.environ.get('PORT', '8080')
+            # Replace with localhost but keep the path
+            internal_url = f"http://localhost:{port}{parsed.path}"
+            if parsed.query:
+                internal_url += f"?{parsed.query}"
+            logger.info(f"🔄 Converting to internal URL: {internal_url}")
+            url = internal_url
         
         # Capture screenshot using the existing service
         screenshot_bytes = await screenshot_service.capture_screenshot_async(
