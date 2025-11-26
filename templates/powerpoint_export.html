@@ -625,6 +625,38 @@ function openCanvasEditor(slideData) {
                         </div>
                     </div>
                 </div>
+                
+                <!-- Crop Controls -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Crop Controls</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Crop Top (%)</label>
+                            <input type="range" id="cropTop" min="0" max="50" value="0" step="0.5" 
+                                   class="w-full" oninput="updateCrop()">
+                            <span id="cropTopValue" class="text-xs text-gray-500">0%</span>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Crop Bottom (%)</label>
+                            <input type="range" id="cropBottom" min="0" max="50" value="0" step="0.5" 
+                                   class="w-full" oninput="updateCrop()">
+                            <span id="cropBottomValue" class="text-xs text-gray-500">0%</span>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Crop Left (%)</label>
+                            <input type="range" id="cropLeft" min="0" max="50" value="0" step="0.5" 
+                                   class="w-full" oninput="updateCrop()">
+                            <span id="cropLeftValue" class="text-xs text-gray-500">0%</span>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Crop Right (%)</label>
+                            <input type="range" id="cropRight" min="0" max="50" value="0" step="0.5" 
+                                   class="w-full" oninput="updateCrop()">
+                            <span id="cropRightValue" class="text-xs text-gray-500">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="flex justify-between items-center">
                     <div class="flex gap-3">
                         <button onclick="resetCanvas()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
@@ -825,6 +857,45 @@ function resetCanvas() {
     }
 }
 
+function updateCrop() {
+    // Get crop values from sliders
+    const cropTop = parseFloat(document.getElementById('cropTop').value);
+    const cropBottom = parseFloat(document.getElementById('cropBottom').value);
+    const cropLeft = parseFloat(document.getElementById('cropLeft').value);
+    const cropRight = parseFloat(document.getElementById('cropRight').value);
+    
+    // Update display values
+    document.getElementById('cropTopValue').textContent = cropTop + '%';
+    document.getElementById('cropBottomValue').textContent = cropBottom + '%';
+    document.getElementById('cropLeftValue').textContent = cropLeft + '%';
+    document.getElementById('cropRightValue').textContent = cropRight + '%';
+    
+    // Store in currentTransform
+    currentTransform.cropTop = cropTop;
+    currentTransform.cropBottom = cropBottom;
+    currentTransform.cropLeft = cropLeft;
+    currentTransform.cropRight = cropRight;
+    
+    // Apply visual crop to canvas using Fabric.js clipPath
+    if (canvasImage) {
+        const imgWidth = canvasImage.width * canvasImage.scaleX;
+        const imgHeight = canvasImage.height * canvasImage.scaleY;
+        
+        canvasImage.clipPath = new fabric.Rect({
+            left: -(imgWidth / 2) + (imgWidth * cropLeft / 100),
+            top: -(imgHeight / 2) + (imgHeight * cropTop / 100),
+            width: imgWidth * (1 - (cropLeft + cropRight) / 100),
+            height: imgHeight * (1 - (cropTop + cropBottom) / 100),
+            absolutePositioned: false,
+            originX: 'left',
+            originY: 'top'
+        });
+        
+        fabricCanvas.renderAll();
+        console.log('🎨 Crop applied:', { cropTop, cropBottom, cropLeft, cropRight });
+    }
+}
+
 function applyCanvasTransform() {
     if (!canvasImage) {
         alert('No image to apply transforms to');
@@ -839,7 +910,11 @@ function applyCanvasTransform() {
         top: canvasImage.top,
         angle: canvasImage.angle,
         width: canvasImage.width,
-        height: canvasImage.height
+        height: canvasImage.height,
+        cropTop: currentTransform.cropTop || 0,
+        cropBottom: currentTransform.cropBottom || 0,
+        cropLeft: currentTransform.cropLeft || 0,
+        cropRight: currentTransform.cropRight || 0
     };
     
     console.log('Transform applied:', transform);
