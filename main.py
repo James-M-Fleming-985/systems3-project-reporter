@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.208"  # Fix crop mode - click and drag to select area to keep
+BUILD_VERSION = "1.0.209"  # Fix crop clipPath calculation and reset function
 
 
 # Setup logging

@@ -818,6 +818,10 @@ function captureScreenshot(viewUrl) {
 
 function resetCanvas() {
     if (canvasImage) {
+        // Remove any crop
+        canvasImage.clipPath = null;
+        
+        // Reset transform
         canvasImage.set({
             left: 960,
             top: 540,
@@ -825,7 +829,15 @@ function resetCanvas() {
             scaleY: 0.8,
             angle: 0
         });
+        
+        // Reset crop values
+        currentTransform.cropTop = 0;
+        currentTransform.cropBottom = 0;
+        currentTransform.cropLeft = 0;
+        currentTransform.cropRight = 0;
+        
         fabricCanvas.renderAll();
+        console.log('🔄 Canvas reset to original state');
     }
 }
 
@@ -941,16 +953,32 @@ function disableCropMode() {
     fabricCanvas.defaultCursor = 'default';
     fabricCanvas.selection = true;
     
-    if (cropRect) {
+    if (cropRect && cropRect.width > 10 && cropRect.height > 10) {
+        // Get the crop rectangle bounds in canvas coordinates
         const cropBounds = cropRect.getBoundingRect();
-        const imgBounds = canvasImage.getBoundingRect();
         
-        // Calculate what percentage of the image to crop from each edge
-        // The crop rectangle shows what to KEEP, so we crop everything outside it
-        const cropLeft = Math.max(0, ((cropBounds.left - imgBounds.left) / imgBounds.width) * 100);
-        const cropTop = Math.max(0, ((cropBounds.top - imgBounds.top) / imgBounds.height) * 100);
-        const cropRight = Math.max(0, ((imgBounds.left + imgBounds.width - cropBounds.left - cropBounds.width) / imgBounds.width) * 100);
-        const cropBottom = Math.max(0, ((imgBounds.top + imgBounds.height - cropBounds.top - cropBounds.height) / imgBounds.height) * 100);
+        // Get image bounds and original dimensions
+        const imgLeft = canvasImage.left - (canvasImage.width * canvasImage.scaleX) / 2;
+        const imgTop = canvasImage.top - (canvasImage.height * canvasImage.scaleY) / 2;
+        const imgWidth = canvasImage.width * canvasImage.scaleX;
+        const imgHeight = canvasImage.height * canvasImage.scaleY;
+        
+        console.log('Image bounds:', { imgLeft, imgTop, imgWidth, imgHeight });
+        console.log('Crop bounds:', cropBounds);
+        
+        // Calculate crop offsets relative to the image (in pixels)
+        const cropLeftPx = Math.max(0, cropBounds.left - imgLeft);
+        const cropTopPx = Math.max(0, cropBounds.top - imgTop);
+        const cropRightPx = Math.max(0, imgLeft + imgWidth - cropBounds.left - cropBounds.width);
+        const cropBottomPx = Math.max(0, imgTop + imgHeight - cropBounds.top - cropBounds.height);
+        
+        console.log('Crop pixels:', { cropLeftPx, cropTopPx, cropRightPx, cropBottomPx });
+        
+        // Convert to percentages of original image
+        const cropLeft = (cropLeftPx / imgWidth) * 100;
+        const cropTop = (cropTopPx / imgHeight) * 100;
+        const cropRight = (cropRightPx / imgWidth) * 100;
+        const cropBottom = (cropBottomPx / imgHeight) * 100;
         
         // Store crop values
         currentTransform.cropTop = cropTop;
@@ -958,26 +986,32 @@ function disableCropMode() {
         currentTransform.cropRight = cropRight;
         currentTransform.cropBottom = cropBottom;
         
-        console.log('✂️ Crop values:', { cropTop, cropLeft, cropRight, cropBottom });
+        console.log('✂️ Crop percentages:', { cropTop, cropLeft, cropRight, cropBottom });
         
-        // Apply crop to image using clipPath
-        const cropWidth = canvasImage.width * (1 - (cropLeft + cropRight) / 100);
-        const cropHeight = canvasImage.height * (1 - (cropTop + cropBottom) / 100);
+        // Apply crop using clipPath (relative to image's own coordinate system)
+        const clipWidth = canvasImage.width * (1 - (cropLeft + cropRight) / 100);
+        const clipHeight = canvasImage.height * (1 - (cropTop + cropBottom) / 100);
+        const clipLeft = (canvasImage.width * cropLeft / 100) - (canvasImage.width / 2);
+        const clipTop = (canvasImage.height * cropTop / 100) - (canvasImage.height / 2);
+        
+        console.log('ClipPath dimensions:', { clipLeft, clipTop, clipWidth, clipHeight });
         
         canvasImage.clipPath = new fabric.Rect({
-            left: -(canvasImage.width / 2) + (canvasImage.width * cropLeft / 100),
-            top: -(canvasImage.height / 2) + (canvasImage.height * cropTop / 100),
-            width: cropWidth,
-            height: cropHeight,
+            left: clipLeft,
+            top: clipTop,
+            width: clipWidth,
+            height: clipHeight,
             absolutePositioned: false
         });
         
-        // Remove crop rectangle
+        console.log('✂️ Crop applied successfully');
+    }
+    
+    // Remove crop rectangle
+    if (cropRect) {
         fabricCanvas.remove(cropRect);
         cropRect = null;
         cropStartPoint = null;
-        
-        console.log('✂️ Crop applied');
     }
     
     // Restore image interactivity
