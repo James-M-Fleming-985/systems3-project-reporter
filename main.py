@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.201"  # Add public folder for favicon bundling
+BUILD_VERSION = "1.0.202"  # Add Playwright test endpoint and better error logging
 
 
 # Setup logging

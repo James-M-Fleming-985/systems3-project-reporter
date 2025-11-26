@@ -267,6 +267,44 @@ async def capture_single_screenshot(url: str):
             headers={"Cache-Control": "no-cache"}
         )
     except Exception as e:
-        logger.error(f"❌ Failed to capture screenshot: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Failed to capture screenshot: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Screenshot failed: {str(e)}"
+        )
+
+
+@api_router.get("/screenshot/test")
+async def test_playwright():
+    """Test endpoint to verify Playwright is working"""
+    try:
+        from playwright.async_api import async_playwright
+        logger.info("🧪 Testing Playwright browser launch...")
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu'
+                ]
+            )
+            page = await browser.new_page()
+            await page.goto('https://example.com')
+            screenshot = await page.screenshot()
+            await browser.close()
+            
+        logger.info(f"✅ Playwright test: {len(screenshot)} bytes")
+        return {
+            "status": "success",
+            "message": f"Playwright working! Size: {len(screenshot)} bytes"
+        }
+    except Exception as e:
+        logger.error(f"❌ Playwright test failed: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "type": type(e).__name__
+        }
 
