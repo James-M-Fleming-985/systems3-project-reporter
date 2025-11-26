@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.199"  # Fix Dockerfile CMD to use run.py not railway_start.py
+BUILD_VERSION = "1.0.200"  # Add missing run.py to git
 
 
 # Setup logging
