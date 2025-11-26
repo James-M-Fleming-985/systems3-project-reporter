@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.204"  # Update Playwright to v1.56.0 to fix browser executable
+BUILD_VERSION = "1.0.205"  # Update Playwright to v1.55.0 (latest available)
 
 
 # Setup logging
