@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Make startup script executable
-RUN chmod +x railway_start.py
+RUN chmod +x run.py
 
 # Create data directory for Railway persistent volume
 RUN mkdir -p /data/projects
@@ -21,4 +21,4 @@ RUN mkdir -p /data/projects
 EXPOSE 8080
 
 # Use Python script to handle PORT variable properly
-CMD ["python3", "railway_start.py"]
+CMD ["python3", "run.py"]
