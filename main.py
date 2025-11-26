@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.206"  # Add crop controls to canvas editor
+BUILD_VERSION = "1.0.207"  # Replace sliders with visual crop mode button
 
 
 # Setup logging
