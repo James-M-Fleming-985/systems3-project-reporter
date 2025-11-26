@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.210"  # Add validation and fix crop calculation
+BUILD_VERSION = "1.0.211"  # Replace alerts with styled notification modals
 
 
 # Setup logging
