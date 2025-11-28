@@ -843,11 +843,14 @@ function showMetricsUploadModal() {
                                     <option value="">-- Select Column --</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Value Column *</label>
-                                <select id="mapValue" class="w-full px-3 py-2 border border-gray-300 rounded">
-                                    <option value="">-- Select Column --</option>
-                                </select>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Value Columns * (Select one or more)</label>
+                                <div id="valueColumnsContainer" class="border border-gray-300 rounded p-3 bg-white max-h-40 overflow-y-auto">
+                                    <p class="text-xs text-gray-500">Columns will appear here after file is loaded</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Tip: Select multiple columns to create separate metrics (e.g., "Velocity - Planned" and "Velocity - Actual")
+                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Annotation/Callout Column (Optional)</label>
@@ -1059,10 +1062,10 @@ function showMetricsFieldMapping(data) {
     // Populate mapping dropdowns
     const mapMetricName = document.getElementById('mapMetricName');
     const mapDate = document.getElementById('mapDate');
-    const mapValue = document.getElementById('mapValue');
     const mapAnnotation = document.getElementById('mapAnnotation');
+    const valueColumnsContainer = document.getElementById('valueColumnsContainer');
     
-    [mapMetricName, mapDate, mapValue].forEach(select => {
+    [mapMetricName, mapDate].forEach(select => {
         select.innerHTML = '<option value="">-- Select Column --</option>' + 
             headers.map(h => '<option value="' + h + '">' + h + '</option>').join('');
     });
@@ -1071,15 +1074,29 @@ function showMetricsFieldMapping(data) {
     mapAnnotation.innerHTML = '<option value="">-- None --</option>' + 
         headers.map(h => '<option value="' + h + '">' + h + '</option>').join('');
     
+    // Create checkboxes for value columns
+    valueColumnsContainer.innerHTML = headers.map(header => `
+        <label class="flex items-center py-1 hover:bg-gray-50 cursor-pointer">
+            <input type="checkbox" name="valueColumn" value="${header}" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2">
+            <span class="text-sm text-gray-700">${header}</span>
+        </label>
+    `).join('');
+    
     // Auto-detect columns
+    let autoSelectedValueCol = false;
     headers.forEach(header => {
         const lower = header.toLowerCase();
         if (lower.includes('metric') || lower.includes('name')) {
             mapMetricName.value = header;
         } else if (lower.includes('date') || lower.includes('time') || lower.includes('week')) {
             mapDate.value = header;
-        } else if (lower.includes('value') || lower.includes('amount') || lower.includes('score') || lower.includes('count')) {
-            mapValue.value = header;
+        } else if (!autoSelectedValueCol && (lower.includes('value') || lower.includes('amount') || lower.includes('score') || lower.includes('count'))) {
+            // Auto-check first value column found
+            const checkbox = valueColumnsContainer.querySelector(`input[value="${header}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                autoSelectedValueCol = true;
+            }
         } else if (lower.includes('annotation') || lower.includes('callout') || lower.includes('note') || lower.includes('comment')) {
             mapAnnotation.value = header;
         }
@@ -1089,24 +1106,26 @@ function showMetricsFieldMapping(data) {
 function importMetricsData() {
     const metricNameCol = document.getElementById('mapMetricName').value;
     const dateCol = document.getElementById('mapDate').value;
-    const valueCol = document.getElementById('mapValue').value;
     const annotationCol = document.getElementById('mapAnnotation').value;
     const overwriteDuplicates = document.getElementById('overwriteDuplicates').checked;
+    
+    // Get all checked value columns
+    const valueColumns = Array.from(document.querySelectorAll('input[name="valueColumn"]:checked'))
+        .map(cb => cb.value);
     
     // Hide previous messages
     document.getElementById('metricsSuccess').classList.add('hidden');
     document.getElementById('metricsError').classList.add('hidden');
     document.getElementById('metricsWarning').classList.add('hidden');
     
-    if (!metricNameCol || !dateCol || !valueCol) {
-        document.getElementById('metricsErrorMessage').textContent = 'Please select metric name, date, and value columns';
+    if (!metricNameCol || !dateCol || valueColumns.length === 0) {
+        document.getElementById('metricsErrorMessage').textContent = 'Please select metric name, date, and at least one value column';
         document.getElementById('metricsError').classList.remove('hidden');
         return;
     }
     
     console.log('Import mode:', overwriteDuplicates ? 'OVERWRITE' : 'MERGE (skip duplicates)');
-    
-    console.log('Import starting with mappings:', { metricNameCol, dateCol, valueCol, annotationCol });
+    console.log('Import starting with mappings:', { metricNameCol, dateCol, valueColumns, annotationCol });
     console.log('Parsed file data:', parsedFileData);
     
     const { rows } = parsedFileData;
@@ -1122,131 +1141,101 @@ function importMetricsData() {
     let skippedCount = 0;
     
     rows.forEach((row, idx) => {
-        const metricName = row[metricNameCol];
+        const baseMetricName = row[metricNameCol];
         const dateStr = row[dateCol];
-        const valueStr = row[valueCol];
         const annotation = annotationCol ? row[annotationCol] : '';
         
-        console.log('Processing row', idx, ':', { metricName, dateStr, valueStr, annotation });
-        
-        if (!metricName || !dateStr || !valueStr) {
-            console.warn('Skipping row', idx, '- missing required fields');
+        if (!baseMetricName || !dateStr) {
+            console.warn('Skipping row', idx, '- missing metric name or date');
             skippedCount++;
             return;
         }
         
-        const value = parseFloat(valueStr);
-        if (isNaN(value)) {
-            console.warn('Skipping row', idx, '- invalid value:', valueStr);
-            skippedCount++;
-            return;
-        }
-        
-        let date;
-        try {
-            // Check if dateStr is an Excel serial number (numeric)
-            const numDate = parseFloat(dateStr);
-            if (!isNaN(numDate) && numDate > 100) {
-                // Excel serial date: days since 1900-01-01 (with 1900 leap year bug)
-                // Excel incorrectly treats 1900 as a leap year, so dates after Feb 28, 1900 are off by 1
-                const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899
-                date = new Date(excelEpoch.getTime() + numDate * 86400000);
-            } else {
-                // Try parsing as text date (handles dd/mm/yyyy, yyyy-mm-dd, etc.)
-                date = new Date(dateStr);
-            }
+        // Process each value column as a separate metric or data point
+        valueColumns.forEach(valueCol => {
+            const valueStr = row[valueCol];
             
-            if (isNaN(date.getTime())) {
-                console.warn('Failed to parse date:', dateStr);
+            if (!valueStr) {
+                console.warn('Skipping value column', valueCol, 'for row', idx, '- missing value');
                 return;
             }
-        } catch (e) {
-            console.error('Date parsing error:', e, dateStr);
-            return;
-        }
-        
-        // Find or create metric
-        let metric = customMetrics.find(m => m.name === metricName);
-        
-        if (!metric) {
-            // Create new metric
-            console.log('Creating new metric:', metricName);
-            metric = {
-                name: metricName,
-                value: value,
-                target: value * 1.1,
-                targetDate: '',
-                unit: '',
-                lastUpdated: date.toISOString(),
-                history: []
-            };
-            customMetrics.push(metric);
-            importCount++;
-        } else {
-            console.log('Found existing metric:', metricName, 'with', metric.history ? metric.history.length : 0, 'history entries');
-            if (metric.history && metric.history.length > 0) {
-                console.log('Existing history dates:', metric.history.map(h => new Date(h.date).toDateString()));
+            
+            // If there are multiple value columns, append column name to metric name
+            const metricName = valueColumns.length > 1 
+                ? `${baseMetricName} - ${valueCol}` 
+                : baseMetricName;
+            
+            console.log('Processing:', { metricName, dateStr, valueStr, annotation });
+            
+            const value = parseFloat(valueStr);
+            if (isNaN(value)) {
+                console.warn('Skipping - invalid value:', valueStr);
+                skippedCount++;
+                return;
             }
-        }
-        
-        // Add to history if not duplicate
-        if (!metric.history) {
-            console.log('Initializing history array for', metricName);
-            metric.history = [];
-        }
-        
-        const importDate = date.toDateString();
-        console.log('Checking for duplicate - Import date:', importDate);
-        
-        const existingEntry = metric.history.find(h => {
-            const historyDate = new Date(h.date).toDateString();
-            console.log('Comparing with history date:', historyDate, 'Match:', historyDate === importDate);
-            return historyDate === importDate;
-        });
-        
-        if (existingEntry) {
-            if (overwriteDuplicates) {
-                console.log('DUPLICATE FOUND - OVERWRITING entry for', metricName, 'on', importDate, 'old value:', existingEntry.value, 'new value:', value);
-                existingEntry.value = value;
-                if (annotation && annotation.trim()) {
-                    existingEntry.annotation = annotation.trim();
-                    console.log('Updated annotation:', annotation.trim());
-                }
-                updateCount++;
-                
-                // Update current value if this is the latest date
-                if (!metric.lastUpdated || new Date(metric.lastUpdated) < date) {
-                    console.log('Updating current value for', metricName, 'from', metric.value, 'to', value);
-                    metric.value = value;
-                    metric.lastUpdated = date.toISOString();
+            
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) {
+                console.warn('Skipping - invalid date:', dateStr);
+                skippedCount++;
+                return;
+            }
+            
+            // Find or create metric
+            let metric = customMetrics.find(m => m.name === metricName);
+            
+            if (!metric) {
+                // Create new metric
+                metric = {
+                    name: metricName,
+                    value: value,
+                    unit: '',
+                    target: null,
+                    targetDate: null,
+                    status: 'ON_TRACK',
+                    lastUpdated: date.toISOString(),
+                    history: []
+                };
+                customMetrics.push(metric);
+                importCount++;
+                console.log('Created new metric:', metricName);
+            }
+            
+            // Check for existing entry on this date
+            const existingEntry = metric.history.find(h => 
+                new Date(h.date).toDateString() === date.toDateString()
+            );
+            
+            if (existingEntry) {
+                if (overwriteDuplicates) {
+                    // Update existing entry
+                    existingEntry.value = value;
+                    if (annotation) existingEntry.annotation = annotation;
+                    updateCount++;
+                    console.log('Updated existing entry for', metricName, 'on', dateStr);
+                } else {
+                    // Skip duplicate
+                    console.log('Skipped duplicate for', metricName, 'on', dateStr);
+                    skippedCount++;
+                    return;
                 }
             } else {
-                console.log('DUPLICATE FOUND - Skipping entry for', metricName, 'on', importDate, 'existing value:', existingEntry.value, 'new value:', value);
-                skippedCount++;
+                // Add new history entry
+                metric.history.push({
+                    value: value,
+                    date: date.toISOString(),
+                    annotation: annotation || undefined
+                });
+                updateCount++;
+                console.log('Added data point for', metricName);
             }
-        } else {
-            console.log('NO DUPLICATE - Adding history entry for', metricName, 'on', importDate, 'value:', value);
-            const historyEntry = {
-                value: value,
-                date: date.toISOString()
-            };
-            
-            // Add annotation if provided
-            if (annotation && annotation.trim()) {
-                historyEntry.annotation = annotation.trim();
-                console.log('Added annotation:', annotation.trim());
-            }
-            
-            metric.history.push(historyEntry);
-            updateCount++;
             
             // Update current value if this is the latest date
-            if (!metric.lastUpdated || new Date(metric.lastUpdated) < date) {
-                console.log('Updating current value for', metricName, 'from', metric.value, 'to', value);
+            if (new Date(metric.lastUpdated) < date) {
                 metric.value = value;
                 metric.lastUpdated = date.toISOString();
             }
-        }
+        });
     });
     
     // Save metrics

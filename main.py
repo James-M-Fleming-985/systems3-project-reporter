@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.215"  # Add custom metrics trends to PowerPoint export
+BUILD_VERSION = "1.0.216"  # Multi-value column support for metrics import
 
 
 # Setup logging
