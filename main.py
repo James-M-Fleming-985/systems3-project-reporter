@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.213"  # PowerPoint template upload with organization branding
+BUILD_VERSION = "1.0.213"  # PowerPoint template upload with organization branding (force redeploy)
 
 
 # Setup logging
