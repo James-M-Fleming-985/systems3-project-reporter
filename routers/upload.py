@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import yaml
 import os
+import logging
 from datetime import datetime
 from typing import List
 
@@ -20,6 +21,7 @@ from middleware.subscription import (
 )
 
 router = APIRouter(tags=["upload"])
+logger = logging.getLogger(__name__)
 
 # Initialize services with persistent storage support
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,10 +30,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_STORAGE_PATH", str(BASE_DIR / "uploads")))
 TEMPLATES_DIR = BASE_DIR / "templates"
+POWERPOINT_TEMPLATES_DIR = DATA_DIR / "powerpoint_templates"
 
 # Ensure directories exist
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+POWERPOINT_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
 project_repo = ProjectRepository(data_dir=DATA_DIR)
 xml_parser = MSProjectXMLParser()
@@ -733,4 +737,162 @@ async def clear_project_cache(project_code: str):
             'success': False,
             'error': str(e)
         }, status_code=500)
+
+
+# ===== PowerPoint Template Management =====
+
+@router.post("/upload/powerpoint-template")
+async def upload_powerpoint_template(
+    file: UploadFile = File(...),
+    name: str = Form(...)
+):
+    """Upload a PowerPoint template with organization branding"""
+    try:
+        # Validate file type
+        if not file.filename.endswith('.pptx'):
+            return JSONResponse({
+                'success': False,
+                'detail': 'Only .pptx PowerPoint files are accepted'
+            }, status_code=400)
+        
+        # Generate unique template ID
+        template_id = f"template_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        template_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.pptx"
+        
+        # Save file
+        content = await file.read()
+        with open(template_path, 'wb') as f:
+            f.write(content)
+        
+        # Save metadata
+        metadata = {
+            'id': template_id,
+            'name': name,
+            'filename': file.filename,
+            'uploaded_at': datetime.now().isoformat(),
+            'is_default': False
+        }
+        
+        metadata_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.yaml"
+        with open(metadata_path, 'w') as f:
+            yaml.dump(metadata, f)
+        
+        return JSONResponse({
+            'success': True,
+            'template_id': template_id,
+            'name': name
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to upload template: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
+
+@router.get("/upload/powerpoint-templates")
+async def list_powerpoint_templates():
+    """List all available PowerPoint templates"""
+    try:
+        templates = []
+        
+        # Find all template metadata files
+        for metadata_file in POWERPOINT_TEMPLATES_DIR.glob("template_*.yaml"):
+            try:
+                with open(metadata_file, 'r') as f:
+                    metadata = yaml.safe_load(f)
+                    
+                # Check if template file exists
+                template_path = POWERPOINT_TEMPLATES_DIR / f"{metadata['id']}.pptx"
+                if template_path.exists():
+                    templates.append(metadata)
+            except Exception as e:
+                logger.warning(f"Failed to load template metadata {metadata_file}: {e}")
+        
+        # Sort by upload date (newest first)
+        templates.sort(key=lambda x: x.get('uploaded_at', ''), reverse=True)
+        
+        return templates
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to list templates: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
+
+@router.delete("/upload/powerpoint-template/{template_id}")
+async def delete_powerpoint_template(template_id: str):
+    """Delete a PowerPoint template"""
+    try:
+        template_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.pptx"
+        metadata_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.yaml"
+        
+        if not template_path.exists():
+            return JSONResponse({
+                'success': False,
+                'detail': 'Template not found'
+            }, status_code=404)
+        
+        # Delete files
+        template_path.unlink()
+        if metadata_path.exists():
+            metadata_path.unlink()
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Template {template_id} deleted'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to delete template: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
+
+@router.post("/upload/powerpoint-template/{template_id}/set-default")
+async def set_default_template(template_id: str):
+    """Set a template as the default for PowerPoint exports"""
+    try:
+        # Clear all existing defaults
+        for metadata_file in POWERPOINT_TEMPLATES_DIR.glob("template_*.yaml"):
+            try:
+                with open(metadata_file, 'r') as f:
+                    metadata = yaml.safe_load(f)
+                metadata['is_default'] = False
+                with open(metadata_file, 'w') as f:
+                    yaml.dump(metadata, f)
+            except Exception as e:
+                logger.warning(f"Failed to update metadata {metadata_file}: {e}")
+        
+        # Set new default
+        metadata_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.yaml"
+        if not metadata_path.exists():
+            return JSONResponse({
+                'success': False,
+                'detail': 'Template not found'
+            }, status_code=404)
+        
+        with open(metadata_path, 'r') as f:
+            metadata = yaml.safe_load(f)
+        metadata['is_default'] = True
+        with open(metadata_path, 'w') as f:
+            yaml.dump(metadata, f)
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Template {template_id} set as default'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to set default template: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
 

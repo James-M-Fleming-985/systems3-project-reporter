@@ -24,12 +24,13 @@ from models import Project, Milestone
 class PowerPointExporter:
     """Export project data to PowerPoint presentation with enhanced layout"""
     
-    def __init__(self):
+    def __init__(self, template_path: Path = None):
         if Presentation is None:
             raise ImportError(
                 "python-pptx is required for PowerPoint export. "
                 "Install with: pip install python-pptx"
             )
+        self.template_path = template_path
     
     def create_presentation(self, projects: List[Project]) -> BytesIO:
         """
@@ -46,9 +47,15 @@ class PowerPointExporter:
         Returns:
             BytesIO buffer containing the PPTX file
         """
-        prs = Presentation()
-        prs.slide_width = Inches(10)
-        prs.slide_height = Inches(7.5)
+        # Use custom template if provided, otherwise create blank
+        if self.template_path and self.template_path.exists():
+            logger.info(f"Using custom template: {self.template_path}")
+            prs = Presentation(str(self.template_path))
+        else:
+            logger.info("Using default blank presentation")
+            prs = Presentation()
+            prs.slide_width = Inches(10)
+            prs.slide_height = Inches(7.5)
         
         # Collect all milestones, risks, and changes from all projects
         all_milestones = []

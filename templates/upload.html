@@ -61,6 +61,38 @@
             </button>
         </div>
 
+        <!-- PowerPoint Template Upload -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-xl font-semibold mb-2">PowerPoint Templates</h2>
+            <p class="text-gray-600 mb-6">Upload custom PowerPoint templates with your organization's branding</p>
+            
+            <div id="templateDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4 cursor-pointer hover:border-purple-500 transition-colors">
+                <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="mt-3 text-gray-600">Drop PowerPoint template here or click to browse</p>
+                <p class="text-sm text-gray-500 mt-1">Accepts .pptx files with custom layouts and branding</p>
+                <input type="file" id="templateFileInput" accept=".pptx" class="hidden">
+            </div>
+            
+            <div id="templateFileInfo" class="hidden bg-purple-50 border border-purple-200 rounded p-4 mb-4">
+                <p class="text-sm text-purple-800"><strong>Selected template:</strong> <span id="templateFileName"></span></p>
+                <input type="text" id="templateNameInput" placeholder="Template name (e.g., Q4 2025)" class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+            </div>
+            
+            <button id="uploadTemplateBtn" class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors mb-4" disabled>
+                📤 Upload Template
+            </button>
+            
+            <!-- Existing Templates List -->
+            <div id="templatesList" class="mt-6">
+                <h3 class="text-lg font-semibold mb-3">Available Templates</h3>
+                <div id="templatesContainer" class="space-y-2">
+                    <p class="text-sm text-gray-500">Loading templates...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Progress -->
         <div id="progress" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
             <div class="flex items-center">
@@ -905,8 +937,168 @@
             localStorage.setItem(storageKey, JSON.stringify(customMetrics));
             
             closeMetricsUploadModal();
-            showSuccessModal('Import Complete', \`Metrics imported: \${importCount}\\nData points added: \${updateCount}\\n\\nGo to the Metrics tab on the dashboard to view the imported data.\`);
+            showSuccessModal('Import Complete', `Metrics imported: ${importCount}\\nData points added: ${updateCount}\\n\\nGo to the Metrics tab on the dashboard to view the imported data.`);
         }
+
+        // ===== PowerPoint Template Upload =====
+        const templateDropZone = document.getElementById('templateDropZone');
+        const templateFileInput = document.getElementById('templateFileInput');
+        const templateFileInfo = document.getElementById('templateFileInfo');
+        const templateFileName = document.getElementById('templateFileName');
+        const templateNameInput = document.getElementById('templateNameInput');
+        const uploadTemplateBtn = document.getElementById('uploadTemplateBtn');
+        let selectedTemplateFile = null;
+
+        // Template drop zone events
+        templateDropZone.addEventListener('click', () => templateFileInput.click());
+        templateDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            templateDropZone.classList.add('border-purple-500', 'bg-purple-50');
+        });
+        templateDropZone.addEventListener('dragleave', () => {
+            templateDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+        });
+        templateDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            templateDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.pptx')) {
+                handleTemplateFileSelect(files[0]);
+            } else {
+                alert('Please upload a .pptx PowerPoint file');
+            }
+        });
+
+        templateFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleTemplateFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleTemplateFileSelect(file) {
+            selectedTemplateFile = file;
+            templateFileName.textContent = file.name;
+            templateFileInfo.classList.remove('hidden');
+            uploadTemplateBtn.disabled = false;
+            
+            // Auto-fill template name from filename
+            const nameWithoutExt = file.name.replace('.pptx', '');
+            templateNameInput.value = nameWithoutExt;
+        }
+
+        uploadTemplateBtn.addEventListener('click', async () => {
+            if (!selectedTemplateFile) return;
+            
+            const templateName = templateNameInput.value.trim() || selectedTemplateFile.name.replace('.pptx', '');
+            
+            const formData = new FormData();
+            formData.append('file', selectedTemplateFile);
+            formData.append('name', templateName);
+            
+            uploadTemplateBtn.disabled = true;
+            uploadTemplateBtn.textContent = 'Uploading...';
+            
+            try {
+                const response = await fetch('/upload/powerpoint-template', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSuccessModal('Template Uploaded', `Template "${templateName}" uploaded successfully!`);
+                    // Reset form
+                    selectedTemplateFile = null;
+                    templateFileInput.value = '';
+                    templateFileInfo.classList.add('hidden');
+                    templateNameInput.value = '';
+                    uploadTemplateBtn.disabled = true;
+                    uploadTemplateBtn.textContent = '📤 Upload Template';
+                    // Reload templates list
+                    loadTemplates();
+                } else {
+                    alert('Upload failed: ' + result.detail);
+                    uploadTemplateBtn.disabled = false;
+                    uploadTemplateBtn.textContent = '📤 Upload Template';
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+                uploadTemplateBtn.disabled = false;
+                uploadTemplateBtn.textContent = '📤 Upload Template';
+            }
+        });
+
+        // Load templates on page load
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/upload/powerpoint-templates');
+                const templates = await response.json();
+                
+                const container = document.getElementById('templatesContainer');
+                
+                if (templates.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500">No templates uploaded yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = templates.map(t => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-gray-900">${t.name}</p>
+                                <p class="text-xs text-gray-500">Uploaded ${new Date(t.uploaded_at).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="setDefaultTemplate('${t.id}')" class="px-3 py-1 text-sm ${t.is_default ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'} rounded hover:opacity-80">
+                                ${t.is_default ? '✓ Default' : 'Set Default'}
+                            </button>
+                            <button onclick="deleteTemplate('${t.id}')" class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+            }
+        }
+
+        async function setDefaultTemplate(templateId) {
+            try {
+                const response = await fetch(`/upload/powerpoint-template/${templateId}/set-default`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    loadTemplates();
+                }
+            } catch (error) {
+                console.error('Failed to set default:', error);
+            }
+        }
+
+        async function deleteTemplate(templateId) {
+            if (!confirm('Are you sure you want to delete this template?')) return;
+            
+            try {
+                const response = await fetch(`/upload/powerpoint-template/${templateId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    loadTemplates();
+                }
+            } catch (error) {
+                console.error('Failed to delete template:', error);
+            }
+        }
+
+        // Load templates on page load
+        loadTemplates();
     </script>
 </body>
 </html>

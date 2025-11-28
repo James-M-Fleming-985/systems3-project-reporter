@@ -122,6 +122,22 @@ async def export_to_powerpoint(
     try:
         logger.info(f"Starting PowerPoint export with {len(export_request.views)} views")
         
+        # Get custom template if specified
+        template_path = None
+        if export_request.template_id and export_request.template_id != "custom":
+            # Check if it's a user-uploaded template
+            from pathlib import Path
+            import os
+            DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+            POWERPOINT_TEMPLATES_DIR = DATA_DIR / "powerpoint_templates"
+            
+            template_file = POWERPOINT_TEMPLATES_DIR / f"{export_request.template_id}.pptx"
+            if template_file.exists():
+                template_path = template_file
+                logger.info(f"Using custom template: {export_request.template_id}")
+            else:
+                logger.warning(f"Template {export_request.template_id} not found, using default")
+        
         # Get base URL
         base_url = f"{request.url.scheme}://{request.url.netloc}"
         
@@ -163,7 +179,7 @@ async def export_to_powerpoint(
         pptx_bytes = ppt_builder.generate_presentation(
             report_data=report_data,
             screenshots=screenshots,
-            template_path=None  # Use default template for now
+            template_path=str(template_path) if template_path else None
         )
         
         logger.info("✅ PowerPoint generation complete")
