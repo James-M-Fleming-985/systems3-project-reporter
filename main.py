@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.214"  # Fix PowerPoint template upload visibility (correct HTML file)
+BUILD_VERSION = "1.0.215"  # Add custom metrics trends to PowerPoint export
 
 
 # Setup logging

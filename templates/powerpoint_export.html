@@ -67,8 +67,8 @@
             <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card">
                 <input type="checkbox" name="view" value="/dashboard/metrics" class="mt-1 mr-3 w-5 h-5 text-blue-600">
                 <div>
-                    <div class="font-semibold text-gray-900">📊 Metrics</div>
-                    <div class="text-sm text-gray-600 mt-1">Project performance metrics</div>
+                    <div class="font-semibold text-gray-900">📊 Metrics Dashboard</div>
+                    <div class="text-sm text-gray-600 mt-1">KPI cards and standard metrics</div>
                 </div>
             </label>
 
@@ -98,6 +98,9 @@
                     <div class="text-sm text-gray-600 mt-1">Portfolio summary</div>
                 </div>
             </label>
+
+            <!-- Custom Metrics Trends (dynamically populated) -->
+            <div id="customMetricsTrendsContainer"></div>
         </div>
 
         <div class="mt-4 text-sm text-gray-600">
@@ -534,6 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load available templates
     loadAvailableTemplates();
+    
+    // Load custom metrics and create checkboxes
+    loadCustomMetricCheckboxes();
 });
 
 async function loadAvailableTemplates() {
@@ -556,6 +562,72 @@ async function loadAvailableTemplates() {
     } catch (error) {
         console.error('Failed to load templates:', error);
     }
+}
+
+// Load custom metrics and create trend checkboxes
+function loadCustomMetricCheckboxes() {
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    if (!selectedProgram) {
+        console.log('No program selected, skipping custom metrics');
+        return;
+    }
+    
+    const storageKey = `customMetrics_${selectedProgram}`;
+    const stored = localStorage.getItem(storageKey);
+    
+    if (!stored) {
+        console.log('No custom metrics found');
+        return;
+    }
+    
+    let customMetrics;
+    try {
+        customMetrics = JSON.parse(stored);
+    } catch (e) {
+        console.error('Failed to parse custom metrics:', e);
+        return;
+    }
+    
+    // Filter metrics that have history data
+    const metricsWithHistory = customMetrics.filter(m => m.history && m.history.length > 0);
+    
+    if (metricsWithHistory.length === 0) {
+        console.log('No custom metrics with history data');
+        return;
+    }
+    
+    const container = document.getElementById('customMetricsTrendsContainer');
+    
+    // Add section header
+    const header = document.createElement('div');
+    header.className = 'col-span-2 mt-4 mb-2';
+    header.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">📈 Custom Metrics Trends</h3>';
+    container.appendChild(header);
+    
+    // Create checkbox for each metric
+    metricsWithHistory.forEach((metric, index) => {
+        const label = document.createElement('label');
+        label.className = 'flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'view';
+        checkbox.value = `/dashboard/metrics/trend/${encodeURIComponent(metric.name)}`;
+        checkbox.className = 'mt-1 mr-3 w-5 h-5 text-blue-600';
+        checkbox.addEventListener('change', updateSelectedCount);
+        
+        const content = document.createElement('div');
+        content.innerHTML = `
+            <div class="font-semibold text-gray-900">📊 ${metric.name}</div>
+            <div class="text-sm text-gray-600 mt-1">Trend chart (${metric.history.length} data points)</div>
+        `;
+        
+        label.appendChild(checkbox);
+        label.appendChild(content);
+        container.appendChild(label);
+    });
+    
+    console.log(`Added ${metricsWithHistory.length} custom metric trend checkboxes`);
 }
 
 async function exportReport() {

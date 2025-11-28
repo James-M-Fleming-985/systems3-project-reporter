@@ -164,6 +164,31 @@ async def milestone_tracker(request: Request):
     return templates.TemplateResponse("milestones.html", context)
 
 
+@router.get("/metrics/trend/{metric_name}", response_class=HTMLResponse)
+async def metric_trend_page(request: Request, metric_name: str):
+    """
+    Individual metric trend chart page for PowerPoint export
+    Shows single large trend chart for one custom metric
+    """
+    from main import BUILD_VERSION
+    from urllib.parse import unquote
+    
+    # Decode metric name
+    decoded_metric_name = unquote(metric_name)
+    
+    project = get_selected_project(request)
+    project_name = project.project_name if project else "Program"
+    
+    context = {
+        "request": request,
+        "project_name": project_name,
+        "metric_name": decoded_metric_name,
+        "build_version": BUILD_VERSION
+    }
+    
+    return templates.TemplateResponse("metric_trend.html", context)
+
+
 @router.get("/metrics", response_class=HTMLResponse)
 async def program_metrics(request: Request):
     """
