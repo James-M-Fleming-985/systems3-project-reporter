@@ -159,6 +159,10 @@
                     </option>
                     {% endfor %}
                 </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    <span id="templateStatus" class="text-blue-600 font-medium"></span>
+                    Template will be applied to all slides during export
+                </p>
             </div>
 
             <!-- Presentation Title -->
@@ -564,9 +568,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Listen for template changes to reload canvas if open
     const templateSelect = document.getElementById('templateSelect');
+    const templateStatus = document.getElementById('templateStatus');
     if (templateSelect) {
+        const updateTemplateStatus = () => {
+            const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+            const templateName = selectedOption ? selectedOption.text : 'Default';
+            if (templateStatus) {
+                templateStatus.textContent = `✓ Using "${templateName}" template - `;
+                templateStatus.className = 'text-green-600 font-medium';
+            }
+        };
+        
         templateSelect.addEventListener('change', () => {
             localStorage.setItem('pptExportSelectedTemplate', templateSelect.value);
+            updateTemplateStatus();
             console.log('🎨 Template changed to:', templateSelect.value);
         });
         
@@ -575,6 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedTemplate) {
             templateSelect.value = savedTemplate;
         }
+        updateTemplateStatus();
     }
     
     // Load custom metrics and create checkboxes
@@ -676,6 +692,9 @@ function loadCustomMetricCheckboxes() {
     });
     
     console.log(`Added ${metricsWithHistory.length} custom metric trend checkboxes`);
+    
+    // Update count after all checkboxes are created and restored
+    updateSelectedCount();
 }
 
 async function exportReport() {
@@ -801,10 +820,10 @@ function openCanvasEditor(slideData) {
     
     // Show modal with canvas editor controls
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
     modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl w-[90vw] max-w-7xl mx-4 max-h-[95vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl mx-auto overflow-hidden" style="max-height: 95vh; display: flex; flex-direction: column;">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
                 <div>
                     <h3 class="text-xl font-semibold">Edit Slide Layout: ${slideData.title}</h3>
                     <p class="text-sm text-gray-600 mt-1">Drag to move • Corners to resize • Rotate handle to rotate • Crop button to crop edges</p>
@@ -815,11 +834,11 @@ function openCanvasEditor(slideData) {
                     </svg>
                 </button>
             </div>
-            <div class="p-6">
+            <div class="p-6 overflow-y-auto flex-1">
                 <!-- Canvas container with proper 16:9 aspect ratio -->
-                <div class="mb-4 bg-gray-900 rounded-lg p-6">
-                    <div class="relative mx-auto" style="width: 100%; max-width: 1100px; aspect-ratio: 16/9; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block; object-fit: contain;"></canvas>
+                <div class="mb-4 bg-gray-900 rounded-lg p-4">
+                    <div class="relative mx-auto" style="width: 100%; aspect-ratio: 16/9; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block;"></canvas>
                         <div class="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded shadow-lg text-xs font-semibold z-10">
                             ${slideData.title}
                         </div>
