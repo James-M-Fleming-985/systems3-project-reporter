@@ -25,9 +25,21 @@ const metricName = "{{ metric_name }}";
 const projectName = "{{ project_name }}";
 
 // Load custom metrics from localStorage
+// Try selectedProgram first (matches upload page), then project name from server
 const selectedProgram = localStorage.getItem('selectedProgram');
-const storageKey = `customMetrics_${selectedProgram}`;
-const stored = localStorage.getItem(storageKey);
+let storageKey = selectedProgram ? `customMetrics_${selectedProgram}` : `customMetrics_${projectName}`;
+console.log('Trying storage key:', storageKey);
+let stored = localStorage.getItem(storageKey);
+
+// If not found, try the other option
+if (!stored && selectedProgram) {
+    console.log('Not found, trying project name:', projectName);
+    storageKey = `customMetrics_${projectName}`;
+    stored = localStorage.getItem(storageKey);
+}
+
+console.log('Storage key used:', storageKey);
+console.log('Stored data found:', !!stored);
 
 if (!stored) {
     document.getElementById('noDataMessage').classList.remove('hidden');
@@ -35,7 +47,10 @@ if (!stored) {
 } else {
     try {
         const customMetrics = JSON.parse(stored);
+        console.log('Total metrics found:', customMetrics.length);
         const metric = customMetrics.find(m => m.name === metricName);
+        console.log('Looking for metric:', metricName);
+        console.log('Found metric:', metric ? metric.name : 'NOT FOUND');
         
         if (!metric) {
             document.getElementById('noDataMessage').classList.remove('hidden');

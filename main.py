@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.223"  # Fix Excel date parsing in import + add debug logging for multi-series
+BUILD_VERSION = "1.0.224"  # Fix metric trend page to use correct localStorage key for multi-series
 
 
 # Setup logging
