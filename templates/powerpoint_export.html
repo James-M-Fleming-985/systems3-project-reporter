@@ -923,6 +923,20 @@ function initFabricCanvas(viewUrl) {
     console.log('✅ Fabric canvas created');
     console.log('📐 Fabric canvas size:', fabricCanvas.width, 'x', fabricCanvas.height);
     
+    // Force canvas to be responsive - Fabric.js overrides our CSS
+    // We need to set the canvas element style AFTER Fabric initializes
+    setTimeout(() => {
+        const canvasEl = document.getElementById('canvasEditor');
+        if (canvasEl) {
+            canvasEl.style.width = '100%';
+            canvasEl.style.height = '100%';
+            canvasEl.style.position = 'absolute';
+            canvasEl.style.top = '0';
+            canvasEl.style.left = '0';
+            console.log('✅ Canvas style forced to 100% after Fabric init');
+        }
+    }, 10);
+    
     // Get selected template to show background
     const templateSelect = document.getElementById('templateSelect');
     const templateId = templateSelect ? templateSelect.value : null;
@@ -1011,13 +1025,20 @@ function initFabricCanvas(viewUrl) {
                     console.log('   - Image element:', img.getElement());
                     
                     canvasImage = img;
+                    
+                    // Scale image to fit canvas properly
+                    const scale = Math.min(
+                        (fabricCanvas.width * 0.95) / img.width,
+                        (fabricCanvas.height * 0.95) / img.height
+                    );
+                    
                     canvasImage.set({
-                        left: 960,
-                        top: 540,
+                        left: fabricCanvas.width / 2,
+                        top: fabricCanvas.height / 2,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: 0.9,
-                        scaleY: 0.9,
+                        scaleX: scale,
+                        scaleY: scale,
                         borderColor: '#3b82f6',
                         cornerColor: '#3b82f6',
                         cornerSize: 12,
@@ -1084,16 +1105,21 @@ function captureScreenshot(viewUrl) {
 }
 
 function resetCanvas() {
-    if (canvasImage) {
+    if (canvasImage && fabricCanvas) {
         // Remove any crop
         canvasImage.clipPath = null;
         
-        // Reset transform
+        // Reset transform with dynamic scaling
+        const scale = Math.min(
+            (fabricCanvas.width * 0.95) / canvasImage.width,
+            (fabricCanvas.height * 0.95) / canvasImage.height
+        );
+        
         canvasImage.set({
-            left: 960,
-            top: 540,
-            scaleX: 0.8,
-            scaleY: 0.8,
+            left: fabricCanvas.width / 2,
+            top: fabricCanvas.height / 2,
+            scaleX: scale,
+            scaleY: scale,
             angle: 0
         });
         
