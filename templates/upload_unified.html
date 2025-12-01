@@ -165,6 +165,28 @@
                 <input type="text" id="templateNameInputUnified" placeholder="Template name (e.g., Q4 2025 Branding)" class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             </div>
             
+            <!-- Success Message -->
+            <div id="templateUploadSuccess" class="hidden bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-green-800 font-semibold">Template uploaded successfully!</span>
+                </div>
+                <p class="text-sm text-green-700 mt-2" id="templateUploadSuccessMessage"></p>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="templateUploadError" class="hidden bg-red-50 border border-red-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-red-800 font-semibold">Upload failed</span>
+                </div>
+                <p class="text-sm text-red-700 mt-2" id="templateUploadErrorMessage"></p>
+            </div>
+            
             <button id="uploadTemplateBtnUnified" class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors mb-6" disabled>
                 📤 Upload Template
             </button>
@@ -1360,7 +1382,11 @@ uploadTemplateBtn?.addEventListener('click', async () => {
         const result = await response.json();
         
         if (response.ok) {
-            alert(`Template "${templateName}" uploaded successfully!`);
+            // Show success message
+            document.getElementById('templateUploadSuccessMessage').textContent = `"${templateName}" is now available for PowerPoint exports`;
+            document.getElementById('templateUploadSuccess').classList.remove('hidden');
+            document.getElementById('templateUploadError').classList.add('hidden');
+            
             // Reset form
             selectedTemplateFile = null;
             templateFileInput.value = '';
@@ -1368,16 +1394,28 @@ uploadTemplateBtn?.addEventListener('click', async () => {
             templateNameInput.value = '';
             uploadTemplateBtn.disabled = true;
             uploadTemplateBtn.textContent = '📤 Upload Template';
+            
             // Reload templates list
             loadTemplates();
+            
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                document.getElementById('templateUploadSuccess').classList.add('hidden');
+            }, 5000);
         } else {
-            alert('Upload failed: ' + result.detail);
+            // Show error message
+            document.getElementById('templateUploadErrorMessage').textContent = result.detail || 'Unknown error';
+            document.getElementById('templateUploadError').classList.remove('hidden');
+            document.getElementById('templateUploadSuccess').classList.add('hidden');
             uploadTemplateBtn.disabled = false;
             uploadTemplateBtn.textContent = '📤 Upload Template';
         }
     } catch (error) {
         console.error('Upload error:', error);
-        alert('Upload failed: ' + error.message);
+        // Show error message
+        document.getElementById('templateUploadErrorMessage').textContent = error.message || 'Network error occurred';
+        document.getElementById('templateUploadError').classList.remove('hidden');
+        document.getElementById('templateUploadSuccess').classList.add('hidden');
         uploadTemplateBtn.disabled = false;
         uploadTemplateBtn.textContent = '📤 Upload Template';
     }

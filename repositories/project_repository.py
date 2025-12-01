@@ -28,6 +28,10 @@ class ProjectRepository:
                      list(self.data_dir.glob("**/*.yml")))
         
         for yaml_file in yaml_files:
+            # Skip PowerPoint template metadata files
+            if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
+                continue
+                
             try:
                 with open(yaml_file, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
