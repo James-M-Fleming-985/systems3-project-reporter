@@ -1360,7 +1360,7 @@ uploadTemplateBtn?.addEventListener('click', async () => {
         const result = await response.json();
         
         if (response.ok) {
-            showSuccessModal('Template Uploaded', `Template "${templateName}" uploaded successfully!`);
+            alert(`Template "${templateName}" uploaded successfully!`);
             // Reset form
             selectedTemplateFile = null;
             templateFileInput.value = '';
