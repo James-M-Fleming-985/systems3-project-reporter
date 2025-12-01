@@ -304,6 +304,10 @@ function updatePreviewCanvas() {
     const previewContainer = document.getElementById('previewSlides');
     const emptyPreview = document.getElementById('emptyPreview');
     
+    // Save selected views to localStorage
+    const selectedViews = Array.from(checkboxes).map(cb => cb.value);
+    localStorage.setItem('pptExportSelectedViews', JSON.stringify(selectedViews));
+    
     if (checkboxes.length === 0) {
         previewContainer.innerHTML = '';
         emptyPreview.classList.remove('hidden');
@@ -525,12 +529,31 @@ function updateSelectedCount() {
         document.getElementById('exportButtonText').textContent = '📊 Generate PowerPoint Report';
     }
     
+    // Save selections to localStorage
+    const selectedViews = Array.from(checkboxes).map(cb => cb.value);
+    localStorage.setItem('pptExportSelectedViews', JSON.stringify(selectedViews));
+    
     // Update preview canvas
     updatePreviewCanvas();
 }
 
 // Add event listeners to checkboxes
 document.addEventListener('DOMContentLoaded', () => {
+    // Restore selections from localStorage first
+    try {
+        const savedViews = localStorage.getItem('pptExportSelectedViews');
+        if (savedViews) {
+            const viewsArray = JSON.parse(savedViews);
+            document.querySelectorAll('input[name="view"]').forEach(checkbox => {
+                checkbox.checked = viewsArray.includes(checkbox.value);
+            });
+            console.log('✅ Restored', viewsArray.length, 'selections from localStorage');
+        }
+    } catch (e) {
+        console.warn('Failed to restore selections:', e);
+    }
+    
+    // Add change listeners
     document.querySelectorAll('input[name="view"]').forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectedCount);
     });
@@ -769,10 +792,13 @@ function openCanvasEditor(slideData) {
                 </button>
             </div>
             <div class="p-6">
-                <div class="mb-4 bg-white rounded-lg p-4 relative border border-gray-300" style="max-width: 100%; overflow: hidden;">
-                    <canvas id="canvasEditor" class="w-full h-auto block" width="1920" height="1080" style="border: 1px solid #d1d5db;"></canvas>
-                    <div class="absolute top-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold">
-                        ${slideData.title}
+                <!-- Canvas container with proper 16:9 aspect ratio -->
+                <div class="mb-4 bg-gray-900 rounded-lg p-6 relative">
+                    <div class="relative mx-auto" style="width: 100%; max-width: 1000px; aspect-ratio: 16/9; background: white; border: 2px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block;"></canvas>
+                        <div class="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded shadow-lg text-xs font-semibold z-10">
+                            ${slideData.title}
+                        </div>
                     </div>
                 </div>
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
