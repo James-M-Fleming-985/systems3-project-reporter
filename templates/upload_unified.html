@@ -1233,12 +1233,25 @@ function importMetricsData() {
             return;
         }
         
-        const date = new Date(dateStr);
+        // Parse date - handle Excel serial dates
+        let date;
+        const numDate = parseFloat(dateStr);
+        if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
+            // Excel serial date
+            const excelEpoch = new Date(1899, 11, 30);
+            date = new Date(excelEpoch.getTime() + numDate * 86400000);
+        } else {
+            // Regular date string
+            date = new Date(dateStr);
+        }
+        
         if (isNaN(date.getTime())) {
             console.warn('Skipping - invalid date:', dateStr);
             skippedCount++;
             return;
         }
+        
+        console.log('Processing row', idx, '- metric:', baseMetricName, 'date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
         
         // Find or create metric (one metric for all value columns)
         let metric = customMetrics.find(m => m.name === baseMetricName);
@@ -1336,6 +1349,16 @@ function importMetricsData() {
     
     console.log('Import complete - Imported:', importCount, 'Updated:', updateCount, 'Skipped:', skippedCount);
     console.log('Final metrics array:', customMetrics);
+    
+    // Log series information for debugging
+    customMetrics.forEach(m => {
+        if (m.series && Object.keys(m.series).length > 0) {
+            console.log(`Metric "${m.name}" has ${Object.keys(m.series).length} series:`, Object.keys(m.series));
+            Object.keys(m.series).forEach(seriesName => {
+                console.log(`  - ${seriesName}: ${m.series[seriesName].length} data points`);
+            });
+        }
+    });
     
     // Hide step 2, show result message
     document.getElementById('metricsUploadStep2').classList.add('hidden');

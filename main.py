@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.222"  # Fix multi-series: Skip non-numeric columns gracefully + add numeric/text badges
+BUILD_VERSION = "1.0.223"  # Fix Excel date parsing in import + add debug logging for multi-series
 
 
 # Setup logging
