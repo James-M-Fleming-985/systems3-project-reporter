@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.219"  # Replace browser confirm with proper delete confirmation modal
+BUILD_VERSION = "1.0.220"  # Fix Excel upload: Use CDN for XLSX library with local fallback
 
 
 # Setup logging

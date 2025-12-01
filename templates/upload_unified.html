@@ -1028,7 +1028,8 @@ function parseExcel(file) {
         // Load XLSX library dynamically if not already loaded
         if (typeof XLSX === 'undefined') {
             const script = document.createElement('script');
-            script.src = '/static/js/libs/xlsx.full.min.js';
+            // Try CDN first for better reliability
+            script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
             script.onload = () => {
                 // Check if library loaded successfully
                 if (typeof XLSX === 'undefined') {
@@ -1037,7 +1038,21 @@ function parseExcel(file) {
                     readExcelFile(file, resolve, reject);
                 }
             };
-            script.onerror = () => reject(new Error('Failed to load Excel parser library. Please use CSV format instead.'));
+            script.onerror = () => {
+                // Try local fallback
+                console.log('CDN failed, trying local library...');
+                const localScript = document.createElement('script');
+                localScript.src = '/static/js/libs/xlsx.full.min.js';
+                localScript.onload = () => {
+                    if (typeof XLSX === 'undefined') {
+                        reject(new Error('Excel parser library failed to load. Please try using CSV format instead.'));
+                    } else {
+                        readExcelFile(file, resolve, reject);
+                    }
+                };
+                localScript.onerror = () => reject(new Error('Failed to load Excel parser library. Please use CSV format instead.'));
+                document.head.appendChild(localScript);
+            };
             document.head.appendChild(script);
         } else {
             readExcelFile(file, resolve, reject);
