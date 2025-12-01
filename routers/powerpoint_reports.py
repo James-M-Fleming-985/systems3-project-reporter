@@ -147,6 +147,18 @@ async def export_to_powerpoint(
         full_urls = [f"{base_url}{view}" for view in export_request.views]
         logger.info(f"Capturing screenshots for: {full_urls}")
         
+        # Extract project code from first URL to set as header for all screenshots
+        from urllib.parse import urlparse, parse_qs
+        extra_headers = {}
+        if full_urls:
+            parsed = urlparse(full_urls[0])
+            if parsed.query:
+                query_params = parse_qs(parsed.query)
+                if 'project' in query_params:
+                    project_code = query_params['project'][0]
+                    extra_headers['X-Project-Code'] = project_code
+                    logger.info(f"📌 Using project code for all screenshots: {project_code}")
+        
         # Capture screenshots using AI-generated service
         screenshots = []
         for url in full_urls:
@@ -154,7 +166,8 @@ async def export_to_powerpoint(
                 screenshot_bytes = await screenshot_service.capture_screenshot_async(
                     url=url,
                     hide_navigation=export_request.hide_navigation,
-                    resolution=(export_request.viewport_width, export_request.viewport_height)
+                    resolution=(export_request.viewport_width, export_request.viewport_height),
+                    extra_headers=extra_headers if extra_headers else None
                 )
                 screenshots.append(screenshot_bytes)
                 logger.info(f"✅ Captured screenshot: {url}")
@@ -272,8 +285,17 @@ async def capture_single_screenshot(url: str, request: Request):
         # Convert external Railway URL to localhost for internal access
         # This allows the container to screenshot itself
         import os
-        from urllib.parse import urlparse
+        from urllib.parse import urlparse, parse_qs
         parsed = urlparse(url)
+        
+        # Extract project code from query parameters to pass as header
+        extra_headers = {}
+        if parsed.query:
+            query_params = parse_qs(parsed.query)
+            if 'project' in query_params:
+                project_code = query_params['project'][0]
+                extra_headers['X-Project-Code'] = project_code
+                logger.info(f"📌 Extracted project code from URL: {project_code}")
         
         # If URL points to the same host we're running on, use localhost
         request_host = request.headers.get('host', '')
@@ -290,11 +312,12 @@ async def capture_single_screenshot(url: str, request: Request):
             logger.info(f"🔄 Converting to internal URL: {internal_url}")
             url = internal_url
         
-        # Capture screenshot using the existing service
+        # Capture screenshot using the existing service with project header
         screenshot_bytes = await screenshot_service.capture_screenshot_async(
             url=url,
             resolution=(1920, 1080),
-            hide_navigation=False
+            hide_navigation=False,
+            extra_headers=extra_headers if extra_headers else None
         )
         
         logger.info(f"✅ Screenshot captured: {len(screenshot_bytes)} bytes")

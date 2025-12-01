@@ -42,7 +42,8 @@ class ScreenshotService:
         url: str,
         hide_navigation: bool = False,
         resolution: Optional[Tuple[int, int]] = None,
-        wait_for_selector: Optional[str] = None
+        wait_for_selector: Optional[str] = None,
+        extra_headers: Optional[Dict[str, str]] = None
     ) -> bytes:
         """
         Asynchronously capture a screenshot of the specified URL.
@@ -53,6 +54,7 @@ class ScreenshotService:
             resolution: Custom resolution (width, height),
                 defaults to 1920x1080
             wait_for_selector: CSS selector to wait for before capturing
+            extra_headers: Additional HTTP headers to send with the request
             
         Returns:
             PNG image data as bytes
@@ -71,6 +73,11 @@ class ScreenshotService:
             page = await browser.new_page(
                 viewport={'width': resolution[0], 'height': resolution[1]}
             )
+            
+            # Set extra headers if provided (e.g., X-Project-Code for project context)
+            if extra_headers:
+                await page.set_extra_http_headers(extra_headers)
+                logger.info(f"Set extra headers: {extra_headers}")
             
             # Navigate to URL
             await page.goto(
