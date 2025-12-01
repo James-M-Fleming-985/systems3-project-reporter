@@ -744,7 +744,13 @@ function openCanvasEditor(slideData) {
         projectCode = localStorage.getItem('selectedProgram') || '';
         console.log('⚠️ No project in dropdown, using localStorage:', projectCode);
     }
-    const viewUrl = slideData.viewPath + (projectCode ? `?project=${projectCode}` : '');
+    
+    // Build URL with proper query parameter handling (use & if ? already exists)
+    let viewUrl = slideData.viewPath;
+    if (projectCode && !viewUrl.includes('project=')) {
+        viewUrl += (viewUrl.includes('?') ? '&' : '?') + 'project=' + projectCode;
+    }
+    console.log('🔗 Canvas editor URL:', viewUrl);
     
     // Show modal with canvas editor controls
     const modal = document.createElement('div');

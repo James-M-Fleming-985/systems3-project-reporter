@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.228"  # Pass X-Project-Code header in Playwright screenshots
+BUILD_VERSION = "1.0.229"  # Fix double question mark in canvas editor URLs (use & not ?)
 
 
 # Setup logging
