@@ -14,7 +14,7 @@ import asyncio
 import uuid
 import io
 
-from middleware.project_context import get_selected_project
+from middleware.project_context import get_selected_project, get_all_projects
 from repositories.project_repository import ProjectRepository
 
 # Import AI-generated services
@@ -68,11 +68,13 @@ class ExportRequest(BaseModel):
 async def powerpoint_export_page(request: Request):
     """PowerPoint Export UI Page"""
     selected_project = get_selected_project(request)
+    all_projects = get_all_projects()
     return templates.TemplateResponse(
         "powerpoint_export.html",
         {
             "request": request,
-            "selected_project": selected_project
+            "selected_project": selected_project,
+            "all_projects": all_projects
         }
     )
 

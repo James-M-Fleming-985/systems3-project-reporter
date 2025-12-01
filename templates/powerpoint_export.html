@@ -153,9 +153,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Project</label>
                 <select id="projectSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="">All Projects</option>
-                    {% if selected_project %}
-                    <option value="{{ selected_project.project_code }}" selected>{{ selected_project.project_name }} ({{ selected_project.project_code }})</option>
-                    {% endif %}
+                    {% for project in all_projects %}
+                    <option value="{{ project.project_code }}" {% if selected_project and project.project_code == selected_project.project_code %}selected{% endif %}>
+                        {{ project.project_name }} ({{ project.project_code }})
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -367,7 +369,6 @@ function updatePreviewCanvas() {
                 </svg>
                 Edit "${title}"
             `;
-            showPreviewModal(viewPath, title);
         });
         
         // Drag and drop events - attach to the drag handle area
@@ -736,8 +737,13 @@ document.getElementById('editLayoutBtn')?.addEventListener('click', () => {
 });
 
 function openCanvasEditor(slideData) {
-    // Get selected project
-    const projectCode = document.getElementById('projectSelect')?.value || '';
+    // Get selected project from dropdown or localStorage fallback
+    let projectCode = document.getElementById('projectSelect')?.value || '';
+    if (!projectCode) {
+        // Fallback to localStorage if no project selected in dropdown
+        projectCode = localStorage.getItem('selectedProgram') || '';
+        console.log('⚠️ No project in dropdown, using localStorage:', projectCode);
+    }
     const viewUrl = slideData.viewPath + (projectCode ? `?project=${projectCode}` : '');
     
     // Show modal with canvas editor controls
