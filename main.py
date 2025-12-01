@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.233"  # Fix canvas modal width, metrics timing, template visual feedback
+BUILD_VERSION = "1.0.234"  # Add comprehensive logging and fix canvas absolute positioning
 
 
 # Setup logging

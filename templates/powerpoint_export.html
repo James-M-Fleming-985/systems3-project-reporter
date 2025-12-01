@@ -803,8 +803,13 @@ document.getElementById('editLayoutBtn')?.addEventListener('click', () => {
 });
 
 function openCanvasEditor(slideData) {
+    console.log('\n=== CANVAS EDITOR OPENING ===' );
+    console.log('📋 Slide Data:', slideData);
+    
     // Get selected project from dropdown or localStorage fallback
     let projectCode = document.getElementById('projectSelect')?.value || '';
+    console.log('🎯 Project code from dropdown:', projectCode);
+    
     if (!projectCode) {
         // Fallback to localStorage if no project selected in dropdown
         projectCode = localStorage.getItem('selectedProgram') || '';
@@ -813,10 +818,12 @@ function openCanvasEditor(slideData) {
     
     // Build URL with proper query parameter handling (use & if ? already exists)
     let viewUrl = slideData.viewPath;
+    console.log('🔗 Original view path:', viewUrl);
+    
     if (projectCode && !viewUrl.includes('project=')) {
         viewUrl += (viewUrl.includes('?') ? '&' : '?') + 'project=' + projectCode;
     }
-    console.log('🔗 Canvas editor URL:', viewUrl);
+    console.log('🔗 Final canvas editor URL:', viewUrl);
     
     // Show modal with canvas editor controls
     const modal = document.createElement('div');
@@ -837,10 +844,12 @@ function openCanvasEditor(slideData) {
             <div class="p-6 overflow-y-auto flex-1">
                 <!-- Canvas container with proper 16:9 aspect ratio -->
                 <div class="mb-4 bg-gray-900 rounded-lg p-4">
-                    <div class="relative mx-auto" style="width: 100%; aspect-ratio: 16/9; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block;"></canvas>
-                        <div class="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded shadow-lg text-xs font-semibold z-10">
-                            ${slideData.title}
+                    <div class="relative mx-auto" style="width: 100%; max-width: 1200px; aspect-ratio: 16/9;">
+                        <div style="position: relative; width: 100%; height: 100%; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                            <canvas id="canvasEditor" width="1920" height="1080" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+                            <div class="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded shadow-lg text-xs font-semibold z-10">
+                                ${slideData.title}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -892,8 +901,18 @@ let fabricCanvas = null;
 let canvasImage = null;
 
 function initFabricCanvas(viewUrl) {
+    console.log('\n=== FABRIC CANVAS INIT ===' );
+    console.log('🔗 View URL:', viewUrl);
+    
     const canvasEl = document.getElementById('canvasEditor');
-    if (!canvasEl) return;
+    if (!canvasEl) {
+        console.error('❌ Canvas element not found!');
+        return;
+    }
+    
+    console.log('✅ Canvas element found:', canvasEl);
+    console.log('📐 Canvas dimensions:', canvasEl.width, 'x', canvasEl.height);
+    console.log('📐 Canvas style:', canvasEl.style.width, 'x', canvasEl.style.height);
     
     fabricCanvas = new fabric.Canvas('canvasEditor', {
         backgroundColor: '#ffffff',
@@ -901,10 +920,13 @@ function initFabricCanvas(viewUrl) {
         preserveObjectStacking: true
     });
     
+    console.log('✅ Fabric canvas created');
+    console.log('📐 Fabric canvas size:', fabricCanvas.width, 'x', fabricCanvas.height);
+    
     // Get selected template to show background
     const templateSelect = document.getElementById('templateSelect');
     const templateId = templateSelect ? templateSelect.value : null;
-    console.log('🎨 Selected template:', templateId);
+    console.log('🎨 Selected template ID:', templateId);
     
     // Show loading message (textBaseline inherited from prototype override)
     const loadingText = new fabric.Text('Loading dashboard preview...', {
@@ -928,23 +950,33 @@ function initFabricCanvas(viewUrl) {
     document.body.appendChild(iframe);
     
     iframe.onload = function() {
+        console.log('🌐 Iframe loaded');
         setTimeout(async () => {
             try {
                 // Build full URL for screenshot API
                 const fullUrl = window.location.origin + viewUrl;
-                console.log('📸 Requesting screenshot for:', fullUrl);
+                console.log('\n=== SCREENSHOT CAPTURE ===' );
+                console.log('📸 Full URL for screenshot:', fullUrl);
+                console.log('🔗 Encoded URL:', encodeURIComponent(fullUrl));
                 
                 let imageUrl;
                 try {
-                    const response = await fetch(
-                        `/api/reports/screenshot?url=${encodeURIComponent(fullUrl)}`
-                    );
+                    const screenshotApiUrl = `/api/reports/screenshot?url=${encodeURIComponent(fullUrl)}`;
+                    console.log('🎯 Calling screenshot API:', screenshotApiUrl);
+                    
+                    const response = await fetch(screenshotApiUrl);
+                    console.log('📡 Response status:', response.status, response.statusText);
+                    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+                    
                     if (response.ok) {
                         const blob = await response.blob();
+                        console.log('📦 Blob received, size:', blob.size, 'type:', blob.type);
                         imageUrl = URL.createObjectURL(blob);
                         console.log('✅ Screenshot captured from backend');
+                        console.log('🖼️ Image URL created:', imageUrl);
                     } else {
                         const errorText = await response.text();
+                        console.error('❌ Screenshot API failed:', response.status, errorText);
                         throw new Error(`Screenshot API failed: ${response.status} - ${errorText}`);
                     }
                 } catch (screenshotError) {
