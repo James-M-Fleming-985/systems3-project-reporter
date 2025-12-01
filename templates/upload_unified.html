@@ -1137,31 +1137,49 @@ function showMetricsFieldMapping(data) {
     mapAnnotation.innerHTML = '<option value="">-- None --</option>' + 
         headers.map(h => '<option value="' + h + '">' + h + '</option>').join('');
     
-    // Create checkboxes for value columns
-    valueColumnsContainer.innerHTML = headers.map(header => `
-        <label class="flex items-center py-1 hover:bg-gray-50 cursor-pointer">
-            <input type="checkbox" name="valueColumn" value="${header}" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2">
-            <span class="text-sm text-gray-700">${header}</span>
-        </label>
-    `).join('');
+    // Create checkboxes for value columns with smart detection
+    valueColumnsContainer.innerHTML = headers.map(header => {
+        // Check if column appears to be numeric by sampling first few rows
+        const sampleValues = rows.slice(0, 5).map(r => r[header]).filter(v => v);
+        const numericCount = sampleValues.filter(v => !isNaN(parseFloat(v))).length;
+        const isLikelyNumeric = numericCount > sampleValues.length / 2;
+        
+        const badge = isLikelyNumeric 
+            ? '<span class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">numeric</span>'
+            : '<span class="ml-2 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">text</span>';
+        
+        return `
+            <label class="flex items-center py-1 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" name="valueColumn" value="${header}" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2">
+                <span class="text-sm text-gray-700">${header}</span>
+                ${badge}
+            </label>
+        `;
+    }).join('');
     
     // Auto-detect columns
     let autoSelectedValueCol = false;
     headers.forEach(header => {
         const lower = header.toLowerCase();
+        
+        // Check if this column is numeric
+        const sampleValues = rows.slice(0, 5).map(r => r[header]).filter(v => v);
+        const numericCount = sampleValues.filter(v => !isNaN(parseFloat(v))).length;
+        const isLikelyNumeric = numericCount > sampleValues.length / 2;
+        
         if (lower.includes('metric') || lower.includes('name')) {
             mapMetricName.value = header;
         } else if (lower.includes('date') || lower.includes('time') || lower.includes('week')) {
             mapDate.value = header;
-        } else if (!autoSelectedValueCol && (lower.includes('value') || lower.includes('amount') || lower.includes('score') || lower.includes('count'))) {
-            // Auto-check first value column found
+        } else if (lower.includes('annotation') || lower.includes('callout') || lower.includes('note') || lower.includes('comment')) {
+            mapAnnotation.value = header;
+        } else if (!autoSelectedValueCol && isLikelyNumeric && (lower.includes('value') || lower.includes('amount') || lower.includes('score') || lower.includes('count') || lower.includes('part') || lower.includes('complete') || lower.includes('%'))) {
+            // Auto-check first numeric value column found
             const checkbox = valueColumnsContainer.querySelector(`input[value="${header}"]`);
             if (checkbox) {
                 checkbox.checked = true;
                 autoSelectedValueCol = true;
             }
-        } else if (lower.includes('annotation') || lower.includes('callout') || lower.includes('note') || lower.includes('comment')) {
-            mapAnnotation.value = header;
         }
     });
 }
@@ -1202,6 +1220,7 @@ function importMetricsData() {
     let importCount = 0;
     let updateCount = 0;
     let skippedCount = 0;
+    const skippedColumns = new Set();  // Track non-numeric columns
     
     rows.forEach((row, idx) => {
         const baseMetricName = row[metricNameCol];
@@ -1258,9 +1277,9 @@ function importMetricsData() {
             
             const value = parseFloat(valueStr);
             if (isNaN(value)) {
-                console.warn('Skipping - invalid value:', valueStr);
-                skippedCount++;
-                return;
+                console.warn('Skipping value column', valueCol, '- invalid numeric value:', valueStr);
+                skippedColumns.add(valueCol);
+                return;  // Skip this column only, continue with other columns
             }
             
             // Initialize series if it doesn't exist
@@ -1332,7 +1351,12 @@ function importMetricsData() {
                 message += updateCount + ' data point(s) added<br>';
             }
         }
-        if (skippedCount > 0) message += '<span class="text-green-600">' + skippedCount + ' duplicate(s) skipped</span>';
+        if (skippedCount > 0) message += '<span class="text-yellow-600">' + skippedCount + ' duplicate(s) skipped</span><br>';
+        
+        // Warn about non-numeric columns
+        if (skippedColumns.size > 0) {
+            message += '<span class="text-orange-600">⚠️ Skipped non-numeric columns: ' + Array.from(skippedColumns).join(', ') + '</span>';
+        }
         
         document.getElementById('metricsSuccessMessage').innerHTML = message;
         document.getElementById('metricsSuccess').classList.remove('hidden');

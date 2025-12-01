@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.221"  # Multi-series metrics: Multiple value columns create multiple trend lines on one chart
+BUILD_VERSION = "1.0.222"  # Fix multi-series: Skip non-numeric columns gracefully + add numeric/text badges
 
 
 # Setup logging
