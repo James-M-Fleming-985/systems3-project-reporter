@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.235"  # Fix Fabric.js responsive sizing with dynamic image scaling
+BUILD_VERSION = "1.0.236"  # Fix canvas viewport fit, remove scrollbars, add template background
 
 
 # Setup logging
