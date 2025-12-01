@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.224"  # Fix metric trend page to use correct localStorage key for multi-series
+BUILD_VERSION = "1.0.225"  # Fix multi-series rendering in metrics dashboard trend modal
 
 
 # Setup logging
