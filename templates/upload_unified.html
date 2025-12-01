@@ -897,7 +897,7 @@ function showMetricsUploadModal() {
                                     <p class="text-xs text-gray-500">Columns will appear here after file is loaded</p>
                                 </div>
                                 <p class="text-xs text-gray-500 mt-1">
-                                    Tip: Select multiple columns to create separate metrics (e.g., "Velocity - Planned" and "Velocity - Actual")
+                                    Tip: Select multiple columns to create multiple trend lines on the same chart
                                 </p>
                             </div>
                             <div>
@@ -1214,7 +1214,40 @@ function importMetricsData() {
             return;
         }
         
-        // Process each value column as a separate metric or data point
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+            console.warn('Skipping - invalid date:', dateStr);
+            skippedCount++;
+            return;
+        }
+        
+        // Find or create metric (one metric for all value columns)
+        let metric = customMetrics.find(m => m.name === baseMetricName);
+        
+        if (!metric) {
+            // Create new metric with series support
+            metric = {
+                name: baseMetricName,
+                value: 0,
+                unit: '',
+                target: null,
+                targetDate: null,
+                status: 'ON_TRACK',
+                lastUpdated: date.toISOString(),
+                series: {},  // Multiple series (one per value column)
+                history: []  // Legacy support - will use first series
+            };
+            customMetrics.push(metric);
+            importCount++;
+            console.log('Created new metric:', baseMetricName);
+        }
+        
+        // Ensure series object exists
+        if (!metric.series) {
+            metric.series = {};
+        }
+        
+        // Process each value column as a series
         valueColumns.forEach(valueCol => {
             const valueStr = row[valueCol];
             
@@ -1223,13 +1256,6 @@ function importMetricsData() {
                 return;
             }
             
-            // If there are multiple value columns, append column name to metric name
-            const metricName = valueColumns.length > 1 
-                ? `${baseMetricName} - ${valueCol}` 
-                : baseMetricName;
-            
-            console.log('Processing:', { metricName, dateStr, valueStr, annotation });
-            
             const value = parseFloat(valueStr);
             if (isNaN(value)) {
                 console.warn('Skipping - invalid value:', valueStr);
@@ -1237,35 +1263,13 @@ function importMetricsData() {
                 return;
             }
             
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) {
-                console.warn('Skipping - invalid date:', dateStr);
-                skippedCount++;
-                return;
+            // Initialize series if it doesn't exist
+            if (!metric.series[valueCol]) {
+                metric.series[valueCol] = [];
             }
             
-            // Find or create metric
-            let metric = customMetrics.find(m => m.name === metricName);
-            
-            if (!metric) {
-                // Create new metric
-                metric = {
-                    name: metricName,
-                    value: value,
-                    unit: '',
-                    target: null,
-                    targetDate: null,
-                    status: 'ON_TRACK',
-                    lastUpdated: date.toISOString(),
-                    history: []
-                };
-                customMetrics.push(metric);
-                importCount++;
-                console.log('Created new metric:', metricName);
-            }
-            
-            // Check for existing entry on this date
-            const existingEntry = metric.history.find(h => 
+            // Check for existing entry on this date in this series
+            const existingEntry = metric.series[valueCol].find(h => 
                 new Date(h.date).toDateString() === date.toDateString()
             );
             
@@ -1275,30 +1279,37 @@ function importMetricsData() {
                     existingEntry.value = value;
                     if (annotation) existingEntry.annotation = annotation;
                     updateCount++;
-                    console.log('Updated existing entry for', metricName, 'on', dateStr);
+                    console.log('Updated existing entry for', baseMetricName, '-', valueCol, 'on', dateStr);
                 } else {
                     // Skip duplicate
-                    console.log('Skipped duplicate for', metricName, 'on', dateStr);
+                    console.log('Skipped duplicate for', baseMetricName, '-', valueCol, 'on', dateStr);
                     skippedCount++;
                     return;
                 }
             } else {
-                // Add new history entry
-                metric.history.push({
+                // Add new history entry to this series
+                metric.series[valueCol].push({
                     value: value,
                     date: date.toISOString(),
                     annotation: annotation || undefined
                 });
                 updateCount++;
-                console.log('Added data point for', metricName);
+                console.log('Added data point for', baseMetricName, '-', valueCol);
             }
             
-            // Update current value if this is the latest date
-            if (new Date(metric.lastUpdated) < date) {
-                metric.value = value;
-                metric.lastUpdated = date.toISOString();
+            // Update current value to first series' latest value
+            if (valueCol === valueColumns[0]) {
+                if (new Date(metric.lastUpdated) < date) {
+                    metric.value = value;
+                    metric.lastUpdated = date.toISOString();
+                }
             }
         });
+        
+        // Update legacy history array for backward compatibility (use first series)
+        if (valueColumns.length > 0 && metric.series[valueColumns[0]]) {
+            metric.history = metric.series[valueColumns[0]];
+        }
     });
     
     // Save metrics

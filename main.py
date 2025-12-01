@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.220"  # Fix Excel upload: Use CDN for XLSX library with local fallback
+BUILD_VERSION = "1.0.221"  # Multi-series metrics: Multiple value columns create multiple trend lines on one chart
 
 
 # Setup logging

@@ -37,12 +37,21 @@ if (!stored) {
         const customMetrics = JSON.parse(stored);
         const metric = customMetrics.find(m => m.name === metricName);
         
-        if (!metric || !metric.history || metric.history.length === 0) {
+        if (!metric) {
             document.getElementById('noDataMessage').classList.remove('hidden');
             document.getElementById('metricTrendChart').style.display = 'none';
         } else {
-            // Render the trend chart
-            renderTrendChart(metric);
+            // Check if metric has data (either series or legacy history)
+            const hasSeries = metric.series && Object.keys(metric.series).length > 0;
+            const hasHistory = metric.history && metric.history.length > 0;
+            
+            if (!hasSeries && !hasHistory) {
+                document.getElementById('noDataMessage').classList.remove('hidden');
+                document.getElementById('metricTrendChart').style.display = 'none';
+            } else {
+                // Render the trend chart
+                renderTrendChart(metric);
+            }
         }
     } catch (e) {
         console.error('Failed to parse metrics:', e);
@@ -52,32 +61,77 @@ if (!stored) {
 }
 
 function renderTrendChart(metric) {
-    // Sort history by date
-    const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
-    const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
-    const values = sortedHistory.map(h => h.value);
+    const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899'];
+    const data = [];
+    const allDates = new Set();
     
-    const data = [{
-        x: dates,
-        y: values,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: metric.name,
-        line: { 
-            color: '#3b82f6', 
-            width: 4 
-        },
-        marker: { 
-            size: 12,
-            color: '#3b82f6',
-            line: {
-                color: '#1e40af',
-                width: 2
-            }
-        },
-        text: sortedHistory.map(h => h.annotation || ''),
-        hovertemplate: '<b>%{y}' + (metric.unit ? ' ' + metric.unit : '') + '</b><br>%{x}<br>%{text}<extra></extra>'
-    }];
+    // Check if metric has multiple series or single history
+    if (metric.series && Object.keys(metric.series).length > 0) {
+        // Multiple series - render multiple lines
+        Object.keys(metric.series).forEach((seriesName, idx) => {
+            const seriesData = metric.series[seriesName];
+            const sortedHistory = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+            const values = sortedHistory.map(h => h.value);
+            
+            // Collect all unique dates
+            dates.forEach(d => allDates.add(d));
+            
+            const color = colors[idx % colors.length];
+            data.push({
+                x: dates,
+                y: values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: seriesName,
+                line: { 
+                    color: color, 
+                    width: 3 
+                },
+                marker: { 
+                    size: 10,
+                    color: color,
+                    line: {
+                        color: 'white',
+                        width: 2
+                    }
+                },
+                text: sortedHistory.map(h => h.annotation || ''),
+                hovertemplate: '<b>%{y}' + (metric.unit ? ' ' + metric.unit : '') + '</b><br>%{x}<br>%{text}<extra></extra>'
+            });
+        });
+    } else if (metric.history && metric.history.length > 0) {
+        // Single series (legacy) - render single line
+        const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        const values = sortedHistory.map(h => h.value);
+        
+        dates.forEach(d => allDates.add(d));
+        
+        data.push({
+            x: dates,
+            y: values,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: metric.name,
+            line: { 
+                color: '#3b82f6', 
+                width: 4 
+            },
+            marker: { 
+                size: 12,
+                color: '#3b82f6',
+                line: {
+                    color: '#1e40af',
+                    width: 2
+                }
+            },
+            text: sortedHistory.map(h => h.annotation || ''),
+            hovertemplate: '<b>%{y}' + (metric.unit ? ' ' + metric.unit : '') + '</b><br>%{x}<br>%{text}<extra></extra>'
+        });
+    }
+    
+    const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
     
     const layout = {
         title: {
@@ -111,12 +165,12 @@ function renderTrendChart(metric) {
     };
     
     // Add target line if defined
-    if (metric.target) {
+    if (metric.target && sortedDates.length > 0) {
         layout.shapes.push({
             type: 'line',
-            x0: dates[0],
+            x0: sortedDates[0],
             y0: metric.target,
-            x1: dates[dates.length - 1],
+            x1: sortedDates[sortedDates.length - 1],
             y1: metric.target,
             line: {
                 color: '#22c55e',
@@ -127,7 +181,7 @@ function renderTrendChart(metric) {
         
         // Add target label
         layout.annotations.push({
-            x: dates[Math.floor(dates.length / 2)],
+            x: sortedDates[Math.floor(sortedDates.length / 2)],
             y: metric.target,
             text: `Target: ${metric.target}${metric.unit ? ' ' + metric.unit : ''}`,
             showarrow: false,
@@ -140,54 +194,60 @@ function renderTrendChart(metric) {
         });
     }
     
-    // Add current value annotation
-    const lastValue = values[values.length - 1];
-    const lastDate = dates[dates.length - 1];
-    layout.annotations.push({
-        x: lastDate,
-        y: lastValue,
-        text: `Current: ${lastValue}${metric.unit ? ' ' + metric.unit : ''}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowcolor: '#3b82f6',
-        ax: 40,
-        ay: -40,
-        font: { size: 14, color: '#1e40af', weight: 'bold' },
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#3b82f6',
-        borderwidth: 2,
-        borderpad: 6
-    });
-    
-    // Add annotations for data points with callouts
-    const annotatedPoints = sortedHistory
-        .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
-        .filter(h => h.annotation);
-    
-    annotatedPoints.forEach((point, idx) => {
-        const yshift = 50 + (idx % 3) * 25;
-        const ax = idx % 2 === 0 ? -60 : 60;
-        const align = ax < 0 ? 'right' : 'left';
+    // Add annotations for data points with callouts (only for single series to avoid clutter)
+    if (metric.history && metric.history.length > 0 && (!metric.series || Object.keys(metric.series).length === 0)) {
+        const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        const values = sortedHistory.map(h => h.value);
         
+        // Add current value annotation for single series
+        const lastValue = values[values.length - 1];
+        const lastDate = dates[dates.length - 1];
         layout.annotations.push({
-            x: point.date,
-            y: point.value,
-            text: point.annotation,
+            x: lastDate,
+            y: lastValue,
+            text: `Current: ${lastValue}${metric.unit ? ' ' + metric.unit : ''}`,
             showarrow: true,
             arrowhead: 2,
             arrowsize: 1,
-            arrowcolor: '#9ca3af',
-            ax: ax,
-            ay: -yshift,
-            font: { size: 13, color: '#374151' },
-            bgcolor: 'rgba(255, 255, 255, 0.98)',
-            bordercolor: '#d1d5db',
-            borderwidth: 1,
-            borderpad: 6,
-            align: align
+            arrowcolor: '#3b82f6',
+            ax: 40,
+            ay: -40,
+            font: { size: 14, color: '#1e40af', weight: 'bold' },
+            bgcolor: 'rgba(255, 255, 255, 0.95)',
+            bordercolor: '#3b82f6',
+            borderwidth: 2,
+            borderpad: 6
         });
-    });
+        
+        const annotatedPoints = sortedHistory
+            .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
+            .filter(h => h.annotation);
+        
+        annotatedPoints.forEach((point, idx) => {
+            const yshift = 50 + (idx % 3) * 25;
+            const ax = idx % 2 === 0 ? -60 : 60;
+            const align = ax < 0 ? 'right' : 'left';
+            
+            layout.annotations.push({
+                x: point.date,
+                y: point.value,
+                text: point.annotation,
+                showarrow: true,
+                arrowhead: 2,
+                arrowsize: 1,
+                arrowcolor: '#9ca3af',
+                ax: ax,
+                ay: -yshift,
+                font: { size: 13, color: '#374151' },
+                bgcolor: 'rgba(255, 255, 255, 0.98)',
+                bordercolor: '#d1d5db',
+                borderwidth: 1,
+                borderpad: 6,
+                align: align
+            });
+        });
+    }
     
     const config = {
         responsive: true,
