@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.218"  # Fix template upload: skip template YAMLs in project loader + improve UI messages
+BUILD_VERSION = "1.0.219"  # Replace browser confirm with proper delete confirmation modal
 
 
 # Setup logging
