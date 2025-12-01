@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.229"  # Fix double question mark in canvas editor URLs (use & not ?)
+BUILD_VERSION = "1.0.230"  # Fix canvas aspect ratio and prevent right-side cutoff
 
 
 # Setup logging

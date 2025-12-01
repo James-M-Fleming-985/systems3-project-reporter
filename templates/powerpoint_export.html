@@ -828,8 +828,14 @@ function initFabricCanvas(viewUrl) {
     
     fabricCanvas = new fabric.Canvas('canvasEditor', {
         backgroundColor: '#ffffff',
-        selection: true
+        selection: true,
+        preserveObjectStacking: true
     });
+    
+    // Get selected template to show background
+    const templateSelect = document.getElementById('templateSelect');
+    const templateId = templateSelect ? templateSelect.value : null;
+    console.log('🎨 Selected template:', templateId);
     
     // Show loading message (textBaseline inherited from prototype override)
     const loadingText = new fabric.Text('Loading dashboard preview...', {
