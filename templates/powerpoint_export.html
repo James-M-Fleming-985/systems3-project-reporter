@@ -562,6 +562,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load available templates
     loadAvailableTemplates();
     
+    // Listen for template changes to reload canvas if open
+    const templateSelect = document.getElementById('templateSelect');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', () => {
+            localStorage.setItem('pptExportSelectedTemplate', templateSelect.value);
+            console.log('🎨 Template changed to:', templateSelect.value);
+        });
+        
+        // Restore selected template
+        const savedTemplate = localStorage.getItem('pptExportSelectedTemplate');
+        if (savedTemplate) {
+            templateSelect.value = savedTemplate;
+        }
+    }
+    
     // Load custom metrics and create checkboxes
     loadCustomMetricCheckboxes();
 });
@@ -639,6 +654,15 @@ function loadCustomMetricCheckboxes() {
         checkbox.value = `/dashboard/metrics/trend/${encodeURIComponent(metric.name)}`;
         checkbox.className = 'mt-1 mr-3 w-5 h-5 text-blue-600';
         checkbox.addEventListener('change', updateSelectedCount);
+        
+        // Restore checked state from localStorage
+        const savedViews = localStorage.getItem('pptExportSelectedViews');
+        if (savedViews) {
+            try {
+                const viewsArray = JSON.parse(savedViews);
+                checkbox.checked = viewsArray.includes(checkbox.value);
+            } catch (e) {}
+        }
         
         const content = document.createElement('div');
         content.innerHTML = `
@@ -793,9 +817,9 @@ function openCanvasEditor(slideData) {
             </div>
             <div class="p-6">
                 <!-- Canvas container with proper 16:9 aspect ratio -->
-                <div class="mb-4 bg-gray-900 rounded-lg p-6 relative">
-                    <div class="relative mx-auto" style="width: 100%; max-width: 1000px; aspect-ratio: 16/9; background: white; border: 2px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block;"></canvas>
+                <div class="mb-4 bg-gray-900 rounded-lg p-6">
+                    <div class="relative mx-auto" style="width: 100%; max-width: 1100px; aspect-ratio: 16/9; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <canvas id="canvasEditor" width="1920" height="1080" style="width: 100%; height: 100%; display: block; object-fit: contain;"></canvas>
                         <div class="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded shadow-lg text-xs font-semibold z-10">
                             ${slideData.title}
                         </div>

@@ -21,7 +21,8 @@
 
 <!-- Gantt Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%; height:700px; overflow:auto;"></div>
+    <div id="ganttChart" style="width:100%; height:auto;"></div>
+    <p class="text-xs text-gray-500 mt-2 text-center">All projects visible - chart auto-sized for optimal viewing</p>
 </div>
 
 <!-- Legend -->
@@ -163,20 +164,20 @@ function createRoadmapViewTraces() {
             marker: {
                 color: barColor,
                 line: {
-                    color: 'rgba(0,0,0,0.3)',
-                    width: 2
-                }
+                    color: 'rgba(0,0,0,0.2)',
+                    width: 1
+                },
+                opacity: 0.9
             },
             name: projectGroup,
             text: '',
+            textposition: 'none',
             customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr, completionPercent]],
             hovertemplate: '<b>%{y}</b><br>' +
-                          'Tasks: %{customdata[1]} total<br>' +
-                          'Completed: %{customdata[2]}<br>' +
-                          'In Progress: %{customdata[3]}<br>' +
-                          'Status: %{customdata[4]}<br>' +
-                          'Timeline: %{customdata[5]} to %{customdata[6]}<br>' +
-                          'Progress: %{customdata[7]}%' +
+                          '<b>Timeline:</b> %{customdata[5]} → %{customdata[6]}<br>' +
+                          '<b>Progress:</b> %{customdata[7]}%<br>' +
+                          '<b>Status:</b> %{customdata[4]}<br>' +
+                          '<b>Tasks:</b> %{customdata[2]} of %{customdata[1]} completed (%{customdata[3]} in progress)' +
                           '<extra></extra>',
             showlegend: false
         });
@@ -191,10 +192,32 @@ function getLayout() {
         ? 'Project Timeline - Milestone Detail View' 
         : 'Program Roadmap - Project Overview';
     
-    // Calculate dynamic height based on milestone count to minimize whitespace
-    const milestoneCount = ganttData.length;
-    // Dynamic height: minimum 400px, add 15px per milestone, max 1500px
-    const chartHeight = Math.min(1500, Math.max(400, 400 + (milestoneCount * 15)));
+    // Calculate number of unique projects/resources for height calculation
+    const uniqueResources = [...new Set(ganttData.map(task => task.Resource))];
+    const projectCount = uniqueResources.length;
+    
+    // Professional auto-sizing: Calculate optimal bar height and chart height
+    // Goal: Show all projects without scrolling, bars should be thick enough to read
+    const minBarHeight = 40;  // Minimum height per bar for readability
+    const maxBarHeight = 80;  // Maximum height per bar to avoid waste
+    const topBottomPadding = 160;  // Space for title, axis labels, margins
+    
+    // Calculate bar height based on project count (more projects = thinner bars)
+    let barHeight;
+    if (projectCount <= 5) {
+        barHeight = maxBarHeight;
+    } else if (projectCount <= 10) {
+        barHeight = 60;
+    } else if (projectCount <= 15) {
+        barHeight = 50;
+    } else {
+        barHeight = minBarHeight;
+    }
+    
+    // Total chart height = (barHeight * projectCount) + padding
+    const chartHeight = (barHeight * projectCount) + topBottomPadding;
+    
+    console.log(`📐 Auto-sizing: ${projectCount} projects × ${barHeight}px = ${chartHeight}px total height`);
     
     // Create annotations for completion percentages
     const annotations = completionAnnotations.map(annot => ({
@@ -205,65 +228,81 @@ function getLayout() {
         text: annot.text,
         showarrow: false,
         font: {
-            size: 13,
+            size: 14,
             color: '#1f2937',
-            family: 'Arial, sans-serif',
+            family: 'system-ui, -apple-system, sans-serif',
             weight: 'bold'
         },
         xanchor: 'left',
-        xshift: 8,
-        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        xshift: 10,
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
         bordercolor: '#d1d5db',
         borderwidth: 1,
-        borderpad: 4
+        borderpad: 5,
+        borderradius: 3
     }));
     
     return {
         title: {
             text: title,
-            font: { size: 20 }
+            font: { 
+                size: 22,
+                family: 'system-ui, -apple-system, sans-serif',
+                weight: 'bold',
+                color: '#111827'
+            },
+            x: 0.05,
+            xanchor: 'left'
         },
         xaxis: {
-            title: 'Date',
+            title: {
+                text: 'Timeline',
+                font: { size: 14, weight: 'bold' }
+            },
             type: 'date',
-            tickformat: '%Y-%m-%d',
+            tickformat: '%b %Y',  // Short month + year (e.g., "Jan 2025")
             tickangle: -45,
-            fixedrange: false  // Allow horizontal zooming
+            fixedrange: true,  // Disable zoom - show everything
+            showgrid: true,
+            gridcolor: '#e5e7eb',
+            zeroline: false
         },
         yaxis: {
             title: {
-                text: currentView === 'detail' ? 'Milestones' : 'Projects',
+                text: 'Projects',
+                font: { size: 14, weight: 'bold' },
                 standoff: 20
             },
             automargin: true,
-            autorange: 'reversed',  // Reversed puts first item at top
-            fixedrange: false  // Allow vertical zooming
+            autorange: 'reversed',  // First item at top
+            fixedrange: true,  // Disable zoom - show everything
+            showgrid: true,
+            gridcolor: '#e5e7eb',
+            tickfont: { size: 12 }
         },
         barmode: 'overlay',
-        bargap: 0.5,  // Increased gap to make bars thinner
+        bargap: 0.3,  // Gap between bars
         height: chartHeight,
         margin: {
-            l: 250,
-            r: 120,
-            t: 80,
-            b: 80  // Reduced from 100 to minimize bottom whitespace
+            l: 280,  // Left margin for project names
+            r: 100,  // Right margin for completion %
+            t: 100,
+            b: 100
         },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
         paper_bgcolor: 'white',
         annotations: annotations,
-        dragmode: 'pan'
+        dragmode: false  // Disable dragging/panning
     };
 }
 
 // Plotly configuration
 const config = {
     responsive: true,
-    displayModeBar: true,  // Show modebar for zoom controls
+    displayModeBar: false,  // Hide zoom controls - no interaction needed
     displaylogo: false,
-    modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-    modeBarButtonsToAdd: ['pan2d'],
-    scrollZoom: true  // Enable scroll to zoom
+    staticPlot: false  // Allow hover tooltips but disable zoom/pan
 };
 
 // Function to render the chart
