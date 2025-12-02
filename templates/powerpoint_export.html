@@ -1040,10 +1040,10 @@ function initFabricCanvas(viewUrl) {
                     
                     canvasImage = img;
                     
-                    // Scale image to fit canvas properly
+                    // Scale image to fit canvas properly - use smaller scale to ensure full image is visible
                     const scale = Math.min(
-                        (fabricCanvas.width * 0.95) / img.width,
-                        (fabricCanvas.height * 0.95) / img.height
+                        (fabricCanvas.width * 0.75) / img.width,
+                        (fabricCanvas.height * 0.75) / img.height
                     );
                     
                     canvasImage.set({
@@ -1123,10 +1123,10 @@ function resetCanvas() {
         // Remove any crop
         canvasImage.clipPath = null;
         
-        // Reset transform with dynamic scaling
+        // Reset transform with dynamic scaling - use 0.75 to ensure full image visible
         const scale = Math.min(
-            (fabricCanvas.width * 0.95) / canvasImage.width,
-            (fabricCanvas.height * 0.95) / canvasImage.height
+            (fabricCanvas.width * 0.75) / canvasImage.width,
+            (fabricCanvas.height * 0.75) / canvasImage.height
         );
         
         canvasImage.set({
