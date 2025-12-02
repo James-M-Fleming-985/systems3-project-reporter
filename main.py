@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.238"  # Reduce screenshot scale to 0.75 to show full image in canvas
+BUILD_VERSION = "1.0.239"  # Fix canvas centering with proper Fabric.js zoom scaling
 
 
 # Setup logging

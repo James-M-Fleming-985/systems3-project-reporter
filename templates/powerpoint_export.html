@@ -845,8 +845,8 @@ function openCanvasEditor(slideData) {
                 <!-- Canvas container with proper 16:9 aspect ratio -->
                 <div class="mb-3 bg-gray-900 rounded p-2 flex-shrink-0" style="max-height: calc(92vh - 180px); overflow: hidden;">
                     <div class="relative mx-auto" style="width: 100%; aspect-ratio: 16/9; max-height: 100%;">
-                        <div style="position: relative; width: 100%; height: 100%; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                            <canvas id="canvasEditor" width="1920" height="1080" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></canvas>
+                        <div id="canvasContainer" style="position: relative; width: 100%; height: 100%; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <canvas id="canvasEditor" width="1920" height="1080" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
                             <div class="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded shadow text-xs font-semibold" style="z-index: 10;">
                                 ${slideData.title}
                             </div>
@@ -912,17 +912,22 @@ function initFabricCanvas(viewUrl) {
     console.log('✅ Fabric canvas created');
     console.log('📐 Fabric canvas size:', fabricCanvas.width, 'x', fabricCanvas.height);
     
-    // Force canvas to be responsive - Fabric.js overrides our CSS
-    // We need to set the canvas element style AFTER Fabric initializes
+    // Calculate actual displayed canvas size and set zoom to match
     setTimeout(() => {
-        const canvasEl = document.getElementById('canvasEditor');
-        if (canvasEl) {
-            canvasEl.style.width = '100%';
-            canvasEl.style.height = '100%';
-            canvasEl.style.position = 'absolute';
-            canvasEl.style.top = '0';
-            canvasEl.style.left = '0';
-            console.log('✅ Canvas style forced to 100% after Fabric init');
+        const container = document.getElementById('canvasContainer');
+        if (container) {
+            const containerRect = container.getBoundingClientRect();
+            const zoomX = containerRect.width / 1920;
+            const zoomY = containerRect.height / 1080;
+            const zoom = Math.min(zoomX, zoomY);
+            
+            fabricCanvas.setZoom(zoom);
+            fabricCanvas.setWidth(containerRect.width);
+            fabricCanvas.setHeight(containerRect.height);
+            
+            console.log('✅ Canvas viewport size:', containerRect.width, 'x', containerRect.height);
+            console.log('📐 Zoom factor:', zoom);
+            console.log('✅ Fabric canvas scaled to match viewport');
         }
     }, 10);
     
