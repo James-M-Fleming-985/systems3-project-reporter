@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.240"  # Fix custom metrics detection and add better logging
+BUILD_VERSION = "1.0.241"  # Fix checkbox persistence and add extensive metric loading debug
 
 
 # Setup logging

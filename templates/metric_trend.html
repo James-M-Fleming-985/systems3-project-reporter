@@ -24,9 +24,24 @@
 const metricName = "{{ metric_name }}";
 const projectName = "{{ project_name }}";
 
+console.log('=== METRIC TREND PAGE DEBUG ===');
+console.log('Looking for metric:', metricName);
+console.log('Project name from server:', projectName);
+
+// List all localStorage keys to help debug
+console.log('All localStorage keys:');
+for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('customMetrics_')) {
+        console.log('  -', key);
+    }
+}
+
 // Load custom metrics from localStorage
 // Try selectedProgram first (matches upload page), then project name from server
 const selectedProgram = localStorage.getItem('selectedProgram');
+console.log('selectedProgram from localStorage:', selectedProgram);
+
 let storageKey = selectedProgram ? `customMetrics_${selectedProgram}` : `customMetrics_${projectName}`;
 console.log('Trying storage key:', storageKey);
 let stored = localStorage.getItem(storageKey);
@@ -35,6 +50,14 @@ let stored = localStorage.getItem(storageKey);
 if (!stored && selectedProgram) {
     console.log('Not found, trying project name:', projectName);
     storageKey = `customMetrics_${projectName}`;
+    stored = localStorage.getItem(storageKey);
+}
+
+// If still not found, try without extension
+if (!stored) {
+    const programNameWithoutExt = selectedProgram ? selectedProgram.replace('.xml', '') : projectName.replace('.xml', '');
+    storageKey = `customMetrics_${programNameWithoutExt}`;
+    console.log('Trying without extension:', storageKey);
     stored = localStorage.getItem(storageKey);
 }
 

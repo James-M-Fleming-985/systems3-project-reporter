@@ -518,7 +518,7 @@ function handleDragEnd(e) {
 }
 
 // Update selected count and preview
-function updateSelectedCount() {
+function updateSelectedCount(saveToStorage = true) {
     const checkboxes = document.querySelectorAll('input[name="view"]:checked');
     document.getElementById('selectedCount').textContent = checkboxes.length;
     document.getElementById('estimatedSlides').textContent = checkboxes.length + 1;
@@ -533,9 +533,12 @@ function updateSelectedCount() {
         document.getElementById('exportButtonText').textContent = '📊 Generate PowerPoint Report';
     }
     
-    // Save selections to localStorage
-    const selectedViews = Array.from(checkboxes).map(cb => cb.value);
-    localStorage.setItem('pptExportSelectedViews', JSON.stringify(selectedViews));
+    // Save selections to localStorage only when called from user interaction
+    if (saveToStorage) {
+        const selectedViews = Array.from(checkboxes).map(cb => cb.value);
+        localStorage.setItem('pptExportSelectedViews', JSON.stringify(selectedViews));
+        console.log('💾 Saved', selectedViews.length, 'selections to localStorage');
+    }
     
     // Update preview canvas
     updatePreviewCanvas();
@@ -561,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[name="view"]').forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectedCount);
     });
-    updateSelectedCount();
+    // Don't call updateSelectedCount here - wait for custom metrics to load
     
     // Load available templates
     loadAvailableTemplates();
@@ -709,8 +712,8 @@ function loadCustomMetricCheckboxes() {
     
     console.log(`Added ${metricsWithHistory.length} custom metric trend checkboxes`);
     
-    // Update count after all checkboxes are created and restored
-    updateSelectedCount();
+    // Update count after all checkboxes are created and restored (don't save to avoid overwriting)
+    updateSelectedCount(false);
 }
 
 async function exportReport() {
