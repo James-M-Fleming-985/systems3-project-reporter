@@ -1006,7 +1006,21 @@ function initFabricCanvas(viewUrl) {
         setTimeout(async () => {
             try {
                 // Build full URL for screenshot API
-                const fullUrl = window.location.origin + viewUrl;
+                let fullUrl = window.location.origin + viewUrl;
+                
+                // For metric trend pages, append metrics data to URL
+                if (viewUrl.includes('/metrics/trend/')) {
+                    const project = '{{ project_name }}';
+                    const storageKey = `customMetrics_${project}`;
+                    const metricsData = localStorage.getItem(storageKey);
+                    if (metricsData) {
+                        const encoded = encodeURIComponent(metricsData);
+                        const separator = fullUrl.includes('?') ? '&' : '?';
+                        fullUrl += `${separator}metricsData=${encoded}`;
+                        console.log('📊 Appended metrics data to URL');
+                    }
+                }
+                
                 console.log('\n=== SCREENSHOT CAPTURE ===' );
                 console.log('📸 Full URL for screenshot:', fullUrl);
                 console.log('🔗 Encoded URL:', encodeURIComponent(fullUrl));

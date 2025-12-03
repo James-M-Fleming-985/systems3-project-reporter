@@ -79,6 +79,30 @@ class ScreenshotService:
                 await page.set_extra_http_headers(extra_headers)
                 logger.info(f"Set extra headers: {extra_headers}")
             
+            # Special handling for metric trend charts - inject localStorage before navigation
+            if '/metrics/trend/' in url:
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(url)
+                query_params = parse_qs(parsed.query)
+                
+                # Check if metricsData was passed in URL
+                if 'metricsData' in query_params:
+                    metrics_json = query_params['metricsData'][0]
+                    project = query_params.get('project', ['Unknown'])[0]
+                    storage_key = f'customMetrics_{project}'
+                    
+                    # Inject localStorage before page loads
+                    await page.add_init_script(f'''
+                        localStorage.setItem('{storage_key}', `{metrics_json}`);
+                        console.log('✅ Injected metrics data into localStorage:', '{storage_key}');
+                    ''')
+                    logger.info(f"💉 Injected metrics data for project: {project}")
+                    
+                    # Remove metricsData from URL to avoid passing huge param to page
+                    url = url.split('&metricsData=')[0].split('?metricsData=')[0]
+                    if parsed.query and 'project=' in parsed.query:
+                        url += f"?project={project}"
+            
             # Navigate to URL
             await page.goto(
                 url, wait_until='networkidle', timeout=self.timeout
