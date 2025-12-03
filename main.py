@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.245"  # Simplify Plotly wait to fixed 4 second delay
+BUILD_VERSION = "1.0.246"  # Increase Plotly wait to 6 seconds for reliable chart capture
 
 
 # Setup logging

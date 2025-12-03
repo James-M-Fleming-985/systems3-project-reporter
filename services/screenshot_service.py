@@ -87,10 +87,10 @@ class ScreenshotService:
             # Special handling for metric trend charts - wait for Plotly to render
             if '/metrics/trend/' in url:
                 logger.info("Detected metric trend chart, waiting for Plotly...")
-                # Simple approach: just wait long enough for Plotly to render
-                # Plotly charts typically render within 3-4 seconds after page load
-                await page.wait_for_timeout(4000)
-                logger.info("✅ Waited 4 seconds for Plotly chart rendering")
+                # Plotly charts need significant time to render after page load
+                # Wait 6 seconds to ensure chart is fully drawn
+                await page.wait_for_timeout(6000)
+                logger.info("✅ Waited 6 seconds for Plotly chart rendering")
             
             # Wait for specific selector if provided
             if wait_for_selector:
