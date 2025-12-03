@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.251"  # SIMPLIFIED: Pass metric data as template context via URL param, not localStorage
+BUILD_VERSION = "1.0.253"  # CRITICAL FIX: Remove duplicate code causing JavaScript syntax error
 
 
 # Setup logging

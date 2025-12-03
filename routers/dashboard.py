@@ -187,16 +187,24 @@ async def metric_trend_page(request: Request, metric_name: str, metricData: str 
             # Decode and parse the metric data
             decoded_data = unquote(metricData)
             metric_json = json.loads(decoded_data)
-            logger.info(f"📊 Received metric data for {decoded_metric_name}: {len(decoded_data)} bytes")
+            logger.info(f"📊 Received metric data for {decoded_metric_name}:")
+            logger.info(f"   - Encoded size: {len(metricData)} bytes")
+            logger.info(f"   - Decoded size: {len(decoded_data)} bytes")
+            logger.info(f"   - Metric name: {metric_json.get('name', 'UNKNOWN')}")
+            logger.info(f"   - Has series: {bool(metric_json.get('series'))}")
+            logger.info(f"   - Has history: {bool(metric_json.get('history'))}")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to parse metricData query param: {e}")
+            logger.error(f"❌ Failed to parse metricData query param: {e}")
+            logger.error(f"   - metricData: {metricData[:200]}..." if len(metricData) > 200 else f"   - metricData: {metricData}")
+    else:
+        logger.warning(f"⚠️ No metricData query param provided for {decoded_metric_name}")
     
     context = {
         "request": request,
         "project_name": project_name,
         "metric_name": decoded_metric_name,
         "build_version": BUILD_VERSION,
-        "metric_data_json": json.dumps(metric_json) if metric_json else None
+        "metric_data": metric_json  # Pass dict directly, template will serialize
     }
     
     return templates.TemplateResponse("metric_trend.html", context)

@@ -25,7 +25,7 @@ const metricName = "{{ metric_name }}";
 const projectName = "{{ project_name }}";
 
 // Check if metric data was passed from server (for screenshot capture)
-const serverMetricData = {{ metric_data_json|safe if metric_data_json else 'null' }};
+const serverMetricData = {{ metric_data|tojson if metric_data else 'null' }};
 
 console.log('=== METRIC TREND PAGE DEBUG ===');
 console.log('Looking for metric:', metricName);
@@ -103,10 +103,6 @@ if (!metric) {
         console.log('✅ Rendering chart with data from:', serverMetricData ? 'SERVER' : 'LOCALSTORAGE');
         // Render the trend chart
         renderTrendChart(metric);
-    }
-}
-        document.getElementById('noDataMessage').classList.remove('hidden');
-        document.getElementById('metricTrendChart').style.display = 'none';
     }
 }
 
