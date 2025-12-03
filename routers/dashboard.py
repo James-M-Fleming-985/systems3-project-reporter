@@ -165,13 +165,14 @@ async def milestone_tracker(request: Request):
 
 
 @router.get("/metrics/trend/{metric_name}", response_class=HTMLResponse)
-async def metric_trend_page(request: Request, metric_name: str):
+async def metric_trend_page(request: Request, metric_name: str, metricData: str = None):
     """
     Individual metric trend chart page for PowerPoint export
     Shows single large trend chart for one custom metric
     """
     from main import BUILD_VERSION
     from urllib.parse import unquote
+    import json
     
     # Decode metric name
     decoded_metric_name = unquote(metric_name)
@@ -179,11 +180,23 @@ async def metric_trend_page(request: Request, metric_name: str):
     project = get_selected_project(request)
     project_name = project.project_name if project else "Program"
     
+    # If metricData query param provided, parse it and pass to template
+    metric_json = None
+    if metricData:
+        try:
+            # Decode and parse the metric data
+            decoded_data = unquote(metricData)
+            metric_json = json.loads(decoded_data)
+            logger.info(f"📊 Received metric data for {decoded_metric_name}: {len(decoded_data)} bytes")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to parse metricData query param: {e}")
+    
     context = {
         "request": request,
         "project_name": project_name,
         "metric_name": decoded_metric_name,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "metric_data_json": json.dumps(metric_json) if metric_json else None
     }
     
     return templates.TemplateResponse("metric_trend.html", context)

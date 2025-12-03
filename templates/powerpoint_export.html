@@ -1008,18 +1008,35 @@ function initFabricCanvas(viewUrl) {
                 // Build full URL for screenshot API
                 let fullUrl = window.location.origin + viewUrl;
                 
-                // For metric trend pages, append metrics data to URL
+                // For metric trend pages, append the specific metric's data to URL
                 if (viewUrl.includes('/metrics/trend/')) {
                     const project = '{{ project_name }}';
                     const storageKey = `customMetrics_${project}`;
-                    const metricsData = localStorage.getItem(storageKey);
+                    const metricsDataStr = localStorage.getItem(storageKey);
                     console.log('🔍 Checking for metrics data:', storageKey);
-                    console.log('📊 Metrics data found:', metricsData ? `${metricsData.length} bytes` : 'NONE');
-                    if (metricsData) {
-                        const encoded = encodeURIComponent(metricsData);
-                        const separator = fullUrl.includes('?') ? '&' : '?';
-                        fullUrl += `${separator}metricsData=${encoded}`;
-                        console.log('✅ Appended metrics data to URL (' + encoded.length + ' bytes encoded)');
+                    console.log('📊 Metrics data found:', metricsDataStr ? `${metricsDataStr.length} bytes` : 'NONE');
+                    
+                    if (metricsDataStr) {
+                        try {
+                            // Parse all metrics and find the specific one for this chart
+                            const allMetrics = JSON.parse(metricsDataStr);
+                            const metricName = viewUrl.split('/metrics/trend/')[1].split('?')[0];
+                            const decodedMetricName = decodeURIComponent(metricName);
+                            const specificMetric = allMetrics.find(m => m.name === decodedMetricName);
+                            
+                            if (specificMetric) {
+                                // Pass only this metric's data
+                                const metricJson = JSON.stringify(specificMetric);
+                                const encoded = encodeURIComponent(metricJson);
+                                const separator = fullUrl.includes('?') ? '&' : '?';
+                                fullUrl += `${separator}metricData=${encoded}`;
+                                console.log('✅ Appended specific metric data to URL (' + encoded.length + ' bytes encoded)');
+                            } else {
+                                console.warn('⚠️ Metric not found:', decodedMetricName);
+                            }
+                        } catch (e) {
+                            console.error('❌ Failed to parse metrics data:', e);
+                        }
                     } else {
                         console.warn('⚠️ No metrics data found in localStorage for key:', storageKey);
                     }

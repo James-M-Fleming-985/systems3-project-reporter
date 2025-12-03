@@ -24,75 +24,87 @@
 const metricName = "{{ metric_name }}";
 const projectName = "{{ project_name }}";
 
+// Check if metric data was passed from server (for screenshot capture)
+const serverMetricData = {{ metric_data_json|safe if metric_data_json else 'null' }};
+
 console.log('=== METRIC TREND PAGE DEBUG ===');
 console.log('Looking for metric:', metricName);
 console.log('Project name from server:', projectName);
+console.log('Server-provided metric data:', serverMetricData ? 'YES' : 'NO');
 
-// List all localStorage keys to help debug
-console.log('All localStorage keys:');
-for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key.startsWith('customMetrics_')) {
-        console.log('  -', key);
+let metric = serverMetricData;
+
+// If no server data, try localStorage (for regular page views)
+if (!metric) {
+    console.log('No server data, checking localStorage...');
+    
+    // List all localStorage keys to help debug
+    console.log('All localStorage keys:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('customMetrics_')) {
+            console.log('  -', key);
+        }
+    }
+
+    // Load custom metrics from localStorage
+    const selectedProgram = localStorage.getItem('selectedProgram');
+    console.log('selectedProgram from localStorage:', selectedProgram);
+
+    let storageKey = selectedProgram ? `customMetrics_${selectedProgram}` : `customMetrics_${projectName}`;
+    console.log('Trying storage key:', storageKey);
+    let stored = localStorage.getItem(storageKey);
+
+    // If not found, try the other option
+    if (!stored && selectedProgram) {
+        console.log('Not found, trying project name:', projectName);
+        storageKey = `customMetrics_${projectName}`;
+        stored = localStorage.getItem(storageKey);
+    }
+
+    // If still not found, try without extension
+    if (!stored) {
+        const programNameWithoutExt = selectedProgram ? selectedProgram.replace('.xml', '') : projectName.replace('.xml', '');
+        storageKey = `customMetrics_${programNameWithoutExt}`;
+        console.log('Trying without extension:', storageKey);
+        stored = localStorage.getItem(storageKey);
+    }
+
+    console.log('Storage key used:', storageKey);
+    console.log('Stored data found:', !!stored);
+
+    if (stored) {
+        try {
+            const customMetrics = JSON.parse(stored);
+            console.log('Total metrics found:', customMetrics.length);
+            metric = customMetrics.find(m => m.name === metricName);
+            console.log('Found metric:', metric ? metric.name : 'NOT FOUND');
+        } catch (e) {
+            console.error('Failed to parse metrics:', e);
+        }
     }
 }
 
-// Load custom metrics from localStorage
-// Try selectedProgram first (matches upload page), then project name from server
-const selectedProgram = localStorage.getItem('selectedProgram');
-console.log('selectedProgram from localStorage:', selectedProgram);
-
-let storageKey = selectedProgram ? `customMetrics_${selectedProgram}` : `customMetrics_${projectName}`;
-console.log('Trying storage key:', storageKey);
-let stored = localStorage.getItem(storageKey);
-
-// If not found, try the other option
-if (!stored && selectedProgram) {
-    console.log('Not found, trying project name:', projectName);
-    storageKey = `customMetrics_${projectName}`;
-    stored = localStorage.getItem(storageKey);
-}
-
-// If still not found, try without extension
-if (!stored) {
-    const programNameWithoutExt = selectedProgram ? selectedProgram.replace('.xml', '') : projectName.replace('.xml', '');
-    storageKey = `customMetrics_${programNameWithoutExt}`;
-    console.log('Trying without extension:', storageKey);
-    stored = localStorage.getItem(storageKey);
-}
-
-console.log('Storage key used:', storageKey);
-console.log('Stored data found:', !!stored);
-
-if (!stored) {
+// Check if we have metric data (from server or localStorage)
+if (!metric) {
+    console.log('❌ No metric data available');
     document.getElementById('noDataMessage').classList.remove('hidden');
     document.getElementById('metricTrendChart').style.display = 'none';
 } else {
-    try {
-        const customMetrics = JSON.parse(stored);
-        console.log('Total metrics found:', customMetrics.length);
-        const metric = customMetrics.find(m => m.name === metricName);
-        console.log('Looking for metric:', metricName);
-        console.log('Found metric:', metric ? metric.name : 'NOT FOUND');
-        
-        if (!metric) {
-            document.getElementById('noDataMessage').classList.remove('hidden');
-            document.getElementById('metricTrendChart').style.display = 'none';
-        } else {
-            // Check if metric has data (either series or legacy history)
-            const hasSeries = metric.series && Object.keys(metric.series).length > 0;
-            const hasHistory = metric.history && metric.history.length > 0;
-            
-            if (!hasSeries && !hasHistory) {
-                document.getElementById('noDataMessage').classList.remove('hidden');
-                document.getElementById('metricTrendChart').style.display = 'none';
-            } else {
-                // Render the trend chart
-                renderTrendChart(metric);
-            }
-        }
-    } catch (e) {
-        console.error('Failed to parse metrics:', e);
+    // Check if metric has data (either series or legacy history)
+    const hasSeries = metric.series && Object.keys(metric.series).length > 0;
+    const hasHistory = metric.history && metric.history.length > 0;
+    
+    if (!hasSeries && !hasHistory) {
+        console.log('❌ Metric found but no data');
+        document.getElementById('noDataMessage').classList.remove('hidden');
+        document.getElementById('metricTrendChart').style.display = 'none';
+    } else {
+        console.log('✅ Rendering chart with data from:', serverMetricData ? 'SERVER' : 'LOCALSTORAGE');
+        // Render the trend chart
+        renderTrendChart(metric);
+    }
+}
         document.getElementById('noDataMessage').classList.remove('hidden');
         document.getElementById('metricTrendChart').style.display = 'none';
     }

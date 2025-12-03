@@ -79,38 +79,7 @@ class ScreenshotService:
                 await page.set_extra_http_headers(extra_headers)
                 logger.info(f"Set extra headers: {extra_headers}")
             
-            # Special handling for metric trend charts - inject localStorage before navigation
-            if '/metrics/trend/' in url:
-                from urllib.parse import urlparse, parse_qs
-                parsed = urlparse(url)
-                query_params = parse_qs(parsed.query)
-                
-                # Check if metricsData was passed in URL
-                if 'metricsData' in query_params:
-                    metrics_json = query_params['metricsData'][0]
-                    project = query_params.get('project', ['Unknown'])[0]
-                    storage_key = f'customMetrics_{project}'
-                    
-                    logger.info(f"💉 Injecting metrics data for project: {project}, size: {len(metrics_json)} bytes")
-                    
-                    # Escape the JSON properly for JavaScript string literal
-                    import json
-                    escaped_json = json.dumps(metrics_json)  # This escapes quotes, newlines, etc.
-                    
-                    # Inject localStorage before page loads
-                    await page.add_init_script(f'''
-                        localStorage.setItem('{storage_key}', {escaped_json});
-                        console.log('✅ Injected metrics data into localStorage:', '{storage_key}', localStorage.getItem('{storage_key}') ? 'SUCCESS' : 'FAILED');
-                    ''')
-                    logger.info(f"✅ localStorage injection script added")
-                    
-                    # Remove metricsData from URL to avoid passing huge param to page
-                    url = url.split('&metricsData=')[0].split('?metricsData=')[0]
-                    if parsed.query and 'project=' in parsed.query:
-                        url += f"?project={project}"
-                    logger.info(f"🔗 Cleaned URL: {url}")
-            
-            # Navigate to URL
+            # Navigate to URL (metric data now passed as query param, not localStorage)
             await page.goto(
                 url, wait_until='networkidle', timeout=self.timeout
             )
