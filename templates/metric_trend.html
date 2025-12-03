@@ -102,6 +102,8 @@ function renderTrendChart(metric) {
     console.log('Rendering chart for metric:', metric.name);
     console.log('Metric series:', metric.series);
     console.log('Series keys:', metric.series ? Object.keys(metric.series) : 'none');
+    console.log('Metric history:', metric.history);
+    console.log('History length:', metric.history ? metric.history.length : 0);
     
     const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899'];
     const data = [];
@@ -110,7 +112,7 @@ function renderTrendChart(metric) {
     // Check if metric has multiple series or single history
     if (metric.series && Object.keys(metric.series).length > 0) {
         // Multiple series - render multiple lines
-        console.log('Rendering multiple series:', Object.keys(metric.series).length);
+        console.log('✅ Rendering multiple series:', Object.keys(metric.series).length);
         Object.keys(metric.series).forEach((seriesName, idx) => {
             const seriesData = metric.series[seriesName];
             console.log(`Series "${seriesName}":`, seriesData.length, 'data points');
@@ -149,9 +151,13 @@ function renderTrendChart(metric) {
         });
     } else if (metric.history && metric.history.length > 0) {
         // Single series (legacy) - render single line
+        console.log('✅ Rendering legacy history with', metric.history.length, 'data points');
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
         const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
         const values = sortedHistory.map(h => h.value);
+        
+        console.log('History dates:', dates);
+        console.log('History values:', values);
         
         dates.forEach(d => allDates.add(d));
         
@@ -176,6 +182,17 @@ function renderTrendChart(metric) {
             text: sortedHistory.map(h => h.annotation || ''),
             hovertemplate: '<b>%{y}' + (metric.unit ? ' ' + metric.unit : '') + '</b><br>%{x}<br>%{text}<extra></extra>'
         });
+    } else {
+        console.error('❌ No series or history data found for metric');
+    }
+    
+    console.log('📊 Total data traces to plot:', data.length);
+    
+    if (data.length === 0) {
+        console.error('❌ No data to plot - showing no data message');
+        document.getElementById('noDataMessage').classList.remove('hidden');
+        document.getElementById('metricTrendChart').style.display = 'none';
+        return;
     }
     
     const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.241"  # Fix checkbox persistence and add extensive metric loading debug
+BUILD_VERSION = "1.0.242"  # Add comprehensive chart rendering debug logging
 
 
 # Setup logging
