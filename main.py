@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.242"  # Add comprehensive chart rendering debug logging
+BUILD_VERSION = "1.0.243"  # Add Plotly chart rendering wait in screenshot service
 
 
 # Setup logging
