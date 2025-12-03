@@ -91,17 +91,24 @@ class ScreenshotService:
                     project = query_params.get('project', ['Unknown'])[0]
                     storage_key = f'customMetrics_{project}'
                     
+                    logger.info(f"💉 Injecting metrics data for project: {project}, size: {len(metrics_json)} bytes")
+                    
+                    # Escape the JSON properly for JavaScript string literal
+                    import json
+                    escaped_json = json.dumps(metrics_json)  # This escapes quotes, newlines, etc.
+                    
                     # Inject localStorage before page loads
                     await page.add_init_script(f'''
-                        localStorage.setItem('{storage_key}', `{metrics_json}`);
-                        console.log('✅ Injected metrics data into localStorage:', '{storage_key}');
+                        localStorage.setItem('{storage_key}', {escaped_json});
+                        console.log('✅ Injected metrics data into localStorage:', '{storage_key}', localStorage.getItem('{storage_key}') ? 'SUCCESS' : 'FAILED');
                     ''')
-                    logger.info(f"💉 Injected metrics data for project: {project}")
+                    logger.info(f"✅ localStorage injection script added")
                     
                     # Remove metricsData from URL to avoid passing huge param to page
                     url = url.split('&metricsData=')[0].split('?metricsData=')[0]
                     if parsed.query and 'project=' in parsed.query:
                         url += f"?project={project}"
+                    logger.info(f"🔗 Cleaned URL: {url}")
             
             # Navigate to URL
             await page.goto(

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.248"  # Pass metrics data via URL and inject into localStorage for screenshot capture
+BUILD_VERSION = "1.0.249"  # Fix localStorage injection with proper JSON escaping and add debug logging
 
 
 # Setup logging

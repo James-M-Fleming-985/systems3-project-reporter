@@ -1013,11 +1013,15 @@ function initFabricCanvas(viewUrl) {
                     const project = '{{ project_name }}';
                     const storageKey = `customMetrics_${project}`;
                     const metricsData = localStorage.getItem(storageKey);
+                    console.log('🔍 Checking for metrics data:', storageKey);
+                    console.log('📊 Metrics data found:', metricsData ? `${metricsData.length} bytes` : 'NONE');
                     if (metricsData) {
                         const encoded = encodeURIComponent(metricsData);
                         const separator = fullUrl.includes('?') ? '&' : '?';
                         fullUrl += `${separator}metricsData=${encoded}`;
-                        console.log('📊 Appended metrics data to URL');
+                        console.log('✅ Appended metrics data to URL (' + encoded.length + ' bytes encoded)');
+                    } else {
+                        console.warn('⚠️ No metrics data found in localStorage for key:', storageKey);
                     }
                 }
                 
