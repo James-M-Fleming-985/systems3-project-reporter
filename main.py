@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.244"  # Fix Plotly SVG selector and increase wait time for chart rendering
+BUILD_VERSION = "1.0.245"  # Simplify Plotly wait to fixed 4 second delay
 
 
 # Setup logging
