@@ -643,11 +643,18 @@ function loadCustomMetricCheckboxes() {
         return;
     }
     
-    // Filter metrics that have history data
-    const metricsWithHistory = customMetrics.filter(m => m.history && m.history.length > 0);
+    // Filter metrics that have history OR series data
+    const metricsWithHistory = customMetrics.filter(m => {
+        const hasHistory = m.history && m.history.length > 0;
+        const hasSeries = m.series && Object.keys(m.series).length > 0;
+        return hasHistory || hasSeries;
+    });
+    
+    console.log('📊 Total custom metrics:', customMetrics.length);
+    console.log('📈 Metrics with data:', metricsWithHistory.length);
     
     if (metricsWithHistory.length === 0) {
-        console.log('No custom metrics with history data');
+        console.log('⚠️ No custom metrics with history or series data');
         return;
     }
     
@@ -676,14 +683,23 @@ function loadCustomMetricCheckboxes() {
         if (savedViews) {
             try {
                 const viewsArray = JSON.parse(savedViews);
-                checkbox.checked = viewsArray.includes(checkbox.value);
-            } catch (e) {}
+                const isChecked = viewsArray.includes(checkbox.value);
+                checkbox.checked = isChecked;
+                if (isChecked) {
+                    console.log('✅ Restored checkbox:', metric.name);
+                }
+            } catch (e) {
+                console.error('Failed to restore checkbox state:', e);
+            }
         }
         
         const content = document.createElement('div');
+        const dataInfo = metric.series && Object.keys(metric.series).length > 0 
+            ? `${Object.keys(metric.series).length} series` 
+            : `${metric.history?.length || 0} data points`;
         content.innerHTML = `
             <div class="font-semibold text-gray-900">📊 ${metric.name}</div>
-            <div class="text-sm text-gray-600 mt-1">Trend chart (${metric.history.length} data points)</div>
+            <div class="text-sm text-gray-600 mt-1">Trend chart (${dataInfo})</div>
         `;
         
         label.appendChild(checkbox);

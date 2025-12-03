@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.239"  # Fix canvas centering with proper Fabric.js zoom scaling
+BUILD_VERSION = "1.0.240"  # Fix custom metrics detection and add better logging
 
 
 # Setup logging
