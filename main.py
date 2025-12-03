@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.249"  # Fix localStorage injection with proper JSON escaping and add debug logging
+BUILD_VERSION = "1.0.250"  # Fix: Pass project_name to powerpoint_export template for metrics data lookup
 
 
 # Setup logging

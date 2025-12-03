@@ -74,7 +74,8 @@ async def powerpoint_export_page(request: Request):
         {
             "request": request,
             "selected_project": selected_project,
-            "all_projects": all_projects
+            "all_projects": all_projects,
+            "project_name": selected_project.project_name if selected_project else ""
         }
     )
 
