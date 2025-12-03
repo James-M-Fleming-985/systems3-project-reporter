@@ -90,15 +90,23 @@ class ScreenshotService:
                 try:
                     # Wait for the chart div to exist
                     await page.wait_for_selector('#metricTrendChart', timeout=5000)
-                    # Wait for Plotly to finish rendering (look for svg element inside)
-                    await page.wait_for_selector('#metricTrendChart .plotly', timeout=5000)
-                    # Extra delay for chart animation
-                    await page.wait_for_timeout(1500)
-                    logger.info("Plotly chart rendered successfully")
+                    logger.info("Chart div found, waiting for Plotly SVG...")
+                    # Wait for Plotly to finish rendering (look for the main svg inside the chart div)
+                    await page.wait_for_selector('#metricTrendChart .js-plotly-plot .plotly', timeout=10000)
+                    logger.info("Plotly SVG detected, waiting for complete render...")
+                    # Extra delay for chart animation and final rendering
+                    await page.wait_for_timeout(2000)
+                    logger.info("✅ Plotly chart fully rendered")
                 except Exception as e:
-                    logger.warning(f"Plotly wait failed, continuing anyway: {e}")
-                    # Still take screenshot even if Plotly detection fails
-                    await page.wait_for_timeout(1000)
+                    logger.warning(f"Plotly wait failed, trying alternate selector: {e}")
+                    try:
+                        # Fallback: wait for any SVG element in the chart div
+                        await page.wait_for_selector('#metricTrendChart svg.main-svg', timeout=5000)
+                        await page.wait_for_timeout(2000)
+                        logger.info("✅ Chart rendered (fallback method)")
+                    except Exception as e2:
+                        logger.warning(f"Fallback also failed: {e2}, using default delay")
+                        await page.wait_for_timeout(2000)
             
             # Wait for specific selector if provided
             if wait_for_selector:
