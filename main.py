@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.246"  # Increase Plotly wait to 6 seconds for reliable chart capture
+BUILD_VERSION = "1.0.247"  # Event-based Plotly detection - wait for chart ready signal instead of fixed timeout
 
 
 # Setup logging

@@ -318,7 +318,11 @@ function renderTrendChart(metric) {
         displayModeBar: false
     };
     
-    Plotly.newPlot('metricTrendChart', data, layout, config);
+    Plotly.newPlot('metricTrendChart', data, layout, config).then(() => {
+        // Signal that chart is fully rendered for screenshot capture
+        document.body.setAttribute('data-plotly-ready', 'true');
+        console.log('✅ Plotly chart fully rendered, set data-plotly-ready');
+    });
 }
 </script>
 {% endblock %}
