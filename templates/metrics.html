@@ -131,11 +131,19 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Custom Program Metrics</h3>
-            <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
-                + Add Metric
-            </button>
+            <div class="flex space-x-2">
+                <button id="exportMetricsBtn" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
+                    📥 Export
+                </button>
+                <button id="importMetricsBtn" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm">
+                    📤 Import
+                </button>
+                <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+                    + Add Metric
+                </button>
+            </div>
         </div>
-        <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program. Update values regularly to see trends.</p>
+        <p class="text-gray-500 text-sm mb-4">Define and track custom metrics specific to this program. Update values regularly to see trends. <strong>Pro tip:</strong> Export your metrics regularly to backup your data!</p>
         
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -568,6 +576,13 @@ function loadCustomMetrics() {
         return;
     }
     
+    // Debug: List ALL localStorage keys first
+    console.log('🔍 ALL localStorage keys:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        console.log(`  - ${key}`);
+    }
+    
     // Debug: List all localStorage keys that might contain custom metrics
     console.log('🔍 Checking all localStorage keys for custom metrics:');
     const allMetricKeys = [];
@@ -586,6 +601,16 @@ function loadCustomMetrics() {
                 }
             }
         }
+    }
+    
+    if (allMetricKeys.length === 0) {
+        console.error('❌ NO customMetrics keys found in localStorage at all!');
+        console.error('💔 Your custom metrics data has been lost.');
+        console.error('💡 This can happen if:');
+        console.error('   1. Browser localStorage was cleared');
+        console.error('   2. Using incognito/private mode');
+        console.error('   3. Different browser than before');
+        console.error('   4. Browser updated and cleared data');
     }
     
     // Try to find metrics with multiple key variations
@@ -1052,6 +1077,8 @@ function deleteMetric(index) {
 // Modal controls
 function initializeModalControls() {
     const addMetricBtn = document.getElementById('addMetricBtn');
+    const exportMetricsBtn = document.getElementById('exportMetricsBtn');
+    const importMetricsBtn = document.getElementById('importMetricsBtn');
     const cancelMetricBtn = document.getElementById('cancelMetricBtn');
     const addMetricModal = document.getElementById('addMetricModal');
     const addMetricForm = document.getElementById('addMetricForm');
@@ -1062,6 +1089,74 @@ function initializeModalControls() {
     
     const trendChartModal = document.getElementById('trendChartModal');
     const closeTrendChartBtn = document.getElementById('closeTrendChartBtn');
+    
+    // Export Metrics Button
+    if (exportMetricsBtn) {
+        exportMetricsBtn.addEventListener('click', function() {
+            if (customMetrics.length === 0) {
+                alert('No metrics to export!');
+                return;
+            }
+            
+            const selectedProgram = localStorage.getItem('selectedProgram');
+            const exportData = {
+                program: selectedProgram,
+                exportDate: new Date().toISOString(),
+                metrics: customMetrics
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `metrics-${selectedProgram.replace(/[^a-z0-9]/gi, '_')}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Metrics exported successfully');
+        });
+    }
+    
+    // Import Metrics Button
+    if (importMetricsBtn) {
+        importMetricsBtn.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        
+                        if (!importedData.metrics || !Array.isArray(importedData.metrics)) {
+                            alert('Invalid metrics file format!');
+                            return;
+                        }
+                        
+                        const confirmMsg = `Import ${importedData.metrics.length} metrics from "${importedData.program}"?\n\nThis will ${customMetrics.length > 0 ? 'REPLACE' : 'add'} your current metrics.`;
+                        
+                        if (confirm(confirmMsg)) {
+                            customMetrics = importedData.metrics;
+                            saveCustomMetrics();
+                            renderCustomMetrics();
+                            console.log('✅ Metrics imported successfully');
+                            alert(`✅ Successfully imported ${customMetrics.length} metrics!`);
+                        }
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        alert('Error importing metrics file. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+    }
     
     // Add/Edit Metric Modal
     if (addMetricBtn) {
