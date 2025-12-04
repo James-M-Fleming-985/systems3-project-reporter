@@ -570,10 +570,12 @@ function loadCustomMetrics() {
     
     // Debug: List all localStorage keys that might contain custom metrics
     console.log('🔍 Checking all localStorage keys for custom metrics:');
+    const allMetricKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.includes('customMetrics')) {
             console.log(`  - Found: ${key}`);
+            allMetricKeys.push(key);
             const data = localStorage.getItem(key);
             if (data) {
                 try {
@@ -586,9 +588,44 @@ function loadCustomMetrics() {
         }
     }
     
+    // Try to find metrics with multiple key variations
     const storageKey = `customMetrics_${selectedProgram}`;
+    let stored = localStorage.getItem(storageKey);
     console.log(`Looking for key: ${storageKey}`);
-    const stored = localStorage.getItem(storageKey);
+    
+    // If not found, try variations without file extensions
+    if (!stored) {
+        const cleanProgramName = selectedProgram
+            .replace(/\.xml$/i, '')
+            .replace(/\.xlsx$/i, '')
+            .replace(/\.yaml$/i, '')
+            .replace(/-\d+$/, '')  // Remove trailing numbers like -12
+            .trim();
+        
+        console.log(`🔍 Trying clean name: ${cleanProgramName}`);
+        const cleanKey = `customMetrics_${cleanProgramName}`;
+        stored = localStorage.getItem(cleanKey);
+        
+        if (stored) {
+            console.log(`✅ Found metrics under clean name: ${cleanKey}`);
+            // Migrate to new key
+            localStorage.setItem(storageKey, stored);
+            console.log(`✅ Migrated metrics to: ${storageKey}`);
+        }
+    }
+    
+    // If still not found, check if there's only one customMetrics key and use it
+    if (!stored && allMetricKeys.length === 1) {
+        console.log(`💡 Found exactly one customMetrics key, attempting to use it`);
+        stored = localStorage.getItem(allMetricKeys[0]);
+        if (stored) {
+            console.log(`✅ Using metrics from: ${allMetricKeys[0]}`);
+            // Migrate to new key
+            localStorage.setItem(storageKey, stored);
+            console.log(`✅ Migrated metrics to: ${storageKey}`);
+        }
+    }
+    
     console.log('Custom metrics from storage:', stored);
     
     if (stored) {
