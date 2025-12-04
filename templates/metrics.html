@@ -969,6 +969,10 @@ function updateMetricValue(index) {
 function showTrendChart(index) {
     const metric = customMetrics[index];
     
+    console.log('📊 showTrendChart called for metric:', metric.name);
+    console.log('📊 Metric history:', metric.history);
+    console.log('📊 Metric series:', metric.series);
+    
     // Check if we have multi-series data
     const hasSeries = metric.series && Object.keys(metric.series).length > 0;
     
@@ -976,6 +980,9 @@ function showTrendChart(index) {
         alert('No history available for this metric yet.');
         return;
     }
+    
+    console.log(`📊 Rendering chart with ${hasSeries ? 'multi-series' : 'single-series'} mode`);
+    console.log(`📊 History array length: ${metric.history ? metric.history.length : 0}`);
     
     const selectedProgram = localStorage.getItem('selectedProgram');
     const annotationPositionsKey = `annotationPositions_${selectedProgram}_${metric.name}`;
@@ -1397,6 +1404,10 @@ function initializeModalControls() {
             const dateValue = document.getElementById('updateMetricDate').value;
             const annotation = document.getElementById('updateMetricAnnotation').value.trim();
             
+            console.log('📝 Updating metric at index:', index);
+            console.log('📝 New value:', newValue, 'Date:', dateValue);
+            console.log('📝 History before update:', customMetrics[index].history);
+            
             // Add to history with user-specified date and annotation
             if (!customMetrics[index].history) {
                 customMetrics[index].history = [];
@@ -1417,11 +1428,14 @@ function initializeModalControls() {
             
             customMetrics[index].history.push(historyEntry);
             
+            console.log('📝 History after update:', customMetrics[index].history);
+            
             // Update current value
             customMetrics[index].value = newValue;
             customMetrics[index].lastUpdated = selectedDate.toISOString();
             
             await saveCustomMetrics();
+            console.log('✅ Metrics saved to server');
             renderCustomMetrics();
             
             updateValueModal.classList.add('hidden');
