@@ -24,12 +24,13 @@ class CustomMetric(BaseModel):
     """Custom metric data model"""
     name: str
     value: float
-    target: float
+    target: Optional[float] = None
     targetDate: Optional[str] = None
     unit: Optional[str] = None
     lastUpdated: str
     history: Optional[List[Dict[str, Any]]] = None
     series: Optional[Dict[str, Any]] = None
+    status: Optional[str] = None  # Allow status field from frontend
 
 
 class MetricsList(BaseModel):
