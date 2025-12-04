@@ -562,11 +562,11 @@ function createScheduleTrendChart(trendData) {
     console.log('✅ Schedule trend chart plotted');
 }
 
-// Custom Metrics Management
+// Custom Metrics Management - Server-side persistence
 let customMetrics = [];
 
-// Load custom metrics from localStorage
-function loadCustomMetrics() {
+// Load custom metrics from server (with localStorage fallback for migration)
+async function loadCustomMetrics() {
     console.log('loadCustomMetrics called');
     const selectedProgram = localStorage.getItem('selectedProgram');
     console.log('Selected program for custom metrics:', selectedProgram);
@@ -576,7 +576,135 @@ function loadCustomMetrics() {
         return;
     }
     
+    try {
+        // Try to load from server first
+        console.log('📡 Loading metrics from server...');
+        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(selectedProgram)}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.metrics && data.metrics.length > 0) {
+                customMetrics = data.metrics;
+                console.log(`✅ Loaded ${customMetrics.length} metrics from server`);
+                renderCustomMetrics();
+                return;
+            } else {
+                console.log('Server returned no metrics, checking localStorage for migration...');
+            }
+        } else {
+            console.warn('Server metrics API not available, falling back to localStorage');
+        }
+    } catch (error) {
+        console.warn('Error loading from server, falling back to localStorage:', error);
+    }
+    
+    // Fallback: Try localStorage and migrate to server if found
+    console.log('🔍 Checking localStorage for metrics to migrate...');
+    await loadAndMigrateFromLocalStorage(selectedProgram);
+}
+
+// Migrate localStorage metrics to server
+async function loadAndMigrateFromLocalStorage(selectedProgram) {
+    
+// Migrate localStorage metrics to server
+async function loadAndMigrateFromLocalStorage(selectedProgram) {
     // Debug: List ALL localStorage keys first
+    console.log('🔍 ALL localStorage keys:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        console.log(`  - ${key}`);
+    }
+    
+    // Debug: List all localStorage keys that might contain custom metrics
+    console.log('🔍 Checking all localStorage keys for custom metrics:');
+    const allMetricKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes('customMetrics')) {
+            console.log(`  - Found: ${key}`);
+            allMetricKeys.push(key);
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    console.log(`    └─ Contains ${parsed.length} metrics`);
+                } catch (e) {
+                    console.log(`    └─ Invalid JSON`);
+                }
+            }
+        }
+    }
+    
+    if (allMetricKeys.length === 0) {
+        console.error('❌ NO customMetrics keys found in localStorage at all!');
+        console.error('💔 No data to migrate.');
+        return;
+    }
+    
+    // Try to find metrics with multiple key variations
+    const storageKey = `customMetrics_${selectedProgram}`;
+    let stored = localStorage.getItem(storageKey);
+    console.log(`Looking for key: ${storageKey}`);
+    
+    // If not found, try variations without file extensions
+    if (!stored) {
+        const cleanProgramName = selectedProgram
+            .replace(/\.xml$/i, '')
+            .replace(/\.xlsx$/i, '')
+            .replace(/\.yaml$/i, '')
+            .replace(/-\d+$/, '')  // Remove trailing numbers like -12
+            .trim();
+        
+        console.log(`🔍 Trying clean name: ${cleanProgramName}`);
+        const cleanKey = `customMetrics_${cleanProgramName}`;
+        stored = localStorage.getItem(cleanKey);
+        
+        if (stored) {
+            console.log(`✅ Found metrics under clean name: ${cleanKey}`);
+        }
+    }
+    
+    // If still not found, check if there's only one customMetrics key and use it
+    if (!stored && allMetricKeys.length === 1) {
+        console.log(`💡 Found exactly one customMetrics key, attempting to use it`);
+        stored = localStorage.getItem(allMetricKeys[0]);
+        if (stored) {
+            console.log(`✅ Using metrics from: ${allMetricKeys[0]}`);
+        }
+    }
+    
+    if (stored) {
+        try {
+            customMetrics = JSON.parse(stored);
+            console.log('✅ Parsed custom metrics from localStorage:', customMetrics);
+            
+            // Migrate old metrics to include history if needed
+            customMetrics = customMetrics.map(metric => {
+                if (!metric.history) {
+                    metric.history = [{
+                        value: metric.value,
+                        date: metric.lastUpdated
+                    }];
+                }
+                if (!metric.targetDate) {
+                    metric.targetDate = null;
+                }
+                return metric;
+            });
+            
+            // Migrate to server
+            console.log('📤 Migrating metrics to server...');
+            await saveCustomMetrics();
+            console.log('✅ Migration complete! Metrics now stored on server.');
+            
+            renderCustomMetrics();
+        } catch (error) {
+            console.error('Error parsing/migrating localStorage metrics:', error);
+        }
+    } else {
+        console.log('❌ No stored custom metrics found');
+    }
+}
     console.log('🔍 ALL localStorage keys:');
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -680,12 +808,42 @@ function loadCustomMetrics() {
 }
 
 // Save custom metrics to localStorage
-function saveCustomMetrics() {
+// Save custom metrics to server (with localStorage backup)
+async function saveCustomMetrics() {
     const selectedProgram = localStorage.getItem('selectedProgram');
     if (!selectedProgram) return;
     
-    const storageKey = `customMetrics_${selectedProgram}`;
-    localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+    try {
+        // Save to server
+        console.log('💾 Saving metrics to server...');
+        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(selectedProgram)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ metrics: customMetrics })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log(`✅ Saved ${result.count} metrics to server`);
+            
+            // Also save to localStorage as backup
+            const storageKey = `customMetrics_${selectedProgram}`;
+            localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+            console.log('✅ Backup saved to localStorage');
+        } else {
+            console.error('Failed to save to server, saving to localStorage only');
+            const storageKey = `customMetrics_${selectedProgram}`;
+            localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+        }
+    } catch (error) {
+        console.error('Error saving to server:', error);
+        // Fallback to localStorage
+        const storageKey = `customMetrics_${selectedProgram}`;
+        localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+        console.log('⚠️  Saved to localStorage only (server unavailable)');
+    }
 }
 
 // Calculate status and color
@@ -1142,7 +1300,7 @@ function initializeModalControls() {
                         
                         if (confirm(confirmMsg)) {
                             customMetrics = importedData.metrics;
-                            saveCustomMetrics();
+                            await saveCustomMetrics();
                             renderCustomMetrics();
                             console.log('✅ Metrics imported successfully');
                             alert(`✅ Successfully imported ${customMetrics.length} metrics!`);
@@ -1213,7 +1371,7 @@ function initializeModalControls() {
                 };
             }
             
-            saveCustomMetrics();
+            await saveCustomMetrics();
             renderCustomMetrics();
             
             addMetricModal.classList.add('hidden');
@@ -1263,7 +1421,7 @@ function initializeModalControls() {
             customMetrics[index].value = newValue;
             customMetrics[index].lastUpdated = selectedDate.toISOString();
             
-            saveCustomMetrics();
+            await saveCustomMetrics();
             renderCustomMetrics();
             
             updateValueModal.classList.add('hidden');
@@ -1290,7 +1448,7 @@ function initializeModalControls() {
     }
     
     if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
+        confirmDeleteBtn.addEventListener('click', async function() {
             const index = parseInt(deleteConfirmModal.dataset.deleteIndex);
             console.log('Deleting metric at index:', index, 'Metric:', customMetrics[index]);
             console.log('Metrics before delete:', customMetrics.length, customMetrics);
@@ -1299,8 +1457,8 @@ function initializeModalControls() {
             
             console.log('Metrics after delete:', customMetrics.length, customMetrics);
             
-            saveCustomMetrics();
-            console.log('Metrics saved to localStorage');
+            await saveCustomMetrics();
+            console.log('Metrics saved to server');
             
             renderCustomMetrics();
             console.log('Table re-rendered');
@@ -1512,7 +1670,7 @@ function showFieldMapping(data) {
 }
 
 // Import metrics data
-function importMetricsData(data, metricNameCol, dateCol, valueCol) {
+async function importMetricsData(data, metricNameCol, dateCol, valueCol) {
     const { rows } = data;
     let importCount = 0;
     let updateCount = 0;
@@ -1576,7 +1734,7 @@ function importMetricsData(data, metricNameCol, dateCol, valueCol) {
         }
     });
     
-    saveCustomMetrics();
+    await saveCustomMetrics();
     renderCustomMetrics();
     
     alert(`Import complete!\n\nMetrics imported: ${importCount}\nData points added: ${updateCount}`);

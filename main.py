@@ -163,6 +163,14 @@ app.include_router(milestones.router, tags=["milestones"])
 # Admin router has: /admin/cleanup-duplicates
 app.include_router(admin.router, tags=["admin"])
 
+# Custom Metrics router has: /api/custom-metrics/*
+try:
+    from routers import custom_metrics
+    app.include_router(custom_metrics.router, tags=["custom-metrics"])
+    logger.info("✅ Custom Metrics server-side persistence enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Custom Metrics API disabled: {e}")
+
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:
     from routers import powerpoint_reports
