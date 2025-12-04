@@ -634,10 +634,8 @@
         let programName = localStorage.getItem('selectedProgram') || '';
         console.log('Selected program:', programName);
         
-        // Clean program name
-        programName = programName.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').trim();
-        programName = programName.replace(/-\d+$/, '').trim();
-        console.log('Cleaned program name:', programName);
+        // Do NOT clean the program name - use it exactly as stored to match the metrics page
+        console.log('Using program name for storage key:', programName);
 
         if (uploadMetricsBtn) {
             console.log('Adding click listener to metrics upload button');
@@ -920,6 +918,7 @@
             }
             
             const { rows } = parsedFileData;
+            console.log('   📋 Total rows in CSV:', rows.length);
             
             // Load existing metrics
             const storageKey = \`customMetrics_\${programName}\`;
@@ -930,11 +929,14 @@
             let importCount = 0;
             let updateCount = 0;
             
-            rows.forEach(row => {
+            console.log('   🔄 Processing rows...');
+            rows.forEach((row, rowIndex) => {
                 const metricName = row[metricNameCol];
                 const dateStr = row[dateCol];
                 const valueStr = row[valueCol];
                 const annotation = annotationCol ? row[annotationCol] : '';
+                
+                console.log(\`   Row \${rowIndex}: metric="\${metricName}", date="\${dateStr}", value="\${valueStr}"\`);
                 
                 if (!metricName || !dateStr || !valueStr) return;
                 
@@ -1000,11 +1002,14 @@
             try {
                 console.log('💾 Saving imported metrics to server...');
                 console.log('   programName:', programName);
-                console.log('   Adding .xml, final URL param:', programName + '.xml');
                 console.log('   Number of metrics to save:', customMetrics.length);
-                console.log('   Metrics:', customMetrics);
+                console.log('   Metrics detail:');
+                customMetrics.forEach((m, i) => {
+                    console.log(`   [${i}] ${m.name}: ${m.history?.length || 0} history points`);
+                });
+                console.log('   Full metrics object:', JSON.stringify(customMetrics, null, 2));
                 
-                const apiUrl = `/api/custom-metrics/${encodeURIComponent(programName + '.xml')}`;
+                const apiUrl = `/api/custom-metrics/${encodeURIComponent(programName)}`;
                 console.log('   Full API URL:', apiUrl);
                 
                 const response = await fetch(apiUrl, {

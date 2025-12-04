@@ -46,6 +46,11 @@ class CustomMetricsRepository:
                 'metrics': metrics
             }
             
+            # Detailed logging
+            logger.info(f"💾 Saving {len(metrics)} metrics for '{project_name}' to {file_path}")
+            for i, metric in enumerate(metrics):
+                logger.info(f"   [{i}] {metric.get('name', 'UNNAMED')}: {len(metric.get('history', []))} history points")
+            
             with open(file_path, 'w', encoding='utf-8') as f:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
             
@@ -70,7 +75,7 @@ class CustomMetricsRepository:
             file_path = self._get_metrics_file_path(project_name)
             
             if not file_path.exists():
-                logger.info(f"No metrics file found for '{project_name}'")
+                logger.info(f"No metrics file found for '{project_name}' at {file_path}")
                 return []
             
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -81,7 +86,9 @@ class CustomMetricsRepository:
                 return []
             
             metrics = data['metrics']
-            logger.info(f"✅ Loaded {len(metrics)} metrics for '{project_name}'")
+            logger.info(f"📂 Loaded {len(metrics)} metrics for '{project_name}'")
+            for i, metric in enumerate(metrics):
+                logger.info(f"   [{i}] {metric.get('name', 'UNNAMED')}: {len(metric.get('history', []))} history points")
             return metrics
             
         except Exception as e:

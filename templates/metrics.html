@@ -583,9 +583,14 @@ async function loadCustomMetrics() {
         
         if (response.ok) {
             const data = await response.json();
+            console.log('📦 Server response:', data);
             if (data.success && data.metrics && data.metrics.length > 0) {
                 customMetrics = data.metrics;
                 console.log(`✅ Loaded ${customMetrics.length} metrics from server`);
+                console.log('📊 Metrics detail:');
+                customMetrics.forEach((m, i) => {
+                    console.log(`   [${i}] ${m.name}: value=${m.value}, history=${m.history?.length || 0} points`);
+                });
                 renderCustomMetrics();
                 return;
             } else {
@@ -878,7 +883,11 @@ function getMetricStatus(value, target) {
 
 // Render custom metrics table
 function renderCustomMetrics() {
-    console.log('renderCustomMetrics called, customMetrics:', customMetrics);
+    console.log('🎨 renderCustomMetrics called');
+    console.log('📊 Number of metrics to render:', customMetrics.length);
+    customMetrics.forEach((m, i) => {
+        console.log(`   [${i}] ${m.name}`);
+    });
     const tbody = document.getElementById('customMetricsTable');
     const noMetricsRow = document.getElementById('noMetricsRow');
     
