@@ -347,6 +347,11 @@ console.log('📊 METRICS - Rendering metrics for', projectName);
 
 // All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
+    // Set selectedProgram in localStorage for custom metrics
+    // This ensures custom metrics are loaded for the correct project
+    localStorage.setItem('selectedProgram', projectName);
+    console.log('🔧 Set selectedProgram to:', projectName);
+    
     // Update UI with project name
     const programNameSpan = document.getElementById('selectedProgramNameMetrics');
     if (programNameSpan) {
@@ -563,13 +568,32 @@ function loadCustomMetrics() {
         return;
     }
     
+    // Debug: List all localStorage keys that might contain custom metrics
+    console.log('🔍 Checking all localStorage keys for custom metrics:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes('customMetrics')) {
+            console.log(`  - Found: ${key}`);
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    console.log(`    └─ Contains ${parsed.length} metrics`);
+                } catch (e) {
+                    console.log(`    └─ Invalid JSON`);
+                }
+            }
+        }
+    }
+    
     const storageKey = `customMetrics_${selectedProgram}`;
+    console.log(`Looking for key: ${storageKey}`);
     const stored = localStorage.getItem(storageKey);
     console.log('Custom metrics from storage:', stored);
     
     if (stored) {
         customMetrics = JSON.parse(stored);
-        console.log('Parsed custom metrics:', customMetrics);
+        console.log('✅ Parsed custom metrics:', customMetrics);
         
         // Migrate old metrics to include history if needed
         customMetrics = customMetrics.map(metric => {
@@ -588,7 +612,8 @@ function loadCustomMetrics() {
         console.log('Calling renderCustomMetrics...');
         renderCustomMetrics();
     } else {
-        console.log('No stored custom metrics found');
+        console.log('❌ No stored custom metrics found for this program');
+        console.log('💡 You may need to re-create your custom metrics');
     }
 }
 

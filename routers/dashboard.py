@@ -235,9 +235,11 @@ async def program_metrics(request: Request):
     # Calculate metrics for ONLY this project
     projects = [project]
     logger.info(f"📊 Metrics: {project.project_name}")
+    logger.info(f"📊 Project has {len(getattr(project, 'milestones', []))} milestones")
     
     metrics_calculator = MetricsCalculator()
     metrics = metrics_calculator.calculate_program_metrics(projects)
+    logger.info(f"📊 Calculated metrics: {json.dumps(metrics, indent=2, default=str)}")
     
     # Try to load risk data for the first program
     # In future, this should be based on selected program from frontend
