@@ -816,6 +816,7 @@ async function saveCustomMetrics() {
     try {
         // Save to server
         console.log('💾 Saving metrics to server...');
+        console.log('💾 Payload:', JSON.stringify({ metrics: customMetrics }, null, 2));
         const response = await fetch(`/api/custom-metrics/${encodeURIComponent(selectedProgram)}`, {
             method: 'POST',
             headers: {
@@ -833,7 +834,13 @@ async function saveCustomMetrics() {
             localStorage.setItem(storageKey, JSON.stringify(customMetrics));
             console.log('✅ Backup saved to localStorage');
         } else {
-            console.error('Failed to save to server, saving to localStorage only');
+            const errorText = await response.text();
+            console.error('❌ Failed to save to server:', response.status, errorText);
+            console.error('📋 Response details:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorText
+            });
             const storageKey = `customMetrics_${selectedProgram}`;
             localStorage.setItem(storageKey, JSON.stringify(customMetrics));
         }
