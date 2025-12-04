@@ -1031,9 +1031,13 @@ function showTrendChart(index) {
     } else {
         // Single-series mode: use legacy history array
         console.log('Rendering single-series chart from history array');
+        console.log('Full history array:', metric.history);
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        console.log('Sorted history:', sortedHistory);
         const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
         const values = sortedHistory.map(h => h.value);
+        console.log('Chart dates:', dates);
+        console.log('Chart values:', values);
         allDates = dates;
         
         data.push({
