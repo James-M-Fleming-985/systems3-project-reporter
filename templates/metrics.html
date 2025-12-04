@@ -1459,7 +1459,33 @@ function initializeModalControls() {
                 customMetrics[index].history.push(historyEntry);
             }
             
+            // Also update series data if it exists
+            if (customMetrics[index].series && Object.keys(customMetrics[index].series).length > 0) {
+                // Update each series with the new data point
+                Object.keys(customMetrics[index].series).forEach(seriesName => {
+                    const seriesData = customMetrics[index].series[seriesName];
+                    
+                    // Check if entry for this date exists in series
+                    const seriesExistingIndex = seriesData.findIndex(entry => {
+                        const entryDate = new Date(entry.date).toISOString().split('T')[0];
+                        const newDate = newDateISO.split('T')[0];
+                        return entryDate === newDate;
+                    });
+                    
+                    if (seriesExistingIndex !== -1) {
+                        // Update existing series entry
+                        seriesData[seriesExistingIndex] = historyEntry;
+                        console.log(`📝 Updated series "${seriesName}" at index ${seriesExistingIndex}`);
+                    } else {
+                        // Add new series entry
+                        seriesData.push(historyEntry);
+                        console.log(`📝 Added new entry to series "${seriesName}"`);
+                    }
+                });
+            }
+            
             console.log('📝 History after update:', customMetrics[index].history);
+            console.log('📝 Series after update:', customMetrics[index].series);
             
             // Update current value
             customMetrics[index].value = newValue;
