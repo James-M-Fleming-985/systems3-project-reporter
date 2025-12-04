@@ -500,7 +500,7 @@
                         <div class="ml-4">
                             <h3 class="text-lg font-semibold text-gray-900">Metrics Import Successful!</h3>
                             <p class="mt-2 text-sm text-gray-600">
-                                Your metric data has been imported successfully.
+                                Your metric data has been imported and saved to the server.
                             </p>
                             <p class="mt-1 text-sm text-gray-600">
                                 Metrics imported: <strong>${importCount}</strong><br>
@@ -511,22 +511,29 @@
                     
                     <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
                         <p class="text-sm text-green-700">
-                            <strong>✓</strong> Navigate to the Metrics tab to view and manage your imported data.
+                            <strong>✓</strong> Click the Metrics tab above to view your imported data.
                         </p>
                     </div>
                     
                     <div class="flex justify-end">
                         <button id="closeMetricsSuccessBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                            Close
+                            Got it!
                         </button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
             
-            // Close button handler
+            // Close button handler - stays on current page
             document.getElementById('closeMetricsSuccessBtn').addEventListener('click', () => {
                 modal.remove();
+            });
+            
+            // Prevent any click outside from navigating
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
             });
         }
 
@@ -891,7 +898,7 @@
             });
         }
 
-        function importMetricsData() {
+        async function importMetricsData() {
             const metricNameCol = document.getElementById('mapMetricName').value;
             const dateCol = document.getElementById('mapDate').value;
             const valueCol = document.getElementById('mapValue').value;
@@ -977,8 +984,37 @@
                 }
             });
             
-            // Save metrics
-            localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+            // Save metrics to server first, then localStorage backup
+            try {
+                console.log('💾 Saving imported metrics to server...');
+                const response = await fetch(`/api/custom-metrics/${encodeURIComponent(programName + '.xml')}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ metrics: customMetrics })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(`✅ Saved ${result.count} metrics to server successfully`);
+                    
+                    // Also save to localStorage as backup
+                    localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+                    console.log('✅ Backup saved to localStorage');
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Failed to save to server:', response.status, errorText);
+                    // Fallback to localStorage only
+                    localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+                    console.log('⚠️ Saved to localStorage only (server save failed)');
+                }
+            } catch (error) {
+                console.error('Error saving to server:', error);
+                // Fallback to localStorage only
+                localStorage.setItem(storageKey, JSON.stringify(customMetrics));
+                console.log('⚠️ Saved to localStorage only (server unavailable)');
+            }
             
             closeMetricsUploadModal();
             showMetricsImportSuccessModal(importCount, updateCount);
