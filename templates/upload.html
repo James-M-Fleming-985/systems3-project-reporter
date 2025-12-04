@@ -903,10 +903,16 @@
         }
 
         async function importMetricsData() {
+            console.log('========================================');
+            console.log('🚀 importMetricsData() called');
+            console.log('   programName at start:', programName);
+            
             const metricNameCol = document.getElementById('mapMetricName').value;
             const dateCol = document.getElementById('mapDate').value;
             const valueCol = document.getElementById('mapValue').value;
             const annotationCol = document.getElementById('mapAnnotation').value;
+            
+            console.log('   Column mappings:', { metricNameCol, dateCol, valueCol, annotationCol });
             
             if (!metricNameCol || !dateCol || !valueCol) {
                 alert('Please select metric name, date, and value columns');
@@ -917,7 +923,9 @@
             
             // Load existing metrics
             const storageKey = \`customMetrics_\${programName}\`;
+            console.log('   Storage key:', storageKey);
             let customMetrics = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            console.log('   Existing metrics in localStorage:', customMetrics.length);
             
             let importCount = 0;
             let updateCount = 0;
@@ -991,13 +999,24 @@
             // Save metrics to server first, then localStorage backup
             try {
                 console.log('💾 Saving imported metrics to server...');
-                const response = await fetch(`/api/custom-metrics/${encodeURIComponent(programName + '.xml')}`, {
+                console.log('   programName:', programName);
+                console.log('   Adding .xml, final URL param:', programName + '.xml');
+                console.log('   Number of metrics to save:', customMetrics.length);
+                console.log('   Metrics:', customMetrics);
+                
+                const apiUrl = `/api/custom-metrics/${encodeURIComponent(programName + '.xml')}`;
+                console.log('   Full API URL:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ metrics: customMetrics })
                 });
+                
+                console.log('   Response status:', response.status);
+                console.log('   Response OK:', response.ok);
                 
                 if (response.ok) {
                     const result = await response.json();
