@@ -87,7 +87,7 @@
                     <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         📊 Export PPT
                     </a>
-                    <a href="/upload" class="hover:bg-blue-700 px-3 py-2 rounded transition bg-blue-700">
+                    <a href="/upload{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition bg-blue-700">
                         📤 Upload
                     </a>
                     <a href="/subscription" class="hover:bg-blue-700 px-3 py-2 rounded transition">
