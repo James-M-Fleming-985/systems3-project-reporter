@@ -1419,10 +1419,18 @@ function initializeModalControls() {
             
             // Convert date to ISO string at noon UTC to avoid timezone issues
             const selectedDate = new Date(dateValue + 'T12:00:00Z');
+            const newDateISO = selectedDate.toISOString();
+            
+            // Check if entry for this date already exists
+            const existingIndex = customMetrics[index].history.findIndex(entry => {
+                const entryDate = new Date(entry.date).toISOString().split('T')[0];
+                const newDate = newDateISO.split('T')[0];
+                return entryDate === newDate;
+            });
             
             const historyEntry = {
                 value: newValue,
-                date: selectedDate.toISOString()
+                date: newDateISO
             };
             
             // Add annotation if provided
@@ -1430,7 +1438,15 @@ function initializeModalControls() {
                 historyEntry.annotation = annotation;
             }
             
-            customMetrics[index].history.push(historyEntry);
+            if (existingIndex !== -1) {
+                // Update existing entry
+                console.log(`📝 Updating existing entry at index ${existingIndex} for date ${dateValue}`);
+                customMetrics[index].history[existingIndex] = historyEntry;
+            } else {
+                // Add new entry
+                console.log(`📝 Adding new entry for date ${dateValue}`);
+                customMetrics[index].history.push(historyEntry);
+            }
             
             console.log('📝 History after update:', customMetrics[index].history);
             
