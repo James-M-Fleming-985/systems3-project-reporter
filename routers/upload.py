@@ -928,16 +928,23 @@ async def set_default_template(template_id: str):
 async def get_template_preview(template_id: str, slide_index: int = 0):
     """Get a preview image of a template slide.
     
-    Renders the actual template layout (title bar, logo, footer, content area)
-    based on the slide master structure, suitable for canvas background.
+    Dynamically renders all visual elements from the template including:
+    - All images (logos, graphics) at their actual positions
+    - Shape outlines and fills
+    - Placeholder areas (title, content, footer)
+    - Lines and separators
+    
+    This works with any template layout.
     """
     from fastapi.responses import FileResponse
     from pptx import Presentation
     from pptx.util import Emu, Inches
     from pptx.enum.shapes import MSO_SHAPE_TYPE
+    from pptx.enum.dml import MSO_THEME_COLOR
     from PIL import Image, ImageDraw, ImageFont
     from io import BytesIO
     import zipfile
+    import re
     
     try:
         template_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.pptx"
@@ -956,141 +963,193 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
                 metadata = yaml.safe_load(f)
                 template_name = metadata.get('name', template_id)
         
-        # Check if cached preview exists (v3 = layout-based preview)
+        # Check if cached preview exists (v4 = full dynamic rendering)
         cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
         cache_dir.mkdir(exist_ok=True)
-        cached_preview = cache_dir / f"{template_id}_slide{slide_index}_v3.png"
+        cached_preview = cache_dir / f"{template_id}_slide{slide_index}_v4.png"
         
         if cached_preview.exists():
             return FileResponse(cached_preview, media_type="image/png")
         
-        # Create template preview based on actual slide master layout
+        # Create template preview by rendering all elements
         try:
             prs = Presentation(template_path)
             
-            # Canvas at 1920x1080 (16:9 matching slide ratio)
-            # Scale factor from slide EMU to pixels
-            slide_width_emu = prs.slide_width
-            slide_height_emu = prs.slide_height
-            scale_x = 1920 / (slide_width_emu / 914400)  # pixels per inch
-            scale_y = 1080 / (slide_height_emu / 914400)
+            # Scale factors: slide EMU to 1920x1080 pixels
+            px_per_emu_x = 1920 / prs.slide_width
+            px_per_emu_y = 1080 / prs.slide_height
             
-            def emu_to_px_x(emu):
-                return int((emu / 914400) * scale_x / (prs.slide_width.inches))
-            
-            def emu_to_px_y(emu):
-                return int((emu / 914400) * scale_y / (prs.slide_height.inches))
+            def to_px(left, top, width, height):
+                return (
+                    int(left * px_per_emu_x),
+                    int(top * px_per_emu_y),
+                    int(width * px_per_emu_x),
+                    int(height * px_per_emu_y)
+                )
             
             # Create white base image
             img = Image.new('RGBA', (1920, 1080), color=(255, 255, 255, 255))
             draw = ImageDraw.Draw(img)
             
-            # Extract logo from PPTX media
-            logo_image = None
-            with zipfile.ZipFile(template_path, 'r') as zip_ref:
-                media_files = [f for f in zip_ref.namelist() if f.startswith('ppt/media/') and 
-                              (f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg'))]
-                
-                for media_file in media_files:
-                    try:
-                        with zip_ref.open(media_file) as f:
-                            img_data = f.read()
-                            temp_img = Image.open(BytesIO(img_data))
-                            # Find small, wide images (logos)
-                            if temp_img.height < 100 and temp_img.width < 400:
-                                if logo_image is None or temp_img.width > logo_image.width:
-                                    logo_image = temp_img.copy()
-                    except Exception as e:
-                        pass
+            # Load all images from the PPTX media folder
+            media_images = {}
+            with zipfile.ZipFile(template_path, 'r') as zf:
+                for name in zf.namelist():
+                    if name.startswith('ppt/media/') and any(name.endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif']):
+                        try:
+                            with zf.open(name) as f:
+                                media_images[name.split('/')[-1]] = Image.open(BytesIO(f.read())).copy()
+                        except:
+                            pass
             
-            # Parse slide master to understand layout
-            master = prs.slide_master
-            title_area = None
-            content_area = None
-            footer_y = 1080
+            logger.info(f"Loaded {len(media_images)} media images from template")
             
-            for shape in master.shapes:
-                left_px = emu_to_px_x(shape.left)
-                top_px = emu_to_px_y(shape.top)
-                width_px = emu_to_px_x(shape.width)
-                height_px = emu_to_px_y(shape.height)
-                
-                name_lower = shape.name.lower()
-                
-                # Identify title/header area
-                if 'titre' in name_lower or 'title' in name_lower:
-                    title_area = (left_px, top_px, left_px + width_px, top_px + height_px)
-                    # Draw subtle title bar background
-                    draw.rectangle([(0, 0), (1920, top_px + height_px + 10)], 
-                                   fill=(248, 249, 252, 255))
-                
-                # Identify footer area  
-                if 'pied' in name_lower or 'footer' in name_lower:
-                    footer_y = min(footer_y, top_px)
-                
-                # Identify content area
-                if 'texte' in name_lower or 'content' in name_lower or 'text' in name_lower:
-                    if shape.height > 500 * 914400:  # Large text areas are content
-                        content_area = (left_px, top_px, left_px + width_px, top_px + height_px)
-                
-                # Draw horizontal lines (separators)
-                if shape.shape_type == MSO_SHAPE_TYPE.LINE:
-                    draw.line([(left_px, top_px), (left_px + width_px, top_px)], 
-                              fill=(220, 225, 230), width=2)
-            
-            # Draw footer separator line
-            if footer_y < 1080:
-                draw.line([(40, footer_y - 5), (1880, footer_y - 5)], fill=(230, 230, 235), width=1)
-                # Footer background
-                draw.rectangle([(0, footer_y - 5), (1920, 1080)], fill=(250, 250, 252, 255))
-            
-            # Place logo in top-right (common in corporate templates)
-            if logo_image:
-                # Scale logo to reasonable size
-                max_height = 40
-                scale = max_height / logo_image.height
-                new_width = int(logo_image.width * scale)
-                new_height = int(logo_image.height * scale)
-                logo_image = logo_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                if logo_image.mode != 'RGBA':
-                    logo_image = logo_image.convert('RGBA')
-                
-                # Position in top-right with padding
-                logo_x = 1920 - new_width - 30
-                logo_y = 15
-                img.paste(logo_image, (logo_x, logo_y), logo_image)
-            
-            # Draw content area boundary (subtle dashed line)
-            if content_area:
-                cx1, cy1, cx2, cy2 = content_area
-            else:
-                # Default content area
-                cx1, cy1 = 40, 100
-                cx2, cy2 = 1880, footer_y - 20 if footer_y < 1080 else 1040
-            
-            # Draw very subtle content area outline
-            for i in range(cx1, cx2, 30):
-                draw.line([(i, cy1), (min(i+15, cx2), cy1)], fill=(235, 238, 242), width=1)
-                draw.line([(i, cy2), (min(i+15, cx2), cy2)], fill=(235, 238, 242), width=1)
-            for i in range(cy1, cy2, 30):
-                draw.line([(cx1, i), (cx1, min(i+15, cy2))], fill=(235, 238, 242), width=1)
-                draw.line([(cx2, i), (cx2, min(i+15, cy2))], fill=(235, 238, 242), width=1)
-            
-            # Add template name watermark in footer
+            # Get fonts
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+                font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+                font_normal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+                font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
             except:
-                font = ImageFont.load_default()
+                font_title = font_normal = font_small = ImageFont.load_default()
             
-            draw.text((40, 1055), f"Template: {template_name}", fill=(180, 180, 190), font=font)
+            # Function to render shapes from a shape collection
+            def render_shapes(shapes, is_master=False):
+                for shape in shapes:
+                    left_px, top_px, width_px, height_px = to_px(
+                        shape.left, shape.top, shape.width, shape.height
+                    )
+                    
+                    # Skip off-screen elements
+                    if left_px > 1920 or top_px > 1080:
+                        continue
+                    if width_px < 2 or height_px < 2:
+                        continue
+                    
+                    shape_type = shape.shape_type
+                    name = shape.name.lower()
+                    
+                    # Render PICTURES (logos, graphics)
+                    if shape_type == MSO_SHAPE_TYPE.PICTURE:
+                        try:
+                            # Try to get the image blob
+                            if hasattr(shape, 'image') and shape.image:
+                                pic_data = shape.image.blob
+                                pic_img = Image.open(BytesIO(pic_data))
+                                
+                                # Resize to match shape dimensions
+                                pic_img = pic_img.resize((max(1, width_px), max(1, height_px)), Image.Resampling.LANCZOS)
+                                
+                                if pic_img.mode != 'RGBA':
+                                    pic_img = pic_img.convert('RGBA')
+                                
+                                # Paste with alpha if available
+                                img.paste(pic_img, (left_px, top_px), pic_img)
+                                logger.info(f"Rendered picture: {shape.name} at ({left_px}, {top_px})")
+                        except Exception as e:
+                            # Draw placeholder for failed images
+                            draw.rectangle([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                          outline=(200, 200, 210), width=1)
+                    
+                    # Render LINES
+                    elif shape_type == MSO_SHAPE_TYPE.LINE:
+                        draw.line([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                 fill=(180, 185, 195), width=2)
+                    
+                    # Render AUTO_SHAPES (rectangles, etc.)
+                    elif shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
+                        # Check for fill
+                        fill_color = None
+                        try:
+                            if hasattr(shape, 'fill') and shape.fill.type is not None:
+                                if hasattr(shape.fill, 'fore_color') and shape.fill.fore_color:
+                                    rgb = shape.fill.fore_color.rgb
+                                    if rgb:
+                                        fill_color = (rgb[0], rgb[1], rgb[2], 50)  # Semi-transparent
+                        except:
+                            pass
+                        
+                        if fill_color:
+                            overlay = Image.new('RGBA', (width_px, height_px), fill_color)
+                            img.paste(overlay, (left_px, top_px), overlay)
+                        
+                        # Draw outline
+                        draw.rectangle([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                      outline=(210, 215, 225), width=1)
+                    
+                    # Render PLACEHOLDERS (title, content, footer areas)
+                    elif shape_type == MSO_SHAPE_TYPE.PLACEHOLDER:
+                        # Determine placeholder type from name
+                        is_title = 'titre' in name or 'title' in name
+                        is_content = 'texte' in name or 'content' in name or 'text' in name
+                        is_footer = 'pied' in name or 'footer' in name
+                        
+                        if is_title:
+                            # Title area - light blue tint
+                            overlay = Image.new('RGBA', (width_px, height_px), (230, 240, 255, 80))
+                            img.paste(overlay, (left_px, top_px), overlay)
+                            draw.rectangle([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                          outline=(150, 180, 220), width=2)
+                            draw.text((left_px + 10, top_px + 5), "TITLE AREA", fill=(120, 150, 190), font=font_small)
+                        
+                        elif is_content and height_px > 200:
+                            # Content area - dashed border
+                            for i in range(left_px, left_px + width_px, 15):
+                                draw.line([(i, top_px), (min(i+8, left_px + width_px), top_px)], fill=(200, 210, 225), width=1)
+                                draw.line([(i, top_px + height_px), (min(i+8, left_px + width_px), top_px + height_px)], fill=(200, 210, 225), width=1)
+                            for i in range(top_px, top_px + height_px, 15):
+                                draw.line([(left_px, i), (left_px, min(i+8, top_px + height_px))], fill=(200, 210, 225), width=1)
+                                draw.line([(left_px + width_px, i), (left_px + width_px, min(i+8, top_px + height_px))], fill=(200, 210, 225), width=1)
+                            # Label
+                            label = "CONTENT AREA - Place your screenshot here"
+                            bbox = draw.textbbox((0, 0), label, font=font_normal)
+                            lx = left_px + (width_px - (bbox[2] - bbox[0])) // 2
+                            ly = top_px + (height_px - (bbox[3] - bbox[1])) // 2
+                            draw.text((lx, ly), label, fill=(180, 190, 210), font=font_normal)
+                        
+                        elif is_footer:
+                            # Footer area - subtle gray
+                            overlay = Image.new('RGBA', (width_px, height_px), (245, 245, 250, 100))
+                            img.paste(overlay, (left_px, top_px), overlay)
+                            draw.line([(left_px, top_px), (left_px + width_px, top_px)], fill=(220, 225, 235), width=1)
+                    
+                    # Render GROUPS (may contain multiple elements)
+                    elif shape_type == MSO_SHAPE_TYPE.GROUP:
+                        # Draw group boundary
+                        draw.rectangle([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                      outline=(190, 200, 215), width=1)
+                    
+                    # Render TEXT_BOX
+                    elif shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
+                        if hasattr(shape, 'text') and shape.text.strip():
+                            # Small text boxes with content (like confidentiality marks)
+                            draw.rectangle([(left_px, top_px), (left_px + width_px, top_px + height_px)],
+                                          fill=(250, 250, 252), outline=(230, 235, 245), width=1)
+            
+            # Render slide master elements (persistent across all slides)
+            logger.info("Rendering slide master elements...")
+            render_shapes(prs.slide_master.shapes, is_master=True)
+            
+            # Render the specified slide layout (or first content layout)
+            layout_idx = min(slide_index, len(prs.slide_layouts) - 1)
+            # Try to find a good content layout (skip cover pages)
+            for i, layout in enumerate(prs.slide_layouts):
+                if any(x in layout.name.lower() for x in ['content', 'text', 'title_text', 'white']):
+                    layout_idx = i
+                    break
+            
+            if layout_idx < len(prs.slide_layouts):
+                logger.info(f"Rendering slide layout: {prs.slide_layouts[layout_idx].name}")
+                render_shapes(prs.slide_layouts[layout_idx].shapes)
+            
+            # Add template name at bottom
+            draw.text((20, 1055), f"Template: {template_name}", fill=(150, 155, 170), font=font_small)
             
             # Convert to RGB for PNG saving
             img = img.convert('RGB')
             
             # Save to cache
             img.save(cached_preview, 'PNG')
-            logger.info(f"Generated template preview v3: {cached_preview}")
+            logger.info(f"Generated template preview v4: {cached_preview}")
             
             return FileResponse(cached_preview, media_type="image/png")
             
