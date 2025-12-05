@@ -928,12 +928,13 @@ async def set_default_template(template_id: str):
 async def get_template_preview(template_id: str, slide_index: int = 0):
     """Get a preview image of a template slide.
     
-    Creates a representative preview showing logo placement and content area,
-    suitable for use as a canvas background in the slide editor.
+    Renders the actual template layout (title bar, logo, footer, content area)
+    based on the slide master structure, suitable for canvas background.
     """
     from fastapi.responses import FileResponse
     from pptx import Presentation
     from pptx.util import Emu, Inches
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
     from PIL import Image, ImageDraw, ImageFont
     from io import BytesIO
     import zipfile
@@ -955,111 +956,141 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
                 metadata = yaml.safe_load(f)
                 template_name = metadata.get('name', template_id)
         
-        # Check if cached preview exists
+        # Check if cached preview exists (v3 = layout-based preview)
         cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
         cache_dir.mkdir(exist_ok=True)
-        cached_preview = cache_dir / f"{template_id}_slide{slide_index}_v2.png"
+        cached_preview = cache_dir / f"{template_id}_slide{slide_index}_v3.png"
         
         if cached_preview.exists():
             return FileResponse(cached_preview, media_type="image/png")
         
-        # Create template preview with proper layout
-        # This creates a preview that shows where the logo/header is and where content goes
+        # Create template preview based on actual slide master layout
         try:
-            # Create a white base image at 16:9 aspect ratio
+            prs = Presentation(template_path)
+            
+            # Canvas at 1920x1080 (16:9 matching slide ratio)
+            # Scale factor from slide EMU to pixels
+            slide_width_emu = prs.slide_width
+            slide_height_emu = prs.slide_height
+            scale_x = 1920 / (slide_width_emu / 914400)  # pixels per inch
+            scale_y = 1080 / (slide_height_emu / 914400)
+            
+            def emu_to_px_x(emu):
+                return int((emu / 914400) * scale_x / (prs.slide_width.inches))
+            
+            def emu_to_px_y(emu):
+                return int((emu / 914400) * scale_y / (prs.slide_height.inches))
+            
+            # Create white base image
             img = Image.new('RGBA', (1920, 1080), color=(255, 255, 255, 255))
             draw = ImageDraw.Draw(img)
             
-            # Extract images from PPTX to find logo
+            # Extract logo from PPTX media
             logo_image = None
-            header_banner = None
-            
             with zipfile.ZipFile(template_path, 'r') as zip_ref:
                 media_files = [f for f in zip_ref.namelist() if f.startswith('ppt/media/') and 
                               (f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg'))]
-                
-                logger.info(f"Found {len(media_files)} media files in template")
                 
                 for media_file in media_files:
                     try:
                         with zip_ref.open(media_file) as f:
                             img_data = f.read()
                             temp_img = Image.open(BytesIO(img_data))
-                            
-                            # Categorize images by aspect ratio
-                            aspect = temp_img.width / temp_img.height if temp_img.height > 0 else 1
-                            
-                            # Wide banners (aspect > 3) are likely header bars
-                            if aspect > 3 and temp_img.width > 500:
-                                if header_banner is None or temp_img.width > header_banner.width:
-                                    header_banner = temp_img.copy()
-                                    logger.info(f"Found header banner: {temp_img.width}x{temp_img.height}")
-                            
-                            # Square-ish small images are likely logos
-                            elif 0.3 < aspect < 3 and temp_img.width < 400 and temp_img.height < 200:
+                            # Find small, wide images (logos)
+                            if temp_img.height < 100 and temp_img.width < 400:
                                 if logo_image is None or temp_img.width > logo_image.width:
                                     logo_image = temp_img.copy()
-                                    logger.info(f"Found logo: {temp_img.width}x{temp_img.height}")
-                                    
                     except Exception as e:
-                        logger.warning(f"Failed to load image {media_file}: {e}")
+                        pass
             
-            # Draw a subtle header area at the top (matching typical corporate templates)
-            header_height = 80
-            draw.rectangle([(0, 0), (1920, header_height)], fill=(245, 245, 250, 255))
-            draw.line([(0, header_height), (1920, header_height)], fill=(220, 220, 225), width=1)
+            # Parse slide master to understand layout
+            master = prs.slide_master
+            title_area = None
+            content_area = None
+            footer_y = 1080
             
-            # Place logo in top-left if found
+            for shape in master.shapes:
+                left_px = emu_to_px_x(shape.left)
+                top_px = emu_to_px_y(shape.top)
+                width_px = emu_to_px_x(shape.width)
+                height_px = emu_to_px_y(shape.height)
+                
+                name_lower = shape.name.lower()
+                
+                # Identify title/header area
+                if 'titre' in name_lower or 'title' in name_lower:
+                    title_area = (left_px, top_px, left_px + width_px, top_px + height_px)
+                    # Draw subtle title bar background
+                    draw.rectangle([(0, 0), (1920, top_px + height_px + 10)], 
+                                   fill=(248, 249, 252, 255))
+                
+                # Identify footer area  
+                if 'pied' in name_lower or 'footer' in name_lower:
+                    footer_y = min(footer_y, top_px)
+                
+                # Identify content area
+                if 'texte' in name_lower or 'content' in name_lower or 'text' in name_lower:
+                    if shape.height > 500 * 914400:  # Large text areas are content
+                        content_area = (left_px, top_px, left_px + width_px, top_px + height_px)
+                
+                # Draw horizontal lines (separators)
+                if shape.shape_type == MSO_SHAPE_TYPE.LINE:
+                    draw.line([(left_px, top_px), (left_px + width_px, top_px)], 
+                              fill=(220, 225, 230), width=2)
+            
+            # Draw footer separator line
+            if footer_y < 1080:
+                draw.line([(40, footer_y - 5), (1880, footer_y - 5)], fill=(230, 230, 235), width=1)
+                # Footer background
+                draw.rectangle([(0, footer_y - 5), (1920, 1080)], fill=(250, 250, 252, 255))
+            
+            # Place logo in top-right (common in corporate templates)
             if logo_image:
-                # Scale logo to fit header
-                max_logo_height = 50
-                scale = min(max_logo_height / logo_image.height, 200 / logo_image.width)
+                # Scale logo to reasonable size
+                max_height = 40
+                scale = max_height / logo_image.height
                 new_width = int(logo_image.width * scale)
                 new_height = int(logo_image.height * scale)
                 logo_image = logo_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
-                # Ensure logo has alpha channel
                 if logo_image.mode != 'RGBA':
                     logo_image = logo_image.convert('RGBA')
                 
-                # Position in top-left with padding
-                logo_y = (header_height - new_height) // 2
-                img.paste(logo_image, (30, logo_y), logo_image if logo_image.mode == 'RGBA' else None)
-                logger.info(f"Placed logo at (30, {logo_y})")
+                # Position in top-right with padding
+                logo_x = 1920 - new_width - 30
+                logo_y = 15
+                img.paste(logo_image, (logo_x, logo_y), logo_image)
             
-            # Draw content area indicator (dashed border showing where content goes)
-            content_margin = 40
-            content_top = header_height + 20
-            content_area = [(content_margin, content_top), (1920 - content_margin, 1080 - content_margin)]
+            # Draw content area boundary (subtle dashed line)
+            if content_area:
+                cx1, cy1, cx2, cy2 = content_area
+            else:
+                # Default content area
+                cx1, cy1 = 40, 100
+                cx2, cy2 = 1880, footer_y - 20 if footer_y < 1080 else 1040
             
-            # Draw a subtle dashed border for content area
-            for i in range(0, 1920 - 2*content_margin, 20):
-                x = content_margin + i
-                draw.line([(x, content_top), (min(x+10, 1920-content_margin), content_top)], fill=(200, 200, 210), width=1)
-                draw.line([(x, 1080-content_margin), (min(x+10, 1920-content_margin), 1080-content_margin)], fill=(200, 200, 210), width=1)
-            for i in range(0, 1080 - content_top - content_margin, 20):
-                y = content_top + i
-                draw.line([(content_margin, y), (content_margin, min(y+10, 1080-content_margin))], fill=(200, 200, 210), width=1)
-                draw.line([(1920-content_margin, y), (1920-content_margin, min(y+10, 1080-content_margin))], fill=(200, 200, 210), width=1)
+            # Draw very subtle content area outline
+            for i in range(cx1, cx2, 30):
+                draw.line([(i, cy1), (min(i+15, cx2), cy1)], fill=(235, 238, 242), width=1)
+                draw.line([(i, cy2), (min(i+15, cx2), cy2)], fill=(235, 238, 242), width=1)
+            for i in range(cy1, cy2, 30):
+                draw.line([(cx1, i), (cx1, min(i+15, cy2))], fill=(235, 238, 242), width=1)
+                draw.line([(cx2, i), (cx2, min(i+15, cy2))], fill=(235, 238, 242), width=1)
             
-            # Add template name in bottom bar
+            # Add template name watermark in footer
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
             except:
                 font = ImageFont.load_default()
             
-            # Semi-transparent bar at bottom
-            footer = Image.new('RGBA', (1920, 30), (240, 240, 245, 230))
-            img.paste(footer, (0, 1050), footer)
-            draw = ImageDraw.Draw(img)
-            draw.text((30, 1055), f"Template: {template_name}", fill=(100, 100, 110), font=font)
+            draw.text((40, 1055), f"Template: {template_name}", fill=(180, 180, 190), font=font)
             
             # Convert to RGB for PNG saving
             img = img.convert('RGB')
             
             # Save to cache
             img.save(cached_preview, 'PNG')
-            logger.info(f"Generated template preview v2: {cached_preview}")
+            logger.info(f"Generated template preview v3: {cached_preview}")
             
             return FileResponse(cached_preview, media_type="image/png")
             
