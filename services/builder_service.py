@@ -27,7 +27,8 @@ class PowerPointBuilderService:
         self,
         report_data: Dict[str, Any],
         screenshots: List[bytes],
-        template_path: Optional[str] = None
+        template_path: Optional[str] = None,
+        skip_slide_titles: bool = False
     ) -> bytes:
         """
         Generate a PowerPoint presentation with report data and screenshots.
@@ -36,6 +37,7 @@ class PowerPointBuilderService:
             report_data: Dictionary containing report metadata
             screenshots: List of screenshot images as bytes
             template_path: Optional path to company template
+            skip_slide_titles: If True, don't add "Screenshot X" titles (templates have their own titles)
             
         Returns:
             Generated PPTX file as bytes
@@ -48,12 +50,16 @@ class PowerPointBuilderService:
         # Load template
         self._load_template(template_path)
         
-        # Create title slide
-        self._create_title_slide(report_data)
+        # Determine if we should skip titles (branded templates have their own)
+        use_template_titles = skip_slide_titles or (template_path is not None)
+        
+        # Create title slide (only if not using template or specifically requested)
+        if not use_template_titles or report_data.get('include_title_slide', True):
+            self._create_title_slide(report_data)
         
         # Create content slides for screenshots
         for idx, screenshot in enumerate(screenshots):
-            self._create_content_slide(screenshot, idx + 1)
+            self._create_content_slide(screenshot, idx + 1, skip_title=use_template_titles)
             
         # Check generation time
         elapsed = time.time() - self.start_time
@@ -127,15 +133,21 @@ class PowerPointBuilderService:
                 p.text = report_data['description']
                 p.alignment = PP_ALIGN.CENTER
                 
-    def _create_content_slide(self, screenshot: bytes, slide_number: int):
-        """Create a content slide with screenshot."""
+    def _create_content_slide(self, screenshot: bytes, slide_number: int, skip_title: bool = False):
+        """Create a content slide with screenshot.
+        
+        Args:
+            screenshot: Screenshot image as bytes
+            slide_number: Slide number for title
+            skip_title: If True, don't override existing title (for branded templates)
+        """
         # Use content slide layout (usually index 1 or 5)
         layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
         slide_layout = self.presentation.slide_layouts[layout_idx]
         slide = self.presentation.slides.add_slide(slide_layout)
         
-        # Set title if available
-        if slide.shapes.title:
+        # Set title if available and not skipping
+        if slide.shapes.title and not skip_title:
             slide.shapes.title.text = f"Screenshot {slide_number}"
             
         # Add screenshot image

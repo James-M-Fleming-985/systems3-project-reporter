@@ -896,3 +896,113 @@ async def set_default_template(template_id: str):
         }, status_code=500)
 
 
+@router.get("/upload/powerpoint-template/{template_id}/preview")
+async def get_template_preview(template_id: str, slide_index: int = 0):
+    """Get a preview image of a template slide.
+    
+    Uses LibreOffice to convert the slide to an image if available,
+    otherwise returns a placeholder with template info.
+    """
+    import subprocess
+    import tempfile
+    from fastapi.responses import FileResponse, Response
+    
+    try:
+        template_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.pptx"
+        metadata_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.yaml"
+        
+        if not template_path.exists():
+            return JSONResponse({
+                'success': False,
+                'detail': 'Template not found'
+            }, status_code=404)
+        
+        # Load metadata for template name
+        template_name = template_id
+        if metadata_path.exists():
+            with open(metadata_path, 'r') as f:
+                metadata = yaml.safe_load(f)
+                template_name = metadata.get('name', template_id)
+        
+        # Check if cached preview exists
+        cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
+        cache_dir.mkdir(exist_ok=True)
+        cached_preview = cache_dir / f"{template_id}_slide{slide_index}.png"
+        
+        if cached_preview.exists():
+            return FileResponse(cached_preview, media_type="image/png")
+        
+        # Try to generate preview using LibreOffice (if available)
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Convert PPTX to PDF first
+                result = subprocess.run(
+                    ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', tmpdir, str(template_path)],
+                    capture_output=True,
+                    timeout=30
+                )
+                
+                if result.returncode == 0:
+                    pdf_path = Path(tmpdir) / f"{template_id}.pdf"
+                    if pdf_path.exists():
+                        # Convert PDF page to PNG using pdftoppm (poppler-utils)
+                        png_result = subprocess.run(
+                            ['pdftoppm', '-png', '-f', str(slide_index + 1), '-l', str(slide_index + 1), 
+                             '-r', '150', str(pdf_path), str(cache_dir / f"{template_id}_slide{slide_index}")],
+                            capture_output=True,
+                            timeout=30
+                        )
+                        
+                        # pdftoppm adds a suffix like -1.png
+                        generated_file = cache_dir / f"{template_id}_slide{slide_index}-{slide_index + 1}.png"
+                        if generated_file.exists():
+                            generated_file.rename(cached_preview)
+                            return FileResponse(cached_preview, media_type="image/png")
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.warning(f"LibreOffice conversion not available: {e}")
+        
+        # Fallback: Generate a placeholder image with template name
+        from PIL import Image, ImageDraw, ImageFont
+        
+        # Create a 16:9 placeholder image
+        img = Image.new('RGB', (1920, 1080), color=(245, 245, 245))
+        draw = ImageDraw.Draw(img)
+        
+        # Draw template name and info
+        try:
+            font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48)
+            font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
+        except:
+            font_large = ImageFont.load_default()
+            font_small = ImageFont.load_default()
+        
+        # Draw centered text
+        text_template = f"📄 {template_name}"
+        text_info = "Template Preview"
+        
+        # Get text bounding boxes for centering
+        bbox1 = draw.textbbox((0, 0), text_template, font=font_large)
+        bbox2 = draw.textbbox((0, 0), text_info, font=font_small)
+        
+        x1 = (1920 - (bbox1[2] - bbox1[0])) // 2
+        x2 = (1920 - (bbox2[2] - bbox2[0])) // 2
+        
+        draw.text((x1, 480), text_template, fill=(60, 60, 60), font=font_large)
+        draw.text((x2, 560), text_info, fill=(120, 120, 120), font=font_small)
+        
+        # Draw border
+        draw.rectangle([(20, 20), (1900, 1060)], outline=(200, 200, 200), width=3)
+        
+        # Save to cache
+        img.save(cached_preview, 'PNG')
+        
+        return FileResponse(cached_preview, media_type="image/png")
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get template preview: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
+
