@@ -96,6 +96,40 @@ class ScreenshotService:
                     # Fallback to small delay if signal doesn't arrive
                     await page.wait_for_timeout(2000)
             
+            # Wait for Plotly charts on Gantt and other chart pages
+            if '/gantt' in url or '/dashboard' in url or '/milestones' in url:
+                logger.info("Waiting for Plotly charts to render...")
+                try:
+                    # Wait for any Plotly chart container to be populated
+                    await page.wait_for_function(
+                        """() => {
+                            // Check if Plotly exists and has rendered charts
+                            const plotDivs = document.querySelectorAll('.js-plotly-plot');
+                            if (plotDivs.length > 0) {
+                                // Check if at least one plot has data
+                                for (const div of plotDivs) {
+                                    if (div.data && div.data.length > 0) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            // Also check for SVG content in common chart containers
+                            const ganttChart = document.getElementById('ganttChart');
+                            if (ganttChart && ganttChart.querySelector('svg')) {
+                                return true;
+                            }
+                            return false;
+                        }""",
+                        timeout=8000
+                    )
+                    logger.info("✅ Plotly charts detected as rendered")
+                    # Give a bit more time for animations to complete
+                    await page.wait_for_timeout(500)
+                except Exception as e:
+                    logger.warning(f"Plotly chart detection timeout: {e}")
+                    # Fallback to longer delay
+                    await page.wait_for_timeout(3000)
+            
             # Wait for specific selector if provided
             if wait_for_selector:
                 await page.wait_for_selector(

@@ -52,6 +52,19 @@ export_jobs: Dict[str, Dict[str, Any]] = {}
 
 
 # Pydantic models
+class SlideTransform(BaseModel):
+    """Transform data for a single slide"""
+    scale: float = 1.0
+    scaleY: float = 1.0
+    left: float = 0
+    top: float = 0
+    angle: float = 0
+    cropTop: float = 0
+    cropBottom: float = 0
+    cropLeft: float = 0
+    cropRight: float = 0
+
+
 class ExportRequest(BaseModel):
     """Export request matching UI"""
     template_id: str = "custom"
@@ -61,6 +74,7 @@ class ExportRequest(BaseModel):
     viewport_height: int = 1080
     hide_navigation: bool = True
     include_title_slide: bool = True
+    slide_transforms: Optional[List[SlideTransform]] = None  # Transform data per slide
 
 
 # UI Route
@@ -190,12 +204,19 @@ async def export_to_powerpoint(
             "slide_count": len(screenshots) + (1 if export_request.include_title_slide else 0)
         }
         
+        # Convert slide transforms to dict format for service
+        slide_transforms = None
+        if export_request.slide_transforms:
+            slide_transforms = [t.model_dump() for t in export_request.slide_transforms]
+            logger.info(f"📐 Applying {len(slide_transforms)} slide transforms")
+        
         # Generate PowerPoint using AI-generated service
         logger.info("Building PowerPoint presentation...")
         pptx_bytes = ppt_builder.generate_presentation(
             report_data=report_data,
             screenshots=screenshots,
-            template_path=str(template_path) if template_path else None
+            template_path=str(template_path) if template_path else None,
+            slide_transforms=slide_transforms
         )
         
         logger.info("✅ PowerPoint generation complete")

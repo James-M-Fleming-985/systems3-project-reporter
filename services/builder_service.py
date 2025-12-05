@@ -28,7 +28,8 @@ class PowerPointBuilderService:
         report_data: Dict[str, Any],
         screenshots: List[bytes],
         template_path: Optional[str] = None,
-        skip_slide_titles: bool = False
+        skip_slide_titles: bool = False,
+        slide_transforms: Optional[List[Dict[str, Any]]] = None
     ) -> bytes:
         """
         Generate a PowerPoint presentation with report data and screenshots.
@@ -38,6 +39,7 @@ class PowerPointBuilderService:
             screenshots: List of screenshot images as bytes
             template_path: Optional path to company template
             skip_slide_titles: If True, don't add "Screenshot X" titles (templates have their own titles)
+            slide_transforms: Optional list of transform data for each slide (position, scale, crop)
             
         Returns:
             Generated PPTX file as bytes
@@ -53,13 +55,26 @@ class PowerPointBuilderService:
         # Determine if we should skip titles (branded templates have their own)
         use_template_titles = skip_slide_titles or (template_path is not None)
         
+        # If using a template, remove existing content slides (keep only layout masters)
+        # Typically slides 2+ are content slides that should be replaced
+        if template_path and self.presentation:
+            self._prepare_template_for_content(report_data.get('include_title_slide', True))
+        
         # Create title slide (only if not using template or specifically requested)
         if not use_template_titles or report_data.get('include_title_slide', True):
             self._create_title_slide(report_data)
         
         # Create content slides for screenshots
         for idx, screenshot in enumerate(screenshots):
-            self._create_content_slide(screenshot, idx + 1, skip_title=use_template_titles)
+            # Get transform for this slide if provided
+            transform = None
+            if slide_transforms and idx < len(slide_transforms):
+                transform = slide_transforms[idx]
+            
+            # Apply transform to screenshot if provided
+            processed_screenshot = self._apply_transform_to_image(screenshot, transform) if transform else screenshot
+            
+            self._create_content_slide(processed_screenshot, idx + 1, skip_title=use_template_titles)
             
         # Check generation time
         elapsed = time.time() - self.start_time
@@ -68,6 +83,73 @@ class PowerPointBuilderService:
             
         # Save to bytes
         return self._save_to_bytes()
+    
+    def _prepare_template_for_content(self, keep_title_slide: bool = True):
+        """Remove existing content slides from template, keeping only the structure.
+        
+        This allows us to use the template's styling while replacing its content.
+        """
+        if not self.presentation:
+            return
+            
+        # Count slides to remove (skip first slide if keeping title)
+        slides_to_remove = []
+        start_idx = 1 if keep_title_slide else 0
+        
+        for i in range(start_idx, len(self.presentation.slides)):
+            slides_to_remove.append(i)
+        
+        # Remove slides in reverse order to avoid index shifting
+        for idx in reversed(slides_to_remove):
+            slide_id = self.presentation.slides._sldIdLst[idx].rId
+            self.presentation.part.drop_rel(slide_id)
+            del self.presentation.slides._sldIdLst[idx]
+    
+    def _apply_transform_to_image(self, image_bytes: bytes, transform: Dict[str, Any]) -> bytes:
+        """Apply crop and positioning transforms to an image.
+        
+        Args:
+            image_bytes: Original image bytes
+            transform: Dict with keys like cropTop, cropBottom, cropLeft, cropRight, scale, left, top
+            
+        Returns:
+            Transformed image as bytes
+        """
+        try:
+            img = Image.open(BytesIO(image_bytes))
+            orig_width, orig_height = img.size
+            
+            # Apply crop if specified (values are percentages)
+            crop_top = transform.get('cropTop', 0) / 100
+            crop_bottom = transform.get('cropBottom', 0) / 100
+            crop_left = transform.get('cropLeft', 0) / 100
+            crop_right = transform.get('cropRight', 0) / 100
+            
+            if any([crop_top, crop_bottom, crop_left, crop_right]):
+                left = int(orig_width * crop_left)
+                top = int(orig_height * crop_top)
+                right = int(orig_width * (1 - crop_right))
+                bottom = int(orig_height * (1 - crop_bottom))
+                img = img.crop((left, top, right, bottom))
+            
+            # Apply scale if specified
+            scale = transform.get('scale', 1.0)
+            if scale != 1.0 and scale > 0:
+                new_width = int(img.width * scale)
+                new_height = int(img.height * scale)
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            # Save to bytes
+            output = BytesIO()
+            img.save(output, format='PNG')
+            output.seek(0)
+            return output.read()
+            
+        except Exception as e:
+            # Return original on error
+            import logging
+            logging.warning(f"Failed to apply transform: {e}")
+            return image_bytes
         
     def _load_template(self, template_path: Optional[str] = None):
         """Load PowerPoint template or use default."""

@@ -753,6 +753,22 @@ async function exportReport() {
             return url;
         });
         
+        // Build transforms array matching the order of views
+        const transforms = views.map(view => {
+            // Look up transform for this view (check with and without project param)
+            const baseView = view.split('?')[0];
+            for (const [path, transform] of Object.entries(slideTransforms)) {
+                const basePath = path.split('?')[0];
+                if (basePath === baseView || path === view) {
+                    console.log('📐 Found transform for view:', view);
+                    return transform;
+                }
+            }
+            return null;  // No transform for this slide
+        });
+        
+        console.log('📐 Transforms to send:', transforms.filter(t => t !== null).length, 'of', views.length);
+        
         // Update progress
         document.getElementById('progressText').textContent = 'Preparing export...';
         document.getElementById('progressBar').style.width = '20%';
@@ -770,7 +786,8 @@ async function exportReport() {
                 viewport_width: viewportWidth,
                 viewport_height: viewportHeight,
                 hide_navigation: hideNavigation,
-                include_title_slide: includeTitle
+                include_title_slide: includeTitle,
+                slide_transforms: transforms
             })
         });
         
@@ -1035,8 +1052,15 @@ async function loadTemplateBackground() {
 let currentTransform = { scale: 1, positionX: 0, positionY: 0, cropTop: 0, cropRight: 0, cropBottom: 0, cropLeft: 0 };
 let fabricCanvas = null;
 let canvasImage = null;
+let currentEditingViewPath = null;  // Track which slide is being edited
+
+// Store transforms per slide (keyed by view path)
+const slideTransforms = {};
 
 function initFabricCanvas(viewUrl) {
+    // Store which slide we're editing
+    currentEditingViewPath = viewUrl;
+    
     console.log('\n=== FABRIC CANVAS INIT ===' );
     console.log('🔗 View URL:', viewUrl);
     
@@ -1541,13 +1565,13 @@ function applyCanvasTransform() {
         return;
     }
     
-    // Get current transform state
+    // Get current transform state from Fabric.js canvas
     const transform = {
         scale: canvasImage.scaleX,
         scaleY: canvasImage.scaleY,
         left: canvasImage.left,
         top: canvasImage.top,
-        angle: canvasImage.angle,
+        angle: canvasImage.angle || 0,
         width: canvasImage.width,
         height: canvasImage.height,
         cropTop: currentTransform.cropTop || 0,
@@ -1556,9 +1580,16 @@ function applyCanvasTransform() {
         cropRight: currentTransform.cropRight || 0
     };
     
-    console.log('Transform applied:', transform);
+    console.log('Transform applied for view:', currentEditingViewPath);
+    console.log('Transform data:', transform);
     
-    // Save to Phase 2 API (simplified for now)
+    // Store transform for this specific slide (keyed by view path)
+    if (currentEditingViewPath) {
+        slideTransforms[currentEditingViewPath] = transform;
+        console.log('📐 Stored transform for slide. Total transforms:', Object.keys(slideTransforms).length);
+    }
+    
+    // Update current transform
     currentTransform = transform;
     
     // Close modal
