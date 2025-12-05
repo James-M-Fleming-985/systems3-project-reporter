@@ -968,48 +968,68 @@ async function loadTemplateBackground() {
         return;
     }
     
-    // Load template preview image
+    // Load template preview image - use fetch first to check for errors
     const previewUrl = `/upload/powerpoint-template/${templateId}/preview`;
     console.log('🔗 Loading template preview from:', previewUrl);
     
-    fabric.Image.fromURL(previewUrl, (img) => {
-        if (!img) {
-            console.error('❌ Failed to load template image');
+    try {
+        // First check if preview exists
+        const response = await fetch(previewUrl);
+        console.log('📥 Preview response status:', response.status);
+        
+        if (!response.ok) {
+            console.error('❌ Template preview not available:', response.status);
+            // Show a notification but keep white background
             return;
         }
         
-        console.log('✅ Template image loaded:', img.width, 'x', img.height);
+        // Get the image as blob and create object URL
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        console.log('✅ Preview blob loaded:', blob.size, 'bytes');
         
-        // Scale to fit canvas (1920x1080 base, but canvas may be zoomed)
-        const scaleX = 1920 / img.width;
-        const scaleY = 1080 / img.height;
-        
-        img.set({
-            left: 0,
-            top: 0,
-            scaleX: scaleX,
-            scaleY: scaleY,
-            selectable: false,
-            evented: false,
-            excludeFromExport: false
+        fabric.Image.fromURL(objectUrl, (img) => {
+            // Clean up object URL after image loads
+            URL.revokeObjectURL(objectUrl);
+            
+            if (!img || !img.width || img.width === 0) {
+                console.error('❌ Failed to create Fabric image from preview');
+                return;
+            }
+            
+            console.log('✅ Template image loaded:', img.width, 'x', img.height);
+            
+            // Scale to fit canvas (1920x1080 base, but canvas may be zoomed)
+            const scaleX = 1920 / img.width;
+            const scaleY = 1080 / img.height;
+            
+            img.set({
+                left: 0,
+                top: 0,
+                scaleX: scaleX,
+                scaleY: scaleY,
+                selectable: false,
+                evented: false,
+                excludeFromExport: false
+            });
+            
+            templateBackgroundImage = img;
+            fabricCanvas.add(img);
+            fabricCanvas.sendToBack(img);
+            fabricCanvas.renderAll();
+            
+            console.log('✅ Template set as background layer');
+            
+            // Also sync the main page template selector
+            const mainTemplateSelect = document.getElementById('templateSelect');
+            if (mainTemplateSelect) {
+                mainTemplateSelect.value = templateId;
+                localStorage.setItem('pptExportSelectedTemplate', templateId);
+            }
         });
-        
-        templateBackgroundImage = img;
-        fabricCanvas.add(img);
-        fabricCanvas.sendToBack(img);
-        fabricCanvas.renderAll();
-        
-        console.log('✅ Template set as background layer');
-        
-        // Also sync the main page template selector
-        const mainTemplateSelect = document.getElementById('templateSelect');
-        if (mainTemplateSelect) {
-            mainTemplateSelect.value = templateId;
-            localStorage.setItem('pptExportSelectedTemplate', templateId);
-        }
-    }, {
-        crossOrigin: 'anonymous'
-    });
+    } catch (error) {
+        console.error('❌ Error loading template preview:', error);
+    }
 }
 
 let currentTransform = { scale: 1, positionX: 0, positionY: 0, cropTop: 0, cropRight: 0, cropBottom: 0, cropLeft: 0 };
@@ -1206,6 +1226,12 @@ function initFabricCanvas(viewUrl) {
                     fabricCanvas.add(canvasImage);
                     console.log('➕ Image added to canvas');
                     console.log('🎨 Canvas object count after:', fabricCanvas.getObjects().length);
+                    
+                    // Ensure template background stays at the back if it exists
+                    if (templateBackgroundImage) {
+                        fabricCanvas.sendToBack(templateBackgroundImage);
+                        console.log('🔙 Template background sent to back');
+                    }
                     
                     fabricCanvas.setActiveObject(canvasImage);
                     console.log('🔵 Image set as active object');
