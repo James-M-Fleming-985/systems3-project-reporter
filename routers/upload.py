@@ -928,14 +928,12 @@ async def set_default_template(template_id: str):
 async def get_template_preview(template_id: str, slide_index: int = 0):
     """Get a preview image of a template slide.
     
-    Extracts visual elements from the PPTX template using python-pptx
-    to create a representative preview image.
+    Creates a representative preview showing logo placement and content area,
+    suitable for use as a canvas background in the slide editor.
     """
-    import subprocess
-    import tempfile
-    from fastapi.responses import FileResponse, Response
+    from fastapi.responses import FileResponse
     from pptx import Presentation
-    from pptx.util import Emu
+    from pptx.util import Emu, Inches
     from PIL import Image, ImageDraw, ImageFont
     from io import BytesIO
     import zipfile
@@ -960,93 +958,113 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
         # Check if cached preview exists
         cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
         cache_dir.mkdir(exist_ok=True)
-        cached_preview = cache_dir / f"{template_id}_slide{slide_index}.png"
+        cached_preview = cache_dir / f"{template_id}_slide{slide_index}_v2.png"
         
         if cached_preview.exists():
             return FileResponse(cached_preview, media_type="image/png")
         
-        # Try to extract images from the PPTX file
-        # PPTX files are ZIP archives containing media files
+        # Create template preview with proper layout
+        # This creates a preview that shows where the logo/header is and where content goes
         try:
-            # Create a base image at 16:9 aspect ratio
-            img = Image.new('RGB', (1920, 1080), color=(255, 255, 255))
+            # Create a white base image at 16:9 aspect ratio
+            img = Image.new('RGBA', (1920, 1080), color=(255, 255, 255, 255))
+            draw = ImageDraw.Draw(img)
             
-            # Try to find and extract a background image from the PPTX
+            # Extract images from PPTX to find logo
+            logo_image = None
+            header_banner = None
+            
             with zipfile.ZipFile(template_path, 'r') as zip_ref:
-                # Look for images in the media folder
                 media_files = [f for f in zip_ref.namelist() if f.startswith('ppt/media/') and 
                               (f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg'))]
                 
                 logger.info(f"Found {len(media_files)} media files in template")
                 
-                if media_files:
-                    # Try to find the largest image (likely the background/header)
-                    largest_image = None
-                    largest_size = 0
-                    
-                    for media_file in media_files:
-                        try:
-                            with zip_ref.open(media_file) as f:
-                                img_data = f.read()
-                                temp_img = Image.open(BytesIO(img_data))
-                                size = temp_img.width * temp_img.height
-                                if size > largest_size:
-                                    largest_size = size
-                                    largest_image = temp_img.copy()
-                        except Exception as e:
-                            logger.warning(f"Failed to load image {media_file}: {e}")
-                    
-                    if largest_image:
-                        # If the image is wide enough, use it as background
-                        if largest_image.width >= 800:
-                            # Scale to fit canvas width
-                            scale = 1920 / largest_image.width
-                            new_height = int(largest_image.height * scale)
-                            largest_image = largest_image.resize((1920, new_height), Image.Resampling.LANCZOS)
+                for media_file in media_files:
+                    try:
+                        with zip_ref.open(media_file) as f:
+                            img_data = f.read()
+                            temp_img = Image.open(BytesIO(img_data))
                             
-                            # Paste at top of canvas
-                            img.paste(largest_image, (0, 0))
-                            logger.info(f"Used background image: {largest_image.width}x{largest_image.height}")
-                        else:
-                            # Place smaller images (logos) in top-left corner
-                            # Scale to reasonable size
-                            max_logo_height = 150
-                            if largest_image.height > max_logo_height:
-                                scale = max_logo_height / largest_image.height
-                                new_width = int(largest_image.width * scale)
-                                largest_image = largest_image.resize((new_width, max_logo_height), Image.Resampling.LANCZOS)
+                            # Categorize images by aspect ratio
+                            aspect = temp_img.width / temp_img.height if temp_img.height > 0 else 1
                             
-                            # Paste in top-left with padding
-                            img.paste(largest_image, (40, 40))
-                            logger.info(f"Used logo image: {largest_image.width}x{largest_image.height}")
+                            # Wide banners (aspect > 3) are likely header bars
+                            if aspect > 3 and temp_img.width > 500:
+                                if header_banner is None or temp_img.width > header_banner.width:
+                                    header_banner = temp_img.copy()
+                                    logger.info(f"Found header banner: {temp_img.width}x{temp_img.height}")
+                            
+                            # Square-ish small images are likely logos
+                            elif 0.3 < aspect < 3 and temp_img.width < 400 and temp_img.height < 200:
+                                if logo_image is None or temp_img.width > logo_image.width:
+                                    logo_image = temp_img.copy()
+                                    logger.info(f"Found logo: {temp_img.width}x{temp_img.height}")
+                                    
+                    except Exception as e:
+                        logger.warning(f"Failed to load image {media_file}: {e}")
             
-            # Add template name overlay at bottom
-            draw = ImageDraw.Draw(img)
+            # Draw a subtle header area at the top (matching typical corporate templates)
+            header_height = 80
+            draw.rectangle([(0, 0), (1920, header_height)], fill=(245, 245, 250, 255))
+            draw.line([(0, header_height), (1920, header_height)], fill=(220, 220, 225), width=1)
             
+            # Place logo in top-left if found
+            if logo_image:
+                # Scale logo to fit header
+                max_logo_height = 50
+                scale = min(max_logo_height / logo_image.height, 200 / logo_image.width)
+                new_width = int(logo_image.width * scale)
+                new_height = int(logo_image.height * scale)
+                logo_image = logo_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Ensure logo has alpha channel
+                if logo_image.mode != 'RGBA':
+                    logo_image = logo_image.convert('RGBA')
+                
+                # Position in top-left with padding
+                logo_y = (header_height - new_height) // 2
+                img.paste(logo_image, (30, logo_y), logo_image if logo_image.mode == 'RGBA' else None)
+                logger.info(f"Placed logo at (30, {logo_y})")
+            
+            # Draw content area indicator (dashed border showing where content goes)
+            content_margin = 40
+            content_top = header_height + 20
+            content_area = [(content_margin, content_top), (1920 - content_margin, 1080 - content_margin)]
+            
+            # Draw a subtle dashed border for content area
+            for i in range(0, 1920 - 2*content_margin, 20):
+                x = content_margin + i
+                draw.line([(x, content_top), (min(x+10, 1920-content_margin), content_top)], fill=(200, 200, 210), width=1)
+                draw.line([(x, 1080-content_margin), (min(x+10, 1920-content_margin), 1080-content_margin)], fill=(200, 200, 210), width=1)
+            for i in range(0, 1080 - content_top - content_margin, 20):
+                y = content_top + i
+                draw.line([(content_margin, y), (content_margin, min(y+10, 1080-content_margin))], fill=(200, 200, 210), width=1)
+                draw.line([(1920-content_margin, y), (1920-content_margin, min(y+10, 1080-content_margin))], fill=(200, 200, 210), width=1)
+            
+            # Add template name in bottom bar
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
             except:
                 font = ImageFont.load_default()
             
-            # Semi-transparent bar at bottom with template name
-            overlay = Image.new('RGBA', (1920, 60), (0, 0, 0, 180))
-            img = img.convert('RGBA')
-            img.paste(overlay, (0, 1020), overlay)
-            
+            # Semi-transparent bar at bottom
+            footer = Image.new('RGBA', (1920, 30), (240, 240, 245, 230))
+            img.paste(footer, (0, 1050), footer)
             draw = ImageDraw.Draw(img)
-            draw.text((40, 1030), f"Template: {template_name}", fill=(255, 255, 255), font=font)
+            draw.text((30, 1055), f"Template: {template_name}", fill=(100, 100, 110), font=font)
             
-            # Convert back to RGB for saving as PNG
+            # Convert to RGB for PNG saving
             img = img.convert('RGB')
             
             # Save to cache
             img.save(cached_preview, 'PNG')
-            logger.info(f"Generated template preview: {cached_preview}")
+            logger.info(f"Generated template preview v2: {cached_preview}")
             
             return FileResponse(cached_preview, media_type="image/png")
             
         except Exception as e:
-            logger.error(f"Failed to extract from PPTX: {e}")
+            logger.error(f"Failed to generate preview from PPTX: {e}")
             # Fall through to placeholder
         
         # Fallback: Generate a styled placeholder
@@ -1061,19 +1079,22 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
             font_small = ImageFont.load_default()
         
         # Draw a subtle header area
-        draw.rectangle([(0, 0), (1920, 120)], fill=(59, 130, 246))  # Blue header
+        draw.rectangle([(0, 0), (1920, 80)], fill=(245, 245, 250))
+        draw.line([(0, 80), (1920, 80)], fill=(220, 220, 225), width=1)
         
         # Draw template name in header
-        draw.text((40, 45), template_name, fill=(255, 255, 255), font=font_large)
+        draw.text((30, 25), template_name, fill=(60, 60, 70), font=font_large)
         
-        # Draw content area placeholder
-        draw.rectangle([(40, 160), (1880, 1040)], outline=(200, 200, 200), width=2)
+        # Draw content area placeholder with dashed border
+        for i in range(0, 1840, 20):
+            draw.line([(40 + i, 100), (min(50 + i, 1880), 100)], fill=(200, 200, 210), width=1)
+            draw.line([(40 + i, 1040), (min(50 + i, 1880), 1040)], fill=(200, 200, 210), width=1)
         
         # Draw "Content Area" text
-        text = "Slide Content Area"
+        text = "Drag your content here"
         bbox = draw.textbbox((0, 0), text, font=font_small)
         x = (1920 - (bbox[2] - bbox[0])) // 2
-        draw.text((x, 580), text, fill=(180, 180, 180), font=font_small)
+        draw.text((x, 560), text, fill=(180, 180, 180), font=font_small)
         
         # Save to cache
         img.save(cached_preview, 'PNG')
@@ -1086,5 +1107,7 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
             'success': False,
             'detail': str(e)
         }, status_code=500)
+
+
 
 
