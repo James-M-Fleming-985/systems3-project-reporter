@@ -841,6 +841,11 @@ async def delete_powerpoint_template(template_id: str):
         if metadata_path.exists():
             metadata_path.unlink()
         
+        # Also delete cached preview
+        cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
+        for cached_file in cache_dir.glob(f"{template_id}_*.png"):
+            cached_file.unlink()
+        
         return JSONResponse({
             'success': True,
             'message': f'Template {template_id} deleted'
@@ -848,6 +853,29 @@ async def delete_powerpoint_template(template_id: str):
         
     except Exception as e:
         logger.error(f"❌ Failed to delete template: {e}")
+        return JSONResponse({
+            'success': False,
+            'detail': str(e)
+        }, status_code=500)
+
+
+@router.delete("/upload/powerpoint-template/{template_id}/preview-cache")
+async def clear_template_preview_cache(template_id: str):
+    """Clear the cached preview for a template to force regeneration"""
+    try:
+        cache_dir = POWERPOINT_TEMPLATES_DIR / "previews"
+        deleted_count = 0
+        for cached_file in cache_dir.glob(f"{template_id}_*.png"):
+            cached_file.unlink()
+            deleted_count += 1
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Cleared {deleted_count} cached preview(s) for {template_id}'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to clear cache: {e}")
         return JSONResponse({
             'success': False,
             'detail': str(e)
@@ -900,12 +928,17 @@ async def set_default_template(template_id: str):
 async def get_template_preview(template_id: str, slide_index: int = 0):
     """Get a preview image of a template slide.
     
-    Uses LibreOffice to convert the slide to an image if available,
-    otherwise returns a placeholder with template info.
+    Extracts visual elements from the PPTX template using python-pptx
+    to create a representative preview image.
     """
     import subprocess
     import tempfile
     from fastapi.responses import FileResponse, Response
+    from pptx import Presentation
+    from pptx.util import Emu
+    from PIL import Image, ImageDraw, ImageFont
+    from io import BytesIO
+    import zipfile
     
     try:
         template_path = POWERPOINT_TEMPLATES_DIR / f"{template_id}.pptx"
@@ -932,66 +965,115 @@ async def get_template_preview(template_id: str, slide_index: int = 0):
         if cached_preview.exists():
             return FileResponse(cached_preview, media_type="image/png")
         
-        # Try to generate preview using LibreOffice (if available)
+        # Try to extract images from the PPTX file
+        # PPTX files are ZIP archives containing media files
         try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                # Convert PPTX to PDF first
-                result = subprocess.run(
-                    ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', tmpdir, str(template_path)],
-                    capture_output=True,
-                    timeout=30
-                )
+            # Create a base image at 16:9 aspect ratio
+            img = Image.new('RGB', (1920, 1080), color=(255, 255, 255))
+            
+            # Try to find and extract a background image from the PPTX
+            with zipfile.ZipFile(template_path, 'r') as zip_ref:
+                # Look for images in the media folder
+                media_files = [f for f in zip_ref.namelist() if f.startswith('ppt/media/') and 
+                              (f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg'))]
                 
-                if result.returncode == 0:
-                    pdf_path = Path(tmpdir) / f"{template_id}.pdf"
-                    if pdf_path.exists():
-                        # Convert PDF page to PNG using pdftoppm (poppler-utils)
-                        png_result = subprocess.run(
-                            ['pdftoppm', '-png', '-f', str(slide_index + 1), '-l', str(slide_index + 1), 
-                             '-r', '150', str(pdf_path), str(cache_dir / f"{template_id}_slide{slide_index}")],
-                            capture_output=True,
-                            timeout=30
-                        )
-                        
-                        # pdftoppm adds a suffix like -1.png
-                        generated_file = cache_dir / f"{template_id}_slide{slide_index}-{slide_index + 1}.png"
-                        if generated_file.exists():
-                            generated_file.rename(cached_preview)
-                            return FileResponse(cached_preview, media_type="image/png")
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            logger.warning(f"LibreOffice conversion not available: {e}")
+                logger.info(f"Found {len(media_files)} media files in template")
+                
+                if media_files:
+                    # Try to find the largest image (likely the background/header)
+                    largest_image = None
+                    largest_size = 0
+                    
+                    for media_file in media_files:
+                        try:
+                            with zip_ref.open(media_file) as f:
+                                img_data = f.read()
+                                temp_img = Image.open(BytesIO(img_data))
+                                size = temp_img.width * temp_img.height
+                                if size > largest_size:
+                                    largest_size = size
+                                    largest_image = temp_img.copy()
+                        except Exception as e:
+                            logger.warning(f"Failed to load image {media_file}: {e}")
+                    
+                    if largest_image:
+                        # If the image is wide enough, use it as background
+                        if largest_image.width >= 800:
+                            # Scale to fit canvas width
+                            scale = 1920 / largest_image.width
+                            new_height = int(largest_image.height * scale)
+                            largest_image = largest_image.resize((1920, new_height), Image.Resampling.LANCZOS)
+                            
+                            # Paste at top of canvas
+                            img.paste(largest_image, (0, 0))
+                            logger.info(f"Used background image: {largest_image.width}x{largest_image.height}")
+                        else:
+                            # Place smaller images (logos) in top-left corner
+                            # Scale to reasonable size
+                            max_logo_height = 150
+                            if largest_image.height > max_logo_height:
+                                scale = max_logo_height / largest_image.height
+                                new_width = int(largest_image.width * scale)
+                                largest_image = largest_image.resize((new_width, max_logo_height), Image.Resampling.LANCZOS)
+                            
+                            # Paste in top-left with padding
+                            img.paste(largest_image, (40, 40))
+                            logger.info(f"Used logo image: {largest_image.width}x{largest_image.height}")
+            
+            # Add template name overlay at bottom
+            draw = ImageDraw.Draw(img)
+            
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+            except:
+                font = ImageFont.load_default()
+            
+            # Semi-transparent bar at bottom with template name
+            overlay = Image.new('RGBA', (1920, 60), (0, 0, 0, 180))
+            img = img.convert('RGBA')
+            img.paste(overlay, (0, 1020), overlay)
+            
+            draw = ImageDraw.Draw(img)
+            draw.text((40, 1030), f"Template: {template_name}", fill=(255, 255, 255), font=font)
+            
+            # Convert back to RGB for saving as PNG
+            img = img.convert('RGB')
+            
+            # Save to cache
+            img.save(cached_preview, 'PNG')
+            logger.info(f"Generated template preview: {cached_preview}")
+            
+            return FileResponse(cached_preview, media_type="image/png")
+            
+        except Exception as e:
+            logger.error(f"Failed to extract from PPTX: {e}")
+            # Fall through to placeholder
         
-        # Fallback: Generate a placeholder image with template name
-        from PIL import Image, ImageDraw, ImageFont
-        
-        # Create a 16:9 placeholder image
-        img = Image.new('RGB', (1920, 1080), color=(245, 245, 245))
+        # Fallback: Generate a styled placeholder
+        img = Image.new('RGB', (1920, 1080), color=(250, 250, 252))
         draw = ImageDraw.Draw(img)
         
-        # Draw template name and info
         try:
-            font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48)
-            font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
+            font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36)
+            font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
         except:
             font_large = ImageFont.load_default()
             font_small = ImageFont.load_default()
         
-        # Draw centered text
-        text_template = f"📄 {template_name}"
-        text_info = "Template Preview"
+        # Draw a subtle header area
+        draw.rectangle([(0, 0), (1920, 120)], fill=(59, 130, 246))  # Blue header
         
-        # Get text bounding boxes for centering
-        bbox1 = draw.textbbox((0, 0), text_template, font=font_large)
-        bbox2 = draw.textbbox((0, 0), text_info, font=font_small)
+        # Draw template name in header
+        draw.text((40, 45), template_name, fill=(255, 255, 255), font=font_large)
         
-        x1 = (1920 - (bbox1[2] - bbox1[0])) // 2
-        x2 = (1920 - (bbox2[2] - bbox2[0])) // 2
+        # Draw content area placeholder
+        draw.rectangle([(40, 160), (1880, 1040)], outline=(200, 200, 200), width=2)
         
-        draw.text((x1, 480), text_template, fill=(60, 60, 60), font=font_large)
-        draw.text((x2, 560), text_info, fill=(120, 120, 120), font=font_small)
-        
-        # Draw border
-        draw.rectangle([(20, 20), (1900, 1060)], outline=(200, 200, 200), width=3)
+        # Draw "Content Area" text
+        text = "Slide Content Area"
+        bbox = draw.textbbox((0, 0), text, font=font_small)
+        x = (1920 - (bbox[2] - bbox[0])) // 2
+        draw.text((x, 580), text, fill=(180, 180, 180), font=font_small)
         
         # Save to cache
         img.save(cached_preview, 'PNG')
