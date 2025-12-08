@@ -1,0 +1,12 @@
+{
+  "james.fleming@systemscubed.co.uk": {
+    "user_id": "b4a805f5-7cd3-4f7e-a49f-bfd23ac61ef7",
+    "email": "james.fleming@systemscubed.co.uk",
+    "full_name": "James Fleming",
+    "password_hash": "8db2393467cb2b708614a047053fa4f1dd2068a1c456a92b00a121ae046deedc",
+    "salt": "df4f5ba532533e39be0501e3678d5782ab6b76ffa9bde9adebf1b40310b8b31f",
+    "is_admin": true,
+    "created_at": "2025-12-08T12:01:04.911526",
+    "last_login": "2025-12-08T12:01:04.967324"
+  }
+}

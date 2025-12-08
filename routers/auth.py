@@ -33,6 +33,10 @@ security = HTTPBearer(auto_error=False)
 AUTH_COOKIE_NAME = "systems3_auth"
 AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 1 week
 
+# Detect if running in production (Railway sets RAILWAY_ENVIRONMENT)
+IS_PRODUCTION = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("RAILWAY_PROJECT_ID") is not None
+COOKIE_SECURE = IS_PRODUCTION  # Only require HTTPS in production
+
 
 def get_auth_service() -> AuthService:
     """Dependency to get auth service"""
@@ -138,7 +142,7 @@ async def login(
         value=token,
         max_age=AUTH_COOKIE_MAX_AGE,
         httponly=True,
-        secure=True,  # Only send over HTTPS
+        secure=COOKIE_SECURE,  # Only require HTTPS in production
         samesite="lax"
     )
     
@@ -219,7 +223,7 @@ async def register(
             value=token,
             max_age=AUTH_COOKIE_MAX_AGE,
             httponly=True,
-            secure=True,
+            secure=COOKIE_SECURE,  # Only require HTTPS in production
             samesite="lax"
         )
     
