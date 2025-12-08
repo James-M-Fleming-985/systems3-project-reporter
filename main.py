@@ -124,6 +124,16 @@ async def root(request: Request):
     })
 
 
+@app.get("/robots.txt")
+async def robots_txt():
+    """Block all search engine crawlers - keep app private"""
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(
+        "User-agent: *\nDisallow: /\n",
+        media_type="text/plain"
+    )
+
+
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon.ico from static directory"""
