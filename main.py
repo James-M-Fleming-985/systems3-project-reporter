@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.257"  # PRIVACY: Anonymize resources at load time + fix screenshot auth cookies
+BUILD_VERSION = "1.0.259"  # UI: Series selector for multi-series metric updates
 
 
 # Setup logging

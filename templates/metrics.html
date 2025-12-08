@@ -251,6 +251,16 @@
                     <input type="text" id="updateMetricNameDisplay" disabled
                            class="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100 text-gray-700">
                 </div>
+                
+                <!-- Series selector (shown only for multi-series metrics) -->
+                <div id="seriesSelectorContainer" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Series to Update</label>
+                    <select id="updateSeriesSelect" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Choose which data series to update</p>
+                </div>
+                
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">New Value</label>
                     <input type="number" step="0.01" id="updateMetricValue" required 
@@ -982,6 +992,46 @@ function updateMetricValue(index) {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('updateMetricDate').value = today;
     
+    // Check if metric has multiple series
+    const seriesContainer = document.getElementById('seriesSelectorContainer');
+    const seriesSelect = document.getElementById('updateSeriesSelect');
+    
+    if (metric.series && Object.keys(metric.series).length > 1) {
+        // Show series selector for multi-series metrics
+        seriesContainer.classList.remove('hidden');
+        seriesSelect.innerHTML = '';
+        
+        // Add "All Series" option
+        const allOption = document.createElement('option');
+        allOption.value = '__all__';
+        allOption.textContent = '📊 Update All Series (same value)';
+        seriesSelect.appendChild(allOption);
+        
+        // Add each series as an option
+        Object.keys(metric.series).forEach((seriesName, idx) => {
+            const option = document.createElement('option');
+            option.value = seriesName;
+            // Get latest value for this series
+            const seriesData = metric.series[seriesName];
+            const latestValue = seriesData.length > 0 ? seriesData[seriesData.length - 1].value : 'N/A';
+            option.textContent = `${seriesName} (current: ${latestValue})`;
+            seriesSelect.appendChild(option);
+        });
+        
+        // When series changes, update the value field with that series' latest value
+        seriesSelect.onchange = function() {
+            if (this.value !== '__all__' && metric.series[this.value]) {
+                const seriesData = metric.series[this.value];
+                if (seriesData.length > 0) {
+                    document.getElementById('updateMetricValue').value = seriesData[seriesData.length - 1].value;
+                }
+            }
+        };
+    } else {
+        // Hide series selector for single-series metrics
+        seriesContainer.classList.add('hidden');
+    }
+    
     document.getElementById('updateValueModal').classList.remove('hidden');
 }
 
@@ -1427,9 +1477,11 @@ function initializeModalControls() {
             const newValue = parseFloat(document.getElementById('updateMetricValue').value);
             const dateValue = document.getElementById('updateMetricDate').value;
             const annotation = document.getElementById('updateMetricAnnotation').value.trim();
+            const selectedSeries = document.getElementById('updateSeriesSelect').value;
             
             console.log('📝 Updating metric at index:', index);
             console.log('📝 New value:', newValue, 'Date:', dateValue);
+            console.log('📝 Selected series:', selectedSeries || 'single-series mode');
             console.log('📝 History before update:', customMetrics[index].history);
             
             // Add to history with user-specified date and annotation
@@ -1441,13 +1493,6 @@ function initializeModalControls() {
             const selectedDate = new Date(dateValue + 'T12:00:00Z');
             const newDateISO = selectedDate.toISOString();
             
-            // Check if entry for this date already exists
-            const existingIndex = customMetrics[index].history.findIndex(entry => {
-                const entryDate = new Date(entry.date).toISOString().split('T')[0];
-                const newDate = newDateISO.split('T')[0];
-                return entryDate === newDate;
-            });
-            
             const historyEntry = {
                 value: newValue,
                 date: newDateISO
@@ -1458,20 +1503,19 @@ function initializeModalControls() {
                 historyEntry.annotation = annotation;
             }
             
-            if (existingIndex !== -1) {
-                // Update existing entry
-                console.log(`📝 Updating existing entry at index ${existingIndex} for date ${dateValue}`);
-                customMetrics[index].history[existingIndex] = historyEntry;
-            } else {
-                // Add new entry
-                console.log(`📝 Adding new entry for date ${dateValue}`);
-                customMetrics[index].history.push(historyEntry);
-            }
+            // Determine which series to update
+            const hasSeries = customMetrics[index].series && Object.keys(customMetrics[index].series).length > 0;
+            const updateAllSeries = !selectedSeries || selectedSeries === '__all__';
             
-            // Also update series data if it exists
-            if (customMetrics[index].series && Object.keys(customMetrics[index].series).length > 0) {
-                // Update each series with the new data point
-                Object.keys(customMetrics[index].series).forEach(seriesName => {
+            if (hasSeries) {
+                // Multi-series mode
+                const seriesToUpdate = updateAllSeries 
+                    ? Object.keys(customMetrics[index].series) 
+                    : [selectedSeries];
+                
+                seriesToUpdate.forEach(seriesName => {
+                    if (!customMetrics[index].series[seriesName]) return;
+                    
                     const seriesData = customMetrics[index].series[seriesName];
                     
                     // Check if entry for this date exists in series
@@ -1483,14 +1527,31 @@ function initializeModalControls() {
                     
                     if (seriesExistingIndex !== -1) {
                         // Update existing series entry
-                        seriesData[seriesExistingIndex] = historyEntry;
+                        seriesData[seriesExistingIndex] = {...historyEntry};
                         console.log(`📝 Updated series "${seriesName}" at index ${seriesExistingIndex}`);
                     } else {
                         // Add new series entry
-                        seriesData.push(historyEntry);
+                        seriesData.push({...historyEntry});
                         console.log(`📝 Added new entry to series "${seriesName}"`);
                     }
                 });
+                
+                console.log(`📝 Updated ${seriesToUpdate.length} series: ${seriesToUpdate.join(', ')}`);
+            }
+            
+            // Also update history array (for single-series or legacy mode)
+            const existingIndex = customMetrics[index].history.findIndex(entry => {
+                const entryDate = new Date(entry.date).toISOString().split('T')[0];
+                const newDate = newDateISO.split('T')[0];
+                return entryDate === newDate;
+            });
+            
+            if (existingIndex !== -1) {
+                customMetrics[index].history[existingIndex] = {...historyEntry};
+                console.log(`📝 Updated history at index ${existingIndex} for date ${dateValue}`);
+            } else {
+                customMetrics[index].history.push({...historyEntry});
+                console.log(`📝 Added new history entry for date ${dateValue}`);
             }
             
             console.log('📝 History after update:', customMetrics[index].history);

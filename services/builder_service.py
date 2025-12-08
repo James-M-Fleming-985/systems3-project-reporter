@@ -235,6 +235,36 @@ class PowerPointBuilderService:
         # Add screenshot image
         self._add_image_to_slide(slide, screenshot)
         
+        # Add editable notes text box at the bottom
+        self._add_notes_textbox(slide)
+    
+    def _add_notes_textbox(self, slide):
+        """Add an editable text box for notes/resources at the bottom of the slide."""
+        try:
+            slide_width = self.presentation.slide_width
+            slide_height = self.presentation.slide_height
+            
+            # Position at bottom of slide
+            left = Inches(0.5)
+            top = int(slide_height * 0.88)  # 88% down the slide
+            width = int(slide_width - Inches(1))
+            height = Inches(0.5)
+            
+            # Add text box
+            textbox = slide.shapes.add_textbox(left, top, width, height)
+            tf = textbox.text_frame
+            tf.word_wrap = True
+            
+            # Add placeholder text
+            p = tf.paragraphs[0]
+            p.text = "📝 Resources/Notes: [Edit this field to add resource names, owners, or additional information]"
+            p.font.size = Pt(10)
+            p.font.color.rgb = RGBColor(100, 100, 100)  # Gray color
+            p.font.italic = True
+        except Exception as e:
+            # Don't fail slide creation if notes box fails
+            pass
+        
     def _add_image_to_slide(self, slide, image_bytes: bytes):
         """Add image to slide with proper sizing."""
         # Load image to get dimensions

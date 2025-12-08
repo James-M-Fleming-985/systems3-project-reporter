@@ -1,15 +1,59 @@
 """
 Risk Repository
 Manages storage and retrieval of normalized risk data.
+
+PRIVACY: Owner names are anonymized at load time.
 """
 import json
 import os
+import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Sensitive words to replace for privacy
+SENSITIVE_REPLACEMENTS = {
+    'Safran': 'Client 1',
+    'safran': 'Client 1',
+    'SAFRAN': 'CLIENT 1',
+}
+
+
+class OwnerAnonymizer:
+    """Anonymizes owner names to prevent PII exposure"""
+    
+    def __init__(self):
+        self._name_map: Dict[str, str] = {}
+        self._counter = 0
+    
+    def anonymize(self, name: str) -> str:
+        """Convert real name to anonymous placeholder like 'Owner A'"""
+        if not name:
+            return name
+        
+        # Sanitize sensitive company names first
+        sanitized = name
+        for sensitive, replacement in SENSITIVE_REPLACEMENTS.items():
+            sanitized = sanitized.replace(sensitive, replacement)
+        
+        # Check if already anonymized
+        if sanitized in self._name_map:
+            return self._name_map[sanitized]
+        
+        # Generate new anonymous name
+        self._counter += 1
+        if self._counter <= 26:
+            anon_name = f"Owner {chr(64 + self._counter)}"
+        else:
+            first = chr(64 + ((self._counter - 1) // 26))
+            second = chr(65 + ((self._counter - 1) % 26))
+            anon_name = f"Owner {first}{second}"
+        
+        self._name_map[sanitized] = anon_name
+        return anon_name
 
 
 class RiskRepository:
@@ -115,7 +159,15 @@ class RiskRepository:
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-            return data.get('risks', [])
+            risks = data.get('risks', [])
+            
+            # PRIVACY: Anonymize owner names
+            anonymizer = OwnerAnonymizer()
+            for risk in risks:
+                if 'owner' in risk and risk['owner']:
+                    risk['owner'] = anonymizer.anonymize(risk['owner'])
+            
+            return risks
         except Exception as e:
             print(f"Error loading risks: {e}")
             return None
