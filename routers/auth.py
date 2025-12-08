@@ -33,9 +33,10 @@ security = HTTPBearer(auto_error=False)
 AUTH_COOKIE_NAME = "systems3_auth"
 AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 1 week
 
-# Detect if running in production (Railway sets RAILWAY_ENVIRONMENT)
+# Detect if running in production OR in GitHub Codespaces (both use HTTPS)
 IS_PRODUCTION = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("RAILWAY_PROJECT_ID") is not None
-COOKIE_SECURE = IS_PRODUCTION  # Only require HTTPS in production
+IS_CODESPACES = os.getenv("CODESPACES") == "true" or os.getenv("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN") is not None
+COOKIE_SECURE = IS_PRODUCTION or IS_CODESPACES  # Require HTTPS when accessed via HTTPS
 
 
 def get_auth_service() -> AuthService:
