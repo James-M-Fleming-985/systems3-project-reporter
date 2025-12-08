@@ -70,7 +70,7 @@
                         onkeydown="handleTitleKeydown(event)">Systems³ Project Reporter</h1>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="/dashboard" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         Portfolio Dashboard
                     </a>
                     <a href="/dashboard/gantt{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
