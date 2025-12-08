@@ -121,3 +121,85 @@ async def list_projects_with_metrics():
     except Exception as e:
         logger.error(f"Error listing projects: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class AnnotationPosition(BaseModel):
+    """Annotation position update"""
+    seriesName: str
+    date: str
+    ax: float
+    ay: float
+
+
+class AnnotationPositionsUpdate(BaseModel):
+    """List of annotation positions to update"""
+    metricName: str
+    positions: List[AnnotationPosition]
+
+
+@router.put("/api/custom-metrics/{project_name}/annotation-positions")
+async def update_annotation_positions(project_name: str, data: AnnotationPositionsUpdate):
+    """
+    Update annotation positions for a metric without overwriting other data.
+    This allows persisting user-positioned annotations.
+    """
+    try:
+        logger.info(f"📍 Updating annotation positions for '{data.metricName}' in '{project_name}'")
+        logger.info(f"   Positions to update: {len(data.positions)}")
+        
+        # Load existing metrics
+        metrics = metrics_repo.load_metrics(project_name)
+        
+        if not metrics:
+            raise HTTPException(status_code=404, detail="No metrics found for project")
+        
+        # Find the specific metric
+        metric_found = False
+        for metric in metrics:
+            if metric.get('name') == data.metricName:
+                metric_found = True
+                
+                # Update positions in series data
+                if metric.get('series'):
+                    for pos in data.positions:
+                        if pos.seriesName in metric['series']:
+                            for point in metric['series'][pos.seriesName]:
+                                # Match by date (normalize date comparison)
+                                point_date = point.get('date', '')
+                                if point_date and pos.date in point_date:
+                                    if point.get('annotation'):
+                                        point['annotationAx'] = pos.ax
+                                        point['annotationAy'] = pos.ay
+                                        logger.info(f"   ✅ Updated {pos.seriesName} @ {pos.date}: ax={pos.ax}, ay={pos.ay}")
+                
+                # Also update in legacy history if present
+                if metric.get('history'):
+                    for pos in data.positions:
+                        for point in metric['history']:
+                            point_date = point.get('date', '')
+                            if point_date and pos.date in point_date:
+                                if point.get('annotation'):
+                                    point['annotationAx'] = pos.ax
+                                    point['annotationAy'] = pos.ay
+                                    logger.info(f"   ✅ Updated history @ {pos.date}: ax={pos.ax}, ay={pos.ay}")
+                break
+        
+        if not metric_found:
+            raise HTTPException(status_code=404, detail=f"Metric '{data.metricName}' not found")
+        
+        # Save updated metrics
+        success = metrics_repo.save_metrics(project_name, metrics)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Updated {len(data.positions)} annotation positions"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save updated positions")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating annotation positions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

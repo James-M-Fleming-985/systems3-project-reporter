@@ -279,16 +279,22 @@ function renderTrendChart(metric) {
             
             // Find annotated points in this series
             const annotatedPoints = sortedHistory
-                .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i], seriesName }))
+                .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i], seriesName, originalDate: h.date }))
                 .filter(h => h.annotation);
             
             console.log(`📝 Series "${seriesName}" has ${annotatedPoints.length} annotations`);
             
             annotatedPoints.forEach((point) => {
-                // Alternate positions to avoid overlap
-                const yshift = 40 + (annotationIdx % 4) * 30;
-                const ax = annotationIdx % 2 === 0 ? -80 : 80;
+                // Use saved positions if available, otherwise calculate defaults
+                const savedAx = point.annotationAx;
+                const savedAy = point.annotationAy;
+                const defaultYshift = 40 + (annotationIdx % 4) * 30;
+                const defaultAx = annotationIdx % 2 === 0 ? -80 : 80;
+                const ax = savedAx !== undefined ? savedAx : defaultAx;
+                const ay = savedAy !== undefined ? savedAy : -defaultYshift;
                 const align = ax < 0 ? 'right' : 'left';
+                
+                console.log(`   📌 "${point.annotation}" @ ${point.date}: ax=${ax}, ay=${ay} (saved: ${savedAx !== undefined})`);
                 
                 layout.annotations.push({
                     x: point.date,
@@ -299,13 +305,16 @@ function renderTrendChart(metric) {
                     arrowsize: 1,
                     arrowcolor: color,
                     ax: ax,
-                    ay: -yshift,
+                    ay: ay,
                     font: { size: 12, color: '#1f2937' },
                     bgcolor: 'rgba(255, 255, 255, 0.95)',
                     bordercolor: color,
                     borderwidth: 2,
                     borderpad: 5,
-                    align: align
+                    align: align,
+                    // Store metadata for saving
+                    name: `${seriesName}|${point.originalDate}|${point.annotation}`,
+                    captureevents: true
                 });
                 annotationIdx++;
             });
@@ -339,13 +348,20 @@ function renderTrendChart(metric) {
         });
         
         const annotatedPoints = sortedHistory
-            .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
+            .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i], originalDate: sortedHistory[i].date }))
             .filter(h => h.annotation);
         
         annotatedPoints.forEach((point, idx) => {
-            const yshift = 50 + (idx % 3) * 25;
-            const ax = idx % 2 === 0 ? -60 : 60;
+            // Use saved positions if available
+            const savedAx = point.annotationAx;
+            const savedAy = point.annotationAy;
+            const defaultYshift = 50 + (idx % 3) * 25;
+            const defaultAx = idx % 2 === 0 ? -60 : 60;
+            const ax = savedAx !== undefined ? savedAx : defaultAx;
+            const ay = savedAy !== undefined ? savedAy : -defaultYshift;
             const align = ax < 0 ? 'right' : 'left';
+            
+            console.log(`   📌 "${point.annotation}" @ ${point.date}: ax=${ax}, ay=${ay} (saved: ${savedAx !== undefined})`);
             
             layout.annotations.push({
                 x: point.date,
@@ -356,27 +372,144 @@ function renderTrendChart(metric) {
                 arrowsize: 1,
                 arrowcolor: '#9ca3af',
                 ax: ax,
-                ay: -yshift,
+                ay: ay,
                 font: { size: 13, color: '#374151' },
                 bgcolor: 'rgba(255, 255, 255, 0.98)',
                 bordercolor: '#d1d5db',
                 borderwidth: 1,
                 borderpad: 6,
-                align: align
+                align: align,
+                // Store metadata for saving
+                name: `history|${point.originalDate}|${point.annotation}`,
+                captureevents: true
             });
         });
     }
     
     const config = {
         responsive: true,
-        displayModeBar: false
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+        edits: {
+            annotationPosition: true,  // Allow dragging annotations
+            annotationTail: true       // Allow dragging arrow tails
+        }
     };
     
     Plotly.newPlot('metricTrendChart', data, layout, config).then(() => {
         // Signal that chart is fully rendered for screenshot capture
         document.body.setAttribute('data-plotly-ready', 'true');
         console.log('✅ Plotly chart fully rendered, set data-plotly-ready');
+        
+        // Listen for annotation position changes (relayout events)
+        const chartDiv = document.getElementById('metricTrendChart');
+        chartDiv.on('plotly_relayout', function(eventData) {
+            console.log('📍 Relayout event:', eventData);
+            
+            // Check if any annotations were moved
+            const annotationUpdates = [];
+            for (const key in eventData) {
+                // Plotly uses format like 'annotations[0].ax' for annotation changes
+                const match = key.match(/annotations\[(\d+)\]\.(ax|ay)/);
+                if (match) {
+                    const annotationIdx = parseInt(match[1]);
+                    const prop = match[2];
+                    const value = eventData[key];
+                    
+                    // Find or create update entry for this annotation
+                    let update = annotationUpdates.find(u => u.idx === annotationIdx);
+                    if (!update) {
+                        update = { idx: annotationIdx };
+                        annotationUpdates.push(update);
+                    }
+                    update[prop] = value;
+                }
+            }
+            
+            if (annotationUpdates.length > 0) {
+                console.log('📍 Annotation position updates:', annotationUpdates);
+                saveAnnotationPositions(layout.annotations, annotationUpdates);
+            }
+        });
     });
+}
+
+// Save annotation positions to server
+async function saveAnnotationPositions(annotations, updates) {
+    const positions = [];
+    
+    for (const update of updates) {
+        const annotation = annotations[update.idx];
+        if (!annotation || !annotation.name) continue;
+        
+        // Parse the name field: "seriesName|date|text"
+        const parts = annotation.name.split('|');
+        if (parts.length >= 2) {
+            const seriesName = parts[0];
+            const date = parts[1];
+            
+            // Get current positions (use update values or existing)
+            const ax = update.ax !== undefined ? update.ax : annotation.ax;
+            const ay = update.ay !== undefined ? update.ay : annotation.ay;
+            
+            positions.push({
+                seriesName: seriesName,
+                date: date,
+                ax: ax,
+                ay: ay
+            });
+        }
+    }
+    
+    if (positions.length === 0) {
+        console.log('⚠️ No valid positions to save');
+        return;
+    }
+    
+    console.log('💾 Saving annotation positions:', positions);
+    
+    try {
+        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(projectName)}/annotation-positions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                metricName: metricName,
+                positions: positions
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Annotation positions saved:', result);
+            
+            // Show brief toast notification
+            showToast('Annotation position saved');
+        } else {
+            const error = await response.text();
+            console.error('❌ Failed to save positions:', error);
+        }
+    } catch (e) {
+        console.error('❌ Error saving annotation positions:', e);
+    }
+}
+
+// Simple toast notification
+function showToast(message) {
+    const existing = document.getElementById('annotation-toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'annotation-toast';
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #22c55e; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; transition: opacity 0.3s;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
 </script>
 {% endblock %}

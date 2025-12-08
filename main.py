@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.260"  # Fix: Annotations now render for multi-series metrics in trend charts
+BUILD_VERSION = "1.0.261"  # Persist annotation positions - drag and save to server
 
 
 # Setup logging
