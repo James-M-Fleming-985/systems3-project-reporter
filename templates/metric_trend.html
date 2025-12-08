@@ -266,8 +266,54 @@ function renderTrendChart(metric) {
         });
     }
     
-    // Add annotations for data points with callouts (only for single series to avoid clutter)
-    if (metric.history && metric.history.length > 0 && (!metric.series || Object.keys(metric.series).length === 0)) {
+    // Add annotations for data points with callouts
+    // For multi-series metrics
+    if (metric.series && Object.keys(metric.series).length > 0) {
+        let annotationIdx = 0;
+        Object.keys(metric.series).forEach((seriesName, seriesIdx) => {
+            const seriesData = metric.series[seriesName];
+            const sortedHistory = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+            const values = sortedHistory.map(h => h.value);
+            const color = colors[seriesIdx % colors.length];
+            
+            // Find annotated points in this series
+            const annotatedPoints = sortedHistory
+                .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i], seriesName }))
+                .filter(h => h.annotation);
+            
+            console.log(`📝 Series "${seriesName}" has ${annotatedPoints.length} annotations`);
+            
+            annotatedPoints.forEach((point) => {
+                // Alternate positions to avoid overlap
+                const yshift = 40 + (annotationIdx % 4) * 30;
+                const ax = annotationIdx % 2 === 0 ? -80 : 80;
+                const align = ax < 0 ? 'right' : 'left';
+                
+                layout.annotations.push({
+                    x: point.date,
+                    y: point.value,
+                    text: `<b>${point.annotation}</b>`,
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowsize: 1,
+                    arrowcolor: color,
+                    ax: ax,
+                    ay: -yshift,
+                    font: { size: 12, color: '#1f2937' },
+                    bgcolor: 'rgba(255, 255, 255, 0.95)',
+                    bordercolor: color,
+                    borderwidth: 2,
+                    borderpad: 5,
+                    align: align
+                });
+                annotationIdx++;
+            });
+        });
+        console.log(`📝 Total annotations added: ${annotationIdx}`);
+    }
+    // For single series (legacy format)
+    else if (metric.history && metric.history.length > 0) {
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
         const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
         const values = sortedHistory.map(h => h.value);

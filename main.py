@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.259"  # UI: Series selector for multi-series metric updates
+BUILD_VERSION = "1.0.260"  # Fix: Annotations now render for multi-series metrics in trend charts
 
 
 # Setup logging
