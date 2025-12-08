@@ -1,0 +1,1894 @@
+project_name: ZnNi Line Development Plan-12.xml
+project_code: ZLD-P1
+status: IN_PROGRESS
+start_date: '2025-12-08'
+target_completion: '2025-12-08'
+completion_percentage: 0
+milestones:
+- id: null
+  name: Surface Finish Table 1 Access to ASTM Specs Granted
+  target_date: '2025-09-15'
+  status: COMPLETED
+  completion_date: '2025-09-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Surface Finish Table 1 Validation
+  resources: Kurt Parsons
+  project: ZLD-P1
+- id: null
+  name: Surface Finish Table 1 released
+  target_date: '2026-01-07'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: Surface Finish Table 1 Validation
+  resources: Martyn Price
+  project: ZLD-P1
+- id: null
+  name: PE & Operator Surtec Training
+  target_date: '2024-09-03'
+  status: COMPLETED
+  completion_date: '2024-09-03'
+  completion_percentage: 10000
+  notes: null
+  parent_project: null
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Placeholder
+  target_date: '2024-09-03'
+  status: COMPLETED
+  completion_date: '2024-09-03'
+  completion_percentage: 10000
+  notes: null
+  parent_project: PE & Operator Surtec Training
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Thermo Fischer Calibration Training
+  target_date: '2024-11-13'
+  status: COMPLETED
+  completion_date: '2024-11-13'
+  completion_percentage: 10000
+  notes: null
+  parent_project: null
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: placeholder
+  target_date: '2024-11-13'
+  status: COMPLETED
+  completion_date: '2024-11-13'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Thermo Fischer Calibration Training
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Analysis Methods Documentation
+  target_date: '2025-06-24'
+  status: COMPLETED
+  completion_date: '2025-06-24'
+  completion_percentage: 10000
+  notes: null
+  parent_project: null
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Surface Finish XRF Operating SoP Competency form creation complete
+  target_date: '2025-03-31'
+  status: COMPLETED
+  completion_date: '2025-03-31'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'Surface Finish XRF Operating SoP '
+  resources: OT Team
+  project: ZLD-P1
+- id: null
+  name: Surface Finish XRF Operating SoP & Compentency Form Uploaded to OSR/CHEOPs
+  target_date: '2025-04-15'
+  status: COMPLETED
+  completion_date: '2025-04-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'Surface Finish XRF Operating SoP '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Surface Finish XRF Operating SoP Work Package Closed
+  target_date: '2025-05-13'
+  status: COMPLETED
+  completion_date: '2025-05-13'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'Surface Finish XRF Operating SoP '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Vendors identified
+  target_date: '2024-11-01'
+  status: COMPLETED
+  completion_date: '2024-11-01'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Requirements communicated
+  target_date: '2024-11-01'
+  status: COMPLETED
+  completion_date: '2024-11-01'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Funding Raised Complete
+  target_date: '2025-04-18'
+  status: COMPLETED
+  completion_date: '2025-04-18'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Vat 8 Prelims (structural calcs & route to line 360
+    scan) Complete
+  target_date: '2025-05-30'
+  status: COMPLETED
+  completion_date: '2025-05-30'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Final Design Review & Sign off
+  target_date: '2025-06-18'
+  status: COMPLETED
+  completion_date: '2025-06-18'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Approval for Manufacture
+  target_date: '2025-06-25'
+  status: COMPLETED
+  completion_date: '2025-06-25'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Manufacture Complete
+  target_date: '2025-10-01'
+  status: COMPLETED
+  completion_date: '2025-10-01'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Unload area cordoned
+  target_date: '2025-10-06'
+  status: COMPLETED
+  completion_date: '2025-10-06'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: James Allcoat
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Vat 8 Removal Complete
+  target_date: '2025-10-22'
+  status: COMPLETED
+  completion_date: '2025-10-22'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Installation Complete
+  target_date: '2025-11-03'
+  status: COMPLETED
+  completion_date: '2025-11-03'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Remove & Install Final Sign off
+  target_date: '2025-11-05'
+  status: COMPLETED
+  completion_date: '2025-11-05'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Vat 8 Remove & Install
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Adequate Chemicals for Vat 8 onsite confirmed
+  target_date: '2025-11-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Vat 9 Spark test Date Confirmed
+  target_date: '2025-11-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Analysis and Additions Complete
+  target_date: '2026-01-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: Mike Warriner
+  project: ZLD-P1
+- id: null
+  name: Plating Efficiency Increased to 80% Complete
+  target_date: '2026-03-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: James Bick
+  project: ZLD-P1
+- id: null
+  name: Vat 8 Testing Successfully Completed
+  target_date: '2026-03-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: Josh Kenny
+  project: ZLD-P1
+- id: null
+  name: QA& M&P Laboratory for Production Sign Off
+  target_date: '2026-06-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: Lloyd Harrington
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat 8 Solution Qualification Complete
+  target_date: '2026-06-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: Lloyd Harrington
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat 8 Production Ready
+  target_date: '2026-06-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Solution Qualification Close out project
+  target_date: '2026-06-08'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Vat 8 Solution Qualification '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Extraction Initial Service & Duct Repair Design Completed
+  target_date: '2024-09-18'
+  status: COMPLETED
+  completion_date: '2024-09-18'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Extraction Initial Service & Duct Repair
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Extraction Initial Service & Duct Repair Gate 4 - Approval to Start Work
+  target_date: '2024-09-18'
+  status: COMPLETED
+  completion_date: '2024-09-18'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Extraction Initial Service & Duct Repair
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Extraction Initial Service & Duct Repair Validation
+  target_date: '2024-10-01'
+  status: COMPLETED
+  completion_date: '2024-10-01'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Extraction Initial Service & Duct Repair
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Initial Design Review
+  target_date: '2025-02-19'
+  status: COMPLETED
+  completion_date: '2025-02-19'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: 'ZnNi Vat Lid Limit Switches Trial Manufacture '
+  target_date: '2025-04-15'
+  status: COMPLETED
+  completion_date: '2025-04-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Trial Manufacture complete
+  target_date: '2025-04-15'
+  status: COMPLETED
+  completion_date: '2025-04-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: ASL
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Trial Switches Installation Complete
+  target_date: '2025-04-30'
+  status: COMPLETED
+  completion_date: '2025-04-30'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Trial Switches PLC Configuration Complete
+  target_date: '2025-04-29'
+  status: COMPLETED
+  completion_date: '2025-04-29'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Trial Validation Complete
+  target_date: '2025-05-07'
+  status: COMPLETED
+  completion_date: '2025-05-07'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: ASL
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Final Fix Switch Manufacture Complete
+  target_date: '2025-06-12'
+  status: COMPLETED
+  completion_date: '2025-06-12'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Final Fix Installation Complete
+  target_date: '2025-06-13'
+  status: COMPLETED
+  completion_date: '2025-06-13'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches Final Fix PLC Configuration Complete
+  target_date: '2025-04-29'
+  status: COMPLETED
+  completion_date: '2025-04-29'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: ZnNi Vat Lid Limit Switches System Commissioning & Sign off
+  target_date: '2025-06-13'
+  status: COMPLETED
+  completion_date: '2025-06-13'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Vat Lid Limit Switches '
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: 'SF Documentation Optimization Milestone: Revised Project Charter Approval'
+  target_date: '2025-08-19'
+  status: COMPLETED
+  completion_date: '2025-08-19'
+  completion_percentage: 10000
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: SF Documentation Optimization Doc Analysis Platorm Complete
+  target_date: '2025-09-15'
+  status: COMPLETED
+  completion_date: '2025-09-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Gap Analysis Complete
+  target_date: '2025-09-15'
+  status: COMPLETED
+  completion_date: '2025-09-15'
+  completion_percentage: 10000
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Full Compliance Action List Approved & Released
+  target_date: '2025-10-06'
+  status: COMPLETED
+  completion_date: '2025-10-06'
+  completion_percentage: 10000
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Full Compliance Action List Work Complete
+  target_date: '2025-12-29'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: SF Documentation Optimization Change and Update work
+  target_date: '2026-04-10'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: SF Documentation Optimization Streamline Complete
+  target_date: '2026-04-20'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Process SF Manual Release
+  target_date: '2026-05-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Implementation Complete
+  target_date: '2026-05-14'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Project Closure Complete
+  target_date: '2026-05-29'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: SF Documentation Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Filter Upgrade Purchase order raised
+  target_date: '2024-11-08'
+  status: COMPLETED
+  completion_date: '2024-11-08'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Filter Upgrade
+  resources: Josh Avent
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Filter Upgrade Vat 7 emptied
+  target_date: '2025-01-29'
+  status: COMPLETED
+  completion_date: '2025-01-29'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Filter Upgrade
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Filter Upgrade Quotation for Vat 7 filter integration received
+  target_date: '2025-03-14'
+  status: COMPLETED
+  completion_date: '2025-03-14'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Filter Upgrade
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Filter Upgrade Work Acceptance Signed off
+  target_date: '2025-06-06'
+  status: COMPLETED
+  completion_date: '2025-06-06'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Filter Upgrade
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: 'ZnNi Line Filter Upgrade Gate 6 - Approval to close out '
+  target_date: '2025-06-17'
+  status: COMPLETED
+  completion_date: '2025-06-17'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Filter Upgrade
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Solution flow final approval & sign off
+  target_date: '2025-05-09'
+  status: COMPLETED
+  completion_date: '2025-05-09'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: ASL
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Flow Monitoring Gate 6 Approval to close
+  target_date: '2025-05-12'
+  status: COMPLETED
+  completion_date: '2025-05-12'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Flow Monitoring Deseminate Lessons Learnt
+  target_date: '2025-05-12'
+  status: COMPLETED
+  completion_date: '2025-05-12'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Flow Monitoring Close out project
+  target_date: '2025-05-12'
+  status: COMPLETED
+  completion_date: '2025-05-12'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Supplier selection
+  target_date: '2025-03-20'
+  status: COMPLETED
+  completion_date: '2025-03-20'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Flow Control Select supplier proposal complete
+  target_date: '2026-03-12'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Agitation Flow Control Installation complete
+  target_date: '2026-04-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: ZnNi Line Flow Rate Optimization
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Safety Interlock Access Point Avanta RAMS
+  target_date: '2024-10-22'
+  status: COMPLETED
+  completion_date: '2024-10-22'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Safety Interlock Access Point installed
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Safety Interlock Access Point Line side near Installation of Gate
+  target_date: '2024-12-03'
+  status: COMPLETED
+  completion_date: '2024-12-03'
+  completion_percentage: 10000
+  notes: null
+  parent_project: Safety Interlock Access Point installed
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Industrialization CAD to ZnNi Planning Complete
+  target_date: '2025-10-07'
+  status: COMPLETED
+  completion_date: '2025-10-07'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Industrialization CAD to ZnNi Gap Ananysis Complete
+  target_date: '2025-10-21'
+  status: COMPLETED
+  completion_date: '2025-10-21'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Industrialization CAD to ZnNi Project Started
+  target_date: '2025-10-22'
+  status: COMPLETED
+  completion_date: '2025-10-22'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: CAD to ZnNi Power Bi Dashboard Complete
+  target_date: '2025-11-05'
+  status: COMPLETED
+  completion_date: '2025-11-05'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Gordano Onboarding Complete (Bogie Pivot)
+  target_date: '2025-11-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Kardex IT System Commission Complete
+  target_date: '2025-12-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: System Documentation Suite Complete
+  target_date: '2025-12-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: CAD to ZnNi ALL Parts Complete
+  target_date: '2026-10-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: ZnNi Industrialization CAD to ZnNi Project Complete
+  target_date: '2026-10-07'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Industrialization CAD to ZnNi '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Optimal dutycycle/power/configuration requirements complete
+  target_date: '2025-05-07'
+  status: COMPLETED
+  completion_date: '2025-05-07'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Platform & Housing Design Review
+  target_date: '2025-05-28'
+  status: COMPLETED
+  completion_date: '2025-05-28'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Platform Loures Design Approved
+  target_date: '2025-08-11'
+  status: COMPLETED
+  completion_date: '2025-08-11'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Platform & Housing Design Complete
+  target_date: '2025-08-11'
+  status: COMPLETED
+  completion_date: '2025-08-11'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization All project Pos placed Complete
+  target_date: '2025-09-11'
+  status: COMPLETED
+  completion_date: '2025-09-11'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Incumbent Platform Removal Complete
+  target_date: '2025-08-05'
+  status: COMPLETED
+  completion_date: '2025-08-05'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: MTECH
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Platform Install Complete
+  target_date: '2025-08-12'
+  status: COMPLETED
+  completion_date: '2025-08-12'
+  completion_percentage: 10000
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: MTECH
+  project: ZLD-P1
+- id: null
+  name: Water testing methods to be added to test schedule
+  target_date: '2025-11-12'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Production Ready
+  target_date: '2025-11-03'
+  status: COMPLETED
+  completion_date: null
+  completion_percentage: 9900
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line Chiller System Optimization Project Closed
+  target_date: '2025-12-12'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: 'ZnNi Line Chiller System Optimization  '
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line First Line Maintenance Plan Roll Out Training Complete
+  target_date: '2025-04-29'
+  status: COMPLETED
+  completion_date: '2025-04-29'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line First Line Maintenance Plan Roll Out
+  resources: HR Manager
+  project: ZLD-P1
+- id: null
+  name: ZnNi Line First Line Maintenance Plan Roll Out ZnNi 1LM Plan Roll Out Traffic
+    Light System for 1LM Status
+  target_date: '2025-05-06'
+  status: COMPLETED
+  completion_date: '2025-05-06'
+  completion_percentage: 10000
+  notes: null
+  parent_project: ZnNi Line First Line Maintenance Plan Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMS Roll Out - Vendor Selection Complete
+  target_date: '2025-09-04'
+  status: COMPLETED
+  completion_date: '2025-09-04'
+  completion_percentage: 10000
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out SoW Approved
+  target_date: '2026-04-02'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Thermo Fischer Proposal Approved
+  target_date: '2026-04-02'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Gate 2 Approval to Start Execution
+  target_date: '2026-04-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Detailed Project Plan Team Review
+  target_date: '2026-04-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Detailed Project Plan complete
+  target_date: '2026-04-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Approval to Start Execution Complete
+  target_date: '2026-04-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out  Finalize the approved design package Team Review
+  target_date: '2026-04-21'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Obtain formal sign-off on testing phase completion.
+  target_date: '2026-06-02'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: James Fleming
+  project: ZLD-P1
+- id: null
+  name: Phase 6 - LIMs Roll Out Implementation
+  target_date: '2026-08-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF
+  target_date: '2026-06-25'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Finalize and verify all implementation plans.
+  target_date: '2026-06-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Prepare the deployment environment and ensure
+    readiness.
+  target_date: '2026-06-08'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Schedule implementation activities and communicate
+    timelines to stakeholders.
+  target_date: '2026-06-09'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Conduct implementation kickoff meetings.
+  target_date: '2026-06-10'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Install or deploy project deliverables into the
+    live environment.
+  target_date: '2026-06-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Migrate data, if necessary.
+  target_date: '2026-06-12'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Perform initial setup and configuration of systems
+    or components.
+  target_date: '2026-06-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Conduct end-user training sessions and provide
+    user documentation.
+  target_date: '2026-06-16'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Perform validation tests to ensure proper installation
+    and functionality.
+  target_date: '2026-06-17'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Monitor the implementation process and address
+    any issues that arise.
+  target_date: '2026-06-18'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Provide user support and troubleshoot any immediate
+    post-implementation problems.
+  target_date: '2026-06-19'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Obtain final acceptance from stakeholders.
+  target_date: '2026-06-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Document the implementation process and any lessons
+    learned.
+  target_date: '2026-06-23'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Conduct a post-implementation review to evaluate
+    success and identify improvements.
+  target_date: '2026-06-24'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Gate 6  LIMs Roll Out M&P Lab and SF Approval to Close out Project
+  target_date: '2026-06-25'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Obtain final acceptance from Team Review
+  target_date: '2026-06-24'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out M&P Lab and SF Approval to ose out Project Complete
+  target_date: '2026-06-25'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment
+  target_date: '2026-07-16'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Finalize and verify all implementation plans.
+  target_date: '2026-06-26'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Prepare the deployment environment and ensure
+    readiness.
+  target_date: '2026-06-29'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Schedule implementation activities and communicate
+    timelines to stakeholders.
+  target_date: '2026-06-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Conduct implementation kickoff meetings.
+  target_date: '2026-07-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Install or deploy project deliverables into the
+    live environment.
+  target_date: '2026-07-02'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Migrate data, if necessary.
+  target_date: '2026-07-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Perform initial setup and configuration of systems
+    or components.
+  target_date: '2026-07-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Conduct end-user training sessions and provide
+    user documentation.
+  target_date: '2026-07-07'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Perform validation tests to ensure proper installation
+    and functionality.
+  target_date: '2026-07-08'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Monitor the implementation process and address
+    any issues that arise.
+  target_date: '2026-07-09'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Provide user support and troubleshoot any immediate
+    post-implementation problems.
+  target_date: '2026-07-10'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Obtain final acceptance from stakeholders.
+  target_date: '2026-07-13'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Document the implementation process and any lessons
+    learned.
+  target_date: '2026-07-14'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Conduct a post-implementation review to evaluate
+    success and identify improvements.
+  target_date: '2026-07-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Gate 6  LIMs Roll Heat Treatment Approval to Close out Project
+  target_date: '2026-07-16'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Obtain final acceptance from Team Review
+  target_date: '2026-07-15'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Heat Treatment Approval to ose out Project Complete
+  target_date: '2026-07-16'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen
+  target_date: '2026-08-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Finalize and verify all implementation plans.
+  target_date: '2026-07-17'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Prepare the deployment environment and ensure readiness.
+  target_date: '2026-07-20'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Schedule implementation activities and communicate
+    timelines to stakeholders.
+  target_date: '2026-07-21'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Conduct implementation kickoff meetings.
+  target_date: '2026-07-22'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Install or deploy project deliverables into the live
+    environment.
+  target_date: '2026-07-23'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Migrate data, if necessary.
+  target_date: '2026-07-24'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Perform initial setup and configuration of systems
+    or components.
+  target_date: '2026-07-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Conduct end-user training sessions and provide user
+    documentation.
+  target_date: '2026-07-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Perform validation tests to ensure proper installation
+    and functionality.
+  target_date: '2026-07-29'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Monitor the implementation process and address any
+    issues that arise.
+  target_date: '2026-07-30'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Provide user support and troubleshoot any immediate
+    post-implementation problems.
+  target_date: '2026-07-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Obtain final acceptance from stakeholders.
+  target_date: '2026-08-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Document the implementation process and any lessons
+    learned.
+  target_date: '2026-08-04'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Conduct a post-implementation review to evaluate success
+    and identify improvements.
+  target_date: '2026-08-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Gate 6  LIMs Roll Shot Peen Approval to Close out Project
+  target_date: '2026-08-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Obtain final acceptance from Team Review
+  target_date: '2026-08-05'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Shot Peen Approval to ose out Project Complete
+  target_date: '2026-08-06'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop
+  target_date: '2026-08-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Finalize and verify all implementation plans.
+  target_date: '2026-08-07'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Prepare the deployment environment and ensure readiness.
+  target_date: '2026-08-10'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Schedule implementation activities and communicate
+    timelines to stakeholders.
+  target_date: '2026-08-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Conduct implementation kickoff meetings.
+  target_date: '2026-08-12'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Install or deploy project deliverables into the live
+    environment.
+  target_date: '2026-08-13'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Migrate data, if necessary.
+  target_date: '2026-08-14'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Perform initial setup and configuration of systems
+    or components.
+  target_date: '2026-08-17'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Conduct end-user training sessions and provide user
+    documentation.
+  target_date: '2026-08-18'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Perform validation tests to ensure proper installation
+    and functionality.
+  target_date: '2026-08-19'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Monitor the implementation process and address any
+    issues that arise.
+  target_date: '2026-08-20'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Provide user support and troubleshoot any immediate
+    post-implementation problems.
+  target_date: '2026-08-21'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Obtain final acceptance from stakeholders.
+  target_date: '2026-08-24'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Document the implementation process and any lessons
+    learned.
+  target_date: '2026-08-25'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Conduct a post-implementation review to evaluate
+    success and identify improvements.
+  target_date: '2026-08-26'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Gate 6  LIMs Roll Paint Shop Approval to Close out Project
+  target_date: '2026-08-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Obtain final acceptance from Team Review
+  target_date: '2026-08-26'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Paint Shop Approval to close out Project Complete
+  target_date: '2026-08-27'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Phase 7 - LIMs Roll Out Closure
+  target_date: '2026-09-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Confirm all project deliverables have been completed and accepted.
+  target_date: '2026-08-28'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Obtain formal sign-off from stakeholders and clients.
+  target_date: '2026-08-31'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Release project resources and reassign team members to new tasks
+    or projects.
+  target_date: '2026-09-01'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Conduct final project performance reviews.
+  target_date: '2026-09-02'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Archive all project documents and records.
+  target_date: '2026-09-03'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Complete any remaining administrative tasks, such as closing
+    contracts and settling invoices.
+  target_date: '2026-09-04'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Conduct a post-project review or "lessons learned" session.
+  target_date: '2026-09-07'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Document lessons learned and best practices.
+  target_date: '2026-09-08'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Prepare a final project report summarizing the project's achievements,
+    challenges, and outcomes.
+  target_date: '2026-09-09'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Celebrate project completion and recognize the contributions
+    of the project team.
+  target_date: '2026-09-10'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: Gate 7  LIMs Roll Out Approval to Close out Project
+  target_date: '2026-09-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Conduct a post-project review or "lessons learned" session Team
+    Review
+  target_date: '2026-09-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+- id: null
+  name: LIMs Roll Out Project Complete
+  target_date: '2026-09-11'
+  status: NOT_STARTED
+  completion_date: null
+  completion_percentage: 0
+  notes: null
+  parent_project: LIMs Roll Out
+  resources: null
+  project: ZLD-P1
+risks: []
+changes: []

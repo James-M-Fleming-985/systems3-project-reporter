@@ -83,13 +83,15 @@ async def powerpoint_export_page(request: Request):
     """PowerPoint Export UI Page"""
     selected_project = get_selected_project(request)
     all_projects = get_all_projects()
+    user = getattr(request.state, 'user', None) if hasattr(request, 'state') else None
     return templates.TemplateResponse(
         "powerpoint_export.html",
         {
             "request": request,
             "selected_project": selected_project,
             "all_projects": all_projects,
-            "project_name": selected_project.project_name if selected_project else ""
+            "project_name": selected_project.project_name if selected_project else "",
+            "user": user
         }
     )
 
@@ -174,6 +176,23 @@ async def export_to_powerpoint(
                     extra_headers['X-Project-Code'] = project_code
                     logger.info(f"📌 Using project code for all screenshots: {project_code}")
         
+        # Get auth cookie from request to pass to screenshot service
+        auth_cookies = []
+        auth_token = request.cookies.get("systems3_auth")
+        if auth_token:
+            # Parse the domain from the base URL
+            parsed_base = urlparse(base_url)
+            auth_cookies.append({
+                "name": "systems3_auth",
+                "value": auth_token,
+                "domain": parsed_base.hostname,
+                "path": "/",
+                "httpOnly": True,
+                "secure": parsed_base.scheme == "https",
+                "sameSite": "Lax"
+            })
+            logger.info(f"📌 Passing auth cookie for authenticated screenshots")
+        
         # Capture screenshots using AI-generated service
         screenshots = []
         for url in full_urls:
@@ -182,7 +201,8 @@ async def export_to_powerpoint(
                     url=url,
                     hide_navigation=export_request.hide_navigation,
                     resolution=(export_request.viewport_width, export_request.viewport_height),
-                    extra_headers=extra_headers if extra_headers else None
+                    extra_headers=extra_headers if extra_headers else None,
+                    cookies=auth_cookies if auth_cookies else None
                 )
                 screenshots.append(screenshot_bytes)
                 logger.info(f"✅ Captured screenshot: {url}")
@@ -334,12 +354,30 @@ async def capture_single_screenshot(url: str, request: Request):
             logger.info(f"🔄 Converting to internal URL: {internal_url}")
             url = internal_url
         
+        # Get auth cookie from request to pass to screenshot service
+        auth_cookies = []
+        auth_token = request.cookies.get("systems3_auth")
+        if auth_token:
+            # For internal localhost URLs, use localhost as domain
+            cookie_domain = "localhost" if "localhost" in url else parsed.hostname
+            auth_cookies.append({
+                "name": "systems3_auth",
+                "value": auth_token,
+                "domain": cookie_domain,
+                "path": "/",
+                "httpOnly": True,
+                "secure": False if "localhost" in url else (parsed.scheme == "https"),
+                "sameSite": "Lax"
+            })
+            logger.info(f"📌 Passing auth cookie for authenticated screenshot")
+        
         # Capture screenshot using the existing service with project header
         screenshot_bytes = await screenshot_service.capture_screenshot_async(
             url=url,
             resolution=(1920, 1080),
             hide_navigation=False,
-            extra_headers=extra_headers if extra_headers else None
+            extra_headers=extra_headers if extra_headers else None,
+            cookies=auth_cookies if auth_cookies else None
         )
         
         logger.info(f"✅ Screenshot captured: {len(screenshot_bytes)} bytes")

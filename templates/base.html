@@ -59,59 +59,101 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-blue-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <h1 id="appTitle" class="text-2xl font-bold cursor-pointer hover:text-blue-200 transition" 
-                        contenteditable="true"
-                        onblur="saveTitle(this)"
-                        onkeydown="handleTitleKeydown(event)">Systems³ Project Reporter</h1>
+    <!-- Navigation - Two-tier professional header -->
+    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg">
+        <!-- Top bar: Branding + User Account -->
+        <div class="border-b border-blue-500/30">
+            <div class="container mx-auto px-4 py-2">
+                <div class="flex items-center justify-between">
+                    <!-- Logo and brand -->
+                    <a href="/" class="flex items-center space-x-3 hover:opacity-90 transition">
+                        <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">S³</span>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold tracking-tight">Systems³</h1>
+                            <p class="text-blue-200 text-xs -mt-0.5">Project Reporter</p>
+                        </div>
+                    </a>
+                    
+                    <!-- User account section -->
+                    <div class="flex items-center space-x-4">
+                        {% if user %}
+                            <div class="flex items-center space-x-3">
+                                {% if user.is_admin %}
+                                    <span class="px-2 py-0.5 bg-amber-500 text-white text-xs rounded font-semibold">Admin</span>
+                                {% endif %}
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
+                                        {{ user.full_name[0] | upper }}
+                                    </div>
+                                    <span class="text-sm font-medium">{{ user.full_name }}</span>
+                                </div>
+                                <a href="/logout" class="text-blue-200 hover:text-white text-sm transition">
+                                    Sign out
+                                </a>
+                            </div>
+                        {% else %}
+                            <a href="/login" class="text-sm hover:text-blue-200 transition">Sign in</a>
+                            <a href="/register" class="px-3 py-1.5 bg-white text-blue-700 text-sm font-medium rounded hover:bg-blue-50 transition">
+                                Get Started
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="/dashboard/" class="hover:bg-blue-700 px-3 py-2 rounded transition">
-                        Portfolio Dashboard
+            </div>
+        </div>
+        
+        <!-- Main navigation bar -->
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-2">
+                <!-- Primary navigation -->
+                <div class="flex items-center space-x-1">
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}">
+                        📊 Portfolio
                     </a>
-                    <a href="/dashboard/gantt{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
-                        Gantt Chart
+                    
+                    <!-- Divider -->
+                    <span class="text-blue-400 mx-1">|</span>
+                    
+                    <!-- Project views group -->
+                    <a href="/dashboard/gantt{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/gantt' in request.url.path %}bg-white/15{% endif %}">
+                        Gantt
                     </a>
-                    <a href="/dashboard/milestones{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/milestones{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/milestones' in request.url.path %}bg-white/15{% endif %}">
                         Milestones
                     </a>
-                    <a href="/dashboard/metrics{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/metrics{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/metrics' in request.url.path %}bg-white/15{% endif %}">
                         Metrics
                     </a>
-                    <a href="/dashboard/risks{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/risks{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/risks' in request.url.path %}bg-white/15{% endif %}">
                         Risks
                     </a>
-                    <a href="/dashboard/changes{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
+                    <a href="/dashboard/changes{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/changes' in request.url.path %}bg-white/15{% endif %}">
                         Changes
                     </a>
-                    <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition">
-                        📊 Export PPT
+                </div>
+                
+                <!-- Actions group -->
+                <div class="flex items-center space-x-2">
+                    <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1">
+                        <span>📊</span><span>Export</span>
                     </a>
-                    <a href="/upload{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" class="hover:bg-blue-700 px-3 py-2 rounded transition bg-blue-700">
-                        📤 Upload
+                    <a href="/upload{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-green-500 hover:bg-green-400 transition flex items-center space-x-1">
+                        <span>📤</span><span>Upload</span>
                     </a>
-                    <a href="/subscription" class="hover:bg-blue-700 px-3 py-2 rounded transition">
-                        💳 Subscription
-                    </a>
-                    <!-- User menu -->
                     {% if user %}
-                        <div class="flex items-center space-x-2 ml-4 pl-4 border-l border-blue-500">
-                            {% if user.is_admin %}
-                                <span class="px-2 py-1 bg-amber-500 text-white text-xs rounded font-medium">Admin</span>
-                            {% endif %}
-                            <span class="text-blue-100">{{ user.full_name }}</span>
-                            <a href="/logout" class="hover:bg-blue-700 px-3 py-2 rounded transition text-blue-200 hover:text-white">
-                                Logout
-                            </a>
-                        </div>
-                    {% else %}
-                        <a href="/login" class="hover:bg-blue-700 px-3 py-2 rounded transition ml-4 pl-4 border-l border-blue-500">
-                            🔒 Login
-                        </a>
+                    <a href="/subscription" 
+                       class="px-3 py-1.5 rounded-md text-sm font-medium border border-blue-400 hover:bg-white/10 transition">
+                        ⚙️ Account
+                    </a>
                     {% endif %}
                 </div>
             </div>

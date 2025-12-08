@@ -195,6 +195,9 @@ async def metric_trend_page(request: Request, metric_name: str, metricData: str 
     from main import BUILD_VERSION
     from urllib.parse import unquote
     import json
+    from repositories.custom_metrics_repository import CustomMetricsRepository
+    from pathlib import Path
+    import os
     
     # Decode metric name
     decoded_metric_name = unquote(metric_name)
@@ -218,8 +221,25 @@ async def metric_trend_page(request: Request, metric_name: str, metricData: str 
         except Exception as e:
             logger.error(f"❌ Failed to parse metricData query param: {e}")
             logger.error(f"   - metricData: {metricData[:200]}..." if len(metricData) > 200 else f"   - metricData: {metricData}")
-    else:
-        logger.warning(f"⚠️ No metricData query param provided for {decoded_metric_name}")
+    
+    # If no metricData in query params, try to load from server repository
+    if not metric_json and project_name:
+        try:
+            DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(Path(__file__).parent.parent / "data")))
+            metrics_repo = CustomMetricsRepository(storage_dir=DATA_DIR / "custom_metrics")
+            all_metrics = metrics_repo.load_metrics(project_name)
+            
+            # Find the specific metric
+            for m in all_metrics:
+                if m.get('name') == decoded_metric_name:
+                    metric_json = m
+                    logger.info(f"📊 Loaded metric '{decoded_metric_name}' from server repository")
+                    break
+            
+            if not metric_json:
+                logger.warning(f"⚠️ Metric '{decoded_metric_name}' not found in repository for {project_name}")
+        except Exception as e:
+            logger.error(f"❌ Failed to load metric from repository: {e}")
     
     user = get_user_from_request(request)
     context = {

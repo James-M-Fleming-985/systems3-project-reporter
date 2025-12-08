@@ -51,10 +51,14 @@ async def upload_page(request: Request):
     # Get existing projects
     projects = project_repo.load_all_projects()
     
+    # Get user from request state
+    user = getattr(request.state, 'user', None) if hasattr(request, 'state') else None
+    
     context = {
         "request": request,
         "projects": projects,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("upload_unified.html", context)

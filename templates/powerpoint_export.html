@@ -545,7 +545,7 @@ function updateSelectedCount(saveToStorage = true) {
 }
 
 // Add event listeners to checkboxes
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Restore selections from localStorage first
     try {
         const savedViews = localStorage.getItem('pptExportSelectedViews');
@@ -596,8 +596,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTemplateStatus();
     }
     
-    // Load custom metrics and create checkboxes
-    loadCustomMetricCheckboxes();
+    // Load custom metrics and create checkboxes (async)
+    await loadCustomMetricCheckboxes();
 });
 
 async function loadAvailableTemplates() {
@@ -623,26 +623,32 @@ async function loadAvailableTemplates() {
 }
 
 // Load custom metrics and create trend checkboxes
-function loadCustomMetricCheckboxes() {
+async function loadCustomMetricCheckboxes() {
     const selectedProgram = localStorage.getItem('selectedProgram');
     if (!selectedProgram) {
         console.log('No program selected, skipping custom metrics');
         return;
     }
     
-    const storageKey = `customMetrics_${selectedProgram}`;
-    const stored = localStorage.getItem(storageKey);
-    
-    if (!stored) {
-        console.log('No custom metrics found');
+    // Fetch from server API instead of localStorage
+    let customMetrics = [];
+    try {
+        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(selectedProgram)}`);
+        if (response.ok) {
+            const data = await response.json();
+            customMetrics = data.metrics || [];
+            console.log('📊 Loaded custom metrics from server:', customMetrics.length);
+        } else {
+            console.log('No custom metrics found on server');
+            return;
+        }
+    } catch (e) {
+        console.error('Failed to fetch custom metrics from server:', e);
         return;
     }
     
-    let customMetrics;
-    try {
-        customMetrics = JSON.parse(stored);
-    } catch (e) {
-        console.error('Failed to parse custom metrics:', e);
+    if (customMetrics.length === 0) {
+        console.log('No custom metrics available');
         return;
     }
     

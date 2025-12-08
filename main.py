@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.255"  # PRIVACY: Anonymize resource names, sanitize sensitive text (Safran→Client 1)
+BUILD_VERSION = "1.0.257"  # PRIVACY: Anonymize resources at load time + fix screenshot auth cookies
 
 
 # Setup logging

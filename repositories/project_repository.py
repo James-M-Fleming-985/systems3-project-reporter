@@ -5,13 +5,68 @@ Adapted from tpl-fastapi-crud repository.py.jinja (SQLAlchemy → YAML)
 SECURITY: Now supports user-based data isolation.
 - Admin users can see all projects in the main data directory
 - Regular users can only see projects in their isolated user directory
+
+PRIVACY: Resource names are anonymized at load time to prevent PII exposure.
 """
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 import yaml
 import os
+import re
 
 from models import Project
+
+
+# Sensitive words to replace for privacy
+SENSITIVE_REPLACEMENTS = {
+    'Safran': 'Client 1',
+    'safran': 'Client 1',
+    'SAFRAN': 'CLIENT 1',
+}
+
+
+class ResourceAnonymizer:
+    """Anonymizes resource names to prevent PII exposure"""
+    
+    def __init__(self):
+        self._name_map: Dict[str, str] = {}
+        self._counter = 0
+    
+    def anonymize(self, name: str) -> str:
+        """Convert real name to anonymous placeholder like 'Resource A'"""
+        if not name:
+            return name
+        
+        # Sanitize sensitive company names first
+        sanitized = name
+        for sensitive, replacement in SENSITIVE_REPLACEMENTS.items():
+            sanitized = sanitized.replace(sensitive, replacement)
+        
+        # Check if already anonymized
+        if sanitized in self._name_map:
+            return self._name_map[sanitized]
+        
+        # Generate new anonymous name
+        self._counter += 1
+        if self._counter <= 26:
+            anon_name = f"Resource {chr(64 + self._counter)}"
+        else:
+            first = chr(64 + ((self._counter - 1) // 26))
+            second = chr(65 + ((self._counter - 1) % 26))
+            anon_name = f"Resource {first}{second}"
+        
+        self._name_map[sanitized] = anon_name
+        return anon_name
+    
+    def anonymize_list(self, names_str: str) -> str:
+        """Anonymize comma or semicolon separated list of names"""
+        if not names_str:
+            return names_str
+        
+        # Split by comma or semicolon
+        names = re.split(r'[,;]', names_str)
+        anonymized = [self.anonymize(n.strip()) for n in names if n.strip()]
+        return ', '.join(anonymized)
 
 
 def get_user_data_dir(user_id: str = None, is_admin: bool = False) -> Path:
@@ -59,6 +114,9 @@ class ProjectRepository:
         if not self.data_dir.exists():
             return projects
         
+        # Create anonymizer for this load operation (consistent mapping across milestones)
+        anonymizer = ResourceAnonymizer()
+        
         # Find all .yaml and .yml files recursively
         yaml_files = (list(self.data_dir.glob("**/*.yaml")) + 
                      list(self.data_dir.glob("**/*.yml")))
@@ -72,7 +130,7 @@ class ProjectRepository:
                 with open(yaml_file, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
                     
-                    # Fix field name mismatches and add defaults
+                    # PRIVACY: Anonymize resource names at load time
                     if 'milestones' in data:
                         for milestone in data['milestones']:
                             # Ensure parent_project and resources exist
@@ -80,6 +138,9 @@ class ProjectRepository:
                                 milestone['parent_project'] = None
                             if 'resources' not in milestone:
                                 milestone['resources'] = None
+                            elif milestone['resources']:
+                                # Anonymize resource names
+                                milestone['resources'] = anonymizer.anonymize_list(milestone['resources'])
                     
                     if 'risks' in data:
                         for risk in data['risks']:
@@ -90,6 +151,9 @@ class ProjectRepository:
                                 sev = risk.get('severity', 'MEDIUM')
                                 prob = risk.get('probability', 'MEDIUM')
                                 risk['impact'] = f"{sev} severity, {prob} probability"
+                            # PRIVACY: Anonymize risk owner
+                            if 'owner' in risk and risk['owner']:
+                                risk['owner'] = anonymizer.anonymize(risk['owner'])
                     
                     if 'changes' in data:
                         for change in data['changes']:

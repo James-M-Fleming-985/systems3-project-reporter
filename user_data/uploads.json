@@ -7,5 +7,14 @@
     "uploaded_at": "2025-11-13 09:03:19.170742",
     "xml_file_path": "/workspaces/control_tower/systems3-project-reporter/uploads/ZCP-P1_20251113_090319.xml",
     "processed": true
+  },
+  {
+    "upload_id": "fe3d96d6-0512-42d9-88d0-d19bb0df5ae8",
+    "user_id": "790e87db-173d-47d8-9f36-0361511acc3a",
+    "project_name": "ZnNi Line Development Plan-12.xml",
+    "file_size_mb": 12.562734603881836,
+    "uploaded_at": "2025-12-08 13:22:28.647018",
+    "xml_file_path": "/workspaces/control_tower/systems3-project-reporter/uploads/ZLD-P1_20251208_132228.xml",
+    "processed": true
   }
 ]

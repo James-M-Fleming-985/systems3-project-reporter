@@ -43,7 +43,8 @@ class ScreenshotService:
         hide_navigation: bool = False,
         resolution: Optional[Tuple[int, int]] = None,
         wait_for_selector: Optional[str] = None,
-        extra_headers: Optional[Dict[str, str]] = None
+        extra_headers: Optional[Dict[str, str]] = None,
+        cookies: Optional[List[Dict]] = None
     ) -> bytes:
         """
         Asynchronously capture a screenshot of the specified URL.
@@ -55,6 +56,7 @@ class ScreenshotService:
                 defaults to 1920x1080
             wait_for_selector: CSS selector to wait for before capturing
             extra_headers: Additional HTTP headers to send with the request
+            cookies: List of cookie dicts to set before navigation
             
         Returns:
             PNG image data as bytes
@@ -69,10 +71,18 @@ class ScreenshotService:
         page = None
         
         try:
-            # Create new page with specified viewport
-            page = await browser.new_page(
+            # Create new browser context with cookies if provided
+            context = await browser.new_context(
                 viewport={'width': resolution[0], 'height': resolution[1]}
             )
+            
+            # Set cookies if provided (for authentication)
+            if cookies:
+                await context.add_cookies(cookies)
+                logger.info(f"Set {len(cookies)} cookies for authentication")
+            
+            # Create new page in this context
+            page = await context.new_page()
             
             # Set extra headers if provided (e.g., X-Project-Code for project context)
             if extra_headers:
@@ -156,6 +166,8 @@ class ScreenshotService:
         finally:
             if page:
                 await page.close()
+            if 'context' in locals() and context:
+                await context.close()
     
     def capture_screenshot(
         self,
