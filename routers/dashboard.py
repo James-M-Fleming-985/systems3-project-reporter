@@ -4,6 +4,8 @@ Adapted from tpl-fastapi-crud router.py.jinja
 
 ARCHITECTURE: All routes use project_context middleware to ensure
 single project scope - prevents data mixing between projects
+
+SECURITY: User data isolation - users only see their own projects.
 """
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -32,17 +34,25 @@ chart_service = ChartFormatterService()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
+def get_user_from_request(request: Request):
+    """Get user dict from request state (set by auth middleware)"""
+    return getattr(request.state, 'user', None) if hasattr(request, 'state') else None
+
+
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """
     FEATURE-WEB-001: Dashboard home page
     Shows ALL project cards with summary metrics (project selector)
+    
+    SECURITY: User data isolation - users only see their own projects.
+    Admin users see all projects.
     """
     from repositories.risk_repository import RiskRepository
     import re
     
-    # Dashboard shows ALL projects (this is the project selector page)
-    projects = get_all_projects()
+    # Dashboard shows projects for the current user (respects data isolation)
+    projects = get_all_projects(request)
     risk_repo = RiskRepository()
     
     # Calculate summary metrics
@@ -74,13 +84,17 @@ async def home(request: Request):
     # Import BUILD_VERSION from main
     from main import BUILD_VERSION
     
+    # Get user from request state (set by auth middleware)
+    user = get_user_from_request(request)
+    
     context = {
         "request": request,
         "projects": projects,
         "total_milestones": total_milestones,
         "total_risks": total_risks,
         "total_changes": total_changes,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("index.html", context)

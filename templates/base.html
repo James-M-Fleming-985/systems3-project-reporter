@@ -93,6 +93,22 @@
                     <a href="/subscription" class="hover:bg-blue-700 px-3 py-2 rounded transition">
                         💳 Subscription
                     </a>
+                    <!-- User menu -->
+                    {% if user %}
+                        <div class="flex items-center space-x-2 ml-4 pl-4 border-l border-blue-500">
+                            {% if user.is_admin %}
+                                <span class="px-2 py-1 bg-amber-500 text-white text-xs rounded font-medium">Admin</span>
+                            {% endif %}
+                            <span class="text-blue-100">{{ user.full_name }}</span>
+                            <a href="/logout" class="hover:bg-blue-700 px-3 py-2 rounded transition text-blue-200 hover:text-white">
+                                Logout
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="/login" class="hover:bg-blue-700 px-3 py-2 rounded transition ml-4 pl-4 border-l border-blue-500">
+                            🔒 Login
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

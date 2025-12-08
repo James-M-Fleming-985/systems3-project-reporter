@@ -57,9 +57,29 @@
                             Systems<sup class="text-lg">3</sup>
                         </h1>
                     </div>
-                    <a href="/dashboard" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
-                        Launch App →
-                    </a>
+                    <div class="flex items-center space-x-4">
+                        {% if user %}
+                            <span class="text-gray-600">
+                                {% if user.is_admin %}
+                                    <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-sm font-medium mr-2">Admin</span>
+                                {% endif %}
+                                {{ user.full_name }}
+                            </span>
+                            <a href="/dashboard" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                Dashboard
+                            </a>
+                            <a href="/logout" class="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors">
+                                Logout
+                            </a>
+                        {% else %}
+                            <a href="/login" class="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors">
+                                Sign In
+                            </a>
+                            <a href="/register" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                                Get Started
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </header>

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.253"  # CRITICAL FIX: Remove duplicate code causing JavaScript syntax error
+BUILD_VERSION = "1.0.254"  # SECURITY: Add user authentication and data isolation
 
 
 # Setup logging
@@ -114,8 +114,14 @@ async def startup_event():
 
 @app.get("/")
 async def root(request: Request):
-    """Landing page with hero section"""
-    return templates.TemplateResponse("landing.html", {"request": request})
+    """Landing page - shows user info if logged in"""
+    from middleware.auth_middleware import get_user_from_request
+    user = get_user_from_request(request)
+    return templates.TemplateResponse("landing.html", {
+        "request": request,
+        "user": user,
+        "build_version": BUILD_VERSION
+    })
 
 
 @app.get("/favicon.ico")
@@ -135,8 +141,21 @@ async def health_check():
     }
 
 
+# Import and add authentication middleware
+from middleware.auth_middleware import AuthMiddleware
+app.add_middleware(AuthMiddleware)
+logger.info("✅ Authentication middleware enabled")
+
 # Import routers
 from routers import dashboard, upload, export, risks, milestones, admin
+
+# Auth router (login, register, logout)
+try:
+    from routers import auth
+    app.include_router(auth.router, tags=["auth"])
+    logger.info("✅ Authentication routes enabled")
+except Exception as e:
+    logger.warning(f"⚠️  Authentication routes disabled: {e}")
 
 # Canvas Editor (Phase 2 - AI Generated)
 try:

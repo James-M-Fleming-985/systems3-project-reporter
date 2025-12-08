@@ -1,20 +1,56 @@
 """
 Project Repository - YAML-based data access
 Adapted from tpl-fastapi-crud repository.py.jinja (SQLAlchemy → YAML)
+
+SECURITY: Now supports user-based data isolation.
+- Admin users can see all projects in the main data directory
+- Regular users can only see projects in their isolated user directory
 """
 from pathlib import Path
 from typing import List, Optional
 import yaml
+import os
 
 from models import Project
+
+
+def get_user_data_dir(user_id: str = None, is_admin: bool = False) -> Path:
+    """
+    Get the appropriate data directory based on user context.
+    
+    - Admin or no user context: Returns main data directory
+    - Regular user: Returns user-specific isolated directory
+    """
+    base_data_dir = Path(os.getenv("DATA_STORAGE_PATH", Path(__file__).parent.parent / "mock_data"))
+    
+    if is_admin or user_id is None:
+        return base_data_dir
+    else:
+        user_dir = base_data_dir / "users" / user_id
+        user_dir.mkdir(parents=True, exist_ok=True)
+        return user_dir
 
 
 class ProjectRepository:
     """Repository for loading project data from YAML files"""
     
-    def __init__(self, data_dir: Path):
-        """Initialize repository with data directory path"""
-        self.data_dir = data_dir
+    def __init__(self, data_dir: Path, user_id: str = None, is_admin: bool = False):
+        """
+        Initialize repository with data directory path.
+        
+        Args:
+            data_dir: Base data directory (can be overridden by user context)
+            user_id: Optional user ID for data isolation
+            is_admin: If True, user has access to all data
+        """
+        self.user_id = user_id
+        self.is_admin = is_admin
+        
+        # If user context provided, use appropriate directory
+        if user_id is not None:
+            self.data_dir = get_user_data_dir(user_id, is_admin)
+        else:
+            self.data_dir = Path(data_dir)
     
     def load_all_projects(self) -> List[Project]:
         """Load all projects from YAML files in data directory"""
