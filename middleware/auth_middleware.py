@@ -52,13 +52,20 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Check if route is public
         path = request.url.path
         
-        # Allow public routes
+        # Always try to get user (even for public routes, so we can show login state)
+        user = self._get_user_from_request(request)
+        
+        # Set user on request state if authenticated (even for public routes)
+        if user:
+            request.state.user = user
+            request.state.user_id = user["user_id"]
+            request.state.is_admin = user.get("is_admin", False)
+        
+        # Allow public routes (with or without auth)
         if self._is_public_route(path):
             return await call_next(request)
         
-        # Check for authentication
-        user = self._get_user_from_request(request)
-        
+        # For protected routes, require authentication
         if not user:
             # Not authenticated - redirect to login for web, return 401 for API
             if path.startswith("/api/"):
@@ -81,12 +88,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             else:
                 return RedirectResponse(url="/", status_code=303)
         
-        # Add user to request state for downstream use
-        request.state.user = user
-        request.state.user_id = user["user_id"]
-        request.state.is_admin = user.get("is_admin", False)
-        
-        # Continue with request
+        # Continue with request (user already set on request.state above)
         response = await call_next(request)
         
         return response
