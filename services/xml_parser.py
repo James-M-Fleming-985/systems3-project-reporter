@@ -13,7 +13,17 @@ from models import Project, Milestone, Risk, Change
 class MSProjectXMLParser:
     """Parser for Microsoft Project XML format"""
     
-    def __init__(self):
+    # Sensitive words to replace for privacy
+    SENSITIVE_REPLACEMENTS = {
+        'Safran': 'Client 1',
+        'safran': 'Client 1',
+        'SAFRAN': 'CLIENT 1',
+    }
+    
+    def __init__(self, anonymize_resources: bool = True):
+        self.anonymize_resources = anonymize_resources
+        self._resource_anonymization_map = {}  # Original name -> anonymized name
+        self._resource_counter = 0
         self.namespace = {
             'ms': 'http://schemas.microsoft.com/project'
         }
@@ -23,6 +33,37 @@ class MSProjectXMLParser:
             '{http://schemas.microsoft.com/project}',  # Default MS Project namespace
             'ms:'  # Prefixed namespace
         ]
+    
+    def _anonymize_resource_name(self, name: str) -> str:
+        """Replace real resource name with anonymous placeholder"""
+        if not self.anonymize_resources or not name:
+            return self._sanitize_text(name) if name else name
+        
+        # Check if we've already anonymized this name
+        if name in self._resource_anonymization_map:
+            return self._resource_anonymization_map[name]
+        
+        # Generate new anonymous name (Resource A, B, C, ... Z, AA, AB, etc.)
+        self._resource_counter += 1
+        if self._resource_counter <= 26:
+            anon_name = f"Resource {chr(64 + self._resource_counter)}"
+        else:
+            # For more than 26 resources: AA, AB, etc.
+            first = chr(64 + ((self._resource_counter - 1) // 26))
+            second = chr(65 + ((self._resource_counter - 1) % 26))
+            anon_name = f"Resource {first}{second}"
+        
+        self._resource_anonymization_map[name] = anon_name
+        return anon_name
+    
+    def _sanitize_text(self, text: str) -> str:
+        """Replace sensitive company names in text"""
+        if not text:
+            return text
+        result = text
+        for sensitive, replacement in self.SENSITIVE_REPLACEMENTS.items():
+            result = result.replace(sensitive, replacement)
+        return result
     
     def parse_file(self, xml_path: Path) -> Project:
         """Parse MS Project XML file and return Project object"""
@@ -84,10 +125,11 @@ class MSProjectXMLParser:
         # Project name (required) - try multiple fields
         name_elem = (self._find_element(root, 'Title') or 
                     self._find_element(root, 'Name'))
-        data['project_name'] = (
+        raw_name = (
             name_elem.text if name_elem is not None 
             else "Untitled Project"
         )
+        data['project_name'] = self._sanitize_text(raw_name)
         
         # Project code (from custom field or generate from name)
         code_elem = root.find('.//ExtendedAttribute[@FieldID="Text1"]/Value')
@@ -339,7 +381,7 @@ class MSProjectXMLParser:
             name_elem = self._find_element(task, 'Name')
             if name_elem is None or not name_elem.text:
                 continue
-            milestone_data['name'] = name_elem.text
+            milestone_data['name'] = self._sanitize_text(name_elem.text)
             
             # Target date
             finish_elem = self._find_element(task, 'Finish')
@@ -429,17 +471,20 @@ class MSProjectXMLParser:
                 # Fallback: try ResourceNames field (older MS Project)
                 resources_elem = self._find_element(task, 'ResourceNames')
                 if resources_elem is not None and resources_elem.text:
-                    milestone_data['resources'] = resources_elem.text
+                    # Anonymize each resource in the comma-separated list
+                    resource_names = resources_elem.text.split(',')
+                    anonymized = [self._anonymize_resource_name(r.strip()) for r in resource_names]
+                    milestone_data['resources'] = ', '.join(anonymized)
                 elif len(milestones) < 3:
                     print(f"DEBUG: No resources found for "
                           f"'{milestone_data['name']}'")
 
 
             
-            # Notes
+            # Notes (sanitize for sensitive info)
             notes_elem = self._find_element(task, 'Notes')
             if notes_elem is not None and notes_elem.text:
-                milestone_data['notes'] = notes_elem.text
+                milestone_data['notes'] = self._sanitize_text(notes_elem.text)
             
             milestones.append(Milestone(**milestone_data))
         
@@ -571,7 +616,7 @@ class MSProjectXMLParser:
                     uid_elem = self._find_element(resource, 'UID')
                     name_elem = self._find_element(resource, 'Name')
                     if uid_elem is not None and name_elem is not None:
-                        resources[uid_elem.text] = name_elem.text
+                        resources[uid_elem.text] = self._anonymize_resource_name(name_elem.text)
                 break
         
         # Then, build task -> resources map from Assignments
@@ -591,7 +636,7 @@ class MSProjectXMLParser:
                         r_uid = res_uid.text
                         
                         if r_uid in resources:
-                            resource_name = resources[r_uid]
+                            resource_name = resources[r_uid]  # Already anonymized
                             if t_uid in resource_map:
                                 resource_map[t_uid] += f", {resource_name}"
                             else:

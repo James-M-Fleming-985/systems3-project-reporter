@@ -114,10 +114,12 @@ async def gantt_chart(request: Request):
     project = get_selected_project(request)
     if not project:
         # No project selected - show project selector message
+        user = get_user_from_request(request)
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "message": "Please select a project from the dashboard first",
-            "build_version": BUILD_VERSION
+            "build_version": BUILD_VERSION,
+            "user": user
         })
     
     # Format data for ONLY this project
@@ -128,11 +130,13 @@ async def gantt_chart(request: Request):
         f"{len(gantt_data)} milestones"
     )
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "project": project,  # Single project
         "gantt_data": gantt_data,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("gantt.html", context)
@@ -151,10 +155,12 @@ async def milestone_tracker(request: Request):
     # Get selected project ONLY
     project = get_selected_project(request)
     if not project:
+        user = get_user_from_request(request)
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "message": "Please select a project from the dashboard first",
-            "build_version": BUILD_VERSION
+            "build_version": BUILD_VERSION,
+            "user": user
         })
     
     # Calculate quadrants for ONLY this project
@@ -168,11 +174,13 @@ async def milestone_tracker(request: Request):
         f"Delayed: {len(quadrants['delayed'])}"
     )
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "project": project,  # Single project
         "quadrants": quadrants,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("milestones.html", context)
@@ -213,12 +221,14 @@ async def metric_trend_page(request: Request, metric_name: str, metricData: str 
     else:
         logger.warning(f"⚠️ No metricData query param provided for {decoded_metric_name}")
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "project_name": project_name,
         "metric_name": decoded_metric_name,
         "build_version": BUILD_VERSION,
-        "metric_data": metric_json  # Pass dict directly, template will serialize
+        "metric_data": metric_json,  # Pass dict directly, template will serialize
+        "user": user
     }
     
     return templates.TemplateResponse("metric_trend.html", context)
@@ -240,10 +250,12 @@ async def program_metrics(request: Request):
     # Get selected project ONLY
     project = get_selected_project(request)
     if not project:
+        user = get_user_from_request(request)
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "message": "Please select a project from the dashboard first",
-            "build_version": BUILD_VERSION
+            "build_version": BUILD_VERSION,
+            "user": user
         })
     
     # Calculate metrics for ONLY this project
@@ -321,12 +333,14 @@ async def program_metrics(request: Request):
     
     logger.info(f"Final metrics with risks: {json.dumps(metrics, indent=2)}")
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "metrics": metrics,
         "project": project,
         "program_name": project.project_name,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("metrics.html", context)
@@ -348,10 +362,12 @@ async def risk_analysis(request: Request):
     # Get selected project ONLY
     project = get_selected_project(request)
     if not project:
+        user = get_user_from_request(request)
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "message": "Please select a project from the dashboard first",
-            "build_version": BUILD_VERSION
+            "build_version": BUILD_VERSION,
+            "user": user
         })
     
     # Format risk data for ONLY this project
@@ -373,12 +389,14 @@ async def risk_analysis(request: Request):
         logger.info(f"Loaded {len(loaded_risks)} risks from repository")
         standalone_risks = loaded_risks
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "project": project,
         "risk_data": risk_data,
         "standalone_risks": standalone_risks,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("risks.html", context)
@@ -397,10 +415,12 @@ async def change_management(request: Request):
     # Get selected project ONLY
     project = get_selected_project(request)
     if not project:
+        user = get_user_from_request(request)
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "message": "Please select a project from the dashboard first",
-            "build_version": BUILD_VERSION
+            "build_version": BUILD_VERSION,
+            "user": user
         })
     
     # Format changes for ONLY this project
@@ -408,12 +428,14 @@ async def change_management(request: Request):
     
     logger.info(f"📊 Changes: {project.project_name} - {len(changes)} changes")
     
+    user = get_user_from_request(request)
     context = {
         "request": request,
         "project": project,
         "changes": changes,
         "program_name": project.project_name,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "user": user
     }
     
     return templates.TemplateResponse("changes.html", context)
