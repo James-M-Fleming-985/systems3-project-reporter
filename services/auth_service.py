@@ -18,8 +18,36 @@ logger = logging.getLogger(__name__)
 # JWT-like token handling (simplified, stateless tokens)
 # In production, consider using python-jose or PyJWT
 
-# Secret key from environment or generate one (persist in production!)
-SECRET_KEY = os.getenv("AUTH_SECRET_KEY", secrets.token_hex(32))
+def _get_or_create_secret_key() -> str:
+    """Get secret key from env, file, or generate and persist one"""
+    # First try environment variable
+    env_key = os.getenv("AUTH_SECRET_KEY")
+    if env_key:
+        return env_key
+    
+    # Try to load from file
+    base_dir = Path(__file__).parent.parent
+    user_data_dir = Path(os.getenv("USER_DATA_PATH", str(base_dir / "user_data")))
+    secret_file = user_data_dir / ".secret_key"
+    
+    if secret_file.exists():
+        try:
+            return secret_file.read_text().strip()
+        except Exception:
+            pass
+    
+    # Generate new key and persist it
+    new_key = secrets.token_hex(32)
+    try:
+        user_data_dir.mkdir(parents=True, exist_ok=True)
+        secret_file.write_text(new_key)
+        logger.info("Generated and persisted new auth secret key")
+    except Exception as e:
+        logger.warning(f"Could not persist secret key: {e}")
+    
+    return new_key
+
+SECRET_KEY = _get_or_create_secret_key()
 TOKEN_EXPIRY_HOURS = 24 * 7  # 1 week
 
 
