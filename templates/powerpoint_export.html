@@ -906,15 +906,29 @@ function openCanvasEditor(slideData) {
                     </div>
                 </div>
                 <div class="flex justify-between items-center gap-2 flex-shrink-0">
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <button onclick="resetCanvas()" class="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
                             Reset
                         </button>
                         <button onclick="toggleCropMode()" id="cropModeBtn" class="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition">
-                            Crop Mode
+                            ✂️ Crop Mode
                         </button>
+                        <button onclick="fitToSlide()" class="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition" title="Enlarge image to fill slide content area">
+                            📐 Fit to Slide
+                        </button>
+                        <div class="relative inline-block">
+                            <button onclick="toggleQuickCropMenu()" class="px-3 py-1.5 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 transition">
+                                ⚡ Quick Crop ▼
+                            </button>
+                            <div id="quickCropMenu" class="hidden absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                <button onclick="quickCrop('chart')" class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100">📊 Chart Only</button>
+                                <button onclick="quickCrop('chartWithLegend')" class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100">📈 Chart + Legend</button>
+                                <button onclick="quickCrop('dataArea')" class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100">📋 Data Area</button>
+                                <button onclick="quickCrop('noNav')" class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100">🔲 Without Navigation</button>
+                            </div>
+                        </div>
                         <button onclick="captureScreenshot('${viewUrl}')" class="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
-                            Refresh
+                            🔄 Refresh
                         </button>
                     </div>
                     <div class="flex gap-2">
@@ -924,7 +938,7 @@ function openCanvasEditor(slideData) {
                         </button>
                         <button onclick="applyCanvasTransform()" 
                                 class="px-4 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                            Apply Changes
+                            ✅ Apply Changes
                         </button>
                     </div>
                 </div>
@@ -1344,6 +1358,167 @@ function resetCanvas() {
     }
 }
 
+// Template safe zone configuration (pixels from edge at 1920x1080)
+// These define where titles and borders typically are in branded templates
+const templateSafeZones = {
+    default: { top: 120, bottom: 60, left: 60, right: 60 },     // Default with title area
+    noTemplate: { top: 40, bottom: 40, left: 40, right: 40 },   // Minimal margins
+    branded: { top: 140, bottom: 80, left: 80, right: 80 }      // More space for logos/footers
+};
+
+// Get current safe zone based on template selection
+function getCurrentSafeZone() {
+    const templateId = document.getElementById('canvasTemplateSelect')?.value;
+    if (!templateId) return templateSafeZones.noTemplate;
+    return templateSafeZones.branded; // Use branded zones when template is selected
+}
+
+// Fit cropped/current image to fill the slide content area (respecting safe zones)
+function fitToSlide() {
+    if (!canvasImage || !fabricCanvas) {
+        showNotification('No image available to fit', 'error');
+        return;
+    }
+    
+    console.log('📐 Fitting image to slide...');
+    
+    // Get safe zones for current template
+    const safeZone = getCurrentSafeZone();
+    
+    // Calculate available content area (accounting for canvas zoom)
+    const zoom = fabricCanvas.getZoom();
+    const contentLeft = safeZone.left * zoom;
+    const contentTop = safeZone.top * zoom;
+    const contentWidth = fabricCanvas.width - (safeZone.left + safeZone.right) * zoom;
+    const contentHeight = fabricCanvas.height - (safeZone.top + safeZone.bottom) * zoom;
+    
+    // Get the actual image dimensions (accounting for any clip/crop)
+    let imgWidth = canvasImage.width;
+    let imgHeight = canvasImage.height;
+    
+    // If image has a clipPath (from cropping), use the clip dimensions
+    if (canvasImage.clipPath) {
+        imgWidth = canvasImage.clipPath.width;
+        imgHeight = canvasImage.clipPath.height;
+    }
+    
+    // Calculate scale to fill content area while maintaining aspect ratio
+    const scaleX = contentWidth / (imgWidth * canvasImage.scaleX);
+    const scaleY = contentHeight / (imgHeight * canvasImage.scaleY);
+    const fitScale = Math.min(scaleX, scaleY);
+    
+    // Apply the new scale
+    const newScaleX = canvasImage.scaleX * fitScale;
+    const newScaleY = canvasImage.scaleY * fitScale;
+    
+    // Calculate center position within content area
+    const centerX = contentLeft + contentWidth / 2;
+    const centerY = contentTop + contentHeight / 2;
+    
+    canvasImage.set({
+        left: centerX,
+        top: centerY,
+        originX: 'center',
+        originY: 'center',
+        scaleX: newScaleX,
+        scaleY: newScaleY
+    });
+    
+    fabricCanvas.renderAll();
+    console.log('✅ Image fitted to slide content area');
+    console.log('   Safe zone:', safeZone);
+    console.log('   Content area:', { contentWidth, contentHeight, centerX, centerY });
+    console.log('   New scale:', { newScaleX, newScaleY });
+    
+    showNotification('Image enlarged to fill slide content area');
+}
+
+// Quick crop menu toggle
+function toggleQuickCropMenu() {
+    const menu = document.getElementById('quickCropMenu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+}
+
+// Close quick crop menu when clicking elsewhere
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('quickCropMenu');
+    if (menu && !e.target.closest('#quickCropMenu') && !e.target.textContent.includes('Quick Crop')) {
+        menu.classList.add('hidden');
+    }
+});
+
+// Quick crop presets - automatically crop to common areas
+function quickCrop(preset) {
+    if (!canvasImage || !fabricCanvas) {
+        showNotification('No image available to crop', 'error');
+        return;
+    }
+    
+    // Close the menu
+    document.getElementById('quickCropMenu')?.classList.add('hidden');
+    
+    console.log('⚡ Applying quick crop preset:', preset);
+    
+    // Preset crop percentages (how much to remove from each edge)
+    // Based on typical web page layouts with nav at top, sidebar at left
+    const presets = {
+        // Chart only - removes nav, sidebar, and footer
+        chart: { top: 15, bottom: 5, left: 5, right: 5 },
+        
+        // Chart with legend - wider area to include side legends
+        chartWithLegend: { top: 12, bottom: 3, left: 2, right: 2 },
+        
+        // Data area - focuses on central content
+        dataArea: { top: 10, bottom: 10, left: 10, right: 10 },
+        
+        // Without navigation - just removes top nav bar
+        noNav: { top: 8, bottom: 0, left: 0, right: 0 }
+    };
+    
+    const crop = presets[preset];
+    if (!crop) {
+        console.error('Unknown preset:', preset);
+        return;
+    }
+    
+    // Apply crop values
+    currentTransform.cropTop = crop.top;
+    currentTransform.cropBottom = crop.bottom;
+    currentTransform.cropLeft = crop.left;
+    currentTransform.cropRight = crop.right;
+    
+    // Calculate clip dimensions in image coordinates
+    const imgWidth = canvasImage.width;
+    const imgHeight = canvasImage.height;
+    
+    const clipLeft = -imgWidth / 2 + (imgWidth * crop.left / 100);
+    const clipTop = -imgHeight / 2 + (imgHeight * crop.top / 100);
+    const clipWidth = imgWidth * (1 - crop.left / 100 - crop.right / 100);
+    const clipHeight = imgHeight * (1 - crop.top / 100 - crop.bottom / 100);
+    
+    console.log('📏 Clip dimensions:', { clipLeft, clipTop, clipWidth, clipHeight });
+    
+    // Apply clipPath
+    canvasImage.clipPath = new fabric.Rect({
+        left: clipLeft,
+        top: clipTop,
+        width: clipWidth,
+        height: clipHeight,
+        absolutePositioned: false
+    });
+    
+    fabricCanvas.renderAll();
+    
+    // Auto-fit to slide after cropping
+    setTimeout(() => {
+        fitToSlide();
+    }, 100);
+    
+    console.log('✅ Quick crop applied:', preset);
+}
+
 let cropMode = false;
 let cropRect = null;
 let isDrawingCrop = false;
@@ -1354,12 +1529,13 @@ function toggleCropMode() {
     const btn = document.getElementById('cropModeBtn');
     
     if (cropMode) {
-        btn.textContent = 'Exit Crop Mode';
-        btn.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition';
+        btn.textContent = '❌ Exit Crop Mode';
+        btn.className = 'px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition';
         enableCropMode();
+        showNotification('Draw a rectangle around the area you want to keep');
     } else {
-        btn.textContent = 'Enable Crop Mode';
-        btn.className = 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition';
+        btn.textContent = '✂️ Crop Mode';
+        btn.className = 'px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition';
         disableCropMode();
     }
 }
@@ -1545,6 +1721,12 @@ function disableCropMode() {
         });
         
         console.log('✅ Crop applied successfully');
+        
+        // Auto-fit the cropped image to fill the slide content area
+        setTimeout(() => {
+            fitToSlide();
+            showNotification('Cropped and enlarged to fill slide!');
+        }, 100);
     }
     
     // Remove crop rectangle

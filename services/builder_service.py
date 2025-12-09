@@ -11,6 +11,15 @@ from pptx.dml.color import RGBColor
 from PIL import Image
 
 
+# Template safe zone configuration (in inches from each edge)
+# These define where the image content should not encroach
+TEMPLATE_SAFE_ZONES = {
+    'default': {'top': 1.2, 'bottom': 0.5, 'left': 0.5, 'right': 0.5},      # Default with title area
+    'no_template': {'top': 0.3, 'bottom': 0.3, 'left': 0.3, 'right': 0.3},  # Minimal margins
+    'branded': {'top': 1.4, 'bottom': 0.6, 'left': 0.5, 'right': 0.5}       # More space for logos/footers
+}
+
+
 class PowerPointBuilderService:
     """Service for building PowerPoint presentations with screenshots and branding."""
     
@@ -266,30 +275,42 @@ class PowerPointBuilderService:
             pass
         
     def _add_image_to_slide(self, slide, image_bytes: bytes):
-        """Add image to slide with proper sizing."""
+        """Add image to slide with smart sizing that fills the content area.
+        
+        The image is enlarged to fill the available space while:
+        - Respecting template safe zones (title area, footer, margins)
+        - Maintaining aspect ratio
+        - Not encroaching on branding elements
+        """
         # Load image to get dimensions
         img = Image.open(BytesIO(image_bytes))
         img_width, img_height = img.size
         
-        # Calculate slide dimensions (leaving margins)
+        # Calculate slide dimensions
         slide_width = self.presentation.slide_width
         slide_height = self.presentation.slide_height
         
-        max_width = int(slide_width * 0.8)
-        max_height = int(slide_height * 0.6)
+        # Get safe zone based on whether we have a template
+        safe_zone = self._get_safe_zone()
         
-        # Calculate scaling to fit
-        width_ratio = max_width / img_width
-        height_ratio = max_height / img_height
+        # Calculate available content area (in EMUs)
+        content_left = Inches(safe_zone['left'])
+        content_top = Inches(safe_zone['top'])
+        content_width = slide_width - Inches(safe_zone['left'] + safe_zone['right'])
+        content_height = slide_height - Inches(safe_zone['top'] + safe_zone['bottom'])
+        
+        # Calculate scaling to fill content area while maintaining aspect ratio
+        width_ratio = content_width / img_width
+        height_ratio = content_height / img_height
         scale_ratio = min(width_ratio, height_ratio)
         
         # Calculate final dimensions
         width = int(img_width * scale_ratio)
         height = int(img_height * scale_ratio)
         
-        # Calculate position (centered)
-        left = int((slide_width - width) / 2)
-        top = int((slide_height - height) / 2)
+        # Calculate position (centered within content area)
+        left = content_left + (content_width - width) // 2
+        top = content_top + (content_height - height) // 2
         
         # Add image
         image_stream = BytesIO(image_bytes)
@@ -300,6 +321,16 @@ class PowerPointBuilderService:
             width=width,
             height=height
         )
+    
+    def _get_safe_zone(self) -> Dict[str, float]:
+        """Get the safe zone configuration based on template.
+        
+        Returns:
+            Dict with 'top', 'bottom', 'left', 'right' values in inches
+        """
+        if self.template_path:
+            return TEMPLATE_SAFE_ZONES['branded']
+        return TEMPLATE_SAFE_ZONES['default']
         
     def _save_to_bytes(self) -> bytes:
         """Save presentation to bytes."""
