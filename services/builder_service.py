@@ -38,7 +38,8 @@ class PowerPointBuilderService:
         screenshots: List[bytes],
         template_path: Optional[str] = None,
         skip_slide_titles: bool = False,
-        slide_transforms: Optional[List[Dict[str, Any]]] = None
+        slide_transforms: Optional[List[Dict[str, Any]]] = None,
+        slide_titles: Optional[List[str]] = None
     ) -> bytes:
         """
         Generate a PowerPoint presentation with report data and screenshots.
@@ -47,8 +48,9 @@ class PowerPointBuilderService:
             report_data: Dictionary containing report metadata
             screenshots: List of screenshot images as bytes
             template_path: Optional path to company template
-            skip_slide_titles: If True, don't add "Screenshot X" titles (templates have their own titles)
-            slide_transforms: Optional list of transform data for each slide (position, scale, crop)
+            skip_slide_titles: If True, don't add titles (templates have their own)
+            slide_transforms: Optional list of transform data for each slide
+            slide_titles: Optional list of descriptive titles for each slide
             
         Returns:
             Generated PPTX file as bytes
@@ -81,9 +83,24 @@ class PowerPointBuilderService:
                 transform = slide_transforms[idx]
             
             # Apply transform to screenshot if provided
-            processed_screenshot = self._apply_transform_to_image(screenshot, transform) if transform else screenshot
+            if transform:
+                processed_screenshot = self._apply_transform_to_image(
+                    screenshot, transform)
+            else:
+                processed_screenshot = screenshot
             
-            self._create_content_slide(processed_screenshot, idx + 1, skip_title=use_template_titles)
+            # Get slide title - use provided title or generate default
+            if slide_titles and idx < len(slide_titles):
+                title = slide_titles[idx]
+            else:
+                title = f"Screenshot {idx + 1}"
+            
+            self._create_content_slide(
+                processed_screenshot, 
+                idx + 1, 
+                skip_title=use_template_titles,
+                slide_title=title
+            )
             
         # Check generation time
         elapsed = time.time() - self.start_time
@@ -224,13 +241,20 @@ class PowerPointBuilderService:
                 p.text = report_data['description']
                 p.alignment = PP_ALIGN.CENTER
                 
-    def _create_content_slide(self, screenshot: bytes, slide_number: int, skip_title: bool = False):
+    def _create_content_slide(
+        self, 
+        screenshot: bytes, 
+        slide_number: int, 
+        skip_title: bool = False,
+        slide_title: str = None
+    ):
         """Create a content slide with screenshot.
         
         Args:
             screenshot: Screenshot image as bytes
-            slide_number: Slide number for title
-            skip_title: If True, don't override existing title (for branded templates)
+            slide_number: Slide number (used as fallback title)
+            skip_title: If True, don't override existing title
+            slide_title: Descriptive title for the slide
         """
         # Use content slide layout (usually index 1 or 5)
         layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
@@ -239,7 +263,10 @@ class PowerPointBuilderService:
         
         # Set title if available and not skipping
         if slide.shapes.title and not skip_title:
-            slide.shapes.title.text = f"Screenshot {slide_number}"
+            if slide_title:
+                slide.shapes.title.text = slide_title
+            else:
+                slide.shapes.title.text = f"Screenshot {slide_number}"
             
         # Add screenshot image
         self._add_image_to_slide(slide, screenshot)

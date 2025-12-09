@@ -562,10 +562,16 @@ async def normalize_risk_ids(program_name: str):
 
 
 @router.get("/print/{program_name}")
-async def risks_print_view(program_name: str):
+async def risks_print_view(program_name: str, page: int = 1, per_page: int = 3):
     """
     Print-friendly risk report page for PowerPoint screenshots.
     Renders risks in card format similar to PDF export.
+    Supports pagination for multi-slide exports.
+    
+    Args:
+        program_name: The program/project name
+        page: Page number (1-indexed)
+        per_page: Number of risks per page (default 3)
     """
     from fastapi.responses import HTMLResponse
     
@@ -581,103 +587,119 @@ async def risks_print_view(program_name: str):
             status_code=200
         )
     
+    # Calculate pagination
+    total_risks = len(risks)
+    total_pages = (total_risks + per_page - 1) // per_page  # Ceiling division
+    
+    # Ensure page is within bounds
+    page = max(1, min(page, total_pages))
+    
+    # Get risks for this page
+    start_idx = (page - 1) * per_page
+    end_idx = min(start_idx + per_page, total_risks)
+    page_risks = risks[start_idx:end_idx]
+    
+    # Page indicator for title
+    page_indicator = f" (Page {page}/{total_pages})" if total_pages > 1 else ""
+    
     # Generate HTML matching the PDF format
-    html_parts = ['''
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+    html_parts = [f'''
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
-        }
-        .header {
+        }}
+        .header {{
             text-align: center;
             margin-bottom: 10px;
             padding-bottom: 10px;
             border-bottom: 2px solid #1e40af;
-        }
-        .header h1 {
+        }}
+        .header h1 {{
             color: #1e40af;
             font-size: 24px;
             margin-bottom: 5px;
-        }
-        .header .timestamp {
+        }}
+        .header .timestamp {{
             color: #6b7280;
             font-size: 12px;
-        }
-        .risk-card {
+        }}
+        .risk-card {{
             margin-bottom: 20px;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             overflow: hidden;
             page-break-inside: avoid;
-        }
-        .risk-title {
+        }}
+        .risk-title {{
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
             padding: 12px 16px;
             font-size: 16px;
             font-weight: bold;
-        }
-        .risk-meta {
+        }}
+        .risk-meta {{
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             background: #f3f4f6;
             border-bottom: 1px solid #e5e7eb;
-        }
-        .risk-meta-item {
+        }}
+        .risk-meta-item {{
             padding: 8px 12px;
             border-right: 1px solid #e5e7eb;
             font-size: 12px;
-        }
-        .risk-meta-item:last-child { border-right: none; }
-        .risk-meta-label {
+        }}
+        .risk-meta-item:last-child {{ border-right: none; }}
+        .risk-meta-label {{
             color: #6b7280;
             font-size: 10px;
             text-transform: uppercase;
             margin-bottom: 2px;
-        }
-        .risk-meta-value {
+        }}
+        .risk-meta-value {{
             font-weight: 600;
             color: #1f2937;
-        }
-        .risk-body {
+        }}
+        .risk-body {{
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             padding: 16px;
-        }
-        .risk-section h4 {
+        }}
+        .risk-section h4 {{
             color: #374151;
             font-size: 12px;
             margin-bottom: 6px;
             font-weight: 600;
-        }
-        .risk-section p {
+        }}
+        .risk-section p {{
             color: #4b5563;
             font-size: 12px;
             line-height: 1.5;
-        }
-        .severity-critical { color: #7c3aed; }
-        .severity-high { color: #dc2626; }
-        .severity-medium { color: #f59e0b; }
-        .severity-low { color: #6b7280; }
+        }}
+        .severity-critical {{ color: #7c3aed; }}
+        .severity-high {{ color: #dc2626; }}
+        .severity-medium {{ color: #f59e0b; }}
+        .severity-low {{ color: #6b7280; }}
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Risk Register: ''' + clean_name + '''</h1>
-        <div class="timestamp">Generated: ''' + datetime.now().strftime('%Y-%m-%d %H:%M') + '''</div>
+        <h1>Risk Register: {clean_name}{page_indicator}</h1>
+        <div class="timestamp">Generated: {timestamp}</div>
     </div>
 ''']
     
-    for risk in risks:
+    for risk in page_risks:
         risk_id = risk.get('id', 'N/A')
         title = risk.get('title', 'Untitled Risk')
         severity = risk.get('severity_normalized', 'medium').upper()

@@ -16,6 +16,7 @@ import io
 
 from middleware.project_context import get_selected_project, get_all_projects
 from repositories.project_repository import ProjectRepository
+from repositories.risk_repository import RiskRepository
 
 # Import AI-generated services
 from services.screenshot_service import ScreenshotService
@@ -23,6 +24,9 @@ from services.builder_service import PowerPointBuilderService
 from repositories.template_repository import TemplateRepository, ConfigurationManager
 
 logger = logging.getLogger(__name__)
+
+# Initialize risk repository for pagination check
+risk_repo = RiskRepository()
 
 # Setup paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,6 +79,119 @@ class ExportRequest(BaseModel):
     hide_navigation: bool = True
     include_title_slide: bool = True
     slide_transforms: Optional[List[SlideTransform]] = None  # Transform data per slide
+    slide_titles: Optional[List[str]] = None  # Custom titles for each slide
+
+
+def get_slide_title_from_url(url: str, project_name: str) -> str:
+    """
+    Generate a descriptive slide title based on the view URL.
+    
+    Args:
+        url: The view URL (e.g., /gantt, /milestones, /risks/print/ZnNi)
+        project_name: The project name to include in the title
+        
+    Returns:
+        Descriptive title like "Gantt Chart - ZnNi Line Development Plan"
+    """
+    # Extract path without query parameters
+    path = url.split('?')[0]
+    
+    # Map URL patterns to descriptive names
+    if '/gantt' in path:
+        return f"Gantt Chart - {project_name}"
+    elif '/milestones' in path:
+        if 'view=month' in url:
+            return f"Milestones (Month View) - {project_name}"
+        elif 'view=week' in url:
+            return f"Milestones (Week View) - {project_name}"
+        else:
+            return f"Milestones - {project_name}"
+    elif '/risks/print/' in path:
+        return f"Risk Register - {project_name}"
+    elif '/risks' in path:
+        return f"Risk Register - {project_name}"
+    elif '/changes' in path:
+        return f"Change Log - {project_name}"
+    elif '/metrics/trend/' in path:
+        # Extract metric name from URL
+        metric_name = path.split('/metrics/trend/')[-1]
+        from urllib.parse import unquote
+        metric_name = unquote(metric_name)
+        return f"{metric_name} - {project_name}"
+    elif '/metrics' in path or '/dashboard' in path:
+        return f"Metrics Dashboard - {project_name}"
+    else:
+        return f"Report - {project_name}"
+
+
+def expand_views_for_pagination(
+    views: List[str], 
+    project_name: str,
+    risks_per_page: int = 3
+) -> tuple[List[str], List[str]]:
+    """
+    Expand views list to handle multi-page content like risks.
+    
+    If a risks view is included and there are more risks than fit on one page,
+    this will generate multiple page URLs.
+    
+    Args:
+        views: List of view URLs
+        project_name: Project name for loading risks
+        risks_per_page: Number of risks per page (default 3)
+        
+    Returns:
+        Tuple of (expanded_views, expanded_titles)
+    """
+    expanded_views = []
+    expanded_titles = []
+    
+    for view in views:
+        if '/risks/print/' in view:
+            # This is a risks view - check how many risks exist
+            try:
+                # Clean program name same way as the risks endpoint
+                import re
+                clean_name = project_name.replace(
+                    '.xml', '').replace('.xlsx', '').replace('.yaml', ''
+                ).strip()
+                clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+                
+                risks = risk_repo.load_risks(clean_name)
+                total_risks = len(risks) if risks else 0
+                
+                if total_risks > risks_per_page:
+                    # Need multiple pages
+                    total_pages = (total_risks + risks_per_page - 1) // risks_per_page
+                    logger.info(
+                        f"📋 Risks: {total_risks} risks across {total_pages} pages"
+                    )
+                    
+                    for page in range(1, total_pages + 1):
+                        # Add page parameter to URL
+                        page_url = f"{view}?page={page}&per_page={risks_per_page}"
+                        expanded_views.append(page_url)
+                        
+                        # Generate title with page number
+                        if total_pages > 1:
+                            title = f"Risk Register ({page}/{total_pages}) - {project_name}"
+                        else:
+                            title = f"Risk Register - {project_name}"
+                        expanded_titles.append(title)
+                else:
+                    # Single page of risks
+                    expanded_views.append(view)
+                    expanded_titles.append(f"Risk Register - {project_name}")
+            except Exception as e:
+                logger.warning(f"Could not check risk count: {e}")
+                expanded_views.append(view)
+                expanded_titles.append(f"Risk Register - {project_name}")
+        else:
+            # Non-risk view - add as-is with generated title
+            expanded_views.append(view)
+            expanded_titles.append(get_slide_title_from_url(view, project_name))
+    
+    return expanded_views, expanded_titles
 
 
 # UI Route
@@ -160,8 +277,24 @@ async def export_to_powerpoint(
         # Get base URL
         base_url = f"{request.url.scheme}://{request.url.netloc}"
         
+        # Get project name for title generation
+        selected_project = get_selected_project(request)
+        project_name = (selected_project.project_name 
+                       if selected_project else "All Projects")
+        
+        # Expand views for multi-page content (e.g., risks with many items)
+        expanded_views, generated_titles = expand_views_for_pagination(
+            export_request.views, project_name
+        )
+        
+        if len(expanded_views) != len(export_request.views):
+            logger.info(
+                f"📄 Views expanded from {len(export_request.views)} "
+                f"to {len(expanded_views)} for pagination"
+            )
+        
         # Build full URLs for screenshot capture
-        full_urls = [f"{base_url}{view}" for view in export_request.views]
+        full_urls = [f"{base_url}{view}" for view in expanded_views]
         logger.info(f"Capturing screenshots for: {full_urls}")
         
         # Extract project code from first URL to set as header for all screenshots
@@ -215,14 +348,21 @@ async def export_to_powerpoint(
         
         logger.info(f"Captured {len(screenshots)} screenshots")
         
-        # Prepare report data
-        selected_project = get_selected_project(request)
+        # Prepare report data (project_name already set above)
         report_data = {
             "title": export_request.title,
-            "project_name": selected_project.project_name if selected_project else "All Projects",
+            "project_name": project_name,
             "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "slide_count": len(screenshots) + (1 if export_request.include_title_slide else 0)
+            "slide_count": len(screenshots) + (
+                1 if export_request.include_title_slide else 0
+            )
         }
+        
+        # Use generated titles from pagination expansion, or fall back to request
+        slide_titles = export_request.slide_titles
+        if not slide_titles:
+            slide_titles = generated_titles
+            logger.info(f"📝 Generated slide titles: {slide_titles}")
         
         # Convert slide transforms to dict format for service
         slide_transforms = None
@@ -236,7 +376,8 @@ async def export_to_powerpoint(
             report_data=report_data,
             screenshots=screenshots,
             template_path=str(template_path) if template_path else None,
-            slide_transforms=slide_transforms
+            slide_transforms=slide_transforms,
+            slide_titles=slide_titles
         )
         
         logger.info("✅ PowerPoint generation complete")
