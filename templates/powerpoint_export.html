@@ -114,13 +114,21 @@
             <div>
                 <h2 class="text-xl font-semibold">2. Preview & Adjust Slide Layout</h2>
                 <p class="text-sm text-gray-600 mt-1">Drag slides to reorder them. Click to see a larger preview or edit layout.</p>
+                <p class="text-sm text-green-600 mt-1" id="savedConfigsInfo">
+                    <!-- Will be populated by JS with saved config count -->
+                </p>
             </div>
-            <button id="editLayoutBtn" class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2 cursor-not-allowed" disabled>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Edit Layout (select slide first)
-            </button>
+            <div class="flex gap-2">
+                <button onclick="clearAllSlideTransforms()" class="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-red-100 hover:text-red-600 transition text-sm" title="Clear all saved slide configurations">
+                    🗑️ Clear All Configs
+                </button>
+                <button id="editLayoutBtn" class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2 cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit Layout (select slide first)
+                </button>
+            </div>
         </div>
         
         <div id="slidePreviewCanvas" class="min-h-[200px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
@@ -930,6 +938,9 @@ function openCanvasEditor(slideData) {
                         <button onclick="captureScreenshot('${viewUrl}')" class="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
                             🔄 Refresh
                         </button>
+                        <button onclick="clearSlideTransform(currentEditingViewPath); this.closest('.fixed').remove();" class="px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition" title="Remove saved configuration for this slide">
+                            🗑️ Clear Config
+                        </button>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="this.closest('.fixed').remove()" 
@@ -1075,7 +1086,97 @@ let canvasImage = null;
 let currentEditingViewPath = null;  // Track which slide is being edited
 
 // Store transforms per slide (keyed by view path)
-const slideTransforms = {};
+// Load saved transforms from localStorage on page load
+const SLIDE_TRANSFORMS_KEY = 'pptExportSlideTransforms';
+let slideTransforms = loadSlideTransforms();
+
+function loadSlideTransforms() {
+    try {
+        const saved = localStorage.getItem(SLIDE_TRANSFORMS_KEY);
+        if (saved) {
+            const transforms = JSON.parse(saved);
+            console.log('📂 Loaded', Object.keys(transforms).length, 'saved slide configurations');
+            return transforms;
+        }
+    } catch (e) {
+        console.error('Failed to load saved transforms:', e);
+    }
+    return {};
+}
+
+function saveSlideTransforms() {
+    try {
+        localStorage.setItem(SLIDE_TRANSFORMS_KEY, JSON.stringify(slideTransforms));
+        console.log('💾 Saved', Object.keys(slideTransforms).length, 'slide configurations');
+    } catch (e) {
+        console.error('Failed to save transforms:', e);
+    }
+}
+
+function clearSlideTransform(viewPath) {
+    const basePath = viewPath.split('?')[0];
+    // Remove any matching transforms
+    for (const key of Object.keys(slideTransforms)) {
+        if (key.split('?')[0] === basePath) {
+            delete slideTransforms[key];
+        }
+    }
+    saveSlideTransforms();
+    updateSlideConfigIndicators();
+    showNotification('Slide configuration cleared');
+}
+
+function clearAllSlideTransforms() {
+    if (confirm('Clear all saved slide configurations? You will need to reconfigure each slide.')) {
+        slideTransforms = {};
+        saveSlideTransforms();
+        updateSlideConfigIndicators();
+        showNotification('All slide configurations cleared');
+    }
+}
+
+// Update visual indicators showing which slides have saved configs
+function updateSlideConfigIndicators() {
+    const configCount = Object.keys(slideTransforms).length;
+    
+    // Update the info message
+    const infoEl = document.getElementById('savedConfigsInfo');
+    if (infoEl) {
+        if (configCount > 0) {
+            infoEl.innerHTML = `✅ <strong>${configCount} slide(s)</strong> have saved configurations - just click Export for consistent reports!`;
+        } else {
+            infoEl.innerHTML = `<span class="text-gray-500">💡 Configure slide layouts once, then export weekly without re-adjusting</span>`;
+        }
+    }
+    
+    document.querySelectorAll('.view-card').forEach(card => {
+        const checkbox = card.querySelector('input[name="view"]');
+        if (!checkbox) return;
+        
+        const viewPath = checkbox.value.split('?')[0];
+        const hasConfig = Object.keys(slideTransforms).some(key => key.split('?')[0] === viewPath);
+        
+        // Add or remove indicator
+        let indicator = card.querySelector('.config-indicator');
+        if (hasConfig) {
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'config-indicator absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full';
+                indicator.textContent = '✓ Configured';
+                indicator.title = 'This slide has saved crop/sizing settings';
+                card.style.position = 'relative';
+                card.appendChild(indicator);
+            }
+        } else if (indicator) {
+            indicator.remove();
+        }
+    });
+}
+
+// Initialize indicators on page load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(updateSlideConfigIndicators, 500);
+});
 
 function initFabricCanvas(viewUrl) {
     // Store which slide we're editing
@@ -1771,10 +1872,20 @@ function applyCanvasTransform() {
     console.log('Transform applied for view:', currentEditingViewPath);
     console.log('Transform data:', transform);
     
-    // Store transform for this specific slide (keyed by view path)
+    // Store transform for this specific slide (keyed by view path - use base path without project param)
     if (currentEditingViewPath) {
-        slideTransforms[currentEditingViewPath] = transform;
-        console.log('📐 Stored transform for slide. Total transforms:', Object.keys(slideTransforms).length);
+        // Use base path so it works across project selections
+        const basePath = currentEditingViewPath.split('?')[0];
+        slideTransforms[basePath] = transform;
+        
+        // Persist to localStorage for future sessions
+        saveSlideTransforms();
+        
+        // Update visual indicators
+        updateSlideConfigIndicators();
+        
+        console.log('📐 Stored and persisted transform for slide:', basePath);
+        console.log('📐 Total transforms:', Object.keys(slideTransforms).length);
     }
     
     // Update current transform
@@ -1784,7 +1895,7 @@ function applyCanvasTransform() {
     document.querySelector('.fixed.inset-0').remove();
     
     // Show success message
-    showNotification('Layout changes saved! These will be applied when you generate the PowerPoint.');
+    showNotification('✅ Layout saved permanently! This configuration will be used for all future exports.');
 }
 
 function updateTransform(property, value) {
