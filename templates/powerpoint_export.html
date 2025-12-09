@@ -1426,6 +1426,46 @@ function initFabricCanvas(viewUrl) {
                     
                     fabricCanvas.renderAll();
                     console.log('✅ Canvas rendered - image should be visible now!');
+                    
+                    // Restore saved transform if one exists for this slide
+                    const basePath = currentEditingViewPath ? currentEditingViewPath.split('?')[0] : null;
+                    if (basePath && slideTransforms[basePath]) {
+                        const saved = slideTransforms[basePath];
+                        console.log('📂 Restoring saved transform for:', basePath);
+                        console.log('   - Saved values:', saved);
+                        
+                        canvasImage.set({
+                            left: saved.left,
+                            top: saved.top,
+                            scaleX: saved.scale,
+                            scaleY: saved.scaleY || saved.scale,
+                            angle: saved.angle || 0
+                        });
+                        
+                        // Restore crop if saved
+                        if (saved.cropTop || saved.cropBottom || saved.cropLeft || saved.cropRight) {
+                            currentTransform.cropTop = saved.cropTop || 0;
+                            currentTransform.cropBottom = saved.cropBottom || 0;
+                            currentTransform.cropLeft = saved.cropLeft || 0;
+                            currentTransform.cropRight = saved.cropRight || 0;
+                            
+                            // Apply clip path for crop
+                            const cropRect = new fabric.Rect({
+                                left: -(canvasImage.width / 2) + (saved.cropLeft || 0),
+                                top: -(canvasImage.height / 2) + (saved.cropTop || 0),
+                                width: canvasImage.width - (saved.cropLeft || 0) - (saved.cropRight || 0),
+                                height: canvasImage.height - (saved.cropTop || 0) - (saved.cropBottom || 0),
+                                absolutePositioned: false
+                            });
+                            canvasImage.clipPath = cropRect;
+                            console.log('   - Restored crop:', currentTransform);
+                        }
+                        
+                        fabricCanvas.renderAll();
+                        console.log('✅ Saved transform restored successfully');
+                    } else {
+                        console.log('📭 No saved transform found for:', basePath);
+                    }
                 }, function(img, isError) {
                     console.error('❌ Error loading SVG:', isError ? 'ERROR' : 'UNKNOWN');
                     console.error('   - Image object:', img);
