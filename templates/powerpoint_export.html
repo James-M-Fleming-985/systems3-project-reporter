@@ -709,17 +709,21 @@ async function loadCustomMetricCheckboxes() {
         checkbox.name = 'view';
         checkbox.value = `/dashboard/metrics/trend/${encodeURIComponent(metric.name)}`;
         checkbox.className = 'mt-1 mr-3 w-5 h-5 text-blue-600';
-        checkbox.addEventListener('change', updateSelectedCount);
+        // Pass true explicitly to save when user changes checkbox
+        checkbox.addEventListener('change', () => updateSelectedCount(true));
         
         // Restore checked state from localStorage
         const savedViews = localStorage.getItem('pptExportSelectedViews');
         if (savedViews) {
             try {
                 const viewsArray = JSON.parse(savedViews);
-                const isChecked = viewsArray.includes(checkbox.value);
+                // Check both encoded and non-encoded versions for compatibility
+                const checkValue = checkbox.value;
+                const isChecked = viewsArray.includes(checkValue) || 
+                                  viewsArray.some(v => decodeURIComponent(v) === decodeURIComponent(checkValue));
                 checkbox.checked = isChecked;
                 if (isChecked) {
-                    console.log('✅ Restored checkbox:', metric.name);
+                    console.log('✅ Restored custom metric checkbox:', metric.name);
                 }
             } catch (e) {
                 console.error('Failed to restore checkbox state:', e);
