@@ -554,6 +554,8 @@ function updateSelectedCount(saveToStorage = true) {
 
 // Add event listeners to checkboxes
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 PowerPoint Export page loaded');
+    
     // Restore selections from localStorage first
     try {
         const savedViews = localStorage.getItem('pptExportSelectedViews');
@@ -563,16 +565,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 checkbox.checked = viewsArray.includes(checkbox.value);
             });
             console.log('✅ Restored', viewsArray.length, 'selections from localStorage');
+        } else {
+            console.log('📋 No saved views, using HTML defaults');
         }
     } catch (e) {
         console.warn('Failed to restore selections:', e);
     }
     
-    // Add change listeners
+    // Add change listeners to all checkboxes
     document.querySelectorAll('input[name="view"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedCount);
+        checkbox.addEventListener('change', () => updateSelectedCount(true));
     });
-    // Don't call updateSelectedCount here - wait for custom metrics to load
+    
+    // Initial update to show preview of currently checked items
+    updateSelectedCount(false);
+    console.log('📐 Initial preview updated');
     
     // Load available templates
     loadAvailableTemplates();
@@ -606,6 +613,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load custom metrics and create checkboxes (async)
     await loadCustomMetricCheckboxes();
+    
+    // Update slide config indicators
+    updateSlideConfigIndicators();
+    console.log('✅ PowerPoint Export page ready');
 });
 
 async function loadAvailableTemplates() {
