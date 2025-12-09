@@ -24,6 +24,7 @@ class ScreenshotService:
         '/milestones?view=month': '#monthView',
         '/milestones?view=week': '#weekView',
         '/milestones': '#statusView',  # Default status view
+        '/risks/print/': 'body',  # Print-friendly risk report - capture whole body
         '/risks': '#risksContent',
         '/changes': '#changesContent',
         '/metrics/trend/': '.js-plotly-plot',

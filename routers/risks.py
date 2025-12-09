@@ -561,6 +561,187 @@ async def normalize_risk_ids(program_name: str):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@router.get("/print/{program_name}")
+async def risks_print_view(program_name: str):
+    """
+    Print-friendly risk report page for PowerPoint screenshots.
+    Renders risks in card format similar to PDF export.
+    """
+    from fastapi.responses import HTMLResponse
+    
+    # Clean program name
+    clean_name = clean_program_name(program_name)
+    
+    # Get risks
+    risks = risk_repo.load_risks(clean_name)
+    
+    if not risks:
+        return HTMLResponse(
+            content=f"<html><body><h1>No risks found for: {clean_name}</h1></body></html>",
+            status_code=200
+        )
+    
+    # Generate HTML matching the PDF format
+    html_parts = ['''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: white; 
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1e40af;
+        }
+        .header h1 {
+            color: #1e40af;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header .timestamp {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .risk-card {
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        .risk-title {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .risk-meta {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .risk-meta-item {
+            padding: 8px 12px;
+            border-right: 1px solid #e5e7eb;
+            font-size: 12px;
+        }
+        .risk-meta-item:last-child { border-right: none; }
+        .risk-meta-label {
+            color: #6b7280;
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .risk-meta-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .risk-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
+        }
+        .risk-section h4 {
+            color: #374151;
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .risk-section p {
+            color: #4b5563;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .severity-critical { color: #7c3aed; }
+        .severity-high { color: #dc2626; }
+        .severity-medium { color: #f59e0b; }
+        .severity-low { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Risk Register: ''' + clean_name + '''</h1>
+        <div class="timestamp">Generated: ''' + datetime.now().strftime('%Y-%m-%d %H:%M') + '''</div>
+    </div>
+''']
+    
+    for risk in risks:
+        risk_id = risk.get('id', 'N/A')
+        title = risk.get('title', 'Untitled Risk')
+        severity = risk.get('severity_normalized', 'medium').upper()
+        status = risk.get('status', 'N/A')
+        owner = risk.get('owner', 'N/A')
+        likelihood = risk.get('likelihood', 'N/A')
+        impact = risk.get('impact', 'N/A')
+        description = risk.get('description', 'No description provided.')
+        
+        # Handle mitigations
+        mitigations = risk.get('mitigations', [])
+        if isinstance(mitigations, list):
+            miti_text = '; '.join(mitigations) if mitigations else 'None specified'
+        else:
+            miti_text = str(mitigations) if mitigations else 'None specified'
+        
+        severity_class = f"severity-{severity.lower()}"
+        
+        html_parts.append(f'''
+    <div class="risk-card">
+        <div class="risk-title">{risk_id}: {title}</div>
+        <div class="risk-meta">
+            <div class="risk-meta-item">
+                <div class="risk-meta-label">Severity</div>
+                <div class="risk-meta-value {severity_class}">{severity}</div>
+            </div>
+            <div class="risk-meta-item">
+                <div class="risk-meta-label">Status</div>
+                <div class="risk-meta-value">{status}</div>
+            </div>
+            <div class="risk-meta-item">
+                <div class="risk-meta-label">Owner</div>
+                <div class="risk-meta-value">{owner}</div>
+            </div>
+            <div class="risk-meta-item">
+                <div class="risk-meta-label">Likelihood</div>
+                <div class="risk-meta-value">L: {likelihood}</div>
+            </div>
+            <div class="risk-meta-item">
+                <div class="risk-meta-label">Impact</div>
+                <div class="risk-meta-value">I: {impact}</div>
+            </div>
+        </div>
+        <div class="risk-body">
+            <div class="risk-section">
+                <h4>Description:</h4>
+                <p>{description}</p>
+            </div>
+            <div class="risk-section">
+                <h4>Mitigations:</h4>
+                <p>{miti_text}</p>
+            </div>
+        </div>
+    </div>
+''')
+    
+    html_parts.append('''
+</body>
+</html>
+''')
+    
+    return HTMLResponse(content=''.join(html_parts))
+
+
 @router.get("/export/{program_name}")
 async def export_risks_pdf(program_name: str):
     """Export risks to PDF in landscape format with multiple risks per page"""
