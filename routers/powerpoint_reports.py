@@ -96,32 +96,32 @@ def get_slide_title_from_url(url: str, project_name: str) -> str:
     # Extract path without query parameters
     path = url.split('?')[0]
     
-    # Map URL patterns to descriptive names
+    # Map URL patterns to descriptive names (format: "Type: Project Name")
     if '/gantt' in path:
-        return f"Gantt Chart - {project_name}"
+        return f"Gantt Chart: {project_name}"
     elif '/milestones' in path:
         if 'view=month' in url:
-            return f"Milestones (Month View) - {project_name}"
+            return f"Milestones (Month View): {project_name}"
         elif 'view=week' in url:
-            return f"Milestones (Week View) - {project_name}"
+            return f"Milestones (Week View): {project_name}"
         else:
-            return f"Milestones - {project_name}"
+            return f"Milestones: {project_name}"
     elif '/risks/print/' in path:
-        return f"Risk Register - {project_name}"
+        return f"Risk Register: {project_name}"
     elif '/risks' in path:
-        return f"Risk Register - {project_name}"
+        return f"Risk Register: {project_name}"
     elif '/changes' in path:
-        return f"Change Log - {project_name}"
+        return f"Change Log: {project_name}"
     elif '/metrics/trend/' in path:
         # Extract metric name from URL
         metric_name = path.split('/metrics/trend/')[-1]
         from urllib.parse import unquote
         metric_name = unquote(metric_name)
-        return f"{metric_name} - {project_name}"
+        return f"{metric_name}: {project_name}"
     elif '/metrics' in path or '/dashboard' in path:
-        return f"Metrics Dashboard - {project_name}"
+        return f"Metrics Dashboard: {project_name}"
     else:
-        return f"Report - {project_name}"
+        return f"Report: {project_name}"
 
 
 def expand_views_for_pagination(
@@ -174,14 +174,14 @@ def expand_views_for_pagination(
                         
                         # Generate title with page number
                         if total_pages > 1:
-                            title = f"Risk Register ({page}/{total_pages}) - {project_name}"
+                            title = f"Risk Register ({page}/{total_pages}): {project_name}"
                         else:
-                            title = f"Risk Register - {project_name}"
+                            title = f"Risk Register: {project_name}"
                         expanded_titles.append(title)
                 else:
                     # Single page of risks
                     expanded_views.append(view)
-                    expanded_titles.append(f"Risk Register - {project_name}")
+                    expanded_titles.append(f"Risk Register: {project_name}")
             except Exception as e:
                 logger.warning(f"Could not check risk count: {e}")
                 expanded_views.append(view)

@@ -268,6 +268,13 @@ class PowerPointBuilderService:
             else:
                 slide.shapes.title.text = f"Screenshot {slide_number}"
             
+            # Apply title styling: font size 28, color #7F7F7F
+            if slide.shapes.title.has_text_frame:
+                for paragraph in slide.shapes.title.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        run.font.size = Pt(28)
+                        run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+            
         # Add screenshot image
         self._add_image_to_slide(slide, screenshot)
         
