@@ -32,7 +32,7 @@
 {% set low_count = risk_data.counts.LOW + (standalone_risks|selectattr('severity_normalized', 'equalto', 'low')|list|length if standalone_risks else 0) %}
 {% set total_count = risk_data.total + (standalone_risks|length if standalone_risks else 0) %}
 
-<div id="risksContent" class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+<div id="risksSummaryCards" class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow p-6">
         <p class="text-gray-500 text-sm mb-2">Total Risks</p>
         <p class="text-4xl font-bold text-gray-800">{{ total_count }}</p>
@@ -95,7 +95,7 @@
 
 <!-- Risk Table -->
 {% if standalone_risks or risk_data.total > 0 %}
-<div class="bg-white rounded-lg shadow overflow-hidden">
+<div id="risksContent" class="bg-white rounded-lg shadow overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200" id="risksTable">
         <thead class="bg-gray-50">
             <tr>

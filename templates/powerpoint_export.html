@@ -581,8 +581,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSelectedCount(false);
     console.log('📐 Initial preview updated');
     
-    // Load available templates
-    loadAvailableTemplates();
+    // Load available templates (await to ensure options exist before restoring)
+    await loadAvailableTemplates();
     
     // Listen for template changes to reload canvas if open
     const templateSelect = document.getElementById('templateSelect');
@@ -603,10 +603,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('🎨 Template changed to:', templateSelect.value);
         });
         
-        // Restore selected template
+        // Restore selected template (now options exist from loadAvailableTemplates)
         const savedTemplate = localStorage.getItem('pptExportSelectedTemplate');
         if (savedTemplate) {
-            templateSelect.value = savedTemplate;
+            // Find the option with this value
+            const option = Array.from(templateSelect.options).find(opt => opt.value === savedTemplate);
+            if (option) {
+                templateSelect.value = savedTemplate;
+                console.log('✅ Restored template selection:', savedTemplate);
+            }
         }
         updateTemplateStatus();
     }
