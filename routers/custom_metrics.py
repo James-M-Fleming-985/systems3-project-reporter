@@ -6,10 +6,38 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime  # noqa: F401 - reserved for future use
 import logging
 import os
 
 from repositories.custom_metrics_repository import CustomMetricsRepository
+
+
+def normalize_date(date_str: str) -> str:
+    """
+    Normalize date string to YYYY-MM-DD format for comparison.
+    Handles:
+    - ISO format: 2025-09-12T00:00:00.000Z
+    - Display format: 12/09/2025 (DD/MM/YYYY)
+    - Already normalized: 2025-09-12
+    """
+    if not date_str:
+        return ""
+    
+    # Strip time portion from ISO dates
+    if 'T' in date_str:
+        date_str = date_str.split('T')[0]
+    
+    # Check if it's DD/MM/YYYY format
+    if '/' in date_str:
+        parts = date_str.split('/')
+        if len(parts) == 3:
+            # Assume DD/MM/YYYY format
+            day, month, year = parts
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+    
+    return date_str
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -162,26 +190,36 @@ async def update_annotation_positions(project_name: str, data: AnnotationPositio
                 # Update positions in series data
                 if metric.get('series'):
                     for pos in data.positions:
+                        norm_pos_date = normalize_date(pos.date)
                         if pos.seriesName in metric['series']:
                             for point in metric['series'][pos.seriesName]:
-                                # Match by date (normalize date comparison)
+                                # Match by normalized date comparison
                                 point_date = point.get('date', '')
-                                if point_date and pos.date in point_date:
+                                norm_point_date = normalize_date(point_date)
+                                if norm_point_date and norm_pos_date == norm_point_date:
                                     if point.get('annotation'):
                                         point['annotationAx'] = pos.ax
                                         point['annotationAy'] = pos.ay
-                                        logger.info(f"   ✅ Updated {pos.seriesName} @ {pos.date}: ax={pos.ax}, ay={pos.ay}")
+                                        logger.info(
+                                            f"   ✅ Updated {pos.seriesName} "
+                                            f"@ {pos.date}: ax={pos.ax}, ay={pos.ay}"
+                                        )
                 
                 # Also update in legacy history if present
                 if metric.get('history'):
                     for pos in data.positions:
+                        norm_pos_date = normalize_date(pos.date)
                         for point in metric['history']:
                             point_date = point.get('date', '')
-                            if point_date and pos.date in point_date:
+                            norm_point_date = normalize_date(point_date)
+                            if norm_point_date and norm_pos_date == norm_point_date:
                                 if point.get('annotation'):
                                     point['annotationAx'] = pos.ax
                                     point['annotationAy'] = pos.ay
-                                    logger.info(f"   ✅ Updated history @ {pos.date}: ax={pos.ax}, ay={pos.ay}")
+                                    logger.info(
+                                        f"   ✅ Updated history "
+                                        f"@ {pos.date}: ax={pos.ax}, ay={pos.ay}"
+                                    )
                 break
         
         if not metric_found:
