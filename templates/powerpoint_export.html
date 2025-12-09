@@ -311,14 +311,11 @@ function showNotification(message, type = 'success') {
 let draggedElement = null;
 
 // Update preview canvas with selected views
+// Note: localStorage saving is handled by updateSelectedCount() - do NOT duplicate here
 function updatePreviewCanvas() {
     const checkboxes = document.querySelectorAll('input[name="view"]:checked');
     const previewContainer = document.getElementById('previewSlides');
     const emptyPreview = document.getElementById('emptyPreview');
-    
-    // Save selected views to localStorage
-    const selectedViews = Array.from(checkboxes).map(cb => cb.value);
-    localStorage.setItem('pptExportSelectedViews', JSON.stringify(selectedViews));
     
     if (checkboxes.length === 0) {
         previewContainer.innerHTML = '';
