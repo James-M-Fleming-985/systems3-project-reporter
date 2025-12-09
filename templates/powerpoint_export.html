@@ -714,20 +714,33 @@ async function loadCustomMetricCheckboxes() {
         
         // Restore checked state from localStorage
         const savedViews = localStorage.getItem('pptExportSelectedViews');
+        console.log(`🔍 Checking restore for "${metric.name}": value="${checkbox.value}"`);
         if (savedViews) {
             try {
                 const viewsArray = JSON.parse(savedViews);
+                console.log(`   📋 Saved views:`, viewsArray);
                 // Check both encoded and non-encoded versions for compatibility
                 const checkValue = checkbox.value;
-                const isChecked = viewsArray.includes(checkValue) || 
-                                  viewsArray.some(v => decodeURIComponent(v) === decodeURIComponent(checkValue));
+                const decodedCheckValue = decodeURIComponent(checkValue);
+                const isChecked = viewsArray.some(v => {
+                    const match = v === checkValue || 
+                                  decodeURIComponent(v) === decodedCheckValue ||
+                                  v.includes(metric.name) ||
+                                  decodeURIComponent(v).includes(metric.name);
+                    if (match) console.log(`   ✅ Match found: "${v}"`);
+                    return match;
+                });
                 checkbox.checked = isChecked;
                 if (isChecked) {
                     console.log('✅ Restored custom metric checkbox:', metric.name);
+                } else {
+                    console.log('❌ No match for custom metric:', metric.name);
                 }
             } catch (e) {
                 console.error('Failed to restore checkbox state:', e);
             }
+        } else {
+            console.log('   ⚠️ No savedViews in localStorage');
         }
         
         const content = document.createElement('div');
