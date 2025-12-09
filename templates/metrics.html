@@ -1266,7 +1266,7 @@ function showTrendChart(index) {
     
     // Listen for annotation changes and save positions
     const chartDiv = document.getElementById('metricTrendChart');
-    chartDiv.on('plotly_relayout', function(eventData) {
+    chartDiv.on('plotly_relayout', async function(eventData) {
         // Check if annotations were updated
         if (eventData && Object.keys(eventData).some(key => key.startsWith('annotations'))) {
             console.log('Annotation positions changed:', eventData);
@@ -1274,7 +1274,7 @@ function showTrendChart(index) {
             // Get current layout
             const currentLayout = chartDiv.layout;
             if (currentLayout.annotations) {
-                // Save annotation positions
+                // Save annotation positions to localStorage (legacy support)
                 const positions = {};
                 currentLayout.annotations.forEach(ann => {
                     // Save positions keyed by the x value (date) to match them up
@@ -1288,6 +1288,41 @@ function showTrendChart(index) {
                 
                 localStorage.setItem(annotationPositionsKey, JSON.stringify(positions));
                 console.log('Saved annotation positions to localStorage:', positions);
+                
+                // Also save to server API for PowerPoint export consistency
+                const serverPositions = [];
+                annotatedPoints.forEach(point => {
+                    const savedPos = positions[point.date];
+                    if (savedPos) {
+                        serverPositions.push({
+                            seriesName: point.series || 'history',
+                            date: point.date,
+                            ax: savedPos.ax,
+                            ay: savedPos.ay
+                        });
+                    }
+                });
+                
+                if (serverPositions.length > 0) {
+                    try {
+                        const selectedProgram = localStorage.getItem('selectedProgram');
+                        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(selectedProgram)}/annotation-positions`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                metricName: metric.name,
+                                positions: serverPositions
+                            })
+                        });
+                        if (response.ok) {
+                            console.log('✅ Annotation positions saved to server');
+                        } else {
+                            console.warn('⚠️ Failed to save positions to server:', await response.text());
+                        }
+                    } catch (e) {
+                        console.error('❌ Error saving positions to server:', e);
+                    }
+                }
             }
         }
     });
