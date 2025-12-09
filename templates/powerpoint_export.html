@@ -1287,37 +1287,50 @@ function initFabricCanvas(viewUrl) {
                 // Build full URL for screenshot API
                 let fullUrl = window.location.origin + viewUrl;
                 
-                // For metric trend pages, append the specific metric's data to URL
+                // For metric trend pages, fetch latest metric data from server API
+                // This ensures annotation positions are up-to-date
                 if (viewUrl.includes('/metrics/trend/')) {
-                    const project = '{{ project_name }}';
-                    const storageKey = `customMetrics_${project}`;
-                    const metricsDataStr = localStorage.getItem(storageKey);
-                    console.log('🔍 Checking for metrics data:', storageKey);
-                    console.log('📊 Metrics data found:', metricsDataStr ? `${metricsDataStr.length} bytes` : 'NONE');
+                    const project = localStorage.getItem('selectedProgram') || '{{ project_name }}';
+                    console.log('🔍 Fetching metrics from server for project:', project);
                     
-                    if (metricsDataStr) {
-                        try {
-                            // Parse all metrics and find the specific one for this chart
-                            const allMetrics = JSON.parse(metricsDataStr);
+                    try {
+                        const response = await fetch(`/api/custom-metrics/${encodeURIComponent(project)}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const allMetrics = data.metrics || [];
+                            console.log('📊 Fetched', allMetrics.length, 'metrics from server');
+                            
                             const metricName = viewUrl.split('/metrics/trend/')[1].split('?')[0];
                             const decodedMetricName = decodeURIComponent(metricName);
                             const specificMetric = allMetrics.find(m => m.name === decodedMetricName);
                             
                             if (specificMetric) {
-                                // Pass only this metric's data
+                                // Check for annotation positions
+                                let hasPositions = false;
+                                if (specificMetric.series) {
+                                    for (const seriesData of Object.values(specificMetric.series)) {
+                                        if (seriesData.some(p => p.annotationAx !== undefined)) {
+                                            hasPositions = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                console.log('📌 Metric has saved annotation positions:', hasPositions);
+                                
+                                // Pass metric data including annotation positions
                                 const metricJson = JSON.stringify(specificMetric);
                                 const encoded = encodeURIComponent(metricJson);
                                 const separator = fullUrl.includes('?') ? '&' : '?';
                                 fullUrl += `${separator}metricData=${encoded}`;
-                                console.log('✅ Appended specific metric data to URL (' + encoded.length + ' bytes encoded)');
+                                console.log('✅ Appended metric data with positions (' + encoded.length + ' bytes)');
                             } else {
                                 console.warn('⚠️ Metric not found:', decodedMetricName);
                             }
-                        } catch (e) {
-                            console.error('❌ Failed to parse metrics data:', e);
+                        } else {
+                            console.warn('⚠️ Failed to fetch metrics from server:', response.status);
                         }
-                    } else {
-                        console.warn('⚠️ No metrics data found in localStorage for key:', storageKey);
+                    } catch (e) {
+                        console.error('❌ Failed to fetch metrics from server:', e);
                     }
                 }
                 
