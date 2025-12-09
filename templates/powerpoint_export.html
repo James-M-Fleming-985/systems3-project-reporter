@@ -1482,54 +1482,70 @@ function fitToSlide() {
     }
     
     console.log('📐 Fitting image to slide...');
+    console.log('   Canvas size:', fabricCanvas.width, 'x', fabricCanvas.height);
+    console.log('   Canvas zoom:', fabricCanvas.getZoom());
+    console.log('   Image original size:', canvasImage.width, 'x', canvasImage.height);
+    console.log('   Image current scale:', canvasImage.scaleX, canvasImage.scaleY);
     
-    // Get safe zones for current template
+    // Get safe zones for current template (in base 1920x1080 coordinates)
     const safeZone = getCurrentSafeZone();
+    console.log('   Safe zone:', safeZone);
     
-    // Calculate available content area (accounting for canvas zoom)
+    // Get the zoom level
     const zoom = fabricCanvas.getZoom();
+    
+    // Calculate available content area in screen pixels
     const contentLeft = safeZone.left * zoom;
     const contentTop = safeZone.top * zoom;
-    const contentWidth = fabricCanvas.width - (safeZone.left + safeZone.right) * zoom;
-    const contentHeight = fabricCanvas.height - (safeZone.top + safeZone.bottom) * zoom;
+    const contentWidth = (1920 - safeZone.left - safeZone.right) * zoom;
+    const contentHeight = (1080 - safeZone.top - safeZone.bottom) * zoom;
     
-    // Get the actual image dimensions (accounting for any clip/crop)
-    let imgWidth = canvasImage.width;
-    let imgHeight = canvasImage.height;
+    console.log('   Content area (screen px):', { contentLeft, contentTop, contentWidth, contentHeight });
     
-    // If image has a clipPath (from cropping), use the clip dimensions
+    // Determine the visible image dimensions
+    // If there's a clipPath, we want to scale so the CLIPPED area fills the content area
+    let visibleWidth, visibleHeight;
+    
     if (canvasImage.clipPath) {
-        imgWidth = canvasImage.clipPath.width;
-        imgHeight = canvasImage.clipPath.height;
+        // ClipPath dimensions are in image coordinate space
+        visibleWidth = canvasImage.clipPath.width;
+        visibleHeight = canvasImage.clipPath.height;
+        console.log('   Clipped dimensions (image coords):', visibleWidth, 'x', visibleHeight);
+    } else {
+        visibleWidth = canvasImage.width;
+        visibleHeight = canvasImage.height;
+        console.log('   Full image dimensions:', visibleWidth, 'x', visibleHeight);
     }
     
-    // Calculate scale to fill content area while maintaining aspect ratio
-    const scaleX = contentWidth / (imgWidth * canvasImage.scaleX);
-    const scaleY = contentHeight / (imgHeight * canvasImage.scaleY);
-    const fitScale = Math.min(scaleX, scaleY);
+    // Calculate scale needed to fit visible portion into content area
+    const scaleToFitX = contentWidth / visibleWidth;
+    const scaleToFitY = contentHeight / visibleHeight;
+    const newScale = Math.min(scaleToFitX, scaleToFitY);
     
-    // Apply the new scale
-    const newScaleX = canvasImage.scaleX * fitScale;
-    const newScaleY = canvasImage.scaleY * fitScale;
+    console.log('   Scale to fit:', { scaleToFitX, scaleToFitY, chosen: newScale });
     
     // Calculate center position within content area
     const centerX = contentLeft + contentWidth / 2;
     const centerY = contentTop + contentHeight / 2;
     
+    console.log('   Center position:', { centerX, centerY });
+    
+    // Apply the new scale and position
     canvasImage.set({
         left: centerX,
         top: centerY,
         originX: 'center',
         originY: 'center',
-        scaleX: newScaleX,
-        scaleY: newScaleY
+        scaleX: newScale,
+        scaleY: newScale
     });
     
+    fabricCanvas.setActiveObject(canvasImage);
     fabricCanvas.renderAll();
+    
     console.log('✅ Image fitted to slide content area');
-    console.log('   Safe zone:', safeZone);
-    console.log('   Content area:', { contentWidth, contentHeight, centerX, centerY });
-    console.log('   New scale:', { newScaleX, newScaleY });
+    console.log('   Final scale:', newScale);
+    console.log('   Final position:', centerX, centerY);
     
     showNotification('Image enlarged to fill slide content area');
 }
@@ -1561,21 +1577,22 @@ function quickCrop(preset) {
     document.getElementById('quickCropMenu')?.classList.add('hidden');
     
     console.log('⚡ Applying quick crop preset:', preset);
+    console.log('   Image dimensions:', canvasImage.width, 'x', canvasImage.height);
     
     // Preset crop percentages (how much to remove from each edge)
-    // Based on typical web page layouts with nav at top, sidebar at left
+    // These are tuned for typical web page layouts with nav at top
     const presets = {
-        // Chart only - removes nav, sidebar, and footer
-        chart: { top: 15, bottom: 5, left: 5, right: 5 },
+        // Chart only - removes nav header and focuses on main chart
+        chart: { top: 18, bottom: 8, left: 3, right: 3 },
         
         // Chart with legend - wider area to include side legends
-        chartWithLegend: { top: 12, bottom: 3, left: 2, right: 2 },
+        chartWithLegend: { top: 15, bottom: 5, left: 2, right: 2 },
         
         // Data area - focuses on central content
-        dataArea: { top: 10, bottom: 10, left: 10, right: 10 },
+        dataArea: { top: 12, bottom: 8, left: 8, right: 8 },
         
         // Without navigation - just removes top nav bar
-        noNav: { top: 8, bottom: 0, left: 0, right: 0 }
+        noNav: { top: 10, bottom: 0, left: 0, right: 0 }
     };
     
     const crop = presets[preset];
@@ -1584,24 +1601,34 @@ function quickCrop(preset) {
         return;
     }
     
-    // Apply crop values
+    console.log('   Crop percentages:', crop);
+    
+    // Store crop values for export
     currentTransform.cropTop = crop.top;
     currentTransform.cropBottom = crop.bottom;
     currentTransform.cropLeft = crop.left;
     currentTransform.cropRight = crop.right;
     
     // Calculate clip dimensions in image coordinates
+    // Image origin is at center, so (0,0) is the middle
     const imgWidth = canvasImage.width;
     const imgHeight = canvasImage.height;
     
-    const clipLeft = -imgWidth / 2 + (imgWidth * crop.left / 100);
-    const clipTop = -imgHeight / 2 + (imgHeight * crop.top / 100);
-    const clipWidth = imgWidth * (1 - crop.left / 100 - crop.right / 100);
-    const clipHeight = imgHeight * (1 - crop.top / 100 - crop.bottom / 100);
+    const cropLeftPx = imgWidth * crop.left / 100;
+    const cropTopPx = imgHeight * crop.top / 100;
+    const cropRightPx = imgWidth * crop.right / 100;
+    const cropBottomPx = imgHeight * crop.bottom / 100;
     
-    console.log('📏 Clip dimensions:', { clipLeft, clipTop, clipWidth, clipHeight });
+    const clipWidth = imgWidth - cropLeftPx - cropRightPx;
+    const clipHeight = imgHeight - cropTopPx - cropBottomPx;
     
-    // Apply clipPath
+    // ClipPath left/top are relative to image center
+    const clipLeft = -imgWidth / 2 + cropLeftPx;
+    const clipTop = -imgHeight / 2 + cropTopPx;
+    
+    console.log('   Clip rect (image coords):', { clipLeft, clipTop, clipWidth, clipHeight });
+    
+    // Apply clipPath to crop the image
     canvasImage.clipPath = new fabric.Rect({
         left: clipLeft,
         top: clipTop,
@@ -1611,13 +1638,13 @@ function quickCrop(preset) {
     });
     
     fabricCanvas.renderAll();
+    console.log('✅ Quick crop applied:', preset);
     
     // Auto-fit to slide after cropping
     setTimeout(() => {
         fitToSlide();
-    }, 100);
-    
-    console.log('✅ Quick crop applied:', preset);
+    }, 150);
+}
 }
 
 let cropMode = false;
