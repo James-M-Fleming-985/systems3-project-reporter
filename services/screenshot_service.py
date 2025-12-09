@@ -17,11 +17,40 @@ logger = logging.getLogger(__name__)
 class ScreenshotService:
     """Service for capturing screenshots using Playwright."""
     
+    # Mapping of URL patterns to their content element selectors
+    # This allows capturing just the chart/data area instead of the whole page
+    CONTENT_SELECTORS = {
+        '/gantt': '#ganttChart',
+        '/milestones?view=month': '#monthView',
+        '/milestones?view=week': '#weekView',
+        '/milestones': '#statusView',  # Default status view
+        '/risks': '#risksContent',
+        '/changes': '#changesContent',
+        '/metrics/trend/': '.js-plotly-plot',
+    }
+    
     def __init__(self):
         self.default_resolution = (1920, 1080)
         self.timeout = 5000  # milliseconds for Playwright
         self._browser: Optional[Browser] = None
         self._playwright = None
+    
+    def _get_content_selector(self, url: str) -> Optional[str]:
+        """Get the content element selector for a given URL.
+        
+        Matches more specific patterns first (e.g., milestones?view=month
+        before milestones).
+        """
+        # Sort by pattern length descending to match most specific first
+        sorted_patterns = sorted(
+            self.CONTENT_SELECTORS.keys(),
+            key=len,
+            reverse=True
+        )
+        for pattern in sorted_patterns:
+            if pattern in url:
+                return self.CONTENT_SELECTORS[pattern]
+        return None
         
     async def _ensure_browser(self) -> Browser:
         """Ensure browser is initialized."""
@@ -146,6 +175,22 @@ class ScreenshotService:
                     wait_for_selector, timeout=self.timeout
                 )
             
+            # Handle milestones view switching based on URL param
+            if '/milestones' in url:
+                view_param = 'status'  # default
+                if 'view=month' in url:
+                    view_param = 'month'
+                elif 'view=week' in url:
+                    view_param = 'week'
+                
+                # Call the view switching function
+                try:
+                    await page.evaluate(f"switchView('{view_param}')")
+                    await page.wait_for_timeout(300)
+                    logger.info(f"Switched milestones to {view_param} view")
+                except Exception as e:
+                    logger.debug(f"View switch not needed or failed: {e}")
+            
             # Hide navigation if requested
             if hide_navigation:
                 await self._hide_navigation_elements(page)
@@ -153,8 +198,35 @@ class ScreenshotService:
             # Additional wait for charts/dynamic content to render
             await page.wait_for_timeout(500)
             
-            # Take screenshot
-            screenshot = await page.screenshot(type='png', full_page=False)
+            # Try to capture just the content element if we have a selector
+            content_selector = self._get_content_selector(url)
+            screenshot = None
+            
+            if content_selector:
+                logger.info(f"Attempting element screenshot: {content_selector}")
+                # Try each selector in the comma-separated list
+                for selector in content_selector.split(','):
+                    selector = selector.strip()
+                    try:
+                        element = await page.query_selector(selector)
+                        if element:
+                            # Check if element is visible
+                            is_visible = await element.is_visible()
+                            if is_visible:
+                                logger.info(f"✅ Found visible element: {selector}")
+                                screenshot = await element.screenshot(type='png')
+                                break
+                    except Exception as e:
+                        logger.debug(f"Selector {selector} failed: {e}")
+                        continue
+                
+                if not screenshot:
+                    logger.warning(f"No content element found, falling back to full page")
+            
+            # Fallback to full page screenshot
+            if not screenshot:
+                screenshot = await page.screenshot(type='png', full_page=False)
+            
             return screenshot
             
         except PlaywrightTimeout:
