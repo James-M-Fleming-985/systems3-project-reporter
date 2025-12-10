@@ -862,6 +862,8 @@ async function exportReport() {
     try {
         // Get configuration
         const projectCode = document.getElementById('projectSelect').value;
+        const projectSelect = document.getElementById('projectSelect');
+        const projectName = projectSelect.options[projectSelect.selectedIndex]?.text?.split(' (')[0] || 'All Projects';
         const title = document.getElementById('presentationTitle').value;
         const viewportWidth = parseInt(document.getElementById('viewportWidth').value);
         const viewportHeight = parseInt(document.getElementById('viewportHeight').value);
@@ -912,7 +914,9 @@ async function exportReport() {
                 viewport_height: viewportHeight,
                 hide_navigation: hideNavigation,
                 include_title_slide: includeTitle,
-                slide_transforms: transforms
+                slide_transforms: transforms,
+                project_name: projectName,
+                project_code: projectCode
             })
         });
         

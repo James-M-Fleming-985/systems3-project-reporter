@@ -78,8 +78,10 @@ class ExportRequest(BaseModel):
     viewport_height: int = 1080
     hide_navigation: bool = True
     include_title_slide: bool = True
-    slide_transforms: Optional[List[SlideTransform]] = None  # Transform data per slide
-    slide_titles: Optional[List[str]] = None  # Custom titles for each slide
+    slide_transforms: Optional[List[SlideTransform]] = None
+    slide_titles: Optional[List[str]] = None
+    project_name: Optional[str] = None  # Project name for slide titles
+    project_code: Optional[str] = None  # Project code for context
 
 
 def get_slide_title_from_url(url: str, project_name: str) -> str:
@@ -277,10 +279,13 @@ async def export_to_powerpoint(
         # Get base URL
         base_url = f"{request.url.scheme}://{request.url.netloc}"
         
-        # Get project name for title generation
-        selected_project = get_selected_project(request)
-        project_name = (selected_project.project_name 
-                       if selected_project else "All Projects")
+        # Get project name - prefer from request body, fall back to context
+        if export_request.project_name:
+            project_name = export_request.project_name
+        else:
+            selected_project = get_selected_project(request)
+            project_name = (selected_project.project_name 
+                           if selected_project else "All Projects")
         
         # Expand views for multi-page content (e.g., risks with many items)
         expanded_views, generated_titles = expand_views_for_pagination(
