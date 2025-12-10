@@ -445,13 +445,12 @@ async def milestones_print_view(
 @router.get("/milestones/table/{program_name}")
 async def milestones_table_preview(program_name: str):
     """
-    Table-based milestone preview that matches PowerPoint export format.
-    
-    This shows exactly what will appear in the exported PowerPoint slide -
-    a clean table with editable Resources field.
+    Table-based milestone preview with 3-column month layout.
+    Shows Last Month / This Month / Next Month format matching PowerPoint.
     """
     from fastapi.responses import HTMLResponse
     from repositories.project_repository import ProjectRepository
+    from datetime import datetime, timedelta
     import re
     
     # Clean program name
@@ -466,7 +465,7 @@ async def milestones_table_preview(program_name: str):
     # Find matching project
     milestones = []
     for project in projects:
-        if (clean_name.lower() in project.project_name.lower() or 
+        if (clean_name.lower() in project.project_name.lower() or
                 clean_name.lower() in project.project_code.lower()):
             milestones = project.milestones or []
             break
@@ -481,7 +480,77 @@ color: #666; }}</style>
             status_code=200
         )
     
-    # Build HTML table matching PowerPoint format
+    # Calculate date ranges for last/this/next month
+    today = datetime.now()
+    this_month_start = today.replace(day=1)
+    if today.month == 12:
+        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month_start = today.replace(month=today.month + 1, day=1)
+    this_month_end = next_month_start - timedelta(days=1)
+    
+    last_month_end = this_month_start - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    
+    if next_month_start.month == 12:
+        next_next = next_month_start.replace(
+            year=next_month_start.year + 1, month=1, day=1)
+    else:
+        next_next = next_month_start.replace(month=next_month_start.month + 1, day=1)
+    next_month_end = next_next - timedelta(days=1)
+    
+    def is_in_range(date_str, start, end):
+        try:
+            d = datetime.strptime(str(date_str), '%Y-%m-%d')
+            return start <= d <= end
+        except Exception:
+            return False
+    
+    def get_ms_attr(ms, attr, default=''):
+        if hasattr(ms, attr):
+            return getattr(ms, attr, default) or default
+        return ms.get(attr, default) if isinstance(ms, dict) else default
+    
+    # Filter milestones by month
+    last_ms = [m for m in milestones 
+               if is_in_range(get_ms_attr(m, 'target_date'), 
+                              last_month_start, last_month_end)]
+    this_ms = [m for m in milestones 
+               if is_in_range(get_ms_attr(m, 'target_date'), 
+                              this_month_start, this_month_end)]
+    next_ms = [m for m in milestones 
+               if is_in_range(get_ms_attr(m, 'target_date'), 
+                              next_month_start, next_month_end)]
+    
+    def format_date_range(start, end):
+        return f"{start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
+    
+    def render_table(ms_list, empty_msg="No milestones"):
+        if not ms_list:
+            return f'<p class="empty">{empty_msg}</p>'
+        
+        rows = ''
+        for ms in ms_list[:8]:  # Max 8 per column
+            name = str(get_ms_attr(ms, 'name', 'Unnamed'))[:40]
+            target = get_ms_attr(ms, 'target_date', 'TBD')
+            status = str(get_ms_attr(ms, 'status', 'not_started'))
+            resources = get_ms_attr(ms, 'resources', 'Resource A')
+            status_cls = f"status-{status.lower().replace('_', '-')}"
+            status_disp = status.replace('_', ' ').title()
+            
+            rows += f'''<tr>
+                <td class="name">{name}</td>
+                <td class="date">{target}</td>
+                <td class="{status_cls}">{status_disp}</td>
+                <td class="resource">{resources}</td>
+            </tr>'''
+        return f'''<table>
+            <thead><tr>
+                <th>Milestone</th><th>Date</th><th>Status</th><th>Resources</th>
+            </tr></thead>
+            <tbody>{rows}</tbody>
+        </table>'''
+    
     html = f'''<!DOCTYPE html>
 <html>
 <head>
@@ -491,132 +560,107 @@ color: #666; }}</style>
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
-            padding: 30px 40px;
-            min-height: 100vh;
+            padding: 20px 30px;
         }}
         .slide-title {{
             color: #7F7F7F;
-            font-size: 28px;
-            margin-bottom: 20px;
+            font-size: 24px;
+            margin-bottom: 15px;
             font-weight: normal;
         }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
+        .columns {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
         }}
-        th {{
-            background: #1E40AF;
-            color: white;
-            padding: 12px 10px;
-            text-align: center;
+        .column {{
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        .column-header {{
+            padding: 10px 12px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
+            color: white;
         }}
-        th:first-child {{ text-align: left; }}
-        td {{
-            padding: 10px;
+        .column-header.last {{ background: #6B7280; }}
+        .column-header.this {{ background: #2563EB; }}
+        .column-header.next {{ background: #F59E0B; color: #1f2937; }}
+        .column-header small {{
+            display: block;
+            font-weight: normal;
+            font-size: 10px;
+            opacity: 0.9;
+        }}
+        .column-body {{ padding: 8px; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 11px; }}
+        th {{ 
+            background: #f3f4f6; 
+            padding: 6px 4px; 
+            text-align: left;
+            font-size: 10px;
             border-bottom: 1px solid #e5e7eb;
-            text-align: center;
-            vertical-align: middle;
         }}
-        td:first-child {{ text-align: left; }}
-        tr:nth-child(even) {{ background: #F9FAFB; }}
-        tr:hover {{ background: #f0f4ff; }}
-        .status-completed {{ color: #059669; font-weight: bold; }}
-        .status-in-progress, .status-in_progress {{ 
-            color: #2563eb; font-weight: bold; 
+        td {{ 
+            padding: 5px 4px; 
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
         }}
-        .status-not-started, .status-not_started {{ 
-            color: #6B7280; font-weight: bold; 
-        }}
-        .status-delayed, .status-at-risk {{ 
-            color: #DC2626; font-weight: bold; 
-        }}
-        .resource-cell {{
-            background: #fffef0;
+        td.name {{ font-weight: 500; }}
+        td.date {{ font-size: 10px; color: #666; }}
+        td.resource {{ 
+            background: #fffef0; 
             font-style: italic;
             color: #666;
         }}
-        .progress-bar {{
-            background: #e5e7eb;
-            border-radius: 4px;
-            height: 8px;
-            width: 80px;
-            margin: 0 auto;
-        }}
-        .progress-fill {{
-            background: #059669;
-            height: 100%;
-            border-radius: 4px;
+        .status-completed {{ color: #059669; font-weight: bold; }}
+        .status-in-progress {{ color: #2563eb; font-weight: bold; }}
+        .status-not-started {{ color: #6B7280; }}
+        .empty {{ 
+            color: #9ca3af; 
+            font-size: 12px; 
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
         }}
         .info-box {{
-            margin-top: 20px;
-            padding: 12px 16px;
+            margin-top: 12px;
+            padding: 10px 14px;
             background: #e0f2fe;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             color: #0369a1;
         }}
     </style>
 </head>
 <body>
     <h1 class="slide-title">Type: Project | {clean_name} - Milestones</h1>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 35%">Milestone</th>
-                <th style="width: 12%">Target Date</th>
-                <th style="width: 12%">Status</th>
-                <th style="width: 20%">Resources</th>
-                <th style="width: 12%">Progress</th>
-            </tr>
-        </thead>
-        <tbody>
-'''
-    
-    for ms in milestones:
-        # Handle both dict and Milestone model objects
-        if hasattr(ms, 'name'):
-            # It's a Milestone model object
-            name = getattr(ms, 'name', 'Unnamed Milestone') or 'Unnamed'
-            target = getattr(ms, 'target_date', 'TBD') or 'TBD'
-            status = getattr(ms, 'status', 'not_started') or 'not_started'
-            resources = getattr(ms, 'resources', 'Resource A') or 'Resource A'
-            progress = getattr(ms, 'completion_percentage', 0) or 0
-        else:
-            # It's a dict
-            name = ms.get('name', 'Unnamed Milestone')
-            target = ms.get('target_date', 'TBD')
-            status = ms.get('status', 'not_started')
-            resources = ms.get('resources', 'Resource A')
-            progress = ms.get('completion_percentage', 0)
-        
-        if len(str(name)) > 50:
-            name = str(name)[:50] + '...'
-        status_class = f"status-{str(status).lower().replace(' ', '-')}"
-        status_display = str(status).replace('_', ' ').title()
-        
-        html += f'''            <tr>
-                <td>{name}</td>
-                <td>{target}</td>
-                <td class="{status_class}">{status_display}</td>
-                <td class="resource-cell">{resources}</td>
-                <td>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: {progress}%"></div>
-                    </div>
-                    <span style="font-size: 11px">{progress}%</span>
-                </td>
-            </tr>
-'''
-    
-    html += '''        </tbody>
-    </table>
+    <div class="columns">
+        <div class="column">
+            <div class="column-header last">
+                📅 Last Month (Completed)
+                <small>{format_date_range(last_month_start, last_month_end)}</small>
+            </div>
+            <div class="column-body">{render_table(last_ms)}</div>
+        </div>
+        <div class="column">
+            <div class="column-header this">
+                📍 This Month (In Progress)
+                <small>{format_date_range(this_month_start, this_month_end)}</small>
+            </div>
+            <div class="column-body">{render_table(this_ms)}</div>
+        </div>
+        <div class="column">
+            <div class="column-header next">
+                📌 Next Month (Planned)
+                <small>{format_date_range(next_month_start, next_month_end)}</small>
+            </div>
+            <div class="column-body">{render_table(next_ms)}</div>
+        </div>
+    </div>
     <div class="info-box">
-        ℹ️ This preview shows the table format that will appear in PowerPoint. 
-        The <strong>Resources</strong> column (highlighted) will be fully 
-        editable in the exported slide.
+        ℹ️ <strong>Resources</strong> column (yellow) is editable in PowerPoint.
     </div>
 </body>
 </html>'''
