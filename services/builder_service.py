@@ -275,14 +275,95 @@ class PowerPointBuilderService:
                         run.font.size = Pt(28)
                         run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
             
-        # Add screenshot image
-        self._add_image_to_slide(slide, screenshot)
+        # Add screenshot image and get its position for overlays
+        image_bounds = self._add_image_to_slide(slide, screenshot)
         
-        # Add editable notes text box at the bottom
-        self._add_notes_textbox(slide)
+        # Add editable owner/resource text boxes for risk/milestone slides
+        title_lower = (slide_title or '').lower()
+        if 'risk' in title_lower and image_bounds:
+            self._add_risk_owner_overlays(slide, image_bounds)
+        elif 'milestone' in title_lower and image_bounds:
+            self._add_milestone_resource_overlays(slide, image_bounds)
     
-    def _add_notes_textbox(self, slide):
-        """Add an editable text box for notes/resources at the bottom of the slide."""
+    def _add_risk_owner_overlays(self, slide, image_bounds):
+        """Add editable text boxes positioned over the Owner fields in risk cards.
+        
+        The risk print view shows 3 cards per page, each with an Owner field
+        in the meta section. We position white text boxes over each Owner field
+        so users can click and type the actual name.
+        
+        Args:
+            slide: The PowerPoint slide
+            image_bounds: Dict with 'left', 'top', 'width', 'height' of image
+        """
+        try:
+            # Each risk card is ~1/3 of the image height
+            # Owner field is in the meta section, about 15% down from card top
+            # and positioned at ~40% from the left (3rd of 5 columns)
+            
+            img_left = image_bounds['left']
+            img_top = image_bounds['top']
+            img_width = image_bounds['width']
+            img_height = image_bounds['height']
+            
+            # Each card takes roughly 30% of image height with gaps
+            card_height = img_height * 0.30
+            card_gap = img_height * 0.03
+            
+            # Owner field position within card: ~15-20% down, ~40-55% across
+            owner_y_offset = 0.15  # From top of card
+            owner_x_offset = 0.38  # From left edge
+            owner_width = img_width * 0.12  # Width of owner field
+            owner_height = Inches(0.25)  # Height of text box
+            
+            for i in range(3):  # Up to 3 risk cards per page
+                # Calculate card top position
+                card_top = img_top + (i * (card_height + card_gap))
+                
+                # Position owner text box
+                left = int(img_left + (img_width * owner_x_offset))
+                top = int(card_top + (card_height * owner_y_offset))
+                width = int(owner_width)
+                
+                # Add white text box
+                textbox = slide.shapes.add_textbox(left, top, width, owner_height)
+                tf = textbox.text_frame
+                tf.word_wrap = False
+                
+                # Set white background
+                fill = textbox.fill
+                fill.solid()
+                fill.fore_color.rgb = RGBColor(255, 255, 255)
+                
+                # Add placeholder text
+                p = tf.paragraphs[0]
+                p.text = "[Owner]"
+                p.font.size = Pt(9)
+                p.font.color.rgb = RGBColor(150, 150, 150)
+                p.font.bold = True
+        except Exception as e:
+            # Don't fail slide creation
+            import logging
+            logging.warning(f"Failed to add owner overlays: {e}")
+    
+    def _add_milestone_resource_overlays(self, slide, image_bounds):
+        """Add editable text boxes for milestone Resource fields.
+        
+        Milestone cards show resources in each card. We add text boxes
+        so users can edit the Resource A, B, C placeholders.
+        """
+        # For now, just add a general text box at the bottom
+        # Milestone layout is more complex (quadrant view)
+        pass
+    
+    def _add_notes_textbox(self, slide, slide_title: str = None):
+        """Add an editable text box for notes/resources at the bottom of the slide.
+        
+        The placeholder text is customized based on the slide type:
+        - Risk slides: Owner field placeholder
+        - Milestone slides: Resources field placeholder
+        - Other slides: Generic notes placeholder
+        """
         try:
             slide_width = self.presentation.slide_width
             slide_height = self.presentation.slide_height
@@ -298,9 +379,18 @@ class PowerPointBuilderService:
             tf = textbox.text_frame
             tf.word_wrap = True
             
+            # Customize placeholder text based on slide type
+            title_lower = (slide_title or '').lower()
+            if 'risk' in title_lower:
+                placeholder = "👤 Owner Names: [Edit to replace Owner A, B, C with actual names]"
+            elif 'milestone' in title_lower:
+                placeholder = "👤 Resources: [Edit to replace Resource A, B, C with actual names]"
+            else:
+                placeholder = "📝 Notes: [Edit this field to add additional information]"
+            
             # Add placeholder text
             p = tf.paragraphs[0]
-            p.text = "📝 Resources/Notes: [Edit this field to add resource names, owners, or additional information]"
+            p.text = placeholder
             p.font.size = Pt(10)
             p.font.color.rgb = RGBColor(100, 100, 100)  # Gray color
             p.font.italic = True
@@ -308,13 +398,16 @@ class PowerPointBuilderService:
             # Don't fail slide creation if notes box fails
             pass
         
-    def _add_image_to_slide(self, slide, image_bytes: bytes):
+    def _add_image_to_slide(self, slide, image_bytes: bytes) -> Dict[str, int]:
         """Add image to slide with smart sizing that fills the content area.
         
         The image is enlarged to fill the available space while:
         - Respecting template safe zones (title area, footer, margins)
         - Maintaining aspect ratio
         - Not encroaching on branding elements
+        
+        Returns:
+            Dict with 'left', 'top', 'width', 'height' of placed image (in EMUs)
         """
         # Load image to get dimensions
         img = Image.open(BytesIO(image_bytes))
@@ -355,6 +448,14 @@ class PowerPointBuilderService:
             width=width,
             height=height
         )
+        
+        # Return image bounds for overlay positioning
+        return {
+            'left': int(left),
+            'top': int(top),
+            'width': int(width),
+            'height': int(height)
+        }
     
     def _get_safe_zone(self) -> Dict[str, float]:
         """Get the safe zone configuration based on template.

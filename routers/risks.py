@@ -562,7 +562,12 @@ async def normalize_risk_ids(program_name: str):
 
 
 @router.get("/print/{program_name}")
-async def risks_print_view(program_name: str, page: int = 1, per_page: int = 3):
+async def risks_print_view(
+    program_name: str, 
+    page: int = 1, 
+    per_page: int = 3,
+    blank_owner: bool = False
+):
     """
     Print-friendly risk report page for PowerPoint screenshots.
     Renders risks in card format similar to PDF export.
@@ -572,6 +577,7 @@ async def risks_print_view(program_name: str, page: int = 1, per_page: int = 3):
         program_name: The program/project name
         page: Page number (1-indexed)
         per_page: Number of risks per page (default 3)
+        blank_owner: If True, leave Owner field blank for PowerPoint text overlay
     """
     from fastapi.responses import HTMLResponse
     
@@ -704,7 +710,8 @@ async def risks_print_view(program_name: str, page: int = 1, per_page: int = 3):
         title = risk.get('title', 'Untitled Risk')
         severity = risk.get('severity_normalized', 'medium').upper()
         status = risk.get('status', 'N/A')
-        owner = risk.get('owner', 'N/A')
+        # Leave owner blank if blank_owner=True for PowerPoint overlay
+        owner = '' if blank_owner else risk.get('owner', 'N/A')
         likelihood = risk.get('likelihood', 'N/A')
         impact = risk.get('impact', 'N/A')
         description = risk.get('description', 'No description provided.')

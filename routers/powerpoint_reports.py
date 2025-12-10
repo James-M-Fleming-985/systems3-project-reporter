@@ -170,8 +170,9 @@ def expand_views_for_pagination(
                     )
                     
                     for page in range(1, total_pages + 1):
-                        # Add page parameter to URL
-                        page_url = f"{view}?page={page}&per_page={risks_per_page}"
+                        # Add page parameter and blank_owner for editable overlays
+                        page_url = (f"{view}?page={page}&per_page={risks_per_page}"
+                                    f"&blank_owner=true")
                         expanded_views.append(page_url)
                         
                         # Generate title with page number
@@ -181,8 +182,11 @@ def expand_views_for_pagination(
                             title = f"Risk Register: {project_name}"
                         expanded_titles.append(title)
                 else:
-                    # Single page of risks
-                    expanded_views.append(view)
+                    # Single page of risks - add blank_owner param
+                    if '?' in view:
+                        expanded_views.append(f"{view}&blank_owner=true")
+                    else:
+                        expanded_views.append(f"{view}?blank_owner=true")
                     expanded_titles.append(f"Risk Register: {project_name}")
             except Exception as e:
                 logger.warning(f"Could not check risk count: {e}")
