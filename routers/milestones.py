@@ -440,3 +440,174 @@ async def milestones_print_view(
 </html>'''
     
     return HTMLResponse(content=html)
+
+
+@router.get("/milestones/table/{program_name}")
+async def milestones_table_preview(program_name: str):
+    """
+    Table-based milestone preview that matches PowerPoint export format.
+    
+    This shows exactly what will appear in the exported PowerPoint slide -
+    a clean table with editable Resources field.
+    """
+    from fastapi.responses import HTMLResponse
+    from repositories.project_repository import ProjectRepository
+    import re
+    
+    # Clean program name
+    clean_name = program_name.replace('.xml', '').replace(
+        '.xlsx', '').replace('.yaml', '').strip()
+    clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+    
+    # Load milestones from project repository
+    repo = ProjectRepository(DATA_DIR)
+    projects = repo.load_all_projects()
+    
+    # Find matching project
+    milestones = []
+    for project in projects:
+        if (clean_name.lower() in project.project_name.lower() or 
+                clean_name.lower() in project.project_code.lower()):
+            milestones = project.milestones or []
+            break
+    
+    if not milestones:
+        return HTMLResponse(
+            content=f'''<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body {{ font-family: Arial; padding: 40px; text-align: center; 
+color: #666; }}</style>
+</head><body><h2>No milestones found for: {clean_name}</h2></body></html>''',
+            status_code=200
+        )
+    
+    # Build HTML table matching PowerPoint format
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
+            font-family: Arial, sans-serif; 
+            background: white; 
+            padding: 30px 40px;
+            min-height: 100vh;
+        }}
+        .slide-title {{
+            color: #7F7F7F;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }}
+        th {{
+            background: #1E40AF;
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+        }}
+        th:first-child {{ text-align: left; }}
+        td {{
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+            vertical-align: middle;
+        }}
+        td:first-child {{ text-align: left; }}
+        tr:nth-child(even) {{ background: #F9FAFB; }}
+        tr:hover {{ background: #f0f4ff; }}
+        .status-completed {{ color: #059669; font-weight: bold; }}
+        .status-in-progress, .status-in_progress {{ 
+            color: #2563eb; font-weight: bold; 
+        }}
+        .status-not-started, .status-not_started {{ 
+            color: #6B7280; font-weight: bold; 
+        }}
+        .status-delayed, .status-at-risk {{ 
+            color: #DC2626; font-weight: bold; 
+        }}
+        .resource-cell {{
+            background: #fffef0;
+            font-style: italic;
+            color: #666;
+        }}
+        .progress-bar {{
+            background: #e5e7eb;
+            border-radius: 4px;
+            height: 8px;
+            width: 80px;
+            margin: 0 auto;
+        }}
+        .progress-fill {{
+            background: #059669;
+            height: 100%;
+            border-radius: 4px;
+        }}
+        .info-box {{
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: #e0f2fe;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #0369a1;
+        }}
+    </style>
+</head>
+<body>
+    <h1 class="slide-title">Type: Project | {clean_name} - Milestones</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 35%">Milestone</th>
+                <th style="width: 12%">Target Date</th>
+                <th style="width: 12%">Status</th>
+                <th style="width: 20%">Resources</th>
+                <th style="width: 12%">Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+'''
+    
+    for ms in milestones:
+        name = ms.get('name', 'Unnamed Milestone')
+        if len(name) > 50:
+            name = name[:50] + '...'
+        target = ms.get('target_date', 'TBD')
+        status = ms.get('status', 'not_started')
+        status_class = f"status-{status.lower().replace(' ', '-')}"
+        status_display = status.replace('_', ' ').title()
+        resources = ms.get('resources', 'Resource A')
+        progress = ms.get('completion_percentage', 0)
+        
+        html += f'''            <tr>
+                <td>{name}</td>
+                <td>{target}</td>
+                <td class="{status_class}">{status_display}</td>
+                <td class="resource-cell">{resources}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {progress}%"></div>
+                    </div>
+                    <span style="font-size: 11px">{progress}%</span>
+                </td>
+            </tr>
+'''
+    
+    html += '''        </tbody>
+    </table>
+    <div class="info-box">
+        ℹ️ This preview shows the table format that will appear in PowerPoint. 
+        The <strong>Resources</strong> column (highlighted) will be fully 
+        editable in the exported slide.
+    </div>
+</body>
+</html>'''
+    
+    return HTMLResponse(content=html, status_code=200)

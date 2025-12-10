@@ -985,6 +985,20 @@ function openCanvasEditor(slideData) {
     let viewUrl = slideData.viewPath;
     console.log('🔗 Original view path:', viewUrl);
     
+    // For risks and milestones, use table preview URL to show actual export format
+    if (viewUrl.includes('/risks/print/') || viewUrl.includes('/risks?')) {
+        // Extract project name from URL and use table view
+        const projectMatch = viewUrl.match(/\/risks\/print\/([^?]+)/) || 
+                            viewUrl.match(/project=([^&]+)/);
+        const proj = projectMatch ? projectMatch[1] : projectCode;
+        viewUrl = `/risks/table/${proj}`;
+        console.log('📊 Switched to table preview for risks:', viewUrl);
+    } else if (viewUrl.includes('/milestones') || viewUrl.includes('milestones')) {
+        // Use table view for milestones
+        viewUrl = `/milestones/table/${projectCode}`;
+        console.log('📊 Switched to table preview for milestones:', viewUrl);
+    }
+    
     if (projectCode && !viewUrl.includes('project=')) {
         viewUrl += (viewUrl.includes('?') ? '&' : '?') + 'project=' + projectCode;
     }

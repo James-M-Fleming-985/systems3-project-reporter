@@ -970,3 +970,159 @@ async def export_risks_pdf(program_name: str):
             status_code=500, 
             detail=f"Error generating PDF: {str(e)}"
         )
+
+
+@router.get("/table/{program_name}")
+async def risks_table_preview(
+    program_name: str, 
+    page: int = 1, 
+    per_page: int = 10
+):
+    """
+    Table-based risk preview that matches PowerPoint export format.
+    
+    This shows exactly what will appear in the exported PowerPoint slide -
+    a clean table with editable Owner fields.
+    
+    Args:
+        program_name: The program/project name
+        page: Page number (1-indexed)
+        per_page: Number of risks per page (default 10)
+    """
+    from fastapi.responses import HTMLResponse
+    
+    # Clean program name
+    clean_name = clean_program_name(program_name)
+    
+    # Get risks
+    risks = risk_repo.load_risks(clean_name)
+    
+    if not risks:
+        return HTMLResponse(
+            content=f'''<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body {{ font-family: Arial; padding: 40px; text-align: center; color: #666; }}</style>
+</head><body><h2>No risks found for: {clean_name}</h2></body></html>''',
+            status_code=200
+        )
+    
+    # Calculate pagination
+    total_risks = len(risks)
+    total_pages = (total_risks + per_page - 1) // per_page
+    page = max(1, min(page, total_pages))
+    
+    start_idx = (page - 1) * per_page
+    end_idx = min(start_idx + per_page, total_risks)
+    page_risks = risks[start_idx:end_idx]
+    
+    # Page indicator
+    page_indicator = f" (Page {page}/{total_pages})" if total_pages > 1 else ""
+    
+    # Build HTML table matching PowerPoint format
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
+            font-family: Arial, sans-serif; 
+            background: white; 
+            padding: 30px 40px;
+            min-height: 100vh;
+        }}
+        .slide-title {{
+            color: #7F7F7F;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }}
+        th {{
+            background: #1E40AF;
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+        }}
+        th:nth-child(2) {{ text-align: left; }}
+        td {{
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+            vertical-align: middle;
+        }}
+        td:nth-child(2) {{ text-align: left; }}
+        tr:nth-child(even) {{ background: #F9FAFB; }}
+        tr:hover {{ background: #f0f4ff; }}
+        .severity-critical {{ color: #7C3AED; font-weight: bold; }}
+        .severity-high {{ color: #DC2626; font-weight: bold; }}
+        .severity-medium {{ color: #F59E0B; font-weight: bold; }}
+        .severity-low {{ color: #6B7280; font-weight: bold; }}
+        .owner-cell {{
+            background: #fffef0;
+            font-style: italic;
+            color: #666;
+        }}
+        .info-box {{
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: #e0f2fe;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #0369a1;
+        }}
+    </style>
+</head>
+<body>
+    <h1 class="slide-title">Type: Project | {clean_name} - Risk Register{page_indicator}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 6%">ID</th>
+                <th style="width: 40%">Title</th>
+                <th style="width: 10%">Severity</th>
+                <th style="width: 10%">Status</th>
+                <th style="width: 18%">Owner</th>
+                <th style="width: 8%">L/I</th>
+            </tr>
+        </thead>
+        <tbody>
+'''
+    
+    for risk in page_risks:
+        risk_id = risk.get('id', 'N/A')
+        risk_title = risk.get('title', 'Untitled')
+        if len(risk_title) > 60:
+            risk_title = risk_title[:60] + '...'
+        severity = risk.get('severity_normalized', 'medium').lower()
+        status = risk.get('status', 'N/A')
+        owner = risk.get('owner', 'Owner A')
+        likelihood = risk.get('likelihood', '?')
+        impact = risk.get('impact', '?')
+        
+        html += f'''            <tr>
+                <td>{risk_id}</td>
+                <td>{risk_title}</td>
+                <td class="severity-{severity}">{severity.upper()}</td>
+                <td>{status}</td>
+                <td class="owner-cell">{owner}</td>
+                <td>L:{likelihood} I:{impact}</td>
+            </tr>
+'''
+    
+    html += '''        </tbody>
+    </table>
+    <div class="info-box">
+        ℹ️ This preview shows the table format that will appear in PowerPoint. 
+        The <strong>Owner</strong> column (highlighted) will be fully editable in the exported slide.
+    </div>
+</body>
+</html>'''
+    
+    return HTMLResponse(content=html, status_code=200)
