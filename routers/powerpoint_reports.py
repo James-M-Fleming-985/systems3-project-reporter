@@ -318,7 +318,7 @@ async def export_to_powerpoint(
         
         # Build full URLs for screenshot capture
         full_urls = [f"{base_url}{view}" for view in expanded_views]
-        logger.info(f"Capturing screenshots for: {full_urls}")
+        logger.info(f"Processing views: {full_urls}")
         
         # Extract project code from first URL to set as header for all screenshots
         from urllib.parse import urlparse, parse_qs
@@ -330,13 +330,12 @@ async def export_to_powerpoint(
                 if 'project' in query_params:
                     project_code = query_params['project'][0]
                     extra_headers['X-Project-Code'] = project_code
-                    logger.info(f"📌 Using project code for all screenshots: {project_code}")
+                    logger.info(f"📌 Using project code: {project_code}")
         
         # Get auth cookie from request to pass to screenshot service
         auth_cookies = []
         auth_token = request.cookies.get("systems3_auth")
         if auth_token:
-            # Parse the domain from the base URL
             parsed_base = urlparse(base_url)
             auth_cookies.append({
                 "name": "systems3_auth",
@@ -347,60 +346,129 @@ async def export_to_powerpoint(
                 "secure": parsed_base.scheme == "https",
                 "sameSite": "Lax"
             })
-            logger.info(f"📌 Passing auth cookie for authenticated screenshots")
         
-        # Capture screenshots using AI-generated service
-        screenshots = []
-        for url in full_urls:
-            try:
-                screenshot_bytes = await screenshot_service.capture_screenshot_async(
-                    url=url,
-                    hide_navigation=export_request.hide_navigation,
-                    resolution=(export_request.viewport_width, export_request.viewport_height),
-                    extra_headers=extra_headers if extra_headers else None,
-                    cookies=auth_cookies if auth_cookies else None
-                )
-                screenshots.append(screenshot_bytes)
-                logger.info(f"✅ Captured screenshot: {url}")
-            except Exception as e:
-                logger.error(f"❌ Failed to capture {url}: {e}")
-                # Create placeholder for failed screenshot
-                screenshots.append(screenshot_service._create_placeholder_image(
-                    (export_request.viewport_width, export_request.viewport_height)
-                ))
+        # Clean project name for data loading
+        import re
+        clean_name = project_name.replace(
+            '.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+        clean_name = re.sub(r'-\d+$', '', clean_name).strip()
         
-        logger.info(f"Captured {len(screenshots)} screenshots")
+        # Build slides data - use native tables for risks/milestones
+        slides_data = []
         
-        # Prepare report data (project_name already set above)
+        for idx, (view, title) in enumerate(zip(expanded_views, generated_titles)):
+            if '/risks' in view and '/print' not in view:
+                # Load risk data and create native table slide
+                logger.info(f"📊 Creating native table for risks")
+                risks = risk_repo.load_risks(clean_name) or []
+                
+                # Handle pagination for risks
+                page = 1
+                per_page = 3
+                if '?page=' in view:
+                    try:
+                        page = int(view.split('page=')[1].split('&')[0])
+                    except:
+                        pass
+                
+                total_risks = len(risks)
+                total_pages = (total_risks + per_page - 1) // per_page
+                start_idx = (page - 1) * per_page
+                end_idx = min(start_idx + per_page, total_risks)
+                page_risks = risks[start_idx:end_idx]
+                
+                slides_data.append({
+                    'type': 'risks',
+                    'data': page_risks,
+                    'title': f"Risk Register: {project_name}",
+                    'page_num': page,
+                    'total_pages': total_pages
+                })
+                
+            elif '/milestones' in view and '/print' not in view:
+                # Load milestone data and create native table slide
+                logger.info(f"📊 Creating native table for milestones")
+                from repositories.project_repository import ProjectRepository
+                repo = ProjectRepository(BASE_DIR / "mock_data")
+                projects = repo.load_all_projects()
+                
+                milestones = []
+                for proj in projects:
+                    if (clean_name.lower() in proj.project_name.lower() or 
+                            clean_name.lower() in proj.project_code.lower()):
+                        milestones = proj.milestones or []
+                        break
+                
+                # Convert to dicts if needed
+                ms_list = []
+                for m in milestones:
+                    if hasattr(m, '__dict__'):
+                        ms_list.append({
+                            'name': m.name,
+                            'target_date': m.target_date,
+                            'status': m.status,
+                            'resources': m.resources,
+                            'completion_percentage': m.completion_percentage
+                        })
+                    else:
+                        ms_list.append(m)
+                
+                slides_data.append({
+                    'type': 'milestones',
+                    'data': ms_list[:12],  # Max 12 per slide
+                    'title': f"Milestones: {project_name}"
+                })
+                
+            else:
+                # Other views: capture screenshot
+                url = f"{base_url}{view}"
+                try:
+                    screenshot = await screenshot_service.capture_screenshot_async(
+                        url=url,
+                        hide_navigation=export_request.hide_navigation,
+                        resolution=(
+                            export_request.viewport_width, 
+                            export_request.viewport_height
+                        ),
+                        extra_headers=extra_headers if extra_headers else None,
+                        cookies=auth_cookies if auth_cookies else None
+                    )
+                    slides_data.append({
+                        'type': 'screenshot',
+                        'data': screenshot,
+                        'title': title
+                    })
+                    logger.info(f"✅ Captured screenshot: {url}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to capture {url}: {e}")
+                    slides_data.append({
+                        'type': 'screenshot',
+                        'data': screenshot_service._create_placeholder_image(
+                            (export_request.viewport_width, 
+                             export_request.viewport_height)
+                        ),
+                        'title': title
+                    })
+        
+        logger.info(f"Prepared {len(slides_data)} slides")
+        
+        # Prepare report data
         report_data = {
             "title": export_request.title,
             "project_name": project_name,
             "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "slide_count": len(screenshots) + (
+            "include_title_slide": export_request.include_title_slide,
+            "slide_count": len(slides_data) + (
                 1 if export_request.include_title_slide else 0
             )
         }
         
-        # Use generated titles from pagination expansion, or fall back to request
-        slide_titles = export_request.slide_titles
-        if not slide_titles:
-            slide_titles = generated_titles
-            logger.info(f"📝 Generated slide titles: {slide_titles}")
-        
-        # Convert slide transforms to dict format for service
-        slide_transforms = None
-        if export_request.slide_transforms:
-            slide_transforms = [t.model_dump() for t in export_request.slide_transforms]
-            logger.info(f"📐 Applying {len(slide_transforms)} slide transforms")
-        
-        # Generate PowerPoint using AI-generated service
-        logger.info("Building PowerPoint presentation...")
-        pptx_bytes = ppt_builder.generate_presentation(
+        # Generate PowerPoint using hybrid method
+        logger.info("Building PowerPoint presentation with native tables...")
+        pptx_bytes = ppt_builder.generate_hybrid_presentation(
             report_data=report_data,
-            screenshots=screenshots,
-            template_path=str(template_path) if template_path else None,
-            slide_transforms=slide_transforms,
-            slide_titles=slide_titles
+            slides_data=slides_data,
+            template_path=str(template_path) if template_path else None
         )
         
         logger.info("✅ PowerPoint generation complete")

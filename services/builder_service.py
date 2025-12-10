@@ -110,6 +110,82 @@ class PowerPointBuilderService:
         # Save to bytes
         return self._save_to_bytes()
     
+    def generate_hybrid_presentation(
+        self,
+        report_data: Dict[str, Any],
+        slides_data: List[Dict[str, Any]],
+        template_path: Optional[str] = None,
+    ) -> bytes:
+        """
+        Generate a PowerPoint with mix of screenshots and native tables.
+        
+        Args:
+            report_data: Dictionary containing report metadata
+            slides_data: List of slide configs, each with:
+                - type: 'screenshot', 'risks', or 'milestones'
+                - data: screenshot bytes OR list of risk/milestone dicts
+                - title: Slide title
+                - page_num/total_pages: For multi-page content
+            template_path: Optional path to company template
+            
+        Returns:
+            Generated PPTX file as bytes
+        """
+        self.start_time = time.time()
+        
+        # Load template
+        self._load_template(template_path)
+        
+        # Prepare template
+        if template_path and self.presentation:
+            self._prepare_template_for_content(
+                report_data.get('include_title_slide', True))
+        
+        # Create title slide
+        if report_data.get('include_title_slide', True):
+            self._create_title_slide(report_data)
+        
+        # Create content slides based on type
+        for slide_config in slides_data:
+            slide_type = slide_config.get('type', 'screenshot')
+            title = slide_config.get('title', 'Slide')
+            
+            if slide_type == 'risks':
+                # Native table for risks
+                risks = slide_config.get('data', [])
+                page_num = slide_config.get('page_num', 1)
+                total_pages = slide_config.get('total_pages', 1)
+                self.create_risk_table_slide(
+                    risks=risks,
+                    title=title,
+                    page_num=page_num,
+                    total_pages=total_pages
+                )
+            elif slide_type == 'milestones':
+                # Native table for milestones
+                milestones = slide_config.get('data', [])
+                self.create_milestone_table_slide(
+                    milestones=milestones,
+                    title=title
+                )
+            else:
+                # Default: screenshot-based slide
+                screenshot = slide_config.get('data')
+                if screenshot:
+                    self._create_content_slide(
+                        screenshot,
+                        slide_number=1,
+                        skip_title=False,
+                        slide_title=title
+                    )
+        
+        # Check generation time
+        elapsed = time.time() - self.start_time
+        if elapsed >= self.MAX_GENERATION_TIME * 2:  # Allow more time for tables
+            raise ValueError("File generation exceeded time limit")
+            
+        return self._save_to_bytes()
+
     def _prepare_template_for_content(self, keep_title_slide: bool = True):
         """Remove existing content slides from template, keeping only the structure.
         
@@ -532,6 +608,248 @@ class PowerPointBuilderService:
         self.presentation.save(output)
         output.seek(0)
         return output.read()
+    
+    def create_risk_table_slide(
+        self, 
+        risks: List[Dict[str, Any]], 
+        title: str = "Risk Register",
+        page_num: int = 1,
+        total_pages: int = 1
+    ):
+        """Create a slide with risks rendered as a native PowerPoint table.
+        
+        This makes all text editable including Owner fields.
+        
+        Args:
+            risks: List of risk dictionaries with id, title, severity, 
+                   status, owner, likelihood, impact
+            title: Slide title
+            page_num: Current page number for multi-page risks
+            total_pages: Total number of risk pages
+        """
+        from pptx.enum.table import WD_TABLE_ALIGNMENT
+        from pptx.enum.text import MSO_ANCHOR
+        
+        # Add slide
+        layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
+        slide_layout = self.presentation.slide_layouts[layout_idx]
+        slide = self.presentation.slides.add_slide(slide_layout)
+        
+        # Set title
+        if slide.shapes.title:
+            page_indicator = f" ({page_num}/{total_pages})" if total_pages > 1 else ""
+            slide.shapes.title.text = f"{title}{page_indicator}"
+            if slide.shapes.title.has_text_frame:
+                for para in slide.shapes.title.text_frame.paragraphs:
+                    for run in para.runs:
+                        run.font.size = Pt(28)
+                        run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+        
+        # Table dimensions
+        left = Inches(0.5)
+        top = Inches(1.3)
+        width = Inches(12.5)
+        
+        # Calculate row height based on number of risks
+        num_risks = len(risks)
+        available_height = 5.5  # inches for content
+        row_height = min(0.8, available_height / (num_risks + 1))
+        
+        # Create table: header + data rows
+        cols = 6  # ID, Title, Severity, Status, Owner, L/I
+        rows = num_risks + 1  # +1 for header
+        
+        table = slide.shapes.add_table(
+            rows, cols, left, top, width, Inches(row_height * rows)
+        ).table
+        
+        # Set column widths
+        col_widths = [0.8, 4.5, 1.2, 1.2, 2.0, 0.8]  # inches
+        for i, w in enumerate(col_widths):
+            table.columns[i].width = Inches(w)
+        
+        # Header row styling
+        headers = ["ID", "Title", "Severity", "Status", "Owner", "L/I"]
+        header_color = RGBColor(0x1E, 0x40, 0xAF)  # Blue
+        
+        for i, header in enumerate(headers):
+            cell = table.cell(0, i)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = header_color
+            para = cell.text_frame.paragraphs[0]
+            para.font.bold = True
+            para.font.size = Pt(11)
+            para.font.color.rgb = RGBColor(255, 255, 255)
+            para.alignment = PP_ALIGN.CENTER
+            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+        
+        # Severity color mapping
+        severity_colors = {
+            'critical': RGBColor(0x7C, 0x3A, 0xED),  # Purple
+            'high': RGBColor(0xDC, 0x26, 0x26),      # Red
+            'medium': RGBColor(0xF5, 0x9E, 0x0B),    # Yellow/Orange
+            'low': RGBColor(0x6B, 0x72, 0x80),       # Gray
+        }
+        
+        # Data rows
+        for row_idx, risk in enumerate(risks, start=1):
+            risk_id = risk.get('id', 'N/A')
+            risk_title = risk.get('title', 'Untitled')
+            severity = risk.get('severity_normalized', 'medium').lower()
+            status = risk.get('status', 'N/A')
+            owner = risk.get('owner', '')
+            likelihood = risk.get('likelihood', '?')
+            impact = risk.get('impact', '?')
+            
+            row_data = [
+                risk_id,
+                risk_title[:60] + '...' if len(risk_title) > 60 else risk_title,
+                severity.upper(),
+                status,
+                owner,
+                f"L:{likelihood} I:{impact}"
+            ]
+            
+            for col_idx, value in enumerate(row_data):
+                cell = table.cell(row_idx, col_idx)
+                cell.text = str(value)
+                para = cell.text_frame.paragraphs[0]
+                para.font.size = Pt(10)
+                para.alignment = PP_ALIGN.LEFT if col_idx == 1 else PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                
+                # Color-code severity column
+                if col_idx == 2:  # Severity column
+                    sev_color = severity_colors.get(severity, severity_colors['medium'])
+                    para.font.color.rgb = sev_color
+                    para.font.bold = True
+                
+                # Alternate row colors
+                if row_idx % 2 == 0:
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+    
+    def create_milestone_table_slide(
+        self,
+        milestones: List[Dict[str, Any]],
+        title: str = "Milestones",
+        column_title: str = "This Month"
+    ):
+        """Create a slide with milestones rendered as a native PowerPoint table.
+        
+        This makes all text editable including Resource fields.
+        
+        Args:
+            milestones: List of milestone dictionaries with name, target_date,
+                       status, resources, completion_percentage
+            title: Slide title
+            column_title: Column header for the milestones
+        """
+        from pptx.enum.text import MSO_ANCHOR
+        
+        # Add slide
+        layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
+        slide_layout = self.presentation.slide_layouts[layout_idx]
+        slide = self.presentation.slides.add_slide(slide_layout)
+        
+        # Set title
+        if slide.shapes.title:
+            slide.shapes.title.text = title
+            if slide.shapes.title.has_text_frame:
+                for para in slide.shapes.title.text_frame.paragraphs:
+                    for run in para.runs:
+                        run.font.size = Pt(28)
+                        run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+        
+        # Table dimensions
+        left = Inches(0.5)
+        top = Inches(1.3)
+        width = Inches(12.5)
+        
+        # Columns: Name, Target Date, Status, Resources, Progress
+        cols = 5
+        num_ms = min(len(milestones), 12)  # Max 12 per slide
+        rows = num_ms + 1  # +1 for header
+        
+        row_height = min(0.5, 5.5 / rows)
+        
+        table = slide.shapes.add_table(
+            rows, cols, left, top, width, Inches(row_height * rows)
+        ).table
+        
+        # Column widths
+        col_widths = [4.5, 1.5, 1.5, 3.0, 2.0]
+        for i, w in enumerate(col_widths):
+            table.columns[i].width = Inches(w)
+        
+        # Header
+        headers = ["Milestone", "Target Date", "Status", "Resources", "Progress"]
+        header_color = RGBColor(0x1E, 0x40, 0xAF)
+        
+        for i, header in enumerate(headers):
+            cell = table.cell(0, i)
+            cell.text = header
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = header_color
+            para = cell.text_frame.paragraphs[0]
+            para.font.bold = True
+            para.font.size = Pt(11)
+            para.font.color.rgb = RGBColor(255, 255, 255)
+            para.alignment = PP_ALIGN.CENTER
+            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+        
+        # Status colors
+        status_colors = {
+            'COMPLETED': RGBColor(0x22, 0xC5, 0x5E),
+            'IN_PROGRESS': RGBColor(0x3B, 0x82, 0xF6),
+            'NOT_STARTED': RGBColor(0x6B, 0x72, 0x80),
+        }
+        
+        # Data rows
+        for row_idx, ms in enumerate(milestones[:12], start=1):
+            name = ms.get('name', 'Untitled')
+            if hasattr(ms, 'name'):
+                name = ms.name
+            target = ms.get('target_date', '')
+            if hasattr(ms, 'target_date'):
+                target = ms.target_date
+            status = ms.get('status', 'NOT_STARTED')
+            if hasattr(ms, 'status'):
+                status = ms.status
+            resources = ms.get('resources', '')
+            if hasattr(ms, 'resources'):
+                resources = ms.resources or ''
+            completion = ms.get('completion_percentage', 0)
+            if hasattr(ms, 'completion_percentage'):
+                completion = ms.completion_percentage or 0
+            
+            row_data = [
+                name[:50] + '...' if len(str(name)) > 50 else name,
+                target,
+                status.replace('_', ' '),
+                resources,
+                f"{completion}%"
+            ]
+            
+            for col_idx, value in enumerate(row_data):
+                cell = table.cell(row_idx, col_idx)
+                cell.text = str(value)
+                para = cell.text_frame.paragraphs[0]
+                para.font.size = Pt(10)
+                para.alignment = PP_ALIGN.LEFT if col_idx in [0, 3] else PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                
+                # Color status
+                if col_idx == 2:
+                    color = status_colors.get(status, status_colors['NOT_STARTED'])
+                    para.font.color.rgb = color
+                    para.font.bold = True
+                
+                # Alternate rows
+                if row_idx % 2 == 0:
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
         
     def get_slide_count(self) -> int:
         """Get the number of slides in the presentation."""
