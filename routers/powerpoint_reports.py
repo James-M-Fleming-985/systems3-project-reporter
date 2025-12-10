@@ -101,6 +101,8 @@ def get_slide_title_from_url(url: str, project_name: str) -> str:
     # Map URL patterns to descriptive names (format: "Type: Project Name")
     if '/gantt' in path:
         return f"Gantt Chart: {project_name}"
+    elif '/milestones/print/' in path:
+        return f"Milestones: {project_name}"
     elif '/milestones' in path:
         if 'view=month' in url:
             return f"Milestones (Month View): {project_name}"
@@ -192,8 +194,20 @@ def expand_views_for_pagination(
                 logger.warning(f"Could not check risk count: {e}")
                 expanded_views.append(view)
                 expanded_titles.append(f"Risk Register - {project_name}")
+        elif '/milestones' in view:
+            # Convert milestones to print-friendly URL with blank resources
+            # Use the print endpoint for month view with blank_resources
+            import re
+            clean_name = project_name.replace(
+                '.xml', '').replace('.xlsx', '').replace('.yaml', ''
+            ).strip()
+            clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+            
+            print_url = f"/milestones/print/{clean_name}?blank_resources=true"
+            expanded_views.append(print_url)
+            expanded_titles.append(f"Milestones: {project_name}")
         else:
-            # Non-risk view - add as-is with generated title
+            # Non-risk/milestone view - add as-is with generated title
             expanded_views.append(view)
             expanded_titles.append(get_slide_title_from_url(view, project_name))
     

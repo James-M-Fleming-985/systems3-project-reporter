@@ -349,12 +349,71 @@ class PowerPointBuilderService:
     def _add_milestone_resource_overlays(self, slide, image_bounds):
         """Add editable text boxes for milestone Resource fields.
         
-        Milestone cards show resources in each card. We add text boxes
-        so users can edit the Resource A, B, C placeholders.
+        The milestone print view shows 3 columns (last/this/next month),
+        each with up to 8 milestone cards. Each card has a Resources field.
+        We position white text boxes over each card's resources area.
+        
+        Args:
+            slide: The PowerPoint slide
+            image_bounds: Dict with 'left', 'top', 'width', 'height' of image
         """
-        # For now, just add a general text box at the bottom
-        # Milestone layout is more complex (quadrant view)
-        pass
+        try:
+            img_left = image_bounds['left']
+            img_top = image_bounds['top']
+            img_width = image_bounds['width']
+            img_height = image_bounds['height']
+            
+            # 3 columns, each ~33% of width with gaps
+            column_width = img_width * 0.30
+            column_gap = img_width * 0.035
+            
+            # Header takes ~12% of height, cards start below
+            header_height = img_height * 0.12
+            cards_area_height = img_height - header_height
+            
+            # Each card is ~11% of image height (8 cards per column)
+            card_height = cards_area_height * 0.11
+            card_gap = cards_area_height * 0.012
+            
+            # Resources field position within card: ~55% down the card
+            resources_y_offset = 0.55
+            resources_height = Inches(0.18)
+            
+            # Add text boxes for each column (3 columns x 8 cards = 24 max)
+            for col in range(3):
+                # Column x position
+                col_x = img_left + (col * (column_width + column_gap)) + column_gap
+                
+                for row in range(8):  # Up to 8 cards per column
+                    # Card y position
+                    card_y = (img_top + header_height + 
+                              (row * (card_height + card_gap)))
+                    
+                    # Resources text box position
+                    left = int(col_x + (column_width * 0.05))
+                    top = int(card_y + (card_height * resources_y_offset))
+                    width = int(column_width * 0.90)
+                    
+                    # Add white text box
+                    textbox = slide.shapes.add_textbox(
+                        left, top, width, resources_height)
+                    tf = textbox.text_frame
+                    tf.word_wrap = False
+                    
+                    # Set white background
+                    fill = textbox.fill
+                    fill.solid()
+                    fill.fore_color.rgb = RGBColor(255, 255, 255)
+                    
+                    # Add placeholder text
+                    p = tf.paragraphs[0]
+                    p.text = "[Resource]"
+                    p.font.size = Pt(8)
+                    p.font.color.rgb = RGBColor(150, 150, 150)
+        except Exception as e:
+            # Don't fail slide creation
+            import logging
+            logging.warning(f"Failed to add milestone overlays: {e}")
     
     def _add_notes_textbox(self, slide, slide_title: str = None):
         """Add an editable text box for notes/resources at the bottom of the slide.

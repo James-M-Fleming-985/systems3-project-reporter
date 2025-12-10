@@ -21,6 +21,7 @@ class ScreenshotService:
     # This allows capturing just the chart/data area instead of the whole page
     CONTENT_SELECTORS = {
         '/gantt': '#ganttChart',
+        '/milestones/print/': 'body',  # Print-friendly milestone view
         '/milestones?view=month': '#monthView',
         '/milestones?view=week': '#weekView',
         '/milestones': '#statusView',  # Default status view

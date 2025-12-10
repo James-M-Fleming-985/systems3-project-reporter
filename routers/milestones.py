@@ -238,3 +238,205 @@ async def update_milestone(data: MilestoneUpdate):
     except Exception as e:
         logger.error(f"Error updating milestone: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/milestones/print/{program_name}")
+async def milestones_print_view(
+    program_name: str,
+    blank_resources: bool = False
+):
+    """
+    Print-friendly milestone month view for PowerPoint screenshots.
+    Renders milestones in a 3-column month layout (last/this/next month).
+    
+    Args:
+        program_name: The program/project name
+        blank_resources: If True, leave Resources field blank for overlay
+    """
+    from fastapi.responses import HTMLResponse
+    from repositories.project_repository import ProjectRepository
+    from datetime import datetime, timedelta
+    import re
+    
+    # Clean program name
+    clean_name = program_name.replace('.xml', '').replace(
+        '.xlsx', '').replace('.yaml', '').strip()
+    clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+    
+    # Load milestones from project repository
+    repo = ProjectRepository(DATA_DIR)
+    projects = repo.load_all_projects()
+    
+    # Find matching project
+    milestones = []
+    for project in projects:
+        if (clean_name.lower() in project.project_name.lower() or 
+                clean_name.lower() in project.project_code.lower()):
+            milestones = project.milestones or []
+            break
+    
+    if not milestones:
+        return HTMLResponse(
+            content=f"<html><body><h1>No milestones for: {clean_name}</h1></body></html>",
+            status_code=200
+        )
+    
+    # Calculate date ranges for last/this/next month
+    today = datetime.now()
+    
+    # This month
+    this_month_start = today.replace(day=1)
+    if today.month == 12:
+        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month_start = today.replace(month=today.month + 1, day=1)
+    this_month_end = next_month_start - timedelta(days=1)
+    
+    # Last month
+    last_month_end = this_month_start - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    
+    # Next month
+    if next_month_start.month == 12:
+        next_next_month = next_month_start.replace(
+            year=next_month_start.year + 1, month=1, day=1)
+    else:
+        next_next_month = next_month_start.replace(
+            month=next_month_start.month + 1, day=1)
+    next_month_end = next_next_month - timedelta(days=1)
+    
+    def is_in_range(date_str, start, end):
+        try:
+            d = datetime.strptime(date_str, '%Y-%m-%d')
+            return start <= d <= end
+        except:
+            return False
+    
+    def format_range(start, end):
+        return f"{start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
+    
+    # Filter milestones by month
+    last_month_ms = [m for m in milestones 
+                     if is_in_range(m.target_date, last_month_start, last_month_end)]
+    this_month_ms = [m for m in milestones 
+                     if is_in_range(m.target_date, this_month_start, this_month_end)]
+    next_month_ms = [m for m in milestones 
+                     if is_in_range(m.target_date, next_month_start, next_month_end)]
+    
+    # Generate milestone card HTML
+    def render_card(m, color):
+        status_colors = {
+            'COMPLETED': 'green',
+            'IN_PROGRESS': 'blue', 
+            'NOT_STARTED': 'gray'
+        }
+        c = status_colors.get(m.status, color)
+        # Blank resources if requested for PowerPoint overlay
+        resources = '' if blank_resources else (m.resources or '')
+        
+        html = f'''
+        <div class="milestone-card {c}">
+            <div class="card-title">{m.name}</div>
+            <div class="card-date">Target: {m.target_date}</div>
+            <div class="card-resources">{resources}</div>
+            <div class="card-status">{m.status.replace('_', ' ')}</div>
+        </div>'''
+        return html
+    
+    def render_column(title, date_range, ms_list, color):
+        cards = ''.join([render_card(m, color) for m in ms_list[:8]])
+        if not cards:
+            cards = '<p class="empty">No milestones</p>'
+        return f'''
+        <div class="column">
+            <h3>{title}</h3>
+            <p class="date-range">{date_range}</p>
+            <div class="cards">{cards}</div>
+        </div>'''
+    
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+    
+    html = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
+            font-family: Arial, sans-serif; 
+            background: white; 
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1e40af;
+        }}
+        .header h1 {{ color: #1e40af; font-size: 24px; margin-bottom: 5px; }}
+        .header .timestamp {{ color: #6b7280; font-size: 12px; }}
+        .columns {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }}
+        .column {{
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 15px;
+        }}
+        .column h3 {{
+            font-size: 18px;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }}
+        .column .date-range {{
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }}
+        .cards {{ display: flex; flex-direction: column; gap: 10px; }}
+        .milestone-card {{
+            border-left: 4px solid;
+            padding: 10px;
+            border-radius: 4px;
+            background: white;
+        }}
+        .milestone-card.green {{ border-color: #22c55e; background: #f0fdf4; }}
+        .milestone-card.blue {{ border-color: #3b82f6; background: #eff6ff; }}
+        .milestone-card.gray {{ border-color: #6b7280; background: #f9fafb; }}
+        .milestone-card.yellow {{ border-color: #eab308; background: #fefce8; }}
+        .card-title {{ font-weight: 600; font-size: 13px; color: #1f2937; }}
+        .card-date {{ font-size: 11px; color: #6b7280; margin-top: 4px; }}
+        .card-resources {{ 
+            font-size: 11px; 
+            color: #4b5563; 
+            margin-top: 4px;
+            min-height: 16px;
+        }}
+        .card-status {{ 
+            font-size: 10px; 
+            color: #6b7280; 
+            margin-top: 4px;
+            text-transform: uppercase;
+        }}
+        .empty {{ color: #9ca3af; font-size: 12px; font-style: italic; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Milestones: {clean_name}</h1>
+        <div class="timestamp">Generated: {timestamp}</div>
+    </div>
+    <div class="columns">
+        {render_column("📅 Last Month", format_range(last_month_start, last_month_end), last_month_ms, "gray")}
+        {render_column("📍 This Month", format_range(this_month_start, this_month_end), this_month_ms, "blue")}
+        {render_column("📌 Next Month", format_range(next_month_start, next_month_end), next_month_ms, "yellow")}
+    </div>
+</body>
+</html>'''
+    
+    return HTMLResponse(content=html)
