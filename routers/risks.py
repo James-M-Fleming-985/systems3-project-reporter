@@ -1069,6 +1069,11 @@ async def risks_table_preview(
             font-style: italic;
             color: #666;
         }}
+        .mitigation {{
+            text-align: left;
+            font-size: 12px;
+            color: #374151;
+        }}
         .info-box {{
             margin-top: 20px;
             padding: 12px 16px;
@@ -1084,12 +1089,13 @@ async def risks_table_preview(
     <table>
         <thead>
             <tr>
-                <th style="width: 6%">ID</th>
-                <th style="width: 40%">Title</th>
-                <th style="width: 10%">Severity</th>
-                <th style="width: 10%">Status</th>
-                <th style="width: 18%">Owner</th>
-                <th style="width: 8%">L/I</th>
+                <th style="width: 5%">ID</th>
+                <th style="width: 22%">Title</th>
+                <th style="width: 25%">Mitigation</th>
+                <th style="width: 7%">Severity</th>
+                <th style="width: 8%">Status</th>
+                <th style="width: 12%">Owner</th>
+                <th style="width: 6%">L/I</th>
             </tr>
         </thead>
         <tbody>
@@ -1098,8 +1104,11 @@ async def risks_table_preview(
     for risk in page_risks:
         risk_id = risk.get('id', 'N/A')
         risk_title = risk.get('title', 'Untitled')
-        if len(risk_title) > 60:
-            risk_title = risk_title[:60] + '...'
+        if len(risk_title) > 40:
+            risk_title = risk_title[:40] + '...'
+        mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
+        if len(str(mitigation)) > 60:
+            mitigation = str(mitigation)[:60] + '...'
         severity = risk.get('severity_normalized', 'medium').lower()
         status = risk.get('status', 'N/A')
         owner = risk.get('owner', 'Owner A')
@@ -1109,6 +1118,7 @@ async def risks_table_preview(
         html += f'''            <tr>
                 <td>{risk_id}</td>
                 <td>{risk_title}</td>
+                <td class="mitigation">{mitigation}</td>
                 <td class="severity-{severity}">{severity.upper()}</td>
                 <td>{status}</td>
                 <td class="owner-cell">{owner}</td>
@@ -1119,8 +1129,7 @@ async def risks_table_preview(
     html += '''        </tbody>
     </table>
     <div class="info-box">
-        ℹ️ This preview shows the table format that will appear in PowerPoint. 
-        The <strong>Owner</strong> column (highlighted) will be fully editable in the exported slide.
+        ℹ️ <strong>Owner</strong> column (yellow) is editable in PowerPoint.
     </div>
 </body>
 </html>'''
