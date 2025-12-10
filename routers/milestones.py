@@ -576,15 +576,26 @@ color: #666; }}</style>
 '''
     
     for ms in milestones:
-        name = ms.get('name', 'Unnamed Milestone')
-        if len(name) > 50:
-            name = name[:50] + '...'
-        target = ms.get('target_date', 'TBD')
-        status = ms.get('status', 'not_started')
-        status_class = f"status-{status.lower().replace(' ', '-')}"
-        status_display = status.replace('_', ' ').title()
-        resources = ms.get('resources', 'Resource A')
-        progress = ms.get('completion_percentage', 0)
+        # Handle both dict and Milestone model objects
+        if hasattr(ms, 'name'):
+            # It's a Milestone model object
+            name = getattr(ms, 'name', 'Unnamed Milestone') or 'Unnamed'
+            target = getattr(ms, 'target_date', 'TBD') or 'TBD'
+            status = getattr(ms, 'status', 'not_started') or 'not_started'
+            resources = getattr(ms, 'resources', 'Resource A') or 'Resource A'
+            progress = getattr(ms, 'completion_percentage', 0) or 0
+        else:
+            # It's a dict
+            name = ms.get('name', 'Unnamed Milestone')
+            target = ms.get('target_date', 'TBD')
+            status = ms.get('status', 'not_started')
+            resources = ms.get('resources', 'Resource A')
+            progress = ms.get('completion_percentage', 0)
+        
+        if len(str(name)) > 50:
+            name = str(name)[:50] + '...'
+        status_class = f"status-{str(status).lower().replace(' ', '-')}"
+        status_display = str(status).replace('_', ' ').title()
         
         html += f'''            <tr>
                 <td>{name}</td>
