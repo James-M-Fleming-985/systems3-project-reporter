@@ -1266,13 +1266,21 @@ function clearAllSlideTransforms() {
 
 // Update visual indicators showing which slides have saved configs
 function updateSlideConfigIndicators() {
-    const configCount = Object.keys(slideTransforms).length;
+    // Only count configs that match currently selected views
+    const selectedViews = Array.from(
+        document.querySelectorAll('input[name="view"]:checked')
+    ).map(cb => cb.value.split('?')[0]);
+    
+    const relevantConfigCount = Object.keys(slideTransforms).filter(key => {
+        const keyPath = key.split('?')[0];
+        return selectedViews.some(v => v.split('?')[0] === keyPath);
+    }).length;
     
     // Update the info message
     const infoEl = document.getElementById('savedConfigsInfo');
     if (infoEl) {
-        if (configCount > 0) {
-            infoEl.innerHTML = `✅ <strong>${configCount} slide(s)</strong> have saved configurations - just click Export for consistent reports!`;
+        if (relevantConfigCount > 0) {
+            infoEl.innerHTML = `✅ <strong>${relevantConfigCount} slide(s)</strong> have saved configurations - just click Export for consistent reports!`;
         } else {
             infoEl.innerHTML = `<span class="text-gray-500">💡 Configure slide layouts once, then export weekly without re-adjusting</span>`;
         }
