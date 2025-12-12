@@ -108,9 +108,10 @@ class ChangeDetectionService:
         project_code: str
     ) -> Change:
         """Create a Change object from detected change info"""
-        # Generate change ID
-        milestone_slug = change_info['milestone_name'].replace(' ', '-')[:20]
-        change_id = f"CHG-{project_code}-{milestone_slug}"
+        # Generate unique change ID using milestone name + dates
+        milestone_slug = change_info['milestone_name'].replace(' ', '-')[:30]
+        date_slug = f"{change_info['old_date']}-to-{change_info['new_date']}"
+        change_id = f"CHG-{project_code}-{milestone_slug}-{date_slug}"
         
         return Change(
             change_id=change_id,
