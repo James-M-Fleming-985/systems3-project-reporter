@@ -199,10 +199,26 @@ async def upload_xml(
         
         # Merge with existing changes if this is an update (not baseline)
         if existing_project and not is_baseline_upload:
-            # Keep existing change reasons
+            # AUTO-SAVE detected changes with auto-generated reason
+            auto_changes = []
+            for c in detected_changes:
+                change = change_detector.create_change_record(
+                    change_info={
+                        'milestone_name': c['milestone_name'],
+                        'old_date': c['old_date'],
+                        'new_date': c['new_date'],
+                        'days_diff': c['days_diff']
+                    },
+                    reason=f"Schedule change detected on {datetime.now().strftime('%Y-%m-%d')}",
+                    impact=c['suggested_impact'],
+                    project_code=new_project.project_code
+                )
+                auto_changes.append(change)
+            
+            # Merge auto-detected changes with existing changes
             new_project.changes = change_detector.merge_changes(
                 existing_project.changes,
-                []  # No new changes yet, user will add reasons later if needed
+                auto_changes
             )
         
         # Save risks from XML - merge with existing if updating
