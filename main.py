@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.270"  # Delete buttons on changes, Clear All, unique change IDs
+BUILD_VERSION = "1.0.272"  # Fix change delete endpoints at root path
 
 
 # Setup logging
@@ -191,6 +191,80 @@ app.include_router(risks.router, tags=["risks"])
 app.include_router(milestones.router, tags=["milestones"])
 # Admin router has: /admin/cleanup-duplicates
 app.include_router(admin.router, tags=["admin"])
+
+
+# ==================== CHANGE MANAGEMENT ENDPOINTS ====================
+# These are at root level (not under /dashboard) for simpler frontend calls
+import yaml
+from urllib.parse import unquote
+
+
+@app.post("/changes/clear/{project_code}")
+async def clear_project_changes(project_code: str):
+    """Clear all changes for a project."""
+    from pathlib import Path
+    import os
+
+    DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH",
+                              str(Path(__file__).parent / "mock_data")))
+
+    project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+    yaml_path = project_dir / "project_status.yaml"
+
+    if not yaml_path.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    with open(yaml_path, 'r') as f:
+        project_data = yaml.safe_load(f)
+
+    old_count = len(project_data.get('changes', []))
+    project_data['changes'] = []
+
+    with open(yaml_path, 'w') as f:
+        yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+
+    logger.info(f"Cleared {old_count} changes for project {project_code}")
+    return {"success": True, "cleared": old_count}
+
+
+@app.delete("/changes/{project_code}/{change_id:path}")
+async def delete_single_change(project_code: str, change_id: str):
+    """Delete a single change by its ID."""
+    from pathlib import Path
+    import os
+
+    change_id = unquote(change_id)
+
+    DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH",
+                              str(Path(__file__).parent / "mock_data")))
+
+    project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+    yaml_path = project_dir / "project_status.yaml"
+
+    if not yaml_path.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    with open(yaml_path, 'r') as f:
+        project_data = yaml.safe_load(f)
+
+    changes = project_data.get('changes', [])
+    original_count = len(changes)
+
+    # Filter out the change with matching ID
+    project_data['changes'] = [c for c in changes if c.get('id') != change_id]
+
+    if len(project_data['changes']) == original_count:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Change not found")
+
+    with open(yaml_path, 'w') as f:
+        yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+
+    logger.info(f"Deleted change {change_id} from project {project_code}")
+    return {"success": True, "deleted": change_id}
+
 
 # Custom Metrics router has: /api/custom-metrics/*
 try:
