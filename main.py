@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.261"  # Persist annotation positions - drag and save to server
+BUILD_VERSION = "1.0.270"  # Delete buttons on changes, Clear All, unique change IDs
 
 
 # Setup logging
