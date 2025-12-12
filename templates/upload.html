@@ -163,6 +163,9 @@
                 <button id="confirmBtn" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
                     Save Changes
                 </button>
+                <button id="clearAllBtn" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg hover:bg-red-200 transition-colors border border-red-300" title="Clear all accumulated changes and start fresh">
+                    🗑️ Clear All
+                </button>
                 <button id="cancelBtn" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
                     Cancel
                 </button>
@@ -520,6 +523,39 @@
 
         // Save changes button
         document.getElementById('confirmBtn').addEventListener('click', confirmUpload);
+
+        // Clear All Changes button
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (!uploadedData || !uploadedData.project_code) {
+                showWarningModal('No Project', 'Please upload a file first to identify the project.');
+                return;
+            }
+            
+            showConfirmModal(
+                'Clear All Changes?',
+                `This will delete ALL accumulated changes for this project and reset the history.\n\nYou can then re-upload your baseline plan followed by the latest plan to get a fresh comparison.\n\nAre you sure?`,
+                async () => {
+                    try {
+                        const response = await fetch(`/changes/clear/${uploadedData.project_code}`, {
+                            method: 'POST'
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            showSuccessModal('Changes Cleared', `Cleared ${result.cleared} changes. You can now upload your baseline plan.`);
+                            // Clear the local data too
+                            changesData = [];
+                            document.getElementById('changesBody').innerHTML = '';
+                            document.getElementById('noChanges').classList.remove('hidden');
+                            document.getElementById('changesTable').classList.add('hidden');
+                        } else {
+                            showErrorModal('Error', 'Failed to clear changes');
+                        }
+                    } catch (error) {
+                        showErrorModal('Error', error.message);
+                    }
+                }
+            );
+        });
 
         // Cancel
         document.getElementById('cancelBtn').addEventListener('click', () => {
