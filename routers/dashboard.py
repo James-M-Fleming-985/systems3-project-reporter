@@ -461,6 +461,81 @@ async def change_management(request: Request):
     return templates.TemplateResponse("changes.html", context)
 
 
+@router.post("/changes/clear/{project_code}")
+async def clear_project_changes(project_code: str):
+    """
+    Clear all changes for a project.
+    Useful when resetting to compare fresh Plan versions.
+    """
+    import yaml
+    
+    DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH",
+                              str(Path(__file__).parent.parent / "mock_data")))
+    
+    # Find project directory
+    project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+    yaml_path = project_dir / "project_status.yaml"
+    
+    if not yaml_path.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Load, clear changes, save
+    with open(yaml_path, 'r') as f:
+        project_data = yaml.safe_load(f)
+    
+    old_count = len(project_data.get('changes', []))
+    project_data['changes'] = []
+    
+    with open(yaml_path, 'w') as f:
+        yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+    
+    logger.info(f"Cleared {old_count} changes for project {project_code}")
+    
+    return {"success": True, "cleared": old_count}
+
+
+@router.delete("/changes/{project_code}/{change_id}")
+async def delete_single_change(project_code: str, change_id: str):
+    """
+    Delete a single change by its ID.
+    """
+    import yaml
+    from urllib.parse import unquote
+    
+    change_id = unquote(change_id)  # URL decode the change_id
+    
+    DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH",
+                              str(Path(__file__).parent.parent / "mock_data")))
+    
+    project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+    yaml_path = project_dir / "project_status.yaml"
+    
+    if not yaml_path.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    with open(yaml_path, 'r') as f:
+        project_data = yaml.safe_load(f)
+    
+    changes = project_data.get('changes', [])
+    original_count = len(changes)
+    
+    # Filter out the change with matching ID
+    project_data['changes'] = [c for c in changes if c.get('id') != change_id]
+    
+    if len(project_data['changes']) == original_count:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Change not found: {change_id}")
+    
+    with open(yaml_path, 'w') as f:
+        yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+    
+    logger.info(f"Deleted change {change_id} from project {project_code}")
+    
+    return {"success": True, "deleted": change_id}
+
+
 @router.get("/api/projects")
 async def get_projects():
     """

@@ -149,6 +149,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Impact</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16"></th>
                             </tr>
                         </thead>
                         <tbody id="changesBody" class="bg-white divide-y divide-gray-200">
@@ -378,6 +379,16 @@
                                    placeholder="Impact description"
                                    value="${change.existing_impact || change.suggested_impact}">
                         </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    onclick="confirmDeleteChange(${index}, '${change.milestone_name.replace(/'/g, "\\'")}')"
+                                    class="text-gray-400 hover:text-red-600 transition-colors p-1" 
+                                    title="Remove this change">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </td>
                     `;
                     changesBody.appendChild(row);
                 });
@@ -392,6 +403,83 @@
                             changesData[index].reason = e.target.value;
                         } else {
                             changesData[index].impact = e.target.value;
+                        }
+                    });
+                });
+            }
+        }
+
+        // Confirm delete of a single change
+        function confirmDeleteChange(index, milestoneName) {
+            if (confirm(`Are you sure you want to remove this change?\n\n"${milestoneName}"\n\nThis change won't be reported.`)) {
+                deleteChange(index);
+            }
+        }
+
+        // Delete a change from the list
+        function deleteChange(index) {
+            // Remove from the data array
+            changesData.splice(index, 1);
+            
+            // Re-render the table
+            const changesBody = document.getElementById('changesBody');
+            changesBody.innerHTML = '';
+            
+            if (changesData.length === 0) {
+                document.getElementById('noChanges').classList.remove('hidden');
+                document.getElementById('changesTable').classList.add('hidden');
+            } else {
+                changesData.forEach((change, idx) => {
+                    const row = document.createElement('tr');
+                    row.className = change.type === 'DELAY' ? 'bg-red-50' : 'bg-green-50';
+                    
+                    const badge = change.type === 'DELAY' 
+                        ? `<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">${change.days_diff} days delayed</span>`
+                        : `<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">${Math.abs(change.days_diff)} days earlier</span>`;
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-sm">${change.milestone_name}</td>
+                        <td class="px-4 py-3 text-sm">${change.old_date}</td>
+                        <td class="px-4 py-3 text-sm">${change.new_date}</td>
+                        <td class="px-4 py-3 text-sm">${badge}</td>
+                        <td class="px-4 py-3">
+                            <input type="text" 
+                                   data-index="${idx}"
+                                   class="reason-input w-full border border-gray-300 rounded px-2 py-1 text-sm" 
+                                   placeholder="Enter reason for change"
+                                   value="${change.reason || change.existing_reason || ''}">
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="text" 
+                                   data-index="${idx}"
+                                   class="impact-input w-full border border-gray-300 rounded px-2 py-1 text-sm" 
+                                   placeholder="Impact description"
+                                   value="${change.impact || change.existing_impact || change.suggested_impact || ''}">
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    onclick="confirmDeleteChange(${idx}, '${change.milestone_name.replace(/'/g, "\\'")}')"
+                                    class="text-gray-400 hover:text-red-600 transition-colors p-1" 
+                                    title="Remove this change">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </td>
+                    `;
+                    changesBody.appendChild(row);
+                });
+
+                // Re-add event listeners
+                document.querySelectorAll('.reason-input, .impact-input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const idx = parseInt(e.target.dataset.index);
+                        const isReason = e.target.classList.contains('reason-input');
+                        
+                        if (isReason) {
+                            changesData[idx].reason = e.target.value;
+                        } else {
+                            changesData[idx].impact = e.target.value;
                         }
                     });
                 });
