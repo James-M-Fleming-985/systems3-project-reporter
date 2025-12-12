@@ -31,6 +31,9 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Impact
                 </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    
+                </th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -72,17 +75,37 @@
                         </span>
                     {% endif %}
                 </td>
+                <td class="px-6 py-4 text-center">
+                    <button type="button" 
+                            onclick="confirmDeleteChange('{{ change.change_id }}', '{{ change.milestone_name|default(change.change_id) }}')"
+                            class="text-gray-400 hover:text-red-600 transition-colors p-1" 
+                            title="Delete this change">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- Summary -->
-<div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-    <p class="text-sm text-blue-800" id="changeSummary">
-        <strong>Total Changes:</strong> {{ changes|length }} schedule modifications recorded across all projects
-    </p>
+<!-- Summary and Actions -->
+<div class="mt-6 flex items-center justify-between">
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded flex-1">
+        <p class="text-sm text-blue-800" id="changeSummary">
+            <strong>Total Changes:</strong> {{ changes|length }} schedule modifications recorded across all projects
+        </p>
+    </div>
+    <button id="clearAllBtn" 
+            class="ml-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors border border-red-300 flex items-center gap-2"
+            title="Clear all changes and start fresh">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+        Clear All Changes
+    </button>
 </div>
 {% endblock %}
 
@@ -99,5 +122,51 @@ console.log('📊 CHANGES - Rendering', changeCount, 'changes for', projectName)
 document.getElementById('changesPageTitle').textContent = `📅 ${projectName} Change Management`;
 document.getElementById('changeSummary').innerHTML = 
     `<strong>Total Changes:</strong> ${changeCount} schedule modifications for ${projectName}`;
+
+// Delete single change
+function confirmDeleteChange(changeId, milestoneName) {
+    if (confirm(`Are you sure you want to delete this change?\n\n"${milestoneName}"\n\nThis cannot be undone.`)) {
+        deleteChange(changeId);
+    }
+}
+
+async function deleteChange(changeId) {
+    try {
+        const response = await fetch(`/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+        if (result.success) {
+            // Reload page to show updated list
+            window.location.reload();
+        } else {
+            alert('Failed to delete change: ' + (result.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error deleting change: ' + error.message);
+    }
+}
+
+// Clear all changes
+document.getElementById('clearAllBtn').addEventListener('click', async () => {
+    if (!confirm(`Are you sure you want to delete ALL ${changeCount} changes for ${projectName}?\n\nThis will reset the change history completely.\n\nThis cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/changes/clear/${projectCode}`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert(`Cleared ${result.cleared} changes. The page will reload.`);
+            window.location.reload();
+        } else {
+            alert('Failed to clear changes');
+        }
+    } catch (error) {
+        alert('Error clearing changes: ' + error.message);
+    }
+});
 </script>
 {% endblock %}
