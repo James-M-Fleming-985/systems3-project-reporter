@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.272"  # Fix change delete endpoints at root path
+BUILD_VERSION = "1.0.273"  # Fix API paths for change endpoints
 
 
 # Setup logging
@@ -199,7 +199,7 @@ import yaml
 from urllib.parse import unquote
 
 
-@app.post("/changes/clear/{project_code}")
+@app.post("/api/changes/clear/{project_code}")
 async def clear_project_changes(project_code: str):
     """Clear all changes for a project."""
     from pathlib import Path
@@ -228,7 +228,7 @@ async def clear_project_changes(project_code: str):
     return {"success": True, "cleared": old_count}
 
 
-@app.delete("/changes/{project_code}/{change_id:path}")
+@app.delete("/api/changes/{project_code}/{change_id:path}")
 async def delete_single_change(project_code: str, change_id: str):
     """Delete a single change by its ID."""
     from pathlib import Path

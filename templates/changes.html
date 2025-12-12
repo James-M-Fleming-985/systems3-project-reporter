@@ -219,8 +219,9 @@ function confirmDeleteChange(changeId, milestoneName) {
 
 async function deleteChange(changeId) {
     try {
-        const response = await fetch(`/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
-            method: 'DELETE'
+        const response = await fetch(`/api/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
+            method: 'DELETE',
+            credentials: 'same-origin'
         });
         const result = await response.json();
         if (result.success) {
@@ -241,8 +242,9 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
         'Yes, Clear All',
         async () => {
             try {
-                const response = await fetch(`/changes/clear/${projectCode}`, {
-                    method: 'POST'
+                const response = await fetch(`/api/changes/clear/${projectCode}`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
                 });
                 const result = await response.json();
                 if (result.success) {
