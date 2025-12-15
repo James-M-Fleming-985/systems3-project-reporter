@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.286"  # Fix custom metrics loading - use template project_name as fallback
+BUILD_VERSION = "1.0.287"  # Fix custom metrics - store by clean project name, auto-migrate versioned files
 
 
 # Setup logging

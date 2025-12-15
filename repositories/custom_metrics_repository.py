@@ -20,10 +20,29 @@ class CustomMetricsRepository:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"CustomMetricsRepository initialized: {self.storage_dir}")
     
+    def _clean_project_name(self, project_name: str) -> str:
+        """Clean project name by removing version numbers and file extensions.
+        
+        This ensures metrics are stored/loaded by base project name regardless of
+        which version of the XML file is currently loaded.
+        
+        Examples:
+            'ZnNi Line Development Plan-13.xml' -> 'ZnNi Line Development Plan'
+            'ZnNi Line Development Plan-12.xml' -> 'ZnNi Line Development Plan'
+        """
+        import re
+        # Remove .xml extension
+        clean = project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '')
+        # Remove version suffix like -13, -12, etc.
+        clean = re.sub(r'-\d+$', '', clean)
+        return clean.strip()
+    
     def _get_metrics_file_path(self, project_name: str) -> Path:
         """Get the file path for a project's metrics"""
-        # Clean the project name for filesystem
-        clean_name = project_name.replace('/', '_').replace('\\', '_')
+        # Clean the project name - remove version numbers and extensions
+        clean_name = self._clean_project_name(project_name)
+        # Also clean for filesystem safety
+        clean_name = clean_name.replace('/', '_').replace('\\', '_')
         return self.storage_dir / f"{clean_name}_metrics.yaml"
     
     def save_metrics(self, project_name: str, metrics: List[Dict[str, Any]]) -> bool:
@@ -73,10 +92,16 @@ class CustomMetricsRepository:
         """
         try:
             file_path = self._get_metrics_file_path(project_name)
+            clean_name = self._clean_project_name(project_name)
             
             if not file_path.exists():
-                logger.info(f"No metrics file found for '{project_name}' at {file_path}")
-                return []
+                # Try to find and migrate old versioned files
+                logger.info(f"No metrics file found for '{project_name}' (cleaned: '{clean_name}') at {file_path}")
+                self._migrate_legacy_metrics_file(project_name)
+                
+                # Check again after migration attempt
+                if not file_path.exists():
+                    return []
             
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
@@ -94,6 +119,30 @@ class CustomMetricsRepository:
         except Exception as e:
             logger.error(f"❌ Error loading metrics for '{project_name}': {e}")
             return []
+    
+    def _migrate_legacy_metrics_file(self, project_name: str):
+        """Try to find and rename legacy versioned metrics files.
+        
+        Looks for files like 'ZnNi Line Development Plan-12.xml_metrics.yaml'
+        and renames them to the clean name format.
+        """
+        import re
+        try:
+            clean_name = self._clean_project_name(project_name)
+            target_path = self._get_metrics_file_path(project_name)
+            
+            # Look for any versioned files that match the base name
+            for old_file in self.storage_dir.glob("*_metrics.yaml"):
+                old_name = old_file.stem.replace('_metrics', '')
+                old_clean = self._clean_project_name(old_name)
+                
+                if old_clean == clean_name and old_file != target_path:
+                    logger.info(f"🔄 Migrating legacy metrics file: {old_file.name} -> {target_path.name}")
+                    old_file.rename(target_path)
+                    return
+                    
+        except Exception as e:
+            logger.error(f"❌ Error migrating legacy metrics: {e}")
     
     def delete_metrics(self, project_name: str) -> bool:
         """
