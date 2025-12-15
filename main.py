@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.282"  # Fix word-break in Change ID column
+BUILD_VERSION = "1.0.283"  # Use div instead of span for Change ID wrapping
 
 
 # Setup logging
