@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.273"  # Fix API paths for change endpoints
+BUILD_VERSION = "1.0.275"  # Fix change_id field name in delete/update
 
 
 # Setup logging
@@ -252,8 +252,8 @@ async def delete_single_change(project_code: str, change_id: str):
     changes = project_data.get('changes', [])
     original_count = len(changes)
 
-    # Filter out the change with matching ID
-    project_data['changes'] = [c for c in changes if c.get('id') != change_id]
+    # Filter out the change with matching ID (changes use 'change_id' field)
+    project_data['changes'] = [c for c in changes if c.get('change_id') != change_id]
 
     if len(project_data['changes']) == original_count:
         from fastapi import HTTPException
@@ -264,6 +264,52 @@ async def delete_single_change(project_code: str, change_id: str):
 
     logger.info(f"Deleted change {change_id} from project {project_code}")
     return {"success": True, "deleted": change_id}
+
+
+@app.patch("/api/changes/{project_code}/{change_id:path}")
+async def update_change(project_code: str, change_id: str, request: Request):
+    """Update a change's reason or other fields."""
+    from pathlib import Path
+    import os
+
+    change_id = unquote(change_id)
+    body = await request.json()
+
+    DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH",
+                              str(Path(__file__).parent / "mock_data")))
+
+    project_dir = DATA_DIR / f"PROJECT-{project_code.replace('-', '_')}"
+    yaml_path = project_dir / "project_status.yaml"
+
+    if not yaml_path.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    with open(yaml_path, 'r') as f:
+        project_data = yaml.safe_load(f)
+
+    changes = project_data.get('changes', [])
+    updated = False
+
+    for change in changes:
+        if change.get('change_id') == change_id:
+            # Update allowed fields
+            if 'reason' in body:
+                change['reason'] = body['reason']
+            if 'impact' in body:
+                change['impact'] = body['impact']
+            updated = True
+            break
+
+    if not updated:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Change not found")
+
+    with open(yaml_path, 'w') as f:
+        yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
+
+    logger.info(f"Updated change {change_id} for project {project_code}")
+    return {"success": True, "updated": change_id}
 
 
 # Custom Metrics router has: /api/custom-metrics/*

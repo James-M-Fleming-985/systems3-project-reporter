@@ -57,8 +57,13 @@
                         <span class="text-green-600 font-semibold">{{ change.new_date }}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
-                    {{ change.reason }}
+                <td class="px-6 py-4 text-sm">
+                    <input type="text" 
+                           class="reason-input w-full border border-gray-200 rounded px-2 py-1 text-sm text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                           data-change-id="{{ change.change_id }}"
+                           value="{{ change.reason }}"
+                           placeholder="Enter reason..."
+                           onchange="updateChangeReason(this, '{{ change.change_id }}')">
                 </td>
                 <td class="px-6 py-4 text-sm">
                     {% if 'delay' in change.impact.lower() or 'slip' in change.impact.lower() %}
@@ -204,6 +209,60 @@ function showErrorModal(title, message) {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+// ==================== UPDATE HANDLERS ====================
+// Update change reason
+async function updateChangeReason(inputElement, changeId) {
+    const newReason = inputElement.value.trim();
+    const originalValue = inputElement.defaultValue;
+    
+    // Visual feedback - show saving state
+    inputElement.classList.add('bg-yellow-50');
+    inputElement.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: newReason })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Success - flash green briefly
+            inputElement.classList.remove('bg-yellow-50');
+            inputElement.classList.add('bg-green-50');
+            inputElement.defaultValue = newReason;  // Update default for future comparisons
+            setTimeout(() => {
+                inputElement.classList.remove('bg-green-50');
+            }, 1000);
+        } else {
+            // Failed - revert and show error
+            inputElement.value = originalValue;
+            inputElement.classList.remove('bg-yellow-50');
+            inputElement.classList.add('bg-red-50');
+            showErrorModal('Update Failed', result.detail || 'Could not save reason');
+            setTimeout(() => {
+                inputElement.classList.remove('bg-red-50');
+            }, 2000);
+        }
+    } catch (error) {
+        // Error - revert and show error
+        inputElement.value = originalValue;
+        inputElement.classList.remove('bg-yellow-50');
+        inputElement.classList.add('bg-red-50');
+        showErrorModal('Error', 'Failed to update reason: ' + error.message);
+        setTimeout(() => {
+            inputElement.classList.remove('bg-red-50');
+        }, 2000);
+    } finally {
+        inputElement.disabled = false;
+    }
 }
 
 // ==================== DELETE HANDLERS ====================
