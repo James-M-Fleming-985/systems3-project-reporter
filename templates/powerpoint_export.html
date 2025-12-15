@@ -754,31 +754,20 @@ async function loadCustomMetricCheckboxes() {
         return;
     }
     
-    // Filter metrics that have history OR series data
-    const metricsWithHistory = customMetrics.filter(m => {
-        const hasHistory = m.history && m.history.length > 0;
-        const hasSeries = m.series && Object.keys(m.series).length > 0;
-        return hasHistory || hasSeries;
-    });
-    
+    // Show ALL custom metrics (not just those with history)
+    // Metrics with history/series can show trend charts, others show current value
     console.log('📊 Total custom metrics:', customMetrics.length);
-    console.log('📈 Metrics with data:', metricsWithHistory.length);
-    
-    if (metricsWithHistory.length === 0) {
-        console.log('⚠️ No custom metrics with history or series data');
-        return;
-    }
     
     const container = document.getElementById('customMetricsTrendsContainer');
     
     // Add section header
     const header = document.createElement('div');
     header.className = 'col-span-2 mt-4 mb-2';
-    header.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">📈 Custom Metrics Trends</h3>';
+    header.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">📈 Custom Metrics</h3>';
     container.appendChild(header);
     
-    // Create checkbox for each metric
-    metricsWithHistory.forEach((metric, index) => {
+    // Create checkbox for each metric (show ALL, not just those with history)
+    customMetrics.forEach((metric, index) => {
         const label = document.createElement('label');
         label.className = 'flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition view-card';
         
@@ -822,12 +811,19 @@ async function loadCustomMetricCheckboxes() {
         }
         
         const content = document.createElement('div');
-        const dataInfo = metric.series && Object.keys(metric.series).length > 0 
-            ? `${Object.keys(metric.series).length} series` 
-            : `${metric.history?.length || 0} data points`;
+        const hasHistory = metric.history && metric.history.length > 0;
+        const hasSeries = metric.series && Object.keys(metric.series).length > 0;
+        let dataInfo = '';
+        if (hasSeries) {
+            dataInfo = `${Object.keys(metric.series).length} series`;
+        } else if (hasHistory) {
+            dataInfo = `${metric.history.length} data points`;
+        } else {
+            dataInfo = `Current: ${metric.current_value || 'N/A'}`;
+        }
         content.innerHTML = `
             <div class="font-semibold text-gray-900">📊 ${metric.name}</div>
-            <div class="text-sm text-gray-600 mt-1">Trend chart (${dataInfo})</div>
+            <div class="text-sm text-gray-600 mt-1">${hasHistory || hasSeries ? 'Trend chart' : 'Metric card'} (${dataInfo})</div>
         `;
         
         label.appendChild(checkbox);
@@ -835,7 +831,7 @@ async function loadCustomMetricCheckboxes() {
         container.appendChild(label);
     });
     
-    console.log(`Added ${metricsWithHistory.length} custom metric trend checkboxes`);
+    console.log(`Added ${customMetrics.length} custom metric checkboxes`);
     
     // Update count after all checkboxes are created and restored (don't save to avoid overwriting)
     updateSelectedCount(false);

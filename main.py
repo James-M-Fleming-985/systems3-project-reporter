@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.284"  # Increase milestone name limit from 30 to 80 chars
+BUILD_VERSION = "1.0.285"  # Show all custom metrics in PPT export (not just those with history)
 
 
 # Setup logging
