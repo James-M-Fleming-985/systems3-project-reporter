@@ -33,6 +33,19 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 chart_service = ChartFormatterService()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# Add custom Jinja2 filter to remove dates from change_id
+import re
+
+
+def regex_replace(value, pattern, replacement=''):
+    """Replace regex pattern in string"""
+    if value is None:
+        return ''
+    return re.sub(pattern, replacement, str(value))
+
+
+templates.env.filters['regex_replace'] = regex_replace
+
 
 def get_user_from_request(request: Request):
     """Get user dict from request state (set by auth middleware)"""
