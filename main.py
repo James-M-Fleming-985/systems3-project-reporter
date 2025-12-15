@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.278"  # Editable Contingency field, expandable textareas
+BUILD_VERSION = "1.0.279"  # Multi-slide changes table in PowerPoint export
 
 
 # Setup logging

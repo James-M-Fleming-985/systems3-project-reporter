@@ -168,6 +168,15 @@ class PowerPointBuilderService:
                     milestones=milestones,
                     title=title
                 )
+            elif slide_type == 'changes':
+                # Native table for schedule changes (auto-paginates)
+                changes = slide_config.get('data', [])
+                rows_per_slide = slide_config.get('rows_per_slide', 6)
+                self.create_changes_table_slides(
+                    changes=changes,
+                    title=title,
+                    rows_per_slide=rows_per_slide
+                )
             else:
                 # Default: screenshot-based slide
                 screenshot = slide_config.get('data')
@@ -850,7 +859,137 @@ class PowerPointBuilderService:
                 if row_idx % 2 == 0:
                     cell.fill.solid()
                     cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+
+    def create_changes_table_slides(
+        self,
+        changes: List[Dict[str, Any]],
+        title: str = "Schedule Changes",
+        rows_per_slide: int = 6
+    ) -> int:
+        """Create slides with changes rendered as native PowerPoint tables.
         
+        Handles multi-page output when changes exceed rows_per_slide.
+        
+        Args:
+            changes: List of change dictionaries with change_id, milestone_name,
+                    old_date, new_date, reason, impact (contingency)
+            title: Base slide title
+            rows_per_slide: Maximum rows per slide (excluding header)
+            
+        Returns:
+            Number of slides created
+        """
+        from pptx.enum.text import MSO_ANCHOR
+        
+        if not changes:
+            return 0
+        
+        # Calculate number of slides needed
+        total_changes = len(changes)
+        num_slides = (total_changes + rows_per_slide - 1) // rows_per_slide
+        
+        for slide_num in range(num_slides):
+            # Get changes for this slide
+            start_idx = slide_num * rows_per_slide
+            end_idx = min(start_idx + rows_per_slide, total_changes)
+            slide_changes = changes[start_idx:end_idx]
+            
+            # Add slide
+            layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
+            slide_layout = self.presentation.slide_layouts[layout_idx]
+            slide = self.presentation.slides.add_slide(slide_layout)
+            
+            # Set title with page indicator
+            if slide.shapes.title:
+                page_indicator = f" ({slide_num + 1}/{num_slides})" if num_slides > 1 else ""
+                slide.shapes.title.text = f"{title}{page_indicator}"
+                if slide.shapes.title.has_text_frame:
+                    for para in slide.shapes.title.text_frame.paragraphs:
+                        for run in para.runs:
+                            run.font.size = Pt(24)
+                            run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+            
+            # Table dimensions
+            left = Inches(0.3)
+            top = Inches(1.2)
+            width = Inches(12.9)
+            
+            # Columns: Milestone, Old Date, New Date, Reason, Contingency
+            cols = 5
+            rows = len(slide_changes) + 1  # +1 for header
+            
+            # Calculate row height to fit content
+            available_height = 5.8  # inches
+            row_height = min(0.9, available_height / rows)
+            
+            table = slide.shapes.add_table(
+                rows, cols, left, top, width, Inches(row_height * rows)
+            ).table
+            
+            # Column widths: Milestone wider, dates narrow, reason/contingency medium
+            col_widths = [3.5, 1.0, 1.0, 3.7, 3.7]
+            for i, w in enumerate(col_widths):
+                table.columns[i].width = Inches(w)
+            
+            # Header row
+            headers = ["Milestone", "Old Date", "New Date", "Reason", "Contingency"]
+            header_color = RGBColor(0x1E, 0x40, 0xAF)  # Blue
+            
+            for i, header in enumerate(headers):
+                cell = table.cell(0, i)
+                cell.text = header
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = header_color
+                para = cell.text_frame.paragraphs[0]
+                para.font.bold = True
+                para.font.size = Pt(10)
+                para.font.color.rgb = RGBColor(255, 255, 255)
+                para.alignment = PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+            
+            # Data rows
+            for row_idx, change in enumerate(slide_changes, start=1):
+                # Extract change data
+                milestone = change.get('milestone_name', change.get('change_id', ''))
+                # Clean milestone name (remove date suffix if present)
+                import re
+                milestone = re.sub(r'-\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}$', '', str(milestone))
+                
+                old_date = change.get('old_date', '')
+                new_date = change.get('new_date', '')
+                reason = change.get('reason', '')
+                contingency = change.get('impact', '')  # 'impact' field is now contingency
+                
+                row_data = [milestone, old_date, new_date, reason, contingency]
+                
+                for col_idx, value in enumerate(row_data):
+                    cell = table.cell(row_idx, col_idx)
+                    
+                    # Set text with word wrap
+                    cell.text = str(value) if value else ''
+                    
+                    # Enable text wrapping
+                    cell.text_frame.word_wrap = True
+                    
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(9)
+                    para.alignment = PP_ALIGN.LEFT if col_idx in [0, 3, 4] else PP_ALIGN.CENTER
+                    cell.vertical_anchor = MSO_ANCHOR.TOP
+                    
+                    # Style dates with color
+                    if col_idx == 1:  # Old date - red strikethrough look
+                        para.font.color.rgb = RGBColor(0xDC, 0x26, 0x26)
+                    elif col_idx == 2:  # New date - green
+                        para.font.color.rgb = RGBColor(0x16, 0xA3, 0x4A)
+                        para.font.bold = True
+                    
+                    # Alternate row background
+                    if row_idx % 2 == 0:
+                        cell.fill.solid()
+                        cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+        
+        return num_slides
+
     def get_slide_count(self) -> int:
         """Get the number of slides in the presentation."""
         if not self.presentation:

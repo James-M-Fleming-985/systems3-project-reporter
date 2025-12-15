@@ -419,6 +419,43 @@ async def export_to_powerpoint(
                     'title': f"Milestones: {project_name}"
                 })
                 
+            elif '/changes' in view:
+                # Load changes data and create native table slides (auto-paginates)
+                logger.info(f"📊 Creating native table for schedule changes")
+                from repositories.project_repository import ProjectRepository
+                repo = ProjectRepository(BASE_DIR / "mock_data")
+                projects = repo.load_all_projects()
+                
+                changes = []
+                for proj in projects:
+                    if (clean_name.lower() in proj.project_name.lower() or 
+                            clean_name.lower() in proj.project_code.lower()):
+                        changes = proj.changes or []
+                        break
+                
+                # Convert to dicts if needed
+                change_list = []
+                for c in changes:
+                    if hasattr(c, '__dict__'):
+                        change_list.append({
+                            'change_id': getattr(c, 'change_id', ''),
+                            'milestone_name': getattr(c, 'milestone_name', ''),
+                            'old_date': getattr(c, 'old_date', ''),
+                            'new_date': getattr(c, 'new_date', ''),
+                            'reason': getattr(c, 'reason', ''),
+                            'impact': getattr(c, 'impact', '')
+                        })
+                    else:
+                        change_list.append(c)
+                
+                if change_list:
+                    slides_data.append({
+                        'type': 'changes',
+                        'data': change_list,
+                        'title': f"Schedule Changes: {project_name}",
+                        'rows_per_slide': 6  # Auto-paginate with 6 rows per slide
+                    })
+                
             else:
                 # Other views: capture screenshot
                 url = f"{base_url}{view}"
