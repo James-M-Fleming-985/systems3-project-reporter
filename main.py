@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.275"  # Fix change_id field name in delete/update
+BUILD_VERSION = "1.0.276"  # Clean change ID display, update column headers
 
 
 # Setup logging
@@ -64,6 +64,19 @@ if PUBLIC_DIR.exists():
 
 # Setup Jinja2 templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Add custom Jinja2 filter to remove dates from change_id
+import re
+
+
+def regex_replace(value, pattern, replacement=''):
+    """Replace regex pattern in string"""
+    if value is None:
+        return ''
+    return re.sub(pattern, replacement, str(value))
+
+
+templates.env.filters['regex_replace'] = regex_replace
 
 
 # Export version for use in routers
