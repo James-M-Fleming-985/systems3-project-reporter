@@ -726,11 +726,14 @@ async function deleteSelectedTemplate() {
 
 // Load custom metrics and create trend checkboxes
 async function loadCustomMetricCheckboxes() {
-    const selectedProgram = localStorage.getItem('selectedProgram');
+    // Use localStorage selectedProgram, fallback to template-provided project_name
+    const selectedProgram = localStorage.getItem('selectedProgram') || '{{ project_name }}';
     if (!selectedProgram) {
         console.log('No program selected, skipping custom metrics');
         return;
     }
+    
+    console.log('📊 Loading custom metrics for program:', selectedProgram);
     
     // Fetch from server API instead of localStorage
     let customMetrics = [];

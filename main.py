@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.285"  # Show all custom metrics in PPT export (not just those with history)
+BUILD_VERSION = "1.0.286"  # Fix custom metrics loading - use template project_name as fallback
 
 
 # Setup logging
