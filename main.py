@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.277"  # Fix regex_replace filter in dashboard router
+BUILD_VERSION = "1.0.278"  # Editable Contingency field, expandable textareas
 
 
 # Setup logging

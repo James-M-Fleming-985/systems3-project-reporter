@@ -29,7 +29,7 @@
                     Reason
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Impact
+                    Contingency
                 </th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     
@@ -57,28 +57,25 @@
                         <span class="text-green-600 font-semibold">{{ change.new_date }}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm">
-                    <input type="text" 
-                           class="reason-input w-full border border-gray-200 rounded px-2 py-1 text-sm text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                <td class="px-6 py-4 text-sm align-top">
+                    <textarea 
+                           class="reason-input w-full border border-gray-200 rounded px-2 py-1 text-sm text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
                            data-change-id="{{ change.change_id }}"
-                           value="{{ change.reason }}"
+                           data-field="reason"
                            placeholder="Enter reason..."
-                           onchange="updateChangeReason(this, '{{ change.change_id }}')">
+                           rows="2"
+                           oninput="autoResize(this)"
+                           onchange="updateChangeField(this, '{{ change.change_id }}', 'reason')">{{ change.reason }}</textarea>
                 </td>
-                <td class="px-6 py-4 text-sm">
-                    {% if 'delay' in change.impact.lower() or 'slip' in change.impact.lower() %}
-                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
-                            {{ change.impact }}
-                        </span>
-                    {% elif 'minor' in change.impact.lower() %}
-                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                            {{ change.impact }}
-                        </span>
-                    {% else %}
-                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                            {{ change.impact }}
-                        </span>
-                    {% endif %}
+                <td class="px-6 py-4 text-sm align-top">
+                    <textarea 
+                           class="contingency-input w-full border border-gray-200 rounded px-2 py-1 text-sm text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
+                           data-change-id="{{ change.change_id }}"
+                           data-field="impact"
+                           placeholder="Enter contingency plan..."
+                           rows="2"
+                           oninput="autoResize(this)"
+                           onchange="updateChangeField(this, '{{ change.change_id }}', 'impact')">{{ change.impact }}</textarea>
                 </td>
                 <td class="px-6 py-4 text-center">
                     <button type="button" 
@@ -212,9 +209,22 @@ function showErrorModal(title, message) {
 }
 
 // ==================== UPDATE HANDLERS ====================
-// Update change reason
-async function updateChangeReason(inputElement, changeId) {
-    const newReason = inputElement.value.trim();
+// Auto-resize textarea to fit content
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// Initialize all textareas on page load
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('textarea').forEach(textarea => {
+        autoResize(textarea);
+    });
+});
+
+// Generic update handler for any field
+async function updateChangeField(inputElement, changeId, fieldName) {
+    const newValue = inputElement.value.trim();
     const originalValue = inputElement.defaultValue;
     
     // Visual feedback - show saving state
@@ -222,13 +232,16 @@ async function updateChangeReason(inputElement, changeId) {
     inputElement.disabled = true;
     
     try {
+        const payload = {};
+        payload[fieldName] = newValue;
+        
         const response = await fetch(`/api/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
             method: 'PATCH',
             credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ reason: newReason })
+            body: JSON.stringify(payload)
         });
         
         const result = await response.json();
@@ -237,7 +250,7 @@ async function updateChangeReason(inputElement, changeId) {
             // Success - flash green briefly
             inputElement.classList.remove('bg-yellow-50');
             inputElement.classList.add('bg-green-50');
-            inputElement.defaultValue = newReason;  // Update default for future comparisons
+            inputElement.defaultValue = newValue;
             setTimeout(() => {
                 inputElement.classList.remove('bg-green-50');
             }, 1000);
@@ -246,7 +259,7 @@ async function updateChangeReason(inputElement, changeId) {
             inputElement.value = originalValue;
             inputElement.classList.remove('bg-yellow-50');
             inputElement.classList.add('bg-red-50');
-            showErrorModal('Update Failed', result.detail || 'Could not save reason');
+            showErrorModal('Update Failed', result.detail || 'Could not save');
             setTimeout(() => {
                 inputElement.classList.remove('bg-red-50');
             }, 2000);
@@ -256,13 +269,18 @@ async function updateChangeReason(inputElement, changeId) {
         inputElement.value = originalValue;
         inputElement.classList.remove('bg-yellow-50');
         inputElement.classList.add('bg-red-50');
-        showErrorModal('Error', 'Failed to update reason: ' + error.message);
+        showErrorModal('Error', 'Failed to update: ' + error.message);
         setTimeout(() => {
             inputElement.classList.remove('bg-red-50');
         }, 2000);
     } finally {
         inputElement.disabled = false;
     }
+}
+
+// Legacy handler (keep for compatibility)
+async function updateChangeReason(inputElement, changeId) {
+    return updateChangeField(inputElement, changeId, 'reason');
 }
 
 // ==================== DELETE HANDLERS ====================
