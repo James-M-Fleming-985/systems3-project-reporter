@@ -806,15 +806,19 @@ class PowerPointBuilderService:
     ):
         """Create a slide with milestones in 3-column table layout.
         
-        Matches the preview format exactly with colored header bars
-        and tables below with Milestone, Date, Status, Resources columns.
+        EXACTLY matches the HTML canvas preview format:
+        - Title: #7F7F7F gray, 32px, normal weight
+        - 3 columns with colored headers and tables below
+        - Header colors: Gray (#6B7280), Blue (#2563EB), Amber (#F59E0B)
+        - Table styling matches HTML preview exactly
         
         Args:
             milestones: List of milestone dictionaries
             title: Slide title
             column_title: Column header (unused, using month names)
         """
-        from pptx.enum.text import MSO_ANCHOR
+        from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+        from pptx.enum.shapes import MSO_SHAPE
         from datetime import datetime, timedelta
         
         # Add slide with blank layout
@@ -822,14 +826,20 @@ class PowerPointBuilderService:
         slide_layout = self.presentation.slide_layouts[layout_idx]
         slide = self.presentation.slides.add_slide(slide_layout)
         
-        # Add title manually
-        title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.2), Inches(12), Inches(0.5))
+        # ============================================================
+        # TITLE: Matches HTML .slide-title
+        # color: #7F7F7F, font-size: 32px, font-weight: normal
+        # ============================================================
+        title_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(12), Inches(0.6))
         title_tf = title_box.text_frame
         title_tf.paragraphs[0].text = title
-        title_tf.paragraphs[0].font.size = Pt(20)
-        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        title_tf.paragraphs[0].font.size = Pt(24)  # 32px scaled for slide
+        title_tf.paragraphs[0].font.bold = False  # font-weight: normal
+        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)  # #7F7F7F
         
-        # Calculate date ranges
+        # ============================================================
+        # DATE CALCULATIONS
+        # ============================================================
         today = datetime.now()
         this_month_start = today.replace(day=1)
         if today.month == 12:
@@ -845,6 +855,7 @@ class PowerPointBuilderService:
         else:
             next_next = next_month_start.replace(month=next_month_start.month + 1, day=1)
         next_month_end = next_next - timedelta(days=1)
+        this_month_end = next_month_start - timedelta(days=1)
         
         def get_ms_attr(ms, attr, default=''):
             if hasattr(ms, attr):
@@ -858,156 +869,267 @@ class PowerPointBuilderService:
             except:
                 return False
         
-        def format_range(start, end):
+        def format_date_range(start, end):
+            """Format: 'Nov 01 - Nov 30, 2025' matching HTML"""
             return f"{start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
         
         # Filter milestones by month
         last_ms = [m for m in milestones 
                    if is_in_range(get_ms_attr(m, 'target_date'), last_month_start, last_month_end)]
         this_ms = [m for m in milestones 
-                   if is_in_range(get_ms_attr(m, 'target_date'), this_month_start, next_month_start - timedelta(days=1))]
+                   if is_in_range(get_ms_attr(m, 'target_date'), this_month_start, this_month_end)]
         next_ms = [m for m in milestones 
                    if is_in_range(get_ms_attr(m, 'target_date'), next_month_start, next_month_end)]
         
-        # Column layout - 3 columns
-        column_width = Inches(4.1)
-        column_gap = Inches(0.15)
-        start_left = Inches(0.3)
-        header_top = Inches(0.8)
+        # ============================================================
+        # COLUMN LAYOUT - Matches HTML .columns grid
+        # 3 equal columns with 20px gap (scaled to inches)
+        # ============================================================
+        slide_width = 13.333  # Standard widescreen width in inches
+        margin = 0.4
+        gap = 0.2  # 20px gap scaled
+        usable_width = slide_width - (2 * margin) - (2 * gap)
+        column_width = usable_width / 3
+        header_top = Inches(1.0)
         
-        # Header bar colors matching preview
-        header_colors = [
-            RGBColor(0xEA, 0x58, 0x0C),  # Orange for Last Month
-            RGBColor(0x16, 0xA3, 0x4A),  # Green for This Month  
-            RGBColor(0xF5, 0x9E, 0x0B),  # Yellow/Amber for Next Month
+        # ============================================================
+        # HEADER COLORS - Matches HTML exactly
+        # .column-header.last: #6B7280 (gray)
+        # .column-header.this: #2563EB (blue)  
+        # .column-header.next: #F59E0B (amber), text #1f2937 (dark)
+        # ============================================================
+        month_config = [
+            {
+                'icon': '📅',
+                'title': 'Last Month (Completed)',
+                'date_range': format_date_range(last_month_start, last_month_end),
+                'milestones': last_ms,
+                'header_bg': RGBColor(0x6B, 0x72, 0x80),  # #6B7280 gray
+                'header_text': RGBColor(0xFF, 0xFF, 0xFF),  # white
+            },
+            {
+                'icon': '📍',
+                'title': 'This Month (In Progress)',
+                'date_range': format_date_range(this_month_start, this_month_end),
+                'milestones': this_ms,
+                'header_bg': RGBColor(0x25, 0x63, 0xEB),  # #2563EB blue
+                'header_text': RGBColor(0xFF, 0xFF, 0xFF),  # white
+            },
+            {
+                'icon': '📌',
+                'title': 'Next Month (Planned)',
+                'date_range': format_date_range(next_month_start, next_month_end),
+                'milestones': next_ms,
+                'header_bg': RGBColor(0xF5, 0x9E, 0x0B),  # #F59E0B amber
+                'header_text': RGBColor(0x1F, 0x29, 0x37),  # #1f2937 dark
+            },
         ]
         
-        month_data = [
-            ("Last Month (Completed)", format_range(last_month_start, last_month_end), last_ms, header_colors[0]),
-            ("This Month (In Progress)", format_range(this_month_start, next_month_start - timedelta(days=1)), this_ms, header_colors[1]),
-            ("Next Month (Planned)", format_range(next_month_start, next_month_end), next_ms, header_colors[2]),
-        ]
-        
-        for col_idx, (col_title, date_range, ms_list, header_color) in enumerate(month_data):
-            left = start_left + (column_width + column_gap) * col_idx
+        for col_idx, config in enumerate(month_config):
+            left = Inches(margin + col_idx * (column_width + gap))
+            col_w = Inches(column_width)
             
-            # Colored header bar
-            header_bar = slide.shapes.add_shape(1, left, header_top, column_width, Inches(0.35))
+            # ============================================================
+            # COLUMN HEADER - Matches HTML .column-header
+            # padding: 14px 16px, font-size: 18px, font-weight: bold
+            # ============================================================
+            header_height = Inches(0.55)  # Room for title + date range
+            header_bar = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, left, header_top, col_w, header_height
+            )
             header_bar.fill.solid()
-            header_bar.fill.fore_color.rgb = header_color
+            header_bar.fill.fore_color.rgb = config['header_bg']
             header_bar.line.fill.background()
+            # Round corners (8px border-radius scaled)
+            header_bar.adjustments[0] = 0.05
             
-            # Header text
+            # Header title: icon + title text
+            # font-size: 18px = ~13.5pt scaled for PPT
             header_tf = header_bar.text_frame
-            header_tf.paragraphs[0].text = f"📍 {col_title}"
-            header_tf.paragraphs[0].font.size = Pt(10)
-            header_tf.paragraphs[0].font.bold = True
-            header_tf.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            header_tf.margin_left = Inches(0.1)
-            header_tf.margin_top = Inches(0.05)
+            header_tf.word_wrap = True
+            header_tf.margin_left = Inches(0.12)
+            header_tf.margin_top = Inches(0.08)
+            header_tf.margin_right = Inches(0.08)
+            header_tf.margin_bottom = Inches(0.04)
             
-            # Date range subtitle
-            date_box = slide.shapes.add_textbox(left, header_top + Inches(0.22), column_width, Inches(0.15))
-            date_tf = date_box.text_frame
-            date_tf.paragraphs[0].text = date_range
-            date_tf.paragraphs[0].font.size = Pt(7)
-            date_tf.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
-            date_tf.margin_left = Inches(0.1)
+            p1 = header_tf.paragraphs[0]
+            p1.text = f"{config['icon']} {config['title']}"
+            p1.font.size = Pt(12)  # 18px scaled
+            p1.font.bold = True
+            p1.font.color.rgb = config['header_text']
             
-            # Table below header
-            table_top = header_top + Inches(0.4)
+            # Date range subtitle: font-size: 14px, opacity: 0.9
+            p2 = header_tf.add_paragraph()
+            p2.text = config['date_range']
+            p2.font.size = Pt(9)  # 14px scaled
+            p2.font.bold = False
+            p2.font.color.rgb = config['header_text']
+            p2.space_before = Pt(2)
+            
+            # ============================================================
+            # TABLE - Matches HTML table styling
+            # ============================================================
+            table_top = header_top + header_height + Inches(0.08)
+            ms_list = config['milestones']
             max_rows = min(len(ms_list), 8) if ms_list else 1
-            num_rows = max_rows + 1  # +1 for header
+            num_rows = max_rows + 1  # +1 for header row
+            row_height = Inches(0.32)  # padding: 10px 8px
             
             table_shape = slide.shapes.add_table(
-                num_rows, 4, left, table_top, column_width, Inches(0.28 * num_rows)
+                num_rows, 4, left, table_top, col_w, row_height * num_rows
             )
             table = table_shape.table
             
-            # Column widths: Milestone, Date, Status, Resources
-            table.columns[0].width = Inches(1.6)
-            table.columns[1].width = Inches(0.6)
-            table.columns[2].width = Inches(0.7)
-            table.columns[3].width = Inches(1.0)
+            # Column widths proportional to HTML
+            # Milestone (40%), Date (15%), Status (20%), Resources (25%)
+            col_w_val = column_width
+            table.columns[0].width = Inches(col_w_val * 0.40)
+            table.columns[1].width = Inches(col_w_val * 0.15)
+            table.columns[2].width = Inches(col_w_val * 0.20)
+            table.columns[3].width = Inches(col_w_val * 0.25)
             
-            # Table header row
+            # ============================================================
+            # TABLE HEADER ROW - Matches HTML th styling
+            # background: #f3f4f6, font-size: 15px, font-weight: bold
+            # padding: 10px 8px, border-bottom: 1px #e5e7eb
+            # ============================================================
             headers = ["Milestone", "Date", "Status", "Resources"]
             for i, hdr in enumerate(headers):
                 cell = table.cell(0, i)
                 cell.text = hdr
                 cell.fill.solid()
-                cell.fill.fore_color.rgb = RGBColor(0xF3, 0xF4, 0xF6)
+                cell.fill.fore_color.rgb = RGBColor(0xF3, 0xF4, 0xF6)  # #f3f4f6
+                
                 para = cell.text_frame.paragraphs[0]
-                para.font.size = Pt(8)
+                para.font.size = Pt(9)  # 15px scaled
                 para.font.bold = True
-                para.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+                para.font.color.rgb = RGBColor(0x37, 0x41, 0x51)  # Dark gray
                 cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                cell.text_frame.margin_left = Inches(0.05)
+                cell.text_frame.margin_right = Inches(0.05)
             
-            # Status colors
+            # ============================================================
+            # STATUS COLORS - Matches HTML exactly
+            # .status-completed: #059669, bold
+            # .status-in-progress: #2563eb, bold
+            # .status-not-started: #6B7280, normal
+            # ============================================================
             status_colors = {
-                'COMPLETED': RGBColor(0x16, 0xA3, 0x4A),
-                'IN_PROGRESS': RGBColor(0x3B, 0x82, 0xF6),
-                'NOT_STARTED': RGBColor(0x6B, 0x72, 0x80),
+                'COMPLETED': (RGBColor(0x05, 0x96, 0x69), True),   # #059669, bold
+                'IN_PROGRESS': (RGBColor(0x25, 0x63, 0xEB), True),  # #2563eb, bold
+                'NOT_STARTED': (RGBColor(0x6B, 0x72, 0x80), False), # #6B7280, normal
             }
             
             if not ms_list:
-                # Empty row
+                # Empty state - matches HTML .empty
                 cell = table.cell(1, 0)
+                cell.merge(table.cell(1, 3))
                 cell.text = "No milestones"
-                cell.text_frame.paragraphs[0].font.size = Pt(8)
-                cell.text_frame.paragraphs[0].font.italic = True
-                cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(0x9C, 0xA3, 0xAF)
+                para = cell.text_frame.paragraphs[0]
+                para.font.size = Pt(9)  # 14px scaled
+                para.font.italic = True
+                para.font.color.rgb = RGBColor(0x9C, 0xA3, 0xAF)  # #9ca3af
+                para.alignment = PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
             else:
-                # Data rows
+                # ============================================================
+                # DATA ROWS - Matches HTML td styling
+                # padding: 10px 8px, font-size: 16px, line-height: 1.4
+                # td.name: font-weight: 500
+                # td.date: font-size: 15px, color: #666
+                # td.resource: background: #fffef0, font-style: italic, color: #666
+                # ============================================================
                 for row_idx, ms in enumerate(ms_list[:8], start=1):
                     name = str(get_ms_attr(ms, 'name', 'Untitled'))
                     target = str(get_ms_attr(ms, 'target_date', ''))
-                    status = str(get_ms_attr(ms, 'status', 'NOT_STARTED'))
+                    status = str(get_ms_attr(ms, 'status', 'NOT_STARTED')).upper()
                     resources = get_ms_attr(ms, 'resources', '')
                     
-                    # Format date as MM-DD
-                    try:
-                        target_short = target[-5:] if len(target) >= 5 else target
-                    except:
-                        target_short = target
+                    # Truncate name to ~35 chars for fit
+                    name_display = name[:35] + ('...' if len(name) > 35 else '')
                     
-                    row_data = [
-                        name[:22] + ('...' if len(name) > 22 else ''),
-                        target_short,
-                        status.replace('_', ' ').title()[:10],
-                        str(resources)[:12] if resources else 'Resource'
-                    ]
+                    # Format date - keep full date for clarity
+                    date_display = target
                     
-                    for cell_idx, value in enumerate(row_data):
-                        cell = table.cell(row_idx, cell_idx)
-                        cell.text = str(value)
-                        para = cell.text_frame.paragraphs[0]
-                        para.font.size = Pt(7)
-                        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-                        
-                        # Color status column
-                        if cell_idx == 2:
-                            color = status_colors.get(status, status_colors['NOT_STARTED'])
-                            para.font.color.rgb = color
-                            para.font.bold = True
-                        
-                        # Resources column - editable highlight
-                        if cell_idx == 3:
-                            cell.fill.solid()
-                            cell.fill.fore_color.rgb = RGBColor(0xFE, 0xF9, 0xC3)  # Light yellow
-                            para.font.color.rgb = RGBColor(0x71, 0x71, 0x71)
-                        
-                        # Alternate row colors
-                        elif row_idx % 2 == 0 and cell_idx != 3:
-                            cell.fill.solid()
-                            cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+                    # Status display text
+                    status_display = status.replace('_', ' ').title()
+                    
+                    # Resources - show actual or placeholder
+                    resource_display = str(resources) if resources else 'Resource'
+                    
+                    # --- Milestone Name Cell ---
+                    cell = table.cell(row_idx, 0)
+                    cell.text = name_display
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(8)
+                    para.font.bold = False  # font-weight: 500 = medium
+                    para.font.color.rgb = RGBColor(0x1F, 0x29, 0x37)  # #1f2937
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    cell.text_frame.margin_left = Inches(0.05)
+                    cell.text_frame.word_wrap = True
+                    
+                    # --- Date Cell ---
+                    cell = table.cell(row_idx, 1)
+                    cell.text = date_display
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(8)
+                    para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)  # #666
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    
+                    # --- Status Cell ---
+                    cell = table.cell(row_idx, 2)
+                    cell.text = status_display
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(8)
+                    color, is_bold = status_colors.get(status, status_colors['NOT_STARTED'])
+                    para.font.color.rgb = color
+                    para.font.bold = is_bold
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    
+                    # --- Resources Cell (EDITABLE) ---
+                    # background: #fffef0, font-style: italic, color: #666
+                    cell = table.cell(row_idx, 3)
+                    cell.text = resource_display
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # #fffef0
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(8)
+                    para.font.italic = True
+                    para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)  # #666
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    
+                    # Alternate row backgrounds (subtle)
+                    if row_idx % 2 == 0:
+                        for ci in range(3):  # Don't override resources column
+                            c = table.cell(row_idx, ci)
+                            if ci != 3:
+                                c.fill.solid()
+                                c.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
         
-        # Add note about editable Resources
-        note_box = slide.shapes.add_textbox(Inches(0.3), Inches(6.3), Inches(6), Inches(0.25))
-        note_tf = note_box.text_frame
-        note_tf.paragraphs[0].text = "ℹ️ Resources column (yellow) is editable in PowerPoint."
-        note_tf.paragraphs[0].font.size = Pt(8)
-        note_tf.paragraphs[0].font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        # ============================================================
+        # INFO BOX - Matches HTML .info-box
+        # background: #e0f2fe, font-size: 12px, color: #0369a1
+        # ============================================================
+        info_left = Inches(margin)
+        info_top = Inches(6.8)
+        info_width = Inches(slide_width - 2 * margin)
+        info_height = Inches(0.35)
+        
+        info_box = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE, info_left, info_top, info_width, info_height
+        )
+        info_box.fill.solid()
+        info_box.fill.fore_color.rgb = RGBColor(0xE0, 0xF2, 0xFE)  # #e0f2fe
+        info_box.line.fill.background()
+        info_box.adjustments[0] = 0.1
+        
+        info_tf = info_box.text_frame
+        info_tf.margin_left = Inches(0.12)
+        info_tf.margin_top = Inches(0.08)
+        p = info_tf.paragraphs[0]
+        p.text = "ℹ️ Resources column (yellow) is editable in PowerPoint."
+        p.font.size = Pt(9)
+        p.font.color.rgb = RGBColor(0x03, 0x69, 0xA1)  # #0369a1
 
     def create_changes_table_slides(
         self,

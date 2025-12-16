@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.300"  # Fix: Remove redundant Path import causing UnboundLocalError
+BUILD_VERSION = "1.0.301"  # Milestone tables: exact HTML preview styling match (gray/blue/amber headers)
 
 
 # Setup logging

@@ -352,40 +352,12 @@ async def export_to_powerpoint(
             '.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
         clean_name = re.sub(r'-\d+$', '', clean_name).strip()
         
-        # Build slides data - use native tables for risks/milestones
+        # Build slides data - native tables for milestones/risks/changes (editable)
         slides_data = []
         
         for idx, (view, title) in enumerate(zip(expanded_views, generated_titles)):
-            if '/risks' in view:
-                # Load risk data and create native table slide
-                logger.info(f"📊 Creating native table for risks")
-                risks = risk_repo.load_risks(clean_name) or []
-                
-                # Handle pagination for risks
-                page = 1
-                per_page = 3
-                if '?page=' in view:
-                    try:
-                        page = int(view.split('page=')[1].split('&')[0])
-                    except:
-                        pass
-                
-                total_risks = len(risks)
-                total_pages = (total_risks + per_page - 1) // per_page
-                start_idx = (page - 1) * per_page
-                end_idx = min(start_idx + per_page, total_risks)
-                page_risks = risks[start_idx:end_idx]
-                
-                slides_data.append({
-                    'type': 'risks',
-                    'data': page_risks,
-                    'title': f"Risk Register: {project_name}",
-                    'page_num': page,
-                    'total_pages': total_pages
-                })
-                
-            elif '/milestones' in view:
-                # Load milestone data and create native table slide
+            # Milestones: native editable table
+            if '/milestones' in view:
                 logger.info(f"📊 Creating native table for milestones")
                 from repositories.project_repository import ProjectRepository
                 import os
@@ -420,15 +392,45 @@ async def export_to_powerpoint(
                 logger.info(f"📊 Passing {len(ms_list)} milestones to table builder")
                 slides_data.append({
                     'type': 'milestones',
-                    'data': ms_list,  # Pass ALL milestones, builder filters by month
+                    'data': ms_list,
                     'title': f"Milestones: {project_name}"
                 })
+            
+            # Risks: native editable table
+            elif '/risks' in view:
+                logger.info(f"📊 Creating native table for risks")
+                risks = risk_repo.load_risks(clean_name) or []
                 
+                # Handle pagination for risks
+                page = 1
+                per_page = 3
+                if '?page=' in view:
+                    try:
+                        page = int(view.split('page=')[1].split('&')[0])
+                    except:
+                        pass
+                
+                total_risks = len(risks)
+                total_pages = (total_risks + per_page - 1) // per_page
+                start_idx = (page - 1) * per_page
+                end_idx = min(start_idx + per_page, total_risks)
+                page_risks = risks[start_idx:end_idx]
+                
+                slides_data.append({
+                    'type': 'risks',
+                    'data': page_risks,
+                    'title': f"Risk Register: {project_name}",
+                    'page_num': page,
+                    'total_pages': total_pages
+                })
+                
+            # Changes: native editable table
             elif '/changes' in view:
-                # Load changes data and create native table slides (auto-paginates)
                 logger.info(f"📊 Creating native table for schedule changes")
                 from repositories.project_repository import ProjectRepository
-                repo = ProjectRepository(BASE_DIR / "mock_data")
+                import os
+                data_storage = os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data"))
+                repo = ProjectRepository(Path(data_storage))
                 projects = repo.load_all_projects()
                 
                 changes = []
@@ -458,7 +460,7 @@ async def export_to_powerpoint(
                         'type': 'changes',
                         'data': change_list,
                         'title': f"Schedule Changes: {project_name}",
-                        'rows_per_slide': 6  # Auto-paginate with 6 rows per slide
+                        'rows_per_slide': 6
                     })
                 
             else:
