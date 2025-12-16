@@ -441,7 +441,7 @@ async def export_to_powerpoint(
                         break
                 
                 total_changes = len(changes) if changes else 0
-                changes_per_page = 6
+                changes_per_page = 10
                 
                 if total_changes > 0:
                     # Calculate pagination

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.309"  # Fix changes table preview: add Request param, match by project_code
+BUILD_VERSION = "1.0.310"  # Changes: increased text sizes (18px) and pagination to 10 items per page
 
 
 # Setup logging

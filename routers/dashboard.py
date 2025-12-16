@@ -554,7 +554,7 @@ async def changes_table_preview(
     request: Request,
     program_name: str,
     page: int = 1,
-    per_page: int = 6
+    per_page: int = 10
 ):
     """
     Table-based changes preview for canvas/PowerPoint export.
@@ -566,7 +566,7 @@ async def changes_table_preview(
         request: FastAPI Request object
         program_name: The program/project name
         page: Page number (1-indexed)
-        per_page: Number of changes per page (default 6)
+        per_page: Number of changes per page (default 10)
     """
     import re
     
