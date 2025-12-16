@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.294"  # PowerPoint export uses card layout matching preview (risks + milestones)
+BUILD_VERSION = "1.0.295"  # Milestone PowerPoint export uses tables with colored headers matching preview
 
 
 # Setup logging
