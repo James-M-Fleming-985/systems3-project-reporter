@@ -343,8 +343,8 @@ function updatePreviewCanvas() {
         slidePreview.dataset.index = index;
         
         slidePreview.innerHTML = `
-            <div class="w-64">
-                <div class="slide-preview-card aspect-[4/3] bg-gradient-to-br from-blue-100 to-blue-50 rounded mb-2 flex items-center justify-center relative overflow-hidden cursor-pointer hover:opacity-80">
+            <div class="w-48">
+                <div class="slide-preview-card aspect-video bg-gradient-to-br from-blue-100 to-blue-50 rounded mb-2 flex items-center justify-center relative overflow-hidden cursor-pointer hover:opacity-80">
                     <div class="text-4xl opacity-30">${title.split(' ')[0]}</div>
                     <div class="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded font-bold">
                         Slide ${index + 2}

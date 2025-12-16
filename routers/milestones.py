@@ -564,14 +564,14 @@ color: #666; }}</style>
         }}
         .slide-title {{
             color: #7F7F7F;
-            font-size: 28px;
-            margin-bottom: 20px;
+            font-size: 32px;
+            margin-bottom: 24px;
             font-weight: normal;
         }}
         .columns {{
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 20px;
         }}
         .column {{
             border: 1px solid #e5e7eb;
@@ -579,9 +579,9 @@ color: #666; }}</style>
             overflow: hidden;
         }}
         .column-header {{
-            padding: 12px 14px;
+            padding: 14px 16px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 18px;
             color: white;
         }}
         .column-header.last {{ background: #6B7280; }}
@@ -590,26 +590,27 @@ color: #666; }}</style>
         .column-header small {{
             display: block;
             font-weight: normal;
-            font-size: 12px;
+            font-size: 14px;
             opacity: 0.9;
         }}
-        .column-body {{ padding: 10px; }}
-        table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
+        .column-body {{ padding: 12px; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 16px; }}
         th {{ 
             background: #f3f4f6; 
-            padding: 8px 6px; 
+            padding: 10px 8px; 
             text-align: left;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             border-bottom: 1px solid #e5e7eb;
         }}
         td {{ 
-            padding: 7px 6px; 
+            padding: 10px 8px; 
             border-bottom: 1px solid #f3f4f6;
             vertical-align: top;
+            line-height: 1.4;
         }}
         td.name {{ font-weight: 500; }}
-        td.date {{ font-size: 13px; color: #666; }}
+        td.date {{ font-size: 15px; color: #666; }}
         td.resource {{ 
             background: #fffef0; 
             font-style: italic;
