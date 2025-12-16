@@ -357,7 +357,7 @@ async def export_to_powerpoint(
         slides_data = []
         
         for idx, (view, title) in enumerate(zip(expanded_views, generated_titles)):
-            if '/risks' in view and '/print' not in view:
+            if '/risks' in view:
                 # Load risk data and create native table slide
                 logger.info(f"📊 Creating native table for risks")
                 risks = risk_repo.load_risks(clean_name) or []
@@ -385,7 +385,7 @@ async def export_to_powerpoint(
                     'total_pages': total_pages
                 })
                 
-            elif '/milestones' in view and '/print' not in view:
+            elif '/milestones' in view:
                 # Load milestone data and create native table slide
                 logger.info(f"📊 Creating native table for milestones")
                 from repositories.project_repository import ProjectRepository

@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.297"  # Fix: Skip non-project YAML files by checking data structure
+BUILD_VERSION = "1.0.298"  # Fix: Use native tables for risks/milestones including /print URLs
 
 
 # Setup logging
