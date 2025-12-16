@@ -1028,39 +1028,39 @@ async def risks_table_preview(
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
-            padding: 30px 40px;
+            padding: 20px 30px;
             min-height: 100vh;
         }}
         .slide-title {{
             color: #7F7F7F;
-            font-size: 36px;
-            margin-bottom: 28px;
+            font-size: 32px;
+            margin-bottom: 24px;
             font-weight: normal;
         }}
         table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 18px;
+            font-size: 16px;
+            table-layout: fixed;
         }}
         th {{
             background: #1E40AF;
             color: white;
-            padding: 16px 14px;
-            text-align: center;
+            padding: 12px 10px;
+            text-align: left;
             font-weight: bold;
-            font-size: 17px;
+            font-size: 15px;
+            white-space: nowrap;
         }}
-        th:nth-child(2) {{ text-align: left; }}
         td {{
-            padding: 14px;
+            padding: 12px 10px;
             border-bottom: 1px solid #e5e7eb;
-            text-align: center;
-            vertical-align: middle;
+            text-align: left;
+            vertical-align: top;
             line-height: 1.4;
+            word-wrap: break-word;
         }}
-        td:nth-child(2) {{ text-align: left; }}
         tr:nth-child(even) {{ background: #F9FAFB; }}
-        tr:hover {{ background: #f0f4ff; }}
         .severity-critical {{ color: #7C3AED; font-weight: bold; }}
         .severity-high {{ color: #DC2626; font-weight: bold; }}
         .severity-medium {{ color: #F59E0B; font-weight: bold; }}
@@ -1071,16 +1071,15 @@ async def risks_table_preview(
             color: #666;
         }}
         .mitigation {{
-            text-align: left;
-            font-size: 16px;
+            font-size: 15px;
             color: #374151;
         }}
         .info-box {{
-            margin-top: 20px;
-            padding: 12px 16px;
+            margin-top: 16px;
+            padding: 10px 14px;
             background: #e0f2fe;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 12px;
             color: #0369a1;
         }}
     </style>
@@ -1090,13 +1089,13 @@ async def risks_table_preview(
     <table>
         <thead>
             <tr>
-                <th style="width: 5%">ID</th>
-                <th style="width: 22%">Title</th>
-                <th style="width: 25%">Mitigation</th>
-                <th style="width: 7%">Severity</th>
-                <th style="width: 8%">Status</th>
-                <th style="width: 12%">Owner</th>
-                <th style="width: 6%">L/I</th>
+                <th style="width: 7%">ID</th>
+                <th style="width: 20%">Title</th>
+                <th style="width: 30%">Mitigation</th>
+                <th style="width: 9%">Severity</th>
+                <th style="width: 10%">Status</th>
+                <th style="width: 14%">Owner</th>
+                <th style="width: 10%">L/I</th>
             </tr>
         </thead>
         <tbody>
@@ -1105,11 +1104,11 @@ async def risks_table_preview(
     for risk in page_risks:
         risk_id = risk.get('id', 'N/A')
         risk_title = risk.get('title', 'Untitled')
-        if len(risk_title) > 40:
-            risk_title = risk_title[:40] + '...'
+        # No truncation - allow text to wrap to multiple lines
         mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
-        if len(str(mitigation)) > 60:
-            mitigation = str(mitigation)[:60] + '...'
+        if isinstance(mitigation, list):
+            mitigation = '; '.join(mitigation) if mitigation else ''
+        # No truncation - allow full text with wrapping
         severity = risk.get('severity_normalized', 'medium').lower()
         status = risk.get('status', 'N/A')
         owner = risk.get('owner', 'Owner A')
