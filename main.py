@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.296"  # Fix: Skip _metrics.yaml files when loading projects
+BUILD_VERSION = "1.0.297"  # Fix: Skip non-project YAML files by checking data structure
 
 
 # Setup logging

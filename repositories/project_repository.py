@@ -138,6 +138,17 @@ class ProjectRepository:
                 with open(yaml_file, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
                     
+                    # Skip if this doesn't look like a project file
+                    # (must have project_code or project_name, not just metrics)
+                    if not data or not isinstance(data, dict):
+                        continue
+                    if 'metrics' in data and 'project_code' not in data:
+                        # This is a metrics file, not a project
+                        continue
+                    if 'project_code' not in data and 'project_name' not in data:
+                        # Missing required project identifiers
+                        continue
+                    
                     # PRIVACY: Anonymize resource names at load time
                     if 'milestones' in data:
                         for milestone in data['milestones']:
