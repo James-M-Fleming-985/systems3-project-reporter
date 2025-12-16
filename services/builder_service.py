@@ -625,20 +625,21 @@ class PowerPointBuilderService:
         page_num: int = 1,
         total_pages: int = 1
     ):
-        """Create a slide with risks rendered as a native PowerPoint table.
+        """Create a slide with risks in card format matching the preview.
         
-        This makes all text editable including Owner fields.
-        Matches the preview format with Mitigation column.
+        Each risk is a card with:
+        - Title bar with ID and title
+        - Meta row: Severity, Status, Owner, L, I
+        - Body: Description and Mitigation
         
         Args:
-            risks: List of risk dictionaries with id, title, severity, 
-                   status, owner, likelihood, impact, mitigation
+            risks: List of risk dictionaries
             title: Slide title
-            page_num: Current page number for multi-page risks
-            total_pages: Total number of risk pages
+            page_num: Current page number
+            total_pages: Total pages
         """
-        from pptx.enum.table import WD_TABLE_ALIGNMENT
         from pptx.enum.text import MSO_ANCHOR
+        from pptx.dml.color import RGBColor
         
         # Add slide
         layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
@@ -647,110 +648,155 @@ class PowerPointBuilderService:
         
         # Set title
         if slide.shapes.title:
-            page_indicator = f" ({page_num}/{total_pages})" if total_pages > 1 else ""
+            page_indicator = f" (Page {page_num}/{total_pages})" if total_pages > 1 else ""
             slide.shapes.title.text = f"{title}{page_indicator}"
             if slide.shapes.title.has_text_frame:
                 for para in slide.shapes.title.text_frame.paragraphs:
                     for run in para.runs:
-                        run.font.size = Pt(28)
-                        run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+                        run.font.size = Pt(24)
+                        run.font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)
         
-        # Table dimensions
-        left = Inches(0.5)
-        top = Inches(1.3)
-        width = Inches(12.5)
+        # Card dimensions - fit 3 cards per slide
+        card_width = Inches(12.0)
+        card_height = Inches(1.9)
+        card_left = Inches(0.5)
+        start_top = Inches(1.2)
+        card_gap = Inches(0.15)
         
-        # Calculate row height based on number of risks
-        num_risks = len(risks)
-        available_height = 5.5  # inches for content
-        row_height = min(0.8, available_height / (num_risks + 1))
-        
-        # Create table: header + data rows
-        # Columns: ID, Title, Mitigation, Severity, Status, Owner, L/I
-        cols = 7
-        rows = num_risks + 1  # +1 for header
-        
-        table = slide.shapes.add_table(
-            rows, cols, left, top, width, Inches(row_height * rows)
-        ).table
-        
-        # Set column widths to match preview percentages
-        # ID=5%, Title=22%, Mitigation=25%, Severity=7%, Status=8%, Owner=12%, L/I=6%
-        col_widths = [0.6, 2.8, 3.1, 0.9, 1.0, 1.5, 0.8]  # ~12.7 inches total
-        for i, w in enumerate(col_widths):
-            table.columns[i].width = Inches(w)
-        
-        # Header row styling
-        headers = ["ID", "Title", "Mitigation", "Severity", "Status", "Owner", "L/I"]
-        header_color = RGBColor(0x1E, 0x40, 0xAF)  # Blue
-        
-        for i, header in enumerate(headers):
-            cell = table.cell(0, i)
-            cell.text = header
-            cell.fill.solid()
-            cell.fill.fore_color.rgb = header_color
-            para = cell.text_frame.paragraphs[0]
-            para.font.bold = True
-            para.font.size = Pt(10)
-            para.font.color.rgb = RGBColor(255, 255, 255)
-            para.alignment = PP_ALIGN.CENTER
-            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-        
-        # Severity color mapping
         severity_colors = {
-            'critical': RGBColor(0x7C, 0x3A, 0xED),  # Purple
-            'high': RGBColor(0xDC, 0x26, 0x26),      # Red
-            'medium': RGBColor(0xF5, 0x9E, 0x0B),    # Yellow/Orange
-            'low': RGBColor(0x6B, 0x72, 0x80),       # Gray
+            'critical': RGBColor(0x7C, 0x3A, 0xED),
+            'high': RGBColor(0xDC, 0x26, 0x26),
+            'medium': RGBColor(0xF5, 0x9E, 0x0B),
+            'low': RGBColor(0x6B, 0x72, 0x80),
         }
         
-        # Data rows
-        for row_idx, risk in enumerate(risks, start=1):
+        for idx, risk in enumerate(risks[:3]):  # Max 3 per slide
+            card_top = start_top + (card_height + card_gap) * idx
+            
             risk_id = risk.get('id', 'N/A')
-            risk_title = risk.get('title', 'Untitled')
-            mitigation = risk.get('mitigation', '') or risk.get('mitigations', '') or ''
+            risk_title = risk.get('title', 'Untitled Risk')
             severity = risk.get('severity_normalized', 'medium').lower()
             status = risk.get('status', 'N/A')
-            owner = risk.get('owner', 'Owner A')
+            owner = risk.get('owner', '')
             likelihood = risk.get('likelihood', '?')
             impact = risk.get('impact', '?')
+            description = risk.get('description', 'No description provided.')
+            mitigations = risk.get('mitigations', []) or risk.get('mitigation', '')
+            if isinstance(mitigations, list):
+                miti_text = '; '.join(mitigations) if mitigations else 'None specified'
+            else:
+                miti_text = str(mitigations) if mitigations else 'None specified'
             
-            row_data = [
-                risk_id,
-                risk_title[:40] + '...' if len(str(risk_title)) > 40 else risk_title,
-                str(mitigation)[:50] + '...' if len(str(mitigation)) > 50 else mitigation,
-                severity.upper(),
-                status,
-                owner,
-                f"L:{likelihood} I:{impact}"
+            # Title bar (blue gradient background)
+            title_shape = slide.shapes.add_shape(
+                1, card_left, card_top, card_width, Inches(0.4)  # 1 = rectangle
+            )
+            title_shape.fill.solid()
+            title_shape.fill.fore_color.rgb = RGBColor(0x1E, 0x40, 0xAF)
+            title_shape.line.fill.background()
+            
+            title_frame = title_shape.text_frame
+            title_frame.paragraphs[0].text = f"{risk_id}: {risk_title}"
+            title_frame.paragraphs[0].font.size = Pt(12)
+            title_frame.paragraphs[0].font.bold = True
+            title_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            title_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
+            title_frame.margin_left = Inches(0.1)
+            title_frame.margin_top = Inches(0.05)
+            
+            # Meta row (gray background)
+            meta_top = card_top + Inches(0.4)
+            meta_shape = slide.shapes.add_shape(
+                1, card_left, meta_top, card_width, Inches(0.35)
+            )
+            meta_shape.fill.solid()
+            meta_shape.fill.fore_color.rgb = RGBColor(0xF3, 0xF4, 0xF6)
+            meta_shape.line.fill.background()
+            
+            # Create meta text boxes for each field
+            meta_items = [
+                ("Severity", severity.upper(), severity_colors.get(severity, severity_colors['medium'])),
+                ("Status", status, RGBColor(0x1F, 0x29, 0x37)),
+                ("Owner", owner or "Owner", RGBColor(0x1F, 0x29, 0x37)),
+                ("Likelihood", f"L: {likelihood}", RGBColor(0x1F, 0x29, 0x37)),
+                ("Impact", f"I: {impact}", RGBColor(0x1F, 0x29, 0x37))
             ]
             
-            for col_idx, value in enumerate(row_data):
-                cell = table.cell(row_idx, col_idx)
-                cell.text = str(value)
-                para = cell.text_frame.paragraphs[0]
-                para.font.size = Pt(9)
-                # Left-align Title, Mitigation, Owner columns
-                para.alignment = PP_ALIGN.LEFT if col_idx in [1, 2, 5] else PP_ALIGN.CENTER
-                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-                cell.text_frame.word_wrap = True
+            item_width = card_width / 5
+            for i, (label, value, color) in enumerate(meta_items):
+                item_left = card_left + item_width * i
+                meta_box = slide.shapes.add_textbox(
+                    item_left, meta_top, item_width, Inches(0.35)
+                )
+                tf = meta_box.text_frame
+                tf.word_wrap = True
+                tf.margin_left = Inches(0.05)
+                tf.margin_top = Inches(0.02)
                 
-                # Color-code severity column
-                if col_idx == 3:  # Severity column
-                    sev_color = severity_colors.get(severity, severity_colors['medium'])
-                    para.font.color.rgb = sev_color
-                    para.font.bold = True
+                # Label
+                p1 = tf.paragraphs[0]
+                p1.text = label
+                p1.font.size = Pt(7)
+                p1.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
                 
-                # Yellow background for Owner column (editable)
-                if col_idx == 5:
-                    cell.fill.solid()
-                    cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # Light yellow
-                    para.font.italic = True
-                    para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-                # Alternate row colors for other columns
-                elif row_idx % 2 == 0:
-                    cell.fill.solid()
-                    cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+                # Value
+                p2 = tf.add_paragraph()
+                p2.text = str(value)[:15]
+                p2.font.size = Pt(9)
+                p2.font.bold = True
+                p2.font.color.rgb = color
+            
+            # Body area (description + mitigation)
+            body_top = meta_top + Inches(0.35)
+            body_height = card_height - Inches(0.75)
+            
+            # Description section (left half)
+            desc_box = slide.shapes.add_textbox(
+                card_left, body_top, card_width / 2 - Inches(0.1), body_height
+            )
+            desc_tf = desc_box.text_frame
+            desc_tf.word_wrap = True
+            desc_tf.margin_left = Inches(0.1)
+            desc_tf.margin_top = Inches(0.05)
+            
+            p = desc_tf.paragraphs[0]
+            p.text = "Description"
+            p.font.size = Pt(9)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0x37, 0x41, 0x51)
+            
+            p2 = desc_tf.add_paragraph()
+            p2.text = str(description)[:200] + ('...' if len(str(description)) > 200 else '')
+            p2.font.size = Pt(8)
+            p2.font.color.rgb = RGBColor(0x4B, 0x55, 0x63)
+            
+            # Mitigation section (right half)
+            miti_box = slide.shapes.add_textbox(
+                card_left + card_width / 2, body_top, card_width / 2 - Inches(0.1), body_height
+            )
+            miti_tf = miti_box.text_frame
+            miti_tf.word_wrap = True
+            miti_tf.margin_left = Inches(0.1)
+            miti_tf.margin_top = Inches(0.05)
+            
+            p = miti_tf.paragraphs[0]
+            p.text = "Mitigation"
+            p.font.size = Pt(9)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0x37, 0x41, 0x51)
+            
+            p2 = miti_tf.add_paragraph()
+            p2.text = str(miti_text)[:200] + ('...' if len(str(miti_text)) > 200 else '')
+            p2.font.size = Pt(8)
+            p2.font.color.rgb = RGBColor(0x4B, 0x55, 0x63)
+            
+            # Card border
+            border = slide.shapes.add_shape(
+                1, card_left, card_top, card_width, card_height
+            )
+            border.fill.background()
+            border.line.color.rgb = RGBColor(0xE5, 0xE7, 0xEB)
+            border.line.width = Pt(1)
     
     def create_milestone_table_slide(
         self,
@@ -758,10 +804,10 @@ class PowerPointBuilderService:
         title: str = "Milestones",
         column_title: str = "This Month"
     ):
-        """Create a slide with milestones in 3-column month layout.
+        """Create a slide with milestones in 3-column card layout.
         
         Matches the preview format with Last Month / This Month / Next Month.
-        This makes all text editable including Resource fields.
+        Each milestone is a card with colored left border.
         
         Args:
             milestones: List of milestone dictionaries with name, target_date,
@@ -783,8 +829,8 @@ class PowerPointBuilderService:
             if slide.shapes.title.has_text_frame:
                 for para in slide.shapes.title.text_frame.paragraphs:
                     for run in para.runs:
-                        run.font.size = Pt(28)
-                        run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+                        run.font.size = Pt(24)
+                        run.font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)
         
         # Calculate date ranges for last/this/next month
         today = datetime.now()
@@ -816,6 +862,9 @@ class PowerPointBuilderService:
             except Exception:
                 return False
         
+        def format_range(start, end):
+            return f"{start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
+        
         # Filter milestones by month
         last_ms = [m for m in milestones 
                    if is_in_range(get_ms_attr(m, 'target_date'), 
@@ -827,117 +876,142 @@ class PowerPointBuilderService:
                    if is_in_range(get_ms_attr(m, 'target_date'), 
                                   next_month_start, next_month_end)]
         
-        # Create 3-column layout using text boxes and tables
+        # Status colors for card borders
+        status_border_colors = {
+            'COMPLETED': RGBColor(0x22, 0xC5, 0x5E),   # Green
+            'IN_PROGRESS': RGBColor(0x3B, 0x82, 0xF6), # Blue
+            'NOT_STARTED': RGBColor(0x6B, 0x72, 0x80), # Gray
+        }
+        status_bg_colors = {
+            'COMPLETED': RGBColor(0xF0, 0xFD, 0xF4),   # Light green
+            'IN_PROGRESS': RGBColor(0xEF, 0xF6, 0xFF), # Light blue
+            'NOT_STARTED': RGBColor(0xF9, 0xFA, 0xFB), # Light gray
+        }
+        
+        # Column layout
         column_width = Inches(4.0)
         column_gap = Inches(0.25)
         start_left = Inches(0.5)
-        top = Inches(1.4)
+        header_top = Inches(1.1)
         
         month_data = [
-            (f"📅 Last Month ({last_month_start.strftime('%b')})", last_ms),
-            (f"📍 This Month ({this_month_start.strftime('%b')})", this_ms),
-            (f"🔜 Next Month ({next_month_start.strftime('%b')})", next_ms)
+            (f"📅 Last Month", format_range(last_month_start, last_month_end), last_ms),
+            (f"📍 This Month", format_range(this_month_start, next_month_start - timedelta(days=1)), this_ms),
+            (f"📌 Next Month", format_range(next_month_start, next_month_end), next_ms)
         ]
         
-        status_colors = {
-            'COMPLETED': RGBColor(0x22, 0xC5, 0x5E),
-            'IN_PROGRESS': RGBColor(0x3B, 0x82, 0xF6),
-            'NOT_STARTED': RGBColor(0x6B, 0x72, 0x80),
-        }
-        
-        for col_idx, (col_title, ms_list) in enumerate(month_data):
+        for col_idx, (col_title, date_range, ms_list) in enumerate(month_data):
             left = start_left + (column_width + column_gap) * col_idx
             
+            # Column background
+            col_bg = slide.shapes.add_shape(
+                1, left, header_top, column_width, Inches(5.5)
+            )
+            col_bg.fill.solid()
+            col_bg.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+            col_bg.line.fill.background()
+            
             # Column header
-            header_box = slide.shapes.add_textbox(left, top, column_width, Inches(0.4))
+            header_box = slide.shapes.add_textbox(left + Inches(0.1), header_top + Inches(0.1), column_width - Inches(0.2), Inches(0.3))
             header_frame = header_box.text_frame
             header_frame.text = col_title
             header_para = header_frame.paragraphs[0]
-            header_para.font.size = Pt(12)
+            header_para.font.size = Pt(14)
             header_para.font.bold = True
             header_para.font.color.rgb = RGBColor(0x1F, 0x29, 0x37)
             
+            # Date range
+            range_box = slide.shapes.add_textbox(left + Inches(0.1), header_top + Inches(0.35), column_width - Inches(0.2), Inches(0.2))
+            range_frame = range_box.text_frame
+            range_frame.text = date_range
+            range_frame.paragraphs[0].font.size = Pt(9)
+            range_frame.paragraphs[0].font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+            
             if not ms_list:
-                # Empty message
                 empty_box = slide.shapes.add_textbox(
-                    left, top + Inches(0.5), column_width, Inches(0.3))
+                    left + Inches(0.1), header_top + Inches(0.7), column_width - Inches(0.2), Inches(0.3))
                 empty_box.text_frame.text = "No milestones"
-                empty_box.text_frame.paragraphs[0].font.size = Pt(9)
+                empty_box.text_frame.paragraphs[0].font.size = Pt(10)
                 empty_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(0x9C, 0xA3, 0xAF)
                 empty_box.text_frame.paragraphs[0].font.italic = True
                 continue
             
-            # Create table for this column
-            max_rows = min(len(ms_list), 6)  # Max 6 per column
-            rows = max_rows + 1  # +1 for header
-            cols = 4  # Milestone, Date, Status, Resources
+            # Create cards for each milestone
+            card_height = Inches(0.7)
+            card_gap = Inches(0.08)
+            cards_top = header_top + Inches(0.65)
             
-            table_shape = slide.shapes.add_table(
-                rows, cols, left, top + Inches(0.45), column_width, Inches(0.35 * rows)
-            )
-            table = table_shape.table
-            
-            # Column widths within the table
-            table.columns[0].width = Inches(1.4)  # Milestone
-            table.columns[1].width = Inches(0.7)  # Date
-            table.columns[2].width = Inches(0.7)  # Status
-            table.columns[3].width = Inches(1.0)  # Resources
-            
-            # Table header
-            table_headers = ["Milestone", "Date", "Status", "Resources"]
-            header_color = RGBColor(0x1E, 0x40, 0xAF)
-            
-            for i, hdr in enumerate(table_headers):
-                cell = table.cell(0, i)
-                cell.text = hdr
-                cell.fill.solid()
-                cell.fill.fore_color.rgb = header_color
-                para = cell.text_frame.paragraphs[0]
-                para.font.bold = True
-                para.font.size = Pt(8)
-                para.font.color.rgb = RGBColor(255, 255, 255)
-                para.alignment = PP_ALIGN.CENTER
-                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-            
-            # Data rows
-            for row_idx, ms in enumerate(ms_list[:6], start=1):
-                name = str(get_ms_attr(ms, 'name', 'Untitled'))[:25]
+            for card_idx, ms in enumerate(ms_list[:7]):  # Max 7 cards per column
+                card_top = cards_top + (card_height + card_gap) * card_idx
+                
+                name = str(get_ms_attr(ms, 'name', 'Untitled'))
                 target = get_ms_attr(ms, 'target_date', 'TBD')
                 status = str(get_ms_attr(ms, 'status', 'NOT_STARTED'))
-                resources = get_ms_attr(ms, 'resources', 'Resource A')
+                resources = get_ms_attr(ms, 'resources', '')
                 
-                row_data = [
-                    name + '...' if len(str(get_ms_attr(ms, 'name', ''))) > 25 else name,
-                    str(target)[-5:] if target else 'TBD',  # Show just MM-DD
-                    status.replace('_', ' ')[:8],
-                    str(resources)[:12]
-                ]
+                border_color = status_border_colors.get(status, status_border_colors['NOT_STARTED'])
+                bg_color = status_bg_colors.get(status, status_bg_colors['NOT_STARTED'])
                 
-                for cell_idx, value in enumerate(row_data):
-                    cell = table.cell(row_idx, cell_idx)
-                    cell.text = str(value)
-                    para = cell.text_frame.paragraphs[0]
-                    para.font.size = Pt(8)
-                    para.alignment = PP_ALIGN.LEFT if cell_idx in [0, 3] else PP_ALIGN.CENTER
-                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-                    cell.text_frame.word_wrap = True
-                    
-                    # Color status
-                    if cell_idx == 2:
-                        color = status_colors.get(status, status_colors['NOT_STARTED'])
-                        para.font.color.rgb = color
-                        para.font.bold = True
-                    
-                    # Yellow background for Resources column (editable)
-                    if cell_idx == 3:
-                        cell.fill.solid()
-                        cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)
-                        para.font.italic = True
-                        para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-                    # Alternate row colors
-                    elif row_idx % 2 == 0:
-                        cell.fill.solid()
-                        cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+                # Card background with left border effect
+                card_bg = slide.shapes.add_shape(
+                    1, left + Inches(0.1), card_top, column_width - Inches(0.2), card_height
+                )
+                card_bg.fill.solid()
+                card_bg.fill.fore_color.rgb = RGBColor(255, 255, 255)
+                card_bg.line.color.rgb = RGBColor(0xE5, 0xE7, 0xEB)
+                card_bg.line.width = Pt(0.5)
+                
+                # Left border accent
+                left_border = slide.shapes.add_shape(
+                    1, left + Inches(0.1), card_top, Inches(0.06), card_height
+                )
+                left_border.fill.solid()
+                left_border.fill.fore_color.rgb = border_color
+                left_border.line.fill.background()
+                
+                # Milestone title
+                title_box = slide.shapes.add_textbox(
+                    left + Inches(0.25), card_top + Inches(0.05), 
+                    column_width - Inches(0.45), Inches(0.25)
+                )
+                tf = title_box.text_frame
+                tf.word_wrap = True
+                tf.paragraphs[0].text = name[:35] + ('...' if len(name) > 35 else '')
+                tf.paragraphs[0].font.size = Pt(9)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = RGBColor(0x1F, 0x29, 0x37)
+                
+                # Target date
+                date_box = slide.shapes.add_textbox(
+                    left + Inches(0.25), card_top + Inches(0.3), 
+                    Inches(1.2), Inches(0.18)
+                )
+                date_tf = date_box.text_frame
+                date_tf.paragraphs[0].text = f"Target: {target}"
+                date_tf.paragraphs[0].font.size = Pt(8)
+                date_tf.paragraphs[0].font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+                
+                # Resources (editable)
+                res_box = slide.shapes.add_textbox(
+                    left + Inches(1.5), card_top + Inches(0.3), 
+                    Inches(2.0), Inches(0.18)
+                )
+                res_tf = res_box.text_frame
+                res_tf.paragraphs[0].text = str(resources)[:25] if resources else "[Resources]"
+                res_tf.paragraphs[0].font.size = Pt(8)
+                res_tf.paragraphs[0].font.italic = True
+                res_tf.paragraphs[0].font.color.rgb = RGBColor(0x4B, 0x55, 0x63)
+                
+                # Status badge
+                status_box = slide.shapes.add_textbox(
+                    left + Inches(0.25), card_top + Inches(0.5), 
+                    Inches(1.5), Inches(0.15)
+                )
+                status_tf = status_box.text_frame
+                status_tf.paragraphs[0].text = status.replace('_', ' ')
+                status_tf.paragraphs[0].font.size = Pt(7)
+                status_tf.paragraphs[0].font.color.rgb = border_color
+                status_tf.paragraphs[0].font.bold = True
 
     def create_changes_table_slides(
         self,
