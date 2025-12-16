@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.287"  # Fix custom metrics - store by clean project name, auto-migrate versioned files
+BUILD_VERSION = "1.0.288"  # Larger fonts in milestone/risk table previews, bigger slide thumbnails
 
 
 # Setup logging

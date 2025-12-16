@@ -564,8 +564,8 @@ color: #666; }}</style>
         }}
         .slide-title {{
             color: #7F7F7F;
-            font-size: 24px;
-            margin-bottom: 15px;
+            font-size: 28px;
+            margin-bottom: 20px;
             font-weight: normal;
         }}
         .columns {{
@@ -579,9 +579,9 @@ color: #666; }}</style>
             overflow: hidden;
         }}
         .column-header {{
-            padding: 10px 12px;
+            padding: 12px 14px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 16px;
             color: white;
         }}
         .column-header.last {{ background: #6B7280; }}
@@ -590,25 +590,26 @@ color: #666; }}</style>
         .column-header small {{
             display: block;
             font-weight: normal;
-            font-size: 10px;
+            font-size: 12px;
             opacity: 0.9;
         }}
-        .column-body {{ padding: 8px; }}
-        table {{ width: 100%; border-collapse: collapse; font-size: 11px; }}
+        .column-body {{ padding: 10px; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
         th {{ 
             background: #f3f4f6; 
-            padding: 6px 4px; 
+            padding: 8px 6px; 
             text-align: left;
-            font-size: 10px;
+            font-size: 13px;
+            font-weight: bold;
             border-bottom: 1px solid #e5e7eb;
         }}
         td {{ 
-            padding: 5px 4px; 
+            padding: 7px 6px; 
             border-bottom: 1px solid #f3f4f6;
             vertical-align: top;
         }}
         td.name {{ font-weight: 500; }}
-        td.date {{ font-size: 10px; color: #666; }}
+        td.date {{ font-size: 13px; color: #666; }}
         td.resource {{ 
             background: #fffef0; 
             font-style: italic;
@@ -619,7 +620,7 @@ color: #666; }}</style>
         .status-not-started {{ color: #6B7280; }}
         .empty {{ 
             color: #9ca3af; 
-            font-size: 12px; 
+            font-size: 14px; 
             font-style: italic;
             padding: 20px;
             text-align: center;
@@ -629,7 +630,7 @@ color: #666; }}</style>
             padding: 10px 14px;
             background: #e0f2fe;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 12px;
             color: #0369a1;
         }}
     </style>

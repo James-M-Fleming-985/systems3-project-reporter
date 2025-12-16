@@ -1033,26 +1033,26 @@ async def risks_table_preview(
         }}
         .slide-title {{
             color: #7F7F7F;
-            font-size: 28px;
-            margin-bottom: 20px;
+            font-size: 32px;
+            margin-bottom: 24px;
             font-weight: normal;
         }}
         table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 16px;
         }}
         th {{
             background: #1E40AF;
             color: white;
-            padding: 12px 10px;
+            padding: 14px 12px;
             text-align: center;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 15px;
         }}
         th:nth-child(2) {{ text-align: left; }}
         td {{
-            padding: 10px;
+            padding: 12px;
             border-bottom: 1px solid #e5e7eb;
             text-align: center;
             vertical-align: middle;
@@ -1071,7 +1071,7 @@ async def risks_table_preview(
         }}
         .mitigation {{
             text-align: left;
-            font-size: 12px;
+            font-size: 14px;
             color: #374151;
         }}
         .info-box {{
@@ -1079,7 +1079,7 @@ async def risks_table_preview(
             padding: 12px 16px;
             background: #e0f2fe;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 14px;
             color: #0369a1;
         }}
     </style>
