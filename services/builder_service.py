@@ -628,10 +628,11 @@ class PowerPointBuilderService:
         """Create a slide with risks rendered as a native PowerPoint table.
         
         This makes all text editable including Owner fields.
+        Matches the preview format with Mitigation column.
         
         Args:
             risks: List of risk dictionaries with id, title, severity, 
-                   status, owner, likelihood, impact
+                   status, owner, likelihood, impact, mitigation
             title: Slide title
             page_num: Current page number for multi-page risks
             total_pages: Total number of risk pages
@@ -665,20 +666,22 @@ class PowerPointBuilderService:
         row_height = min(0.8, available_height / (num_risks + 1))
         
         # Create table: header + data rows
-        cols = 6  # ID, Title, Severity, Status, Owner, L/I
+        # Columns: ID, Title, Mitigation, Severity, Status, Owner, L/I
+        cols = 7
         rows = num_risks + 1  # +1 for header
         
         table = slide.shapes.add_table(
             rows, cols, left, top, width, Inches(row_height * rows)
         ).table
         
-        # Set column widths
-        col_widths = [0.8, 4.5, 1.2, 1.2, 2.0, 0.8]  # inches
+        # Set column widths to match preview percentages
+        # ID=5%, Title=22%, Mitigation=25%, Severity=7%, Status=8%, Owner=12%, L/I=6%
+        col_widths = [0.6, 2.8, 3.1, 0.9, 1.0, 1.5, 0.8]  # ~12.7 inches total
         for i, w in enumerate(col_widths):
             table.columns[i].width = Inches(w)
         
         # Header row styling
-        headers = ["ID", "Title", "Severity", "Status", "Owner", "L/I"]
+        headers = ["ID", "Title", "Mitigation", "Severity", "Status", "Owner", "L/I"]
         header_color = RGBColor(0x1E, 0x40, 0xAF)  # Blue
         
         for i, header in enumerate(headers):
@@ -688,7 +691,7 @@ class PowerPointBuilderService:
             cell.fill.fore_color.rgb = header_color
             para = cell.text_frame.paragraphs[0]
             para.font.bold = True
-            para.font.size = Pt(11)
+            para.font.size = Pt(10)
             para.font.color.rgb = RGBColor(255, 255, 255)
             para.alignment = PP_ALIGN.CENTER
             cell.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -705,15 +708,17 @@ class PowerPointBuilderService:
         for row_idx, risk in enumerate(risks, start=1):
             risk_id = risk.get('id', 'N/A')
             risk_title = risk.get('title', 'Untitled')
+            mitigation = risk.get('mitigation', '') or risk.get('mitigations', '') or ''
             severity = risk.get('severity_normalized', 'medium').lower()
             status = risk.get('status', 'N/A')
-            owner = risk.get('owner', '')
+            owner = risk.get('owner', 'Owner A')
             likelihood = risk.get('likelihood', '?')
             impact = risk.get('impact', '?')
             
             row_data = [
                 risk_id,
-                risk_title[:60] + '...' if len(risk_title) > 60 else risk_title,
+                risk_title[:40] + '...' if len(str(risk_title)) > 40 else risk_title,
+                str(mitigation)[:50] + '...' if len(str(mitigation)) > 50 else mitigation,
                 severity.upper(),
                 status,
                 owner,
@@ -724,18 +729,26 @@ class PowerPointBuilderService:
                 cell = table.cell(row_idx, col_idx)
                 cell.text = str(value)
                 para = cell.text_frame.paragraphs[0]
-                para.font.size = Pt(10)
-                para.alignment = PP_ALIGN.LEFT if col_idx == 1 else PP_ALIGN.CENTER
+                para.font.size = Pt(9)
+                # Left-align Title, Mitigation, Owner columns
+                para.alignment = PP_ALIGN.LEFT if col_idx in [1, 2, 5] else PP_ALIGN.CENTER
                 cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                cell.text_frame.word_wrap = True
                 
                 # Color-code severity column
-                if col_idx == 2:  # Severity column
+                if col_idx == 3:  # Severity column
                     sev_color = severity_colors.get(severity, severity_colors['medium'])
                     para.font.color.rgb = sev_color
                     para.font.bold = True
                 
-                # Alternate row colors
-                if row_idx % 2 == 0:
+                # Yellow background for Owner column (editable)
+                if col_idx == 5:
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # Light yellow
+                    para.font.italic = True
+                    para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+                # Alternate row colors for other columns
+                elif row_idx % 2 == 0:
                     cell.fill.solid()
                     cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
     
@@ -745,8 +758,9 @@ class PowerPointBuilderService:
         title: str = "Milestones",
         column_title: str = "This Month"
     ):
-        """Create a slide with milestones rendered as a native PowerPoint table.
+        """Create a slide with milestones in 3-column month layout.
         
+        Matches the preview format with Last Month / This Month / Next Month.
         This makes all text editable including Resource fields.
         
         Args:
@@ -756,6 +770,7 @@ class PowerPointBuilderService:
             column_title: Column header for the milestones
         """
         from pptx.enum.text import MSO_ANCHOR
+        from datetime import datetime, timedelta
         
         # Add slide
         layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
@@ -771,94 +786,158 @@ class PowerPointBuilderService:
                         run.font.size = Pt(28)
                         run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
         
-        # Table dimensions
-        left = Inches(0.5)
-        top = Inches(1.3)
-        width = Inches(12.5)
+        # Calculate date ranges for last/this/next month
+        today = datetime.now()
+        this_month_start = today.replace(day=1)
+        if today.month == 12:
+            next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+        else:
+            next_month_start = today.replace(month=today.month + 1, day=1)
         
-        # Columns: Name, Target Date, Status, Resources, Progress
-        cols = 5
-        num_ms = min(len(milestones), 12)  # Max 12 per slide
-        rows = num_ms + 1  # +1 for header
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
         
-        row_height = min(0.5, 5.5 / rows)
+        if next_month_start.month == 12:
+            next_next = next_month_start.replace(
+                year=next_month_start.year + 1, month=1, day=1)
+        else:
+            next_next = next_month_start.replace(month=next_month_start.month + 1, day=1)
+        next_month_end = next_next - timedelta(days=1)
         
-        table = slide.shapes.add_table(
-            rows, cols, left, top, width, Inches(row_height * rows)
-        ).table
+        def get_ms_attr(ms, attr, default=''):
+            if hasattr(ms, attr):
+                return getattr(ms, attr, default) or default
+            return ms.get(attr, default) if isinstance(ms, dict) else default
         
-        # Column widths
-        col_widths = [4.5, 1.5, 1.5, 3.0, 2.0]
-        for i, w in enumerate(col_widths):
-            table.columns[i].width = Inches(w)
+        def is_in_range(date_str, start, end):
+            try:
+                d = datetime.strptime(str(date_str), '%Y-%m-%d')
+                return start <= d <= end
+            except Exception:
+                return False
         
-        # Header
-        headers = ["Milestone", "Target Date", "Status", "Resources", "Progress"]
-        header_color = RGBColor(0x1E, 0x40, 0xAF)
+        # Filter milestones by month
+        last_ms = [m for m in milestones 
+                   if is_in_range(get_ms_attr(m, 'target_date'), 
+                                  last_month_start, last_month_end)]
+        this_ms = [m for m in milestones 
+                   if is_in_range(get_ms_attr(m, 'target_date'), 
+                                  this_month_start, next_month_start - timedelta(days=1))]
+        next_ms = [m for m in milestones 
+                   if is_in_range(get_ms_attr(m, 'target_date'), 
+                                  next_month_start, next_month_end)]
         
-        for i, header in enumerate(headers):
-            cell = table.cell(0, i)
-            cell.text = header
-            cell.fill.solid()
-            cell.fill.fore_color.rgb = header_color
-            para = cell.text_frame.paragraphs[0]
-            para.font.bold = True
-            para.font.size = Pt(11)
-            para.font.color.rgb = RGBColor(255, 255, 255)
-            para.alignment = PP_ALIGN.CENTER
-            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+        # Create 3-column layout using text boxes and tables
+        column_width = Inches(4.0)
+        column_gap = Inches(0.25)
+        start_left = Inches(0.5)
+        top = Inches(1.4)
         
-        # Status colors
+        month_data = [
+            (f"📅 Last Month ({last_month_start.strftime('%b')})", last_ms),
+            (f"📍 This Month ({this_month_start.strftime('%b')})", this_ms),
+            (f"🔜 Next Month ({next_month_start.strftime('%b')})", next_ms)
+        ]
+        
         status_colors = {
             'COMPLETED': RGBColor(0x22, 0xC5, 0x5E),
             'IN_PROGRESS': RGBColor(0x3B, 0x82, 0xF6),
             'NOT_STARTED': RGBColor(0x6B, 0x72, 0x80),
         }
         
-        # Data rows
-        for row_idx, ms in enumerate(milestones[:12], start=1):
-            name = ms.get('name', 'Untitled')
-            if hasattr(ms, 'name'):
-                name = ms.name
-            target = ms.get('target_date', '')
-            if hasattr(ms, 'target_date'):
-                target = ms.target_date
-            status = ms.get('status', 'NOT_STARTED')
-            if hasattr(ms, 'status'):
-                status = ms.status
-            resources = ms.get('resources', '')
-            if hasattr(ms, 'resources'):
-                resources = ms.resources or ''
-            completion = ms.get('completion_percentage', 0)
-            if hasattr(ms, 'completion_percentage'):
-                completion = ms.completion_percentage or 0
+        for col_idx, (col_title, ms_list) in enumerate(month_data):
+            left = start_left + (column_width + column_gap) * col_idx
             
-            row_data = [
-                name[:50] + '...' if len(str(name)) > 50 else name,
-                target,
-                status.replace('_', ' '),
-                resources,
-                f"{completion}%"
-            ]
+            # Column header
+            header_box = slide.shapes.add_textbox(left, top, column_width, Inches(0.4))
+            header_frame = header_box.text_frame
+            header_frame.text = col_title
+            header_para = header_frame.paragraphs[0]
+            header_para.font.size = Pt(12)
+            header_para.font.bold = True
+            header_para.font.color.rgb = RGBColor(0x1F, 0x29, 0x37)
             
-            for col_idx, value in enumerate(row_data):
-                cell = table.cell(row_idx, col_idx)
-                cell.text = str(value)
+            if not ms_list:
+                # Empty message
+                empty_box = slide.shapes.add_textbox(
+                    left, top + Inches(0.5), column_width, Inches(0.3))
+                empty_box.text_frame.text = "No milestones"
+                empty_box.text_frame.paragraphs[0].font.size = Pt(9)
+                empty_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(0x9C, 0xA3, 0xAF)
+                empty_box.text_frame.paragraphs[0].font.italic = True
+                continue
+            
+            # Create table for this column
+            max_rows = min(len(ms_list), 6)  # Max 6 per column
+            rows = max_rows + 1  # +1 for header
+            cols = 4  # Milestone, Date, Status, Resources
+            
+            table_shape = slide.shapes.add_table(
+                rows, cols, left, top + Inches(0.45), column_width, Inches(0.35 * rows)
+            )
+            table = table_shape.table
+            
+            # Column widths within the table
+            table.columns[0].width = Inches(1.4)  # Milestone
+            table.columns[1].width = Inches(0.7)  # Date
+            table.columns[2].width = Inches(0.7)  # Status
+            table.columns[3].width = Inches(1.0)  # Resources
+            
+            # Table header
+            table_headers = ["Milestone", "Date", "Status", "Resources"]
+            header_color = RGBColor(0x1E, 0x40, 0xAF)
+            
+            for i, hdr in enumerate(table_headers):
+                cell = table.cell(0, i)
+                cell.text = hdr
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = header_color
                 para = cell.text_frame.paragraphs[0]
-                para.font.size = Pt(10)
-                para.alignment = PP_ALIGN.LEFT if col_idx in [0, 3] else PP_ALIGN.CENTER
+                para.font.bold = True
+                para.font.size = Pt(8)
+                para.font.color.rgb = RGBColor(255, 255, 255)
+                para.alignment = PP_ALIGN.CENTER
                 cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+            
+            # Data rows
+            for row_idx, ms in enumerate(ms_list[:6], start=1):
+                name = str(get_ms_attr(ms, 'name', 'Untitled'))[:25]
+                target = get_ms_attr(ms, 'target_date', 'TBD')
+                status = str(get_ms_attr(ms, 'status', 'NOT_STARTED'))
+                resources = get_ms_attr(ms, 'resources', 'Resource A')
                 
-                # Color status
-                if col_idx == 2:
-                    color = status_colors.get(status, status_colors['NOT_STARTED'])
-                    para.font.color.rgb = color
-                    para.font.bold = True
+                row_data = [
+                    name + '...' if len(str(get_ms_attr(ms, 'name', ''))) > 25 else name,
+                    str(target)[-5:] if target else 'TBD',  # Show just MM-DD
+                    status.replace('_', ' ')[:8],
+                    str(resources)[:12]
+                ]
                 
-                # Alternate rows
-                if row_idx % 2 == 0:
-                    cell.fill.solid()
-                    cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
+                for cell_idx, value in enumerate(row_data):
+                    cell = table.cell(row_idx, cell_idx)
+                    cell.text = str(value)
+                    para = cell.text_frame.paragraphs[0]
+                    para.font.size = Pt(8)
+                    para.alignment = PP_ALIGN.LEFT if cell_idx in [0, 3] else PP_ALIGN.CENTER
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    cell.text_frame.word_wrap = True
+                    
+                    # Color status
+                    if cell_idx == 2:
+                        color = status_colors.get(status, status_colors['NOT_STARTED'])
+                        para.font.color.rgb = color
+                        para.font.bold = True
+                    
+                    # Yellow background for Resources column (editable)
+                    if cell_idx == 3:
+                        cell.fill.solid()
+                        cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)
+                        para.font.italic = True
+                        para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+                    # Alternate row colors
+                    elif row_idx % 2 == 0:
+                        cell.fill.solid()
+                        cell.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
 
     def create_changes_table_slides(
         self,
