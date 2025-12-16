@@ -389,7 +389,11 @@ async def export_to_powerpoint(
                 # Load milestone data and create native table slide
                 logger.info(f"📊 Creating native table for milestones")
                 from repositories.project_repository import ProjectRepository
-                repo = ProjectRepository(BASE_DIR / "mock_data")
+                import os
+                
+                # Use the proper data directory (from env or fallback)
+                data_storage = os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data"))
+                repo = ProjectRepository(Path(data_storage))
                 projects = repo.load_all_projects()
                 
                 milestones = []
@@ -397,6 +401,7 @@ async def export_to_powerpoint(
                     if (clean_name.lower() in proj.project_name.lower() or 
                             clean_name.lower() in proj.project_code.lower()):
                         milestones = proj.milestones or []
+                        logger.info(f"📊 Found {len(milestones)} milestones for {proj.project_name}")
                         break
                 
                 # Convert to dicts if needed
@@ -413,9 +418,10 @@ async def export_to_powerpoint(
                     else:
                         ms_list.append(m)
                 
+                logger.info(f"📊 Passing {len(ms_list)} milestones to table builder")
                 slides_data.append({
                     'type': 'milestones',
-                    'data': ms_list[:12],  # Max 12 per slide
+                    'data': ms_list,  # Pass ALL milestones, builder filters by month
                     'title': f"Milestones: {project_name}"
                 })
                 
