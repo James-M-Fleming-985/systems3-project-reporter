@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.295"  # Milestone PowerPoint export uses tables with colored headers matching preview
+BUILD_VERSION = "1.0.296"  # Fix: Skip _metrics.yaml files when loading projects
 
 
 # Setup logging

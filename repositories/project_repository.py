@@ -125,6 +125,14 @@ class ProjectRepository:
             # Skip PowerPoint template metadata files
             if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
                 continue
+            
+            # Skip custom metrics files (they have a different format)
+            if yaml_file.name.endswith("_metrics.yaml") or yaml_file.name.endswith("_metrics.yml"):
+                continue
+            
+            # Skip files in custom_metrics directory
+            if "custom_metrics" in str(yaml_file):
+                continue
                 
             try:
                 with open(yaml_file, 'r', encoding='utf-8') as f:
