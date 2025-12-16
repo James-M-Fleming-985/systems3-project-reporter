@@ -882,15 +882,16 @@ class PowerPointBuilderService:
                    if is_in_range(get_ms_attr(m, 'target_date'), next_month_start, next_month_end)]
         
         # ============================================================
-        # COLUMN LAYOUT - Matches HTML .columns grid
-        # 3 equal columns with 20px gap (scaled to inches)
+        # COLUMN LAYOUT - Fits within standard widescreen slide
+        # Standard 16:9 slide is 10" x 7.5" (or 13.333" x 7.5" in some cases)
+        # Using conservative 10" width to ensure fit
         # ============================================================
-        slide_width = 13.333  # Standard widescreen width in inches
-        margin = 0.4
-        gap = 0.2  # 20px gap scaled
+        slide_width = 10.0  # Conservative width to ensure fit
+        margin = 0.3
+        gap = 0.15  # Smaller gap between columns
         usable_width = slide_width - (2 * margin) - (2 * gap)
-        column_width = usable_width / 3
-        header_top = Inches(1.0)
+        column_width = usable_width / 3  # ~3.0 inches each
+        header_top = Inches(0.9)
         
         # ============================================================
         # HEADER COLORS - Matches CANVAS PREVIEW exactly
@@ -1045,11 +1046,14 @@ class PowerPointBuilderService:
                     status = str(get_ms_attr(ms, 'status', 'NOT_STARTED')).upper()
                     resources = get_ms_attr(ms, 'resources', '')
                     
-                    # Truncate name to ~35 chars for fit
-                    name_display = name[:35] + ('...' if len(name) > 35 else '')
+                    # Allow longer names - text will wrap in cell
+                    name_display = name[:50] + ('...' if len(name) > 50 else '')
                     
-                    # Format date - keep full date for clarity
-                    date_display = target
+                    # Format date as MM-DD for compact display
+                    try:
+                        date_display = target[5:] if len(target) >= 10 else target  # YYYY-MM-DD -> MM-DD
+                    except:
+                        date_display = target
                     
                     # Status display text
                     status_display = status.replace('_', ' ').title()
@@ -1107,13 +1111,13 @@ class PowerPointBuilderService:
                                 c.fill.fore_color.rgb = RGBColor(0xF9, 0xFA, 0xFB)
         
         # ============================================================
-        # INFO BOX - Matches HTML .info-box
+        # INFO BOX - Matches HTML .info-box, fits within slide
         # background: #e0f2fe, font-size: 12px, color: #0369a1
         # ============================================================
         info_left = Inches(margin)
-        info_top = Inches(6.8)
-        info_width = Inches(slide_width - 2 * margin)
-        info_height = Inches(0.35)
+        info_top = Inches(6.5)  # Position above bottom edge
+        info_width = Inches(slide_width - 2 * margin)  # Same width as columns area
+        info_height = Inches(0.3)
         
         info_box = slide.shapes.add_shape(
             MSO_SHAPE.ROUNDED_RECTANGLE, info_left, info_top, info_width, info_height

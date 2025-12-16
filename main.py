@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.302"  # Fix: Match canvas preview colors exactly (orange/green/yellow headers)
+BUILD_VERSION = "1.0.303"  # Fix: Milestone table layout fits on slide, longer names, proper sizing
 
 
 # Setup logging
