@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.305"  # Risk canvas preview: no truncation, text wraps, larger fonts matching milestones
+BUILD_VERSION = "1.0.306"  # Risk PowerPoint: rewritten to TABLE format matching canvas preview
 
 
 # Setup logging

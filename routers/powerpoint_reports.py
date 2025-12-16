@@ -131,7 +131,7 @@ def get_slide_title_from_url(url: str, project_name: str) -> str:
 def expand_views_for_pagination(
     views: List[str], 
     project_name: str,
-    risks_per_page: int = 3
+    risks_per_page: int = 8  # Table format fits more rows
 ) -> tuple[List[str], List[str]]:
     """
     Expand views list to handle multi-page content like risks.
@@ -142,7 +142,7 @@ def expand_views_for_pagination(
     Args:
         views: List of view URLs
         project_name: Project name for loading risks
-        risks_per_page: Number of risks per page (default 3)
+        risks_per_page: Number of risks per page (default 8 for table format)
         
     Returns:
         Tuple of (expanded_views, expanded_titles)

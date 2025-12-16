@@ -625,14 +625,14 @@ class PowerPointBuilderService:
         page_num: int = 1,
         total_pages: int = 1
     ):
-        """Create a slide with risks in card format matching the canvas preview EXACTLY.
+        """Create a slide with risks in TABLE format matching the canvas preview EXACTLY.
         
-        Styling from HTML /risks/print/{program_name}:
-        - Title: #1e40af blue, 24px
-        - Card title bar: blue gradient #1e40af -> #3b82f6
-        - Meta row: #f3f4f6 background, 5 columns
-        - Body: 2 columns (Description, Mitigations)
-        - Owner field is editable (highlighted)
+        Canvas preview format (/risks/table/):
+        - Title: gray #7F7F7F
+        - Table with blue header row #1E40AF
+        - Columns: ID, Title, Mitigation, Severity, Status, Owner, L/I
+        - Owner column: yellow background (editable)
+        - Alternating row colors
         
         Args:
             risks: List of risk dictionaries
@@ -650,212 +650,166 @@ class PowerPointBuilderService:
         slide = self.presentation.slides.add_slide(slide_layout)
         
         # ============================================================
-        # SLIDE TITLE - Matches HTML .header h1
-        # color: #1e40af, font-size: 24px
-        # ============================================================
-        page_indicator = f" (Page {page_num}/{total_pages})" if total_pages > 1 else ""
-        title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.25), Inches(9), Inches(0.5))
-        title_tf = title_box.text_frame
-        title_tf.paragraphs[0].text = f"{title}{page_indicator}"
-        title_tf.paragraphs[0].font.size = Pt(20)
-        title_tf.paragraphs[0].font.bold = True
-        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)  # #1e40af
-        
-        # ============================================================
-        # CARD LAYOUT - Fits 3 cards within 10" slide width
+        # SLIDE DIMENSIONS - Fit within 10" wide slide
         # ============================================================
         slide_width = 10.0
-        margin = 0.3
-        card_width = Inches(slide_width - 2 * margin)  # 9.4 inches
-        card_height = Inches(1.85)  # Height for 3 cards + gaps
-        card_left = Inches(margin)
-        start_top = Inches(0.85)
-        card_gap = Inches(0.12)
+        margin = 0.25
+        table_width = slide_width - (2 * margin)
         
         # ============================================================
-        # SEVERITY COLORS - Matches HTML exactly
+        # TITLE - Matches canvas preview
+        # "Type: Project | {name} - Risk Register", gray #7F7F7F
+        # ============================================================
+        page_indicator = f" (Page {page_num}/{total_pages})" if total_pages > 1 else ""
+        # Extract clean name from title
+        clean_title = title.replace("Risk Register: ", "").replace(".xml", "")
+        title_text = f"Type: Project | {clean_title} - Risk Register{page_indicator}"
+        
+        title_box = slide.shapes.add_textbox(Inches(margin), Inches(0.2), Inches(table_width), Inches(0.5))
+        title_tf = title_box.text_frame
+        title_tf.paragraphs[0].text = title_text
+        title_tf.paragraphs[0].font.size = Pt(18)
+        title_tf.paragraphs[0].font.bold = False
+        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)  # Gray
+        
+        # ============================================================
+        # TABLE - 7 columns matching canvas preview
+        # ID, Title, Mitigation, Severity, Status, Owner, L/I
+        # ============================================================
+        num_risks = min(len(risks), 8)  # Max 8 risks per slide
+        num_rows = num_risks + 1  # +1 for header
+        num_cols = 7
+        
+        table_top = Inches(0.7)
+        table_height = Inches(0.4 + 0.55 * num_risks)  # Header + data rows
+        
+        table_shape = slide.shapes.add_table(
+            num_rows, num_cols, 
+            Inches(margin), table_top, 
+            Inches(table_width), table_height
+        )
+        table = table_shape.table
+        
+        # Column widths (percentages of table width)
+        # ID=7%, Title=20%, Mitigation=30%, Severity=9%, Status=10%, Owner=14%, L/I=10%
+        col_widths = [0.07, 0.20, 0.30, 0.09, 0.10, 0.14, 0.10]
+        for i, pct in enumerate(col_widths):
+            table.columns[i].width = Inches(table_width * pct)
+        
+        # ============================================================
+        # HEADER ROW - Blue #1E40AF background, white text
+        # ============================================================
+        headers = ["ID", "Title", "Mitigation", "Severity", "Status", "Owner", "L/I"]
+        for i, hdr in enumerate(headers):
+            cell = table.cell(0, i)
+            cell.text = hdr
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(0x1E, 0x40, 0xAF)  # Blue
+            
+            para = cell.text_frame.paragraphs[0]
+            para.font.size = Pt(9)
+            para.font.bold = True
+            para.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)  # White
+            para.alignment = PP_ALIGN.LEFT
+            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+            cell.text_frame.margin_left = Inches(0.05)
+            cell.text_frame.margin_right = Inches(0.05)
+        
+        # ============================================================
+        # SEVERITY COLORS - Match canvas preview exactly
         # ============================================================
         severity_colors = {
-            'critical': RGBColor(0x7C, 0x3A, 0xED),  # #7c3aed purple
-            'high': RGBColor(0xDC, 0x26, 0x26),      # #dc2626 red
-            'medium': RGBColor(0xF5, 0x9E, 0x0B),    # #f59e0b amber
-            'low': RGBColor(0x6B, 0x72, 0x80),       # #6b7280 gray
+            'critical': RGBColor(0x7C, 0x3A, 0xED),  # Purple
+            'high': RGBColor(0xDC, 0x26, 0x26),      # Red
+            'medium': RGBColor(0xF5, 0x9E, 0x0B),    # Amber
+            'low': RGBColor(0x6B, 0x72, 0x80),       # Gray
         }
         
-        for idx, risk in enumerate(risks[:3]):  # Max 3 per slide
-            card_top = start_top + (card_height + card_gap) * idx
-            
+        # ============================================================
+        # DATA ROWS - Match canvas preview exactly
+        # ============================================================
+        for row_idx, risk in enumerate(risks[:8], start=1):
             risk_id = risk.get('id', 'N/A')
-            risk_title = risk.get('title', 'Untitled Risk')
+            risk_title = risk.get('title', 'Untitled')
+            mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
+            if isinstance(mitigation, list):
+                mitigation = '; '.join(mitigation) if mitigation else ''
             severity = risk.get('severity_normalized', 'medium').lower()
             status = risk.get('status', 'N/A')
-            owner = risk.get('owner', '')
+            owner = risk.get('owner', 'Owner A')
             likelihood = risk.get('likelihood', '?')
             impact = risk.get('impact', '?')
-            description = risk.get('description', 'No description provided.')
-            mitigations = risk.get('mitigations', []) or risk.get('mitigation', '')
-            if isinstance(mitigations, list):
-                miti_text = '; '.join(mitigations) if mitigations else 'None specified'
-            else:
-                miti_text = str(mitigations) if mitigations else 'None specified'
             
-            # ============================================================
-            # CARD BORDER - Matches HTML .risk-card
-            # border: 1px solid #e5e7eb, border-radius: 8px
-            # ============================================================
-            border = slide.shapes.add_shape(
-                MSO_SHAPE.ROUNDED_RECTANGLE, card_left, card_top, card_width, card_height
-            )
-            border.fill.solid()
-            border.fill.fore_color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-            border.line.color.rgb = RGBColor(0xE5, 0xE7, 0xEB)
-            border.line.width = Pt(1)
-            border.adjustments[0] = 0.02  # Small corner radius
-            
-            # ============================================================
-            # TITLE BAR - Matches HTML .risk-title
-            # background: linear-gradient(#1e40af -> #3b82f6)
-            # color: white, padding: 12px 16px, font-size: 16px, bold
-            # ============================================================
-            title_bar_height = Inches(0.38)
-            title_bar = slide.shapes.add_shape(
-                MSO_SHAPE.ROUNDED_RECTANGLE, card_left, card_top, card_width, title_bar_height
-            )
-            title_bar.fill.solid()
-            title_bar.fill.fore_color.rgb = RGBColor(0x1E, 0x40, 0xAF)  # #1e40af
-            title_bar.line.fill.background()
-            title_bar.adjustments[0] = 0.02
-            
-            title_frame = title_bar.text_frame
-            title_frame.paragraphs[0].text = f"{risk_id}: {risk_title}"
-            title_frame.paragraphs[0].font.size = Pt(11)
-            title_frame.paragraphs[0].font.bold = True
-            title_frame.paragraphs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-            title_frame.margin_left = Inches(0.12)
-            title_frame.margin_top = Inches(0.08)
-            
-            # ============================================================
-            # META ROW - Matches HTML .risk-meta
-            # background: #f3f4f6, 5 equal columns
-            # Label: 10px uppercase #6b7280
-            # Value: 12px, font-weight: 600, #1f2937
-            # ============================================================
-            meta_top = card_top + title_bar_height
-            meta_height = Inches(0.38)
-            meta_shape = slide.shapes.add_shape(
-                MSO_SHAPE.RECTANGLE, card_left, meta_top, card_width, meta_height
-            )
-            meta_shape.fill.solid()
-            meta_shape.fill.fore_color.rgb = RGBColor(0xF3, 0xF4, 0xF6)  # #f3f4f6
-            meta_shape.line.fill.background()
-            
-            # Meta items: Severity, Status, Owner (editable), Likelihood, Impact
-            meta_items = [
-                ("SEVERITY", severity.upper(), severity_colors.get(severity, severity_colors['medium']), False),
-                ("STATUS", status, RGBColor(0x1F, 0x29, 0x37), False),
-                ("OWNER", owner or "Owner", RGBColor(0x1F, 0x29, 0x37), True),  # Editable
-                ("LIKELIHOOD", f"L: {likelihood}", RGBColor(0x1F, 0x29, 0x37), False),
-                ("IMPACT", f"I: {impact}", RGBColor(0x1F, 0x29, 0x37), False)
+            row_data = [
+                risk_id,
+                risk_title,
+                str(mitigation),
+                severity.upper(),
+                status,
+                owner,
+                f"L:{likelihood} I:{impact}"
             ]
             
-            item_width_val = (slide_width - 2 * margin) / 5
-            for i, (label, value, color, is_editable) in enumerate(meta_items):
-                item_left = card_left + Inches(item_width_val * i)
+            # Alternating row colors
+            is_even = row_idx % 2 == 0
+            row_bg = RGBColor(0xF9, 0xFA, 0xFB) if is_even else RGBColor(0xFF, 0xFF, 0xFF)
+            
+            for col_idx, value in enumerate(row_data):
+                cell = table.cell(row_idx, col_idx)
                 
-                # Add highlight background for editable Owner field
-                if is_editable:
-                    highlight = slide.shapes.add_shape(
-                        MSO_SHAPE.RECTANGLE, item_left, meta_top, Inches(item_width_val), meta_height
-                    )
-                    highlight.fill.solid()
-                    highlight.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # Light yellow
-                    highlight.line.fill.background()
+                # Truncate for fit but allow wrapping
+                max_chars = [10, 45, 70, 10, 12, 15, 12][col_idx]
+                display_val = str(value)[:max_chars] + ('...' if len(str(value)) > max_chars else '')
+                cell.text = display_val
                 
-                meta_box = slide.shapes.add_textbox(
-                    item_left, meta_top, Inches(item_width_val), meta_height
-                )
-                tf = meta_box.text_frame
-                tf.word_wrap = True
-                tf.margin_left = Inches(0.08)
-                tf.margin_top = Inches(0.03)
+                para = cell.text_frame.paragraphs[0]
+                para.font.size = Pt(8)
+                para.alignment = PP_ALIGN.LEFT
+                cell.vertical_anchor = MSO_ANCHOR.TOP
+                cell.text_frame.margin_left = Inches(0.04)
+                cell.text_frame.margin_top = Inches(0.03)
+                cell.text_frame.word_wrap = True
                 
-                # Label (uppercase, small)
-                p1 = tf.paragraphs[0]
-                p1.text = label
-                p1.font.size = Pt(6)
-                p1.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)  # #6b7280
+                # Default row background
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = row_bg
+                para.font.color.rgb = RGBColor(0x37, 0x41, 0x51)  # Dark gray
                 
-                # Value (bold)
-                p2 = tf.add_paragraph()
-                p2.text = str(value)[:20]
-                p2.font.size = Pt(9)
-                p2.font.bold = True
-                p2.font.color.rgb = color
-                p2.space_before = Pt(1)
-            
-            # ============================================================
-            # BODY - Matches HTML .risk-body
-            # 2 columns: Description (left), Mitigations (right)
-            # Section header: 12px, #374151, bold
-            # Text: 12px, #4b5563
-            # ============================================================
-            body_top = meta_top + meta_height + Inches(0.02)
-            body_height = card_height - title_bar_height - meta_height - Inches(0.06)
-            half_width = card_width / 2 - Inches(0.05)
-            
-            # Description section (left)
-            desc_box = slide.shapes.add_textbox(
-                card_left + Inches(0.08), body_top, half_width, body_height
-            )
-            desc_tf = desc_box.text_frame
-            desc_tf.word_wrap = True
-            desc_tf.margin_left = Inches(0.05)
-            desc_tf.margin_top = Inches(0.03)
-            
-            p = desc_tf.paragraphs[0]
-            p.text = "Description:"
-            p.font.size = Pt(8)
-            p.font.bold = True
-            p.font.color.rgb = RGBColor(0x37, 0x41, 0x51)  # #374151
-            
-            p2 = desc_tf.add_paragraph()
-            desc_truncated = str(description)[:250] + ('...' if len(str(description)) > 250 else '')
-            p2.text = desc_truncated
-            p2.font.size = Pt(7)
-            p2.font.color.rgb = RGBColor(0x4B, 0x55, 0x63)  # #4b5563
-            p2.space_before = Pt(2)
-            
-            # Mitigations section (right)
-            miti_box = slide.shapes.add_textbox(
-                card_left + half_width + Inches(0.1), body_top, half_width, body_height
-            )
-            miti_tf = miti_box.text_frame
-            miti_tf.word_wrap = True
-            miti_tf.margin_left = Inches(0.05)
-            miti_tf.margin_top = Inches(0.03)
-            
-            p = miti_tf.paragraphs[0]
-            p.text = "Mitigations:"
-            p.font.size = Pt(8)
-            p.font.bold = True
-            p.font.color.rgb = RGBColor(0x37, 0x41, 0x51)  # #374151
-            
-            p2 = miti_tf.add_paragraph()
-            miti_truncated = str(miti_text)[:250] + ('...' if len(str(miti_text)) > 250 else '')
-            p2.text = miti_truncated
-            p2.font.size = Pt(7)
-            p2.font.color.rgb = RGBColor(0x4B, 0x55, 0x63)  # #4b5563
-            p2.space_before = Pt(2)
+                # Severity column - colored text
+                if col_idx == 3:
+                    color = severity_colors.get(severity, severity_colors['medium'])
+                    para.font.color.rgb = color
+                    para.font.bold = True
+                
+                # Owner column - yellow background (editable)
+                if col_idx == 5:
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # Light yellow
+                    para.font.italic = True
+                    para.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
         
         # ============================================================
-        # INFO NOTE - Owner field is editable
+        # INFO BOX - Match canvas preview
+        # Blue background #e0f2fe, text about editable Owner
         # ============================================================
-        if risks:
-            info_box = slide.shapes.add_textbox(Inches(margin), Inches(6.6), Inches(6), Inches(0.25))
-            info_tf = info_box.text_frame
-            info_tf.paragraphs[0].text = "ℹ️ Owner field (yellow) is editable in PowerPoint."
-            info_tf.paragraphs[0].font.size = Pt(8)
-            info_tf.paragraphs[0].font.color.rgb = RGBColor(0x03, 0x69, 0xA1)
+        info_top = table_top + table_height + Inches(0.15)
+        info_box = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE, 
+            Inches(margin), info_top, 
+            Inches(table_width), Inches(0.28)
+        )
+        info_box.fill.solid()
+        info_box.fill.fore_color.rgb = RGBColor(0xE0, 0xF2, 0xFE)  # Light blue
+        info_box.line.fill.background()
+        info_box.adjustments[0] = 0.1
+        
+        info_tf = info_box.text_frame
+        info_tf.margin_left = Inches(0.1)
+        info_tf.margin_top = Inches(0.05)
+        p = info_tf.paragraphs[0]
+        p.text = "ℹ️ Owner column (yellow) is editable in PowerPoint."
+        p.font.size = Pt(8)
+        p.font.color.rgb = RGBColor(0x03, 0x69, 0xA1)  # Blue text
     
     def create_milestone_table_slide(
         self,
