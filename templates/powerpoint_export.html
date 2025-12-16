@@ -879,7 +879,7 @@ async function exportReport() {
             return url;
         });
         
-        // Build transforms array matching the order of views
+        // Build transforms array matching the order of views - filter out nulls
         const transforms = views.map(view => {
             // Look up transform for this view (check with and without project param)
             const baseView = view.split('?')[0];
@@ -892,6 +892,11 @@ async function exportReport() {
             }
             return null;  // No transform for this slide
         });
+        
+        // Only include transforms if at least one is defined, and convert nulls to undefined
+        const validTransforms = transforms.some(t => t !== null) 
+            ? transforms.map(t => t || undefined)
+            : undefined;
         
         console.log('📐 Transforms to send:', transforms.filter(t => t !== null).length, 'of', views.length);
         
@@ -913,7 +918,7 @@ async function exportReport() {
                 viewport_height: viewportHeight,
                 hide_navigation: hideNavigation,
                 include_title_slide: includeTitle,
-                slide_transforms: transforms,
+                slide_transforms: validTransforms,
                 project_name: projectName,
                 project_code: projectCode
             })
@@ -921,7 +926,18 @@ async function exportReport() {
         
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `Export failed: ${response.statusText}`);
+            // Handle Pydantic validation errors which come as an array in 'detail'
+            let errorMessage = 'Export failed';
+            if (typeof errorData.detail === 'string') {
+                errorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+                errorMessage = errorData.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+            } else if (errorData.detail) {
+                errorMessage = JSON.stringify(errorData.detail);
+            } else {
+                errorMessage = response.statusText;
+            }
+            throw new Error(errorMessage);
         }
         
         // Update progress
