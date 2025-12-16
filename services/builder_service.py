@@ -761,10 +761,8 @@ class PowerPointBuilderService:
             for col_idx, value in enumerate(row_data):
                 cell = table.cell(row_idx, col_idx)
                 
-                # Truncate for fit but allow wrapping
-                max_chars = [10, 45, 70, 10, 12, 15, 12][col_idx]
-                display_val = str(value)[:max_chars] + ('...' if len(str(value)) > max_chars else '')
-                cell.text = display_val
+                # No truncation - let text wrap naturally
+                cell.text = str(value) if value else ''
                 
                 para = cell.text_frame.paragraphs[0]
                 para.font.size = Pt(8)

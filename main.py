@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.310"  # Changes: increased text sizes (18px) and pagination to 10 items per page
+BUILD_VERSION = "1.0.311"  # Risk PowerPoint: removed text truncation - let title and mitigation wrap naturally
 
 
 # Setup logging
