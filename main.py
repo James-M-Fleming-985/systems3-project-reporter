@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.308"  # Canvas preview: changes now uses /dashboard/changes/table/ endpoint
+BUILD_VERSION = "1.0.309"  # Fix changes table preview: add Request param, match by project_code
 
 
 # Setup logging

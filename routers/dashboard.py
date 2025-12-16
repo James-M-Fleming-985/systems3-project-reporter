@@ -551,6 +551,7 @@ async def delete_single_change(project_code: str, change_id: str):
 
 @router.get("/changes/table/{program_name}", response_class=HTMLResponse)
 async def changes_table_preview(
+    request: Request,
     program_name: str,
     page: int = 1,
     per_page: int = 6
@@ -562,6 +563,7 @@ async def changes_table_preview(
     Supports pagination for multiple slides.
     
     Args:
+        request: FastAPI Request object
         program_name: The program/project name
         page: Page number (1-indexed)
         per_page: Number of changes per page (default 6)
@@ -572,15 +574,21 @@ async def changes_table_preview(
     clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
     clean_name = re.sub(r'-\d+$', '', clean_name).strip()
     
-    # Get project and its changes
-    projects = project_repo.load_all_projects()
+    # Get project and its changes using middleware helper
+    projects = get_all_projects(request)
     changes = []
     
     for proj in projects:
-        if proj.project_name == clean_name or clean_name in proj.project_name:
+        # Match by project code (e.g., ZLD-P1) or project name
+        if (proj.project_code == program_name or 
+            proj.project_code == clean_name or
+            proj.project_name == clean_name or 
+            clean_name in proj.project_name):
             raw_changes = proj.changes or []
             # Format changes for display
             changes = chart_service.format_change_data([proj])
+            # Use the actual project name for display
+            clean_name = proj.project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '')
             break
     
     if not changes:
