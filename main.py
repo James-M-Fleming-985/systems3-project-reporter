@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.307"  # Standardized PPT titles: Pt(24), left-justified, no .xml; Changes canvas preview + screenshot export
+BUILD_VERSION = "1.0.308"  # Canvas preview: changes now uses /dashboard/changes/table/ endpoint
 
 
 # Setup logging

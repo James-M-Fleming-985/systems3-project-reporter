@@ -1010,6 +1010,10 @@ function openCanvasEditor(slideData) {
         // Use table view for milestones
         viewUrl = `/milestones/table/${projectCode}`;
         console.log('📊 Switched to table preview for milestones:', viewUrl);
+    } else if (viewUrl.includes('/changes') || viewUrl.includes('changes')) {
+        // Use table view for changes
+        viewUrl = `/dashboard/changes/table/${projectCode}`;
+        console.log('📊 Switched to table preview for changes:', viewUrl);
     }
     
     if (projectCode && !viewUrl.includes('project=')) {
