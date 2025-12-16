@@ -78,7 +78,7 @@ class ExportRequest(BaseModel):
     viewport_height: int = 1080
     hide_navigation: bool = True
     include_title_slide: bool = True
-    slide_transforms: Optional[List[SlideTransform]] = None
+    slide_transforms: Optional[List[Optional[SlideTransform]]] = None
     slide_titles: Optional[List[str]] = None
     project_name: Optional[str] = None  # Project name for slide titles
     project_code: Optional[str] = None  # Project code for context
