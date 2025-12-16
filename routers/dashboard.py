@@ -549,6 +549,183 @@ async def delete_single_change(project_code: str, change_id: str):
     return {"success": True, "deleted": change_id}
 
 
+@router.get("/changes/table/{program_name}", response_class=HTMLResponse)
+async def changes_table_preview(
+    program_name: str,
+    page: int = 1,
+    per_page: int = 6
+):
+    """
+    Table-based changes preview for canvas/PowerPoint export.
+    
+    Matches PowerPoint export format with larger readable text.
+    Supports pagination for multiple slides.
+    
+    Args:
+        program_name: The program/project name
+        page: Page number (1-indexed)
+        per_page: Number of changes per page (default 6)
+    """
+    import re
+    
+    # Clean program name
+    clean_name = program_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    clean_name = re.sub(r'-\d+$', '', clean_name).strip()
+    
+    # Get project and its changes
+    projects = project_repo.load_all_projects()
+    changes = []
+    
+    for proj in projects:
+        if proj.project_name == clean_name or clean_name in proj.project_name:
+            raw_changes = proj.changes or []
+            # Format changes for display
+            changes = chart_service.format_change_data([proj])
+            break
+    
+    if not changes:
+        return HTMLResponse(
+            content=f'''<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body {{ font-family: Arial; padding: 40px; text-align: center; color: #666; }}</style>
+</head><body><h2>No changes found for: {clean_name}</h2></body></html>''',
+            status_code=200
+        )
+    
+    # Calculate pagination
+    total_changes = len(changes)
+    total_pages = (total_changes + per_page - 1) // per_page
+    page = max(1, min(page, total_pages))
+    
+    start_idx = (page - 1) * per_page
+    end_idx = min(start_idx + per_page, total_changes)
+    page_changes = changes[start_idx:end_idx]
+    
+    # Page indicator
+    page_indicator = f" (Page {page}/{total_pages})" if total_pages > 1 else ""
+    
+    # Build HTML table matching PowerPoint format with LARGER text
+    html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ 
+            font-family: Arial, sans-serif; 
+            background: white; 
+            padding: 20px 30px;
+            min-height: 100vh;
+        }}
+        .slide-title {{
+            color: #7F7F7F;
+            font-size: 32px;
+            margin-bottom: 24px;
+            font-weight: normal;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 16px;
+            table-layout: fixed;
+        }}
+        th {{
+            background: #1E40AF;
+            color: white;
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 15px;
+        }}
+        td {{
+            padding: 14px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }}
+        tr:nth-child(even) {{ background: #F9FAFB; }}
+        .old-date {{ 
+            color: #DC2626; 
+            text-decoration: line-through;
+            font-size: 15px;
+        }}
+        .new-date {{ 
+            color: #16A34A; 
+            font-weight: bold;
+            font-size: 15px;
+        }}
+        .arrow {{
+            color: #6B7280;
+            padding: 0 8px;
+        }}
+        .milestone-name {{
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 15px;
+        }}
+        .reason-text, .contingency-text {{
+            font-size: 14px;
+            color: #374151;
+        }}
+        .info-box {{
+            margin-top: 16px;
+            padding: 10px 14px;
+            background: #e0f2fe;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #0369a1;
+        }}
+    </style>
+</head>
+<body>
+    <h1 class="slide-title">Type: Project | {clean_name} - Schedule Changes{page_indicator}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%">Milestone</th>
+                <th style="width: 20%">Schedule Change</th>
+                <th style="width: 27%">Reason</th>
+                <th style="width: 28%">Contingency</th>
+            </tr>
+        </thead>
+        <tbody>'''
+    
+    for change in page_changes:
+        # Clean milestone name (remove date suffix)
+        milestone = change.get('milestone_name', change.get('change_id', ''))
+        milestone = re.sub(r'-\d{{4}}-\d{{2}}-\d{{2}}-to-\d{{4}}-\d{{2}}-\d{{2}}$', '', str(milestone))
+        
+        old_date = change.get('old_date', '')
+        new_date = change.get('new_date', '')
+        reason = change.get('reason', '') or ''
+        contingency = change.get('impact', '') or ''
+        
+        html += f'''
+            <tr>
+                <td class="milestone-name">{milestone}</td>
+                <td>
+                    <span class="old-date">{old_date}</span>
+                    <span class="arrow">→</span>
+                    <span class="new-date">{new_date}</span>
+                </td>
+                <td class="reason-text">{reason}</td>
+                <td class="contingency-text">{contingency}</td>
+            </tr>'''
+    
+    html += '''
+        </tbody>
+    </table>
+    <div class="info-box">
+        ℹ️ Schedule changes are captured automatically when milestone dates are modified.
+    </div>
+</body>
+</html>'''
+    
+    return HTMLResponse(content=html, status_code=200)
+
+
 @router.get("/api/projects")
 async def get_projects():
     """

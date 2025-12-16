@@ -424,9 +424,9 @@ async def export_to_powerpoint(
                     'total_pages': total_pages
                 })
                 
-            # Changes: native editable table
+            # Changes: SCREENSHOT-based (nothing is edited on these slides)
             elif '/changes' in view:
-                logger.info(f"📊 Creating native table for schedule changes")
+                logger.info(f"📸 Creating screenshot slides for schedule changes")
                 from repositories.project_repository import ProjectRepository
                 import os
                 data_storage = os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data"))
@@ -440,28 +440,41 @@ async def export_to_powerpoint(
                         changes = proj.changes or []
                         break
                 
-                # Convert to dicts if needed
-                change_list = []
-                for c in changes:
-                    if hasattr(c, '__dict__'):
-                        change_list.append({
-                            'change_id': getattr(c, 'change_id', ''),
-                            'milestone_name': getattr(c, 'milestone_name', ''),
-                            'old_date': getattr(c, 'old_date', ''),
-                            'new_date': getattr(c, 'new_date', ''),
-                            'reason': getattr(c, 'reason', ''),
-                            'impact': getattr(c, 'impact', '')
-                        })
-                    else:
-                        change_list.append(c)
+                total_changes = len(changes) if changes else 0
+                changes_per_page = 6
                 
-                if change_list:
-                    slides_data.append({
-                        'type': 'changes',
-                        'data': change_list,
-                        'title': f"Schedule Changes: {project_name}",
-                        'rows_per_slide': 6
-                    })
+                if total_changes > 0:
+                    # Calculate pagination
+                    total_pages = (total_changes + changes_per_page - 1) // changes_per_page
+                    logger.info(f"📋 Changes: {total_changes} changes across {total_pages} pages")
+                    
+                    # Capture screenshot of each page
+                    for page in range(1, total_pages + 1):
+                        page_url = f"{base_url}/dashboard/changes/table/{clean_name}?page={page}&per_page={changes_per_page}"
+                        
+                        try:
+                            screenshot = await screenshot_service.capture_screenshot_async(
+                                url=page_url,
+                                hide_navigation=True,
+                                resolution=(
+                                    export_request.viewport_width, 
+                                    export_request.viewport_height
+                                ),
+                                extra_headers=extra_headers if extra_headers else None,
+                                cookies=auth_cookies if auth_cookies else None
+                            )
+                            
+                            page_indicator = f" ({page}/{total_pages})" if total_pages > 1 else ""
+                            slides_data.append({
+                                'type': 'screenshot',
+                                'data': screenshot,
+                                'title': f"Schedule Changes: {project_name}{page_indicator}"
+                            })
+                            logger.info(f"✅ Captured changes screenshot page {page}/{total_pages}")
+                        except Exception as e:
+                            logger.error(f"❌ Failed to capture changes page {page}: {e}")
+                else:
+                    logger.info("📋 No changes to include")
                 
             else:
                 # Other views: capture screenshot

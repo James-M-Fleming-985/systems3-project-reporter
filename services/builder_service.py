@@ -341,6 +341,8 @@ class PowerPointBuilderService:
             skip_title: If True, don't override existing title
             slide_title: Descriptive title for the slide
         """
+        from pptx.enum.text import PP_ALIGN
+        
         # Use content slide layout (usually index 1 or 5)
         layout_idx = 5 if len(self.presentation.slide_layouts) > 5 else 1
         slide_layout = self.presentation.slide_layouts[layout_idx]
@@ -348,16 +350,19 @@ class PowerPointBuilderService:
         
         # Set title if available and not skipping
         if slide.shapes.title and not skip_title:
+            # Clean title - remove file extensions
             if slide_title:
-                slide.shapes.title.text = slide_title
+                clean_title = slide_title.replace(".xml", "").replace(".xlsx", "").replace(".yaml", "")
+                slide.shapes.title.text = clean_title
             else:
                 slide.shapes.title.text = f"Screenshot {slide_number}"
             
-            # Apply title styling: font size 28, color #7F7F7F
+            # Standardized title styling: Pt(24), gray #7F7F7F
             if slide.shapes.title.has_text_frame:
                 for paragraph in slide.shapes.title.text_frame.paragraphs:
+                    paragraph.alignment = PP_ALIGN.LEFT
                     for run in paragraph.runs:
-                        run.font.size = Pt(28)
+                        run.font.size = Pt(24)
                         run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
             
         # Add screenshot image and get its position for overlays
@@ -657,18 +662,17 @@ class PowerPointBuilderService:
         table_width = slide_width - (2 * margin)
         
         # ============================================================
-        # TITLE - Matches canvas preview
-        # "Type: Project | {name} - Risk Register", gray #7F7F7F
+        # TITLE - Standardized: Pt(24), left-justified, gray #7F7F7F
         # ============================================================
         page_indicator = f" (Page {page_num}/{total_pages})" if total_pages > 1 else ""
-        # Extract clean name from title
-        clean_title = title.replace("Risk Register: ", "").replace(".xml", "")
+        # Extract clean name from title, remove .xml
+        clean_title = title.replace("Risk Register: ", "").replace(".xml", "").replace(".xlsx", "").replace(".yaml", "")
         title_text = f"Type: Project | {clean_title} - Risk Register{page_indicator}"
         
         title_box = slide.shapes.add_textbox(Inches(margin), Inches(0.2), Inches(table_width), Inches(0.5))
         title_tf = title_box.text_frame
         title_tf.paragraphs[0].text = title_text
-        title_tf.paragraphs[0].font.size = Pt(18)
+        title_tf.paragraphs[0].font.size = Pt(24)
         title_tf.paragraphs[0].font.bold = False
         title_tf.paragraphs[0].font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)  # Gray
         
@@ -840,15 +844,16 @@ class PowerPointBuilderService:
         slide = self.presentation.slides.add_slide(slide_layout)
         
         # ============================================================
-        # TITLE: Matches HTML .slide-title
-        # color: #7F7F7F, font-size: 32px, font-weight: normal
+        # TITLE: Standardized: Pt(24), left-justified at 0.25", gray
         # ============================================================
-        title_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(12), Inches(0.6))
+        # Clean title - remove file extensions
+        clean_title = title.replace(".xml", "").replace(".xlsx", "").replace(".yaml", "")
+        title_box = slide.shapes.add_textbox(Inches(0.25), Inches(0.2), Inches(9.5), Inches(0.5))
         title_tf = title_box.text_frame
-        title_tf.paragraphs[0].text = title
-        title_tf.paragraphs[0].font.size = Pt(24)  # 32px scaled for slide
-        title_tf.paragraphs[0].font.bold = False  # font-weight: normal
-        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)  # #7F7F7F
+        title_tf.paragraphs[0].text = clean_title
+        title_tf.paragraphs[0].font.size = Pt(24)
+        title_tf.paragraphs[0].font.bold = False
+        title_tf.paragraphs[0].font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)  # Gray
         
         # ============================================================
         # DATE CALCULATIONS
@@ -1187,12 +1192,15 @@ class PowerPointBuilderService:
             slide_layout = self.presentation.slide_layouts[layout_idx]
             slide = self.presentation.slides.add_slide(slide_layout)
             
-            # Set title with page indicator
+            # Set title with page indicator - standardized: Pt(24), left, gray
             if slide.shapes.title:
                 page_indicator = f" ({slide_num + 1}/{num_slides})" if num_slides > 1 else ""
-                slide.shapes.title.text = f"{title}{page_indicator}"
+                # Clean title - remove file extensions
+                clean_title = title.replace(".xml", "").replace(".xlsx", "").replace(".yaml", "")
+                slide.shapes.title.text = f"{clean_title}{page_indicator}"
                 if slide.shapes.title.has_text_frame:
                     for para in slide.shapes.title.text_frame.paragraphs:
+                        para.alignment = PP_ALIGN.LEFT
                         for run in para.runs:
                             run.font.size = Pt(24)
                             run.font.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)

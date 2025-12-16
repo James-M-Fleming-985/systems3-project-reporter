@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.306"  # Risk PowerPoint: rewritten to TABLE format matching canvas preview
+BUILD_VERSION = "1.0.307"  # Standardized PPT titles: Pt(24), left-justified, no .xml; Changes canvas preview + screenshot export
 
 
 # Setup logging
