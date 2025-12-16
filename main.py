@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.299"  # Fix: Use correct DATA_STORAGE_PATH for milestones, pass all milestones to builder
+BUILD_VERSION = "1.0.300"  # Fix: Remove redundant Path import causing UnboundLocalError
 
 
 # Setup logging

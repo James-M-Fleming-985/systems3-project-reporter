@@ -282,7 +282,6 @@ async def export_to_powerpoint(
         template_path = None
         if export_request.template_id and export_request.template_id != "custom":
             # Check if it's a user-uploaded template
-            from pathlib import Path
             import os
             DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
             POWERPOINT_TEMPLATES_DIR = DATA_DIR / "powerpoint_templates"
