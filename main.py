@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.301"  # Milestone tables: exact HTML preview styling match (gray/blue/amber headers)
+BUILD_VERSION = "1.0.302"  # Fix: Match canvas preview colors exactly (orange/green/yellow headers)
 
 
 # Setup logging

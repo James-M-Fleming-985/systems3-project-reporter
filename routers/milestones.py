@@ -584,8 +584,8 @@ color: #666; }}</style>
             font-size: 18px;
             color: white;
         }}
-        .column-header.last {{ background: #6B7280; }}
-        .column-header.this {{ background: #2563EB; }}
+        .column-header.last {{ background: #EA580C; }}
+        .column-header.this {{ background: #16A34A; }}
         .column-header.next {{ background: #F59E0B; color: #1f2937; }}
         .column-header small {{
             display: block;
@@ -616,7 +616,7 @@ color: #666; }}</style>
             font-style: italic;
             color: #666;
         }}
-        .status-completed {{ color: #059669; font-weight: bold; }}
+        .status-completed {{ color: #EA580C; font-weight: bold; }}
         .status-in-progress {{ color: #2563eb; font-weight: bold; }}
         .status-not-started {{ color: #6B7280; }}
         .empty {{ 

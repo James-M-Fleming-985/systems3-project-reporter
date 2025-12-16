@@ -893,10 +893,10 @@ class PowerPointBuilderService:
         header_top = Inches(1.0)
         
         # ============================================================
-        # HEADER COLORS - Matches HTML exactly
-        # .column-header.last: #6B7280 (gray)
-        # .column-header.this: #2563EB (blue)  
-        # .column-header.next: #F59E0B (amber), text #1f2937 (dark)
+        # HEADER COLORS - Matches CANVAS PREVIEW exactly
+        # Last Month: #EA580C (orange/red)
+        # This Month: #16A34A (green)  
+        # Next Month: #F59E0B (yellow/amber), text #1f2937 (dark)
         # ============================================================
         month_config = [
             {
@@ -904,7 +904,7 @@ class PowerPointBuilderService:
                 'title': 'Last Month (Completed)',
                 'date_range': format_date_range(last_month_start, last_month_end),
                 'milestones': last_ms,
-                'header_bg': RGBColor(0x6B, 0x72, 0x80),  # #6B7280 gray
+                'header_bg': RGBColor(0xEA, 0x58, 0x0C),  # #EA580C orange/red
                 'header_text': RGBColor(0xFF, 0xFF, 0xFF),  # white
             },
             {
@@ -912,7 +912,7 @@ class PowerPointBuilderService:
                 'title': 'This Month (In Progress)',
                 'date_range': format_date_range(this_month_start, this_month_end),
                 'milestones': this_ms,
-                'header_bg': RGBColor(0x25, 0x63, 0xEB),  # #2563EB blue
+                'header_bg': RGBColor(0x16, 0xA3, 0x4A),  # #16A34A green
                 'header_text': RGBColor(0xFF, 0xFF, 0xFF),  # white
             },
             {
@@ -1009,15 +1009,15 @@ class PowerPointBuilderService:
                 cell.text_frame.margin_right = Inches(0.05)
             
             # ============================================================
-            # STATUS COLORS - Matches HTML exactly
-            # .status-completed: #059669, bold
-            # .status-in-progress: #2563eb, bold
-            # .status-not-started: #6B7280, normal
+            # STATUS COLORS - Matches CANVAS PREVIEW exactly
+            # Completed: #EA580C (red/orange), bold
+            # In Progress: #2563EB (blue), bold
+            # Not Started: #6B7280 (gray), normal
             # ============================================================
             status_colors = {
-                'COMPLETED': (RGBColor(0x05, 0x96, 0x69), True),   # #059669, bold
-                'IN_PROGRESS': (RGBColor(0x25, 0x63, 0xEB), True),  # #2563eb, bold
-                'NOT_STARTED': (RGBColor(0x6B, 0x72, 0x80), False), # #6B7280, normal
+                'COMPLETED': (RGBColor(0xEA, 0x58, 0x0C), True),   # #EA580C red/orange, bold
+                'IN_PROGRESS': (RGBColor(0x25, 0x63, 0xEB), True),  # #2563EB blue, bold
+                'NOT_STARTED': (RGBColor(0x6B, 0x72, 0x80), False), # #6B7280 gray, normal
             }
             
             if not ms_list:
