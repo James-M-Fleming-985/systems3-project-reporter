@@ -13,6 +13,9 @@
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
+                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" title="Select all changes">
+                </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Change ID
                 </th>
@@ -39,6 +42,9 @@
         <tbody class="bg-white divide-y divide-gray-200">
             {% for change in changes %}
             <tr class="hover:bg-gray-50 transition">
+                <td class="px-3 py-4 text-center">
+                    <input type="checkbox" class="change-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-change-id="{{ change.change_id }}" title="Select this change">
+                </td>
                 <td class="px-6 py-4" style="min-width: 280px; max-width: 400px;">
                     <div class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold leading-relaxed" title="{{ change.change_id }}">
                         {{ change.change_id | regex_replace('-\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}$', '') if change.change_id else '' }}
@@ -97,16 +103,17 @@
 <div class="mt-6 flex items-center justify-between">
     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded flex-1">
         <p class="text-sm text-blue-800" id="changeSummary">
-            <strong>Total Changes:</strong> {{ changes|length }} schedule modifications recorded across all projects
+            <strong>Total Changes:</strong> {{ changes|length }} schedule modifications | <span id="selectedCount">0</span> selected
         </p>
     </div>
-    <button id="clearAllBtn" 
-            class="ml-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors border border-red-300 flex items-center gap-2"
-            title="Clear all changes and start fresh">
+    <button id="clearSelectedBtn" 
+            class="ml-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors border border-red-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete selected changes"
+            disabled>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
         </svg>
-        Clear All Changes
+        <span id="clearBtnText">Delete Selected</span>
     </button>
 </div>
 {% endblock %}
@@ -123,7 +130,7 @@ console.log('📊 CHANGES - Rendering', changeCount, 'changes for', projectName)
 // Update page title
 document.getElementById('changesPageTitle').textContent = `📅 ${projectName} Change Management`;
 document.getElementById('changeSummary').innerHTML = 
-    `<strong>Total Changes:</strong> ${changeCount} schedule modifications for ${projectName}`;
+    `<strong>Total Changes:</strong> ${changeCount} schedule modifications | <span id="selectedCount">0</span> selected`;
 
 // ==================== STYLED MODAL HELPERS ====================
 function showConfirmModal(title, message, confirmText, onConfirm) {
@@ -283,6 +290,48 @@ async function updateChangeReason(inputElement, changeId) {
     return updateChangeField(inputElement, changeId, 'reason');
 }
 
+// ==================== CHECKBOX SELECTION ====================
+// Track selected changes
+let selectedChanges = new Set();
+
+// Select all checkbox
+document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
+    const checkboxes = document.querySelectorAll('.change-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) {
+            selectedChanges.add(cb.dataset.changeId);
+        } else {
+            selectedChanges.delete(cb.dataset.changeId);
+        }
+    });
+    updateSelectedCount();
+});
+
+// Individual checkbox change
+document.querySelectorAll('.change-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            selectedChanges.add(e.target.dataset.changeId);
+        } else {
+            selectedChanges.delete(e.target.dataset.changeId);
+            document.getElementById('selectAllCheckbox').checked = false;
+        }
+        updateSelectedCount();
+    });
+});
+
+// Update selected count display
+function updateSelectedCount() {
+    const count = selectedChanges.size;
+    document.getElementById('selectedCount').textContent = count;
+    const btn = document.getElementById('clearSelectedBtn');
+    const btnText = document.getElementById('clearBtnText');
+    
+    btn.disabled = count === 0;
+    btnText.textContent = count === 0 ? 'Delete Selected' : `Delete ${count} Selected`;
+}
+
 // ==================== DELETE HANDLERS ====================
 // Delete single change
 function confirmDeleteChange(changeId, milestoneName) {
@@ -311,26 +360,48 @@ async function deleteChange(changeId) {
     }
 }
 
-// Clear all changes
-document.getElementById('clearAllBtn').addEventListener('click', () => {
+// Delete selected changes
+document.getElementById('clearSelectedBtn').addEventListener('click', () => {
+    const count = selectedChanges.size;
+    if (count === 0) return;
+    
     showConfirmModal(
-        'Clear All Changes?',
-        `Are you sure you want to delete ALL ${changeCount} changes for ${projectName}?\n\nThis will reset the change history completely.\n\nThis cannot be undone.`,
-        'Yes, Clear All',
+        `Delete ${count} Change${count > 1 ? 's' : ''}?`,
+        `Are you sure you want to delete ${count} selected change${count > 1 ? 's' : ''} for ${projectName}?\n\nThis cannot be undone.`,
+        `Yes, Delete ${count}`,
         async () => {
             try {
-                const response = await fetch(`/api/changes/clear/${projectCode}`, {
-                    method: 'POST',
-                    credentials: 'same-origin'
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showSuccessModal('Changes Cleared', `Cleared ${result.cleared} changes successfully.`);
+                let deleted = 0;
+                let failed = 0;
+                
+                // Delete each selected change
+                for (const changeId of selectedChanges) {
+                    try {
+                        const response = await fetch(`/api/changes/${projectCode}/${encodeURIComponent(changeId)}`, {
+                            method: 'DELETE',
+                            credentials: 'same-origin'
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            deleted++;
+                        } else {
+                            failed++;
+                        }
+                    } catch (error) {
+                        failed++;
+                    }
+                }
+                
+                if (deleted > 0) {
+                    showSuccessModal(
+                        'Changes Deleted', 
+                        `Successfully deleted ${deleted} change${deleted > 1 ? 's' : ''}${failed > 0 ? `. Failed to delete ${failed}.` : '.'}`
+                    );
                 } else {
-                    showErrorModal('Clear Failed', 'Failed to clear changes');
+                    showErrorModal('Delete Failed', 'Failed to delete any changes.');
                 }
             } catch (error) {
-                showErrorModal('Error', 'Failed to clear changes: ' + error.message);
+                showErrorModal('Error', 'Failed to delete changes: ' + error.message);
             }
         }
     );
