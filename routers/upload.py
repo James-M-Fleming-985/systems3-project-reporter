@@ -69,11 +69,15 @@ async def upload_page(request: Request):
 async def upload_xml(
     file: UploadFile = File(...),
     is_baseline: str = Form("false"),
+    clear_previous_changes: str = Form("false"),
     user=Depends(get_user_or_create_anonymous),
     sub_service: SubscriptionService = Depends(get_subscription_service)
 ):
     """
     Upload MS Project XML file and detect changes (with subscription limits)
+    
+    Args:
+        clear_previous_changes: If "true", removes all previous changes before adding new ones
     """
     import logging
     logger = logging.getLogger(__name__)
@@ -198,6 +202,8 @@ async def upload_xml(
         yaml_path = project_dir / "project_status.yaml"
         
         # Merge with existing changes if this is an update (not baseline)
+        clear_old_changes = clear_previous_changes.lower() == "true"
+        
         if existing_project and not is_baseline_upload:
             # AUTO-SAVE detected changes with auto-generated reason
             auto_changes = []
@@ -215,11 +221,19 @@ async def upload_xml(
                 )
                 auto_changes.append(change)
             
-            # Merge auto-detected changes with existing changes
-            new_project.changes = change_detector.merge_changes(
-                existing_project.changes,
-                auto_changes
-            )
+            # Conditionally merge or replace changes
+            if clear_old_changes:
+                # Replace all old changes with only new detected changes
+                logger.info(f"🗑️ Clearing {len(existing_project.changes)} previous changes")
+                new_project.changes = auto_changes
+                logger.info(f"✅ Keeping only {len(auto_changes)} new changes")
+            else:
+                # Merge auto-detected changes with existing changes
+                new_project.changes = change_detector.merge_changes(
+                    existing_project.changes,
+                    auto_changes
+                )
+                logger.info(f"📊 Merged: {len(existing_project.changes)} old + {len(auto_changes)} new = {len(new_project.changes)} total")
         
         # Save risks from XML - merge with existing if updating
         yaml_risks = new_project.risks  # Start with risks from new XML

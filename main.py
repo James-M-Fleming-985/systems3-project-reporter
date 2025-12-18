@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.311"  # Risk PowerPoint: removed text truncation - let title and mitigation wrap naturally
+BUILD_VERSION = "1.0.312"  # Upload: Add 'Clear Previous Changes' option to remove old changes when uploading new version
 
 
 # Setup logging
