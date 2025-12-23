@@ -9,22 +9,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-
-class NoCacheMiddleware(BaseHTTPMiddleware):
-    """Prevent browser caching of HTML responses"""
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        # Add no-cache headers for HTML responses
-        if response.headers.get("content-type", "").startswith("text/html"):
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-        return response
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.320"  # ROOT CAUSE FIX: Disable Jinja2 template caching + add no-cache headers
+BUILD_VERSION = "1.0.321"  # Fix: Remove duplicate middleware definition
 
 
 # Setup logging
@@ -95,13 +83,13 @@ templates.env.filters['regex_replace'] = regex_replace
 
 # Middleware to prevent HTML caching
 class NoCacheMiddleware(BaseHTTPMiddleware):
-    \"\"\"Prevent browser caching of HTML responses\"\"\"
-    async def dispatch(self, request: StarletteRequest, call_next):
+    """Prevent browser caching of HTML responses"""
+    async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         # Add no-cache headers for HTML responses
         if response.headers.get("content-type", "").startswith("text/html"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"  
+            response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
         return response
 
