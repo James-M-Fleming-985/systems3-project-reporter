@@ -12,7 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.321"  # Fix: Remove duplicate middleware definition
+BUILD_VERSION = "1.0.322"  # Fix: Remove duplicate middleware definition
 
 
 # Setup logging
@@ -64,9 +64,10 @@ if PUBLIC_DIR.exists():
     app.mount("/public", StaticFiles(directory=str(PUBLIC_DIR)), name="public")
 
 # Setup Jinja2 templates - DISABLE CACHING for immediate updates
-from jinja2 import Environment, FileSystemLoader
-env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), auto_reload=True, cache_size=0)
-templates = Jinja2Templates(env=env)
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+# Configure the environment for no caching and auto-reload
+templates.env.auto_reload = True
+templates.env.cache = None  # Completely disable caching
 
 # Add custom Jinja2 filter to remove dates from change_id
 import re
