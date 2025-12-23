@@ -135,7 +135,7 @@ function renderTrendChart(metric) {
             dates.forEach(d => allDates.add(d));
             
             const color = colors[idx % colors.length];
-            data.push({
+            const trace = {
                 x: dates,
                 y: values,
                 type: 'scatter',
@@ -155,7 +155,14 @@ function renderTrendChart(metric) {
                 },
                 text: sortedHistory.map(h => h.annotation || ''),
                 hovertemplate: '<b>%{y}' + (metric.unit ? ' ' + metric.unit : '') + '</b><br>%{x}<br>%{text}<extra></extra>'
-            });
+            };
+            
+            // Assign to yaxis2 if this series should use the right axis
+            if (yaxis2SeriesNames.includes(seriesName)) {
+                trace.yaxis = 'y2';
+            }
+            
+            data.push(trace);
         });
     } else if (metric.history && metric.history.length > 0) {
         // Single series (legacy) - render single line
@@ -205,6 +212,37 @@ function renderTrendChart(metric) {
     
     const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
     
+    // Detect if we need dual Y-axes (different value ranges across series)
+    let needsDualAxis = false;
+    let yaxis2SeriesNames = [];
+    
+    if (metric.series && Object.keys(metric.series).length > 1) {
+        const seriesKeys = Object.keys(metric.series);
+        const ranges = {};
+        
+        // Calculate range for each series
+        seriesKeys.forEach(key => {
+            const values = metric.series[key].map(h => h.value);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            ranges[key] = { min, max, range: max - min };
+        });
+        
+        // Check if any series has drastically different scale (e.g., 0-100 vs 0-1000)
+        const rangeValues = Object.values(ranges).map(r => r.range);
+        const maxRange = Math.max(...rangeValues);
+        const minRange = Math.min(...rangeValues.filter(r => r > 0));
+        
+        // If range difference is > 10x, use dual axis
+        if (maxRange / minRange > 10) {
+            needsDualAxis = true;
+            // Put the smaller-range series on the right axis
+            const smallRangeSeries = Object.keys(ranges).find(k => ranges[k].range === minRange);
+            yaxis2SeriesNames.push(smallRangeSeries);
+            console.log(`📊 Dual Y-axis enabled: "${smallRangeSeries}" on right axis`);;
+        }
+    }
+    
     const layout = {
         title: {
             text: `${metric.name} Trend`,
@@ -229,12 +267,27 @@ function renderTrendChart(metric) {
             gridcolor: '#e5e7eb',
             font: { size: 14 }
         },
-        margin: { t: 80, b: 120, l: 80, r: 60 },
+        margin: { t: 80, b: 120, l: 80, r: 80 },  // Increased right margin for yaxis2
         paper_bgcolor: '#ffffff',
         plot_bgcolor: '#f9fafb',
         shapes: [],
         annotations: []
     };
+    
+    // Add secondary Y-axis if needed
+    if (needsDualAxis) {
+        layout.yaxis2 = {
+            title: {
+                text: 'Percentage (%)',
+                font: { size: 16 }
+            },
+            overlaying: 'y',
+            side: 'right',
+            zeroline: false,
+            gridcolor: 'transparent',  // Don't show gridlines for secondary axis
+            font: { size: 14 }
+        };
+    }
     
     // Add target line if defined
     if (metric.target && sortedDates.length > 0) {
@@ -386,13 +439,17 @@ function renderTrendChart(metric) {
         });
     }
     
+    // Check if we're in PowerPoint export mode (screenshot capture)
+    const isPowerPointMode = new URLSearchParams(window.location.search).get('ppt_export') === 'true';
+    
     const config = {
         responsive: true,
-        displayModeBar: true,
+        displayModeBar: !isPowerPointMode,  // Hide controls for PowerPoint export
+        staticPlot: isPowerPointMode,  // Disable all interactions for PowerPoint export
         modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
         edits: {
-            annotationPosition: true,  // Allow dragging annotations
-            annotationTail: true       // Allow dragging arrow tails
+            annotationPosition: !isPowerPointMode,  // Only allow dragging in interactive mode
+            annotationTail: !isPowerPointMode       // Only allow dragging in interactive mode
         }
     };
     

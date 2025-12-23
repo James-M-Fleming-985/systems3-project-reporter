@@ -401,12 +401,17 @@ async def export_to_powerpoint(
                 logger.info(f"📊 Creating native table for risks")
                 risks = risk_repo.load_risks(clean_name) or []
                 
-                # Handle pagination for risks
+                # Handle pagination for risks - extract both page AND per_page from URL
                 page = 1
-                per_page = 3
-                if '?page=' in view:
+                per_page = 8  # Default to match expand_views_for_pagination
+                if '?page=' in view or '&page=' in view:
                     try:
                         page = int(view.split('page=')[1].split('&')[0])
+                    except:
+                        pass
+                if '?per_page=' in view or '&per_page=' in view:
+                    try:
+                        per_page = int(view.split('per_page=')[1].split('&')[0])
                     except:
                         pass
                 
@@ -415,6 +420,8 @@ async def export_to_powerpoint(
                 start_idx = (page - 1) * per_page
                 end_idx = min(start_idx + per_page, total_risks)
                 page_risks = risks[start_idx:end_idx]
+                
+                logger.info(f"📋 Risks page {page}/{total_pages}: showing {len(page_risks)} risks ({start_idx+1}-{end_idx} of {total_risks})")
                 
                 slides_data.append({
                     'type': 'risks',

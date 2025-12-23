@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.313"  # Changes tab: Add checkboxes for selective deletion - select specific changes to delete
+BUILD_VERSION = "1.0.314"  # PowerPoint fixes: risk pagination, change text size, dual Y-axis, hide chart controls
 
 
 # Setup logging

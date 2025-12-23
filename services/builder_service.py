@@ -1266,7 +1266,7 @@ class PowerPointBuilderService:
                     cell.text_frame.word_wrap = True
                     
                     para = cell.text_frame.paragraphs[0]
-                    para.font.size = Pt(9)
+                    para.font.size = Pt(34)
                     para.alignment = PP_ALIGN.LEFT if col_idx in [0, 3, 4] else PP_ALIGN.CENTER
                     cell.vertical_anchor = MSO_ANCHOR.TOP
                     
