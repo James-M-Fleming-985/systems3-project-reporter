@@ -117,6 +117,37 @@ function renderTrendChart(metric) {
     const data = [];
     const allDates = new Set();
     
+    // Detect if we need dual Y-axes (different value ranges across series) - MUST BE BEFORE RENDERING
+    let needsDualAxis = false;
+    let yaxis2SeriesNames = [];
+    
+    if (metric.series && Object.keys(metric.series).length > 1) {
+        const seriesKeys = Object.keys(metric.series);
+        const ranges = {};
+        
+        // Calculate range for each series
+        seriesKeys.forEach(key => {
+            const values = metric.series[key].map(h => h.value);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            ranges[key] = { min, max, range: max - min };
+        });
+        
+        // Check if any series has drastically different scale (e.g., 0-100 vs 0-1000)
+        const rangeValues = Object.values(ranges).map(r => r.range);
+        const maxRange = Math.max(...rangeValues);
+        const minRange = Math.min(...rangeValues.filter(r => r > 0));
+        
+        // If range difference is > 10x, use dual axis
+        if (maxRange / minRange > 10) {
+            needsDualAxis = true;
+            // Put the smaller-range series on the right axis
+            const smallRangeSeries = Object.keys(ranges).find(k => ranges[k].range === minRange);
+            yaxis2SeriesNames.push(smallRangeSeries);
+            console.log(`📊 Dual Y-axis enabled: "${smallRangeSeries}" on right axis`);
+        }
+    }
+    
     // Check if metric has multiple series or single history
     if (metric.series && Object.keys(metric.series).length > 0) {
         // Multiple series - render multiple lines
@@ -211,37 +242,6 @@ function renderTrendChart(metric) {
     }
     
     const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
-    
-    // Detect if we need dual Y-axes (different value ranges across series)
-    let needsDualAxis = false;
-    let yaxis2SeriesNames = [];
-    
-    if (metric.series && Object.keys(metric.series).length > 1) {
-        const seriesKeys = Object.keys(metric.series);
-        const ranges = {};
-        
-        // Calculate range for each series
-        seriesKeys.forEach(key => {
-            const values = metric.series[key].map(h => h.value);
-            const min = Math.min(...values);
-            const max = Math.max(...values);
-            ranges[key] = { min, max, range: max - min };
-        });
-        
-        // Check if any series has drastically different scale (e.g., 0-100 vs 0-1000)
-        const rangeValues = Object.values(ranges).map(r => r.range);
-        const maxRange = Math.max(...rangeValues);
-        const minRange = Math.min(...rangeValues.filter(r => r > 0));
-        
-        // If range difference is > 10x, use dual axis
-        if (maxRange / minRange > 10) {
-            needsDualAxis = true;
-            // Put the smaller-range series on the right axis
-            const smallRangeSeries = Object.keys(ranges).find(k => ranges[k].range === minRange);
-            yaxis2SeriesNames.push(smallRangeSeries);
-            console.log(`📊 Dual Y-axis enabled: "${smallRangeSeries}" on right axis`);;
-        }
-    }
     
     const layout = {
         title: {
