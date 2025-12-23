@@ -8,10 +8,23 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    """Prevent browser caching of HTML responses"""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Add no-cache headers for HTML responses
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.319"  # Add version logging to metric_trend.html for cache debugging
+BUILD_VERSION = "1.0.320"  # ROOT CAUSE FIX: Disable Jinja2 template caching + add no-cache headers
 
 
 # Setup logging
@@ -62,8 +75,10 @@ PUBLIC_DIR.mkdir(exist_ok=True)
 if PUBLIC_DIR.exists():
     app.mount("/public", StaticFiles(directory=str(PUBLIC_DIR)), name="public")
 
-# Setup Jinja2 templates
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+# Setup Jinja2 templates - DISABLE CACHING for immediate updates
+from jinja2 import Environment, FileSystemLoader
+env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), auto_reload=True, cache_size=0)
+templates = Jinja2Templates(env=env)
 
 # Add custom Jinja2 filter to remove dates from change_id
 import re
@@ -78,6 +93,17 @@ def regex_replace(value, pattern, replacement=''):
 
 templates.env.filters['regex_replace'] = regex_replace
 
+# Middleware to prevent HTML caching
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    \"\"\"Prevent browser caching of HTML responses\"\"\"
+    async def dispatch(self, request: StarletteRequest, call_next):
+        response = await call_next(request)
+        # Add no-cache headers for HTML responses
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"  
+            response.headers["Expires"] = "0"
+        return response
 
 # Export version for use in routers
 def get_template_context(request: Request, **kwargs):
