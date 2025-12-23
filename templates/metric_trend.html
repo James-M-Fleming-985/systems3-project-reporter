@@ -125,26 +125,30 @@ function renderTrendChart(metric) {
         const seriesKeys = Object.keys(metric.series);
         const ranges = {};
         
-        // Calculate range for each series
+        // Calculate range AND max value for each series
         seriesKeys.forEach(key => {
             const values = metric.series[key].map(h => h.value);
             const min = Math.min(...values);
             const max = Math.max(...values);
-            ranges[key] = { min, max, range: max - min };
+            ranges[key] = { min, max, range: max - min, maxValue: max };
         });
         
-        // Check if any series has drastically different scale (e.g., 0-100 vs 0-1000)
-        const rangeValues = Object.values(ranges).map(r => r.range);
-        const maxRange = Math.max(...rangeValues);
-        const minRange = Math.min(...rangeValues.filter(r => r > 0));
+        console.log('📊 Series ranges:', ranges);
         
-        // If range difference is > 10x, use dual axis
-        if (maxRange / minRange > 10) {
+        // Check if max values differ significantly (e.g., 6 vs 30, or 100 vs 1000)
+        const maxValues = Object.values(ranges).map(r => r.maxValue);
+        const largestMax = Math.max(...maxValues);
+        const smallestMax = Math.min(...maxValues);
+        
+        // Use dual axis if max values differ by >3x (e.g., 6 vs 30 = 5x difference)
+        if (largestMax / smallestMax > 3) {
             needsDualAxis = true;
-            // Put the smaller-range series on the right axis
-            const smallRangeSeries = Object.keys(ranges).find(k => ranges[k].range === minRange);
-            yaxis2SeriesNames.push(smallRangeSeries);
-            console.log(`📊 Dual Y-axis enabled: "${smallRangeSeries}" on right axis`);
+            // Put the series with smaller max value on the right axis
+            const smallMaxSeries = Object.keys(ranges).find(k => ranges[k].maxValue === smallestMax);
+            yaxis2SeriesNames.push(smallMaxSeries);
+            console.log(`📊 Dual Y-axis enabled: "${smallMaxSeries}" (max: ${smallestMax}) on right axis, other series max: ${largestMax}`);
+        } else {
+            console.log(`📊 Single Y-axis: max values too similar (${smallestMax} vs ${largestMax})`);
         }
     }
     
