@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.316"  # Add logging to verify ppt_export param is being added to URLs
+BUILD_VERSION = "1.0.317"  # Fix dual Y-axis: Move detection before series rendering loop
 
 
 # Setup logging
