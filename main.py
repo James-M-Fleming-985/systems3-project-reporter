@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.314"  # PowerPoint fixes: risk pagination, change text size, dual Y-axis, hide chart controls
+BUILD_VERSION = "1.0.315"  # Fix PPT export: Add ppt_export=true param to enable chart fixes (dual Y-axis, hide modebar)
 
 
 # Setup logging

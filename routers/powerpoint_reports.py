@@ -457,7 +457,7 @@ async def export_to_powerpoint(
                     
                     # Capture screenshot of each page
                     for page in range(1, total_pages + 1):
-                        page_url = f"{base_url}/dashboard/changes/table/{clean_name}?page={page}&per_page={changes_per_page}"
+                        page_url = f"{base_url}/dashboard/changes/table/{clean_name}?page={page}&per_page={changes_per_page}&ppt_export=true"
                         
                         try:
                             screenshot = await screenshot_service.capture_screenshot_async(
@@ -485,7 +485,9 @@ async def export_to_powerpoint(
                 
             else:
                 # Other views: capture screenshot
-                url = f"{base_url}{view}"
+                # Add ppt_export=true for charts to hide controls and enable dual Y-axis
+                separator = '&' if '?' in view else '?'
+                url = f"{base_url}{view}{separator}ppt_export=true"
                 try:
                     screenshot = await screenshot_service.capture_screenshot_async(
                         url=url,
