@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.318"  # Fix dual Y-axis: Compare max values instead of ranges (handles flat lines)
+BUILD_VERSION = "1.0.319"  # Add version logging to metric_trend.html for cache debugging
 
 
 # Setup logging
