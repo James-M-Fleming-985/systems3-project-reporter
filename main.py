@@ -192,6 +192,11 @@ async def health_check():
 
 # Import and add authentication middleware
 from middleware.auth_middleware import AuthMiddleware
+
+# Add no-cache middleware FIRST (before auth) to prevent template caching
+app.add_middleware(NoCacheMiddleware)
+logger.info("✅ No-cache middleware enabled for HTML responses")
+
 app.add_middleware(AuthMiddleware)
 logger.info("✅ Authentication middleware enabled")
 
