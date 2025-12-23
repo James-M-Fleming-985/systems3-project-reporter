@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.315"  # Fix PPT export: Add ppt_export=true param to enable chart fixes (dual Y-axis, hide modebar)
+BUILD_VERSION = "1.0.316"  # Add logging to verify ppt_export param is being added to URLs
 
 
 # Setup logging

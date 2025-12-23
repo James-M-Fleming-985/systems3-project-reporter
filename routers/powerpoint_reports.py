@@ -488,6 +488,7 @@ async def export_to_powerpoint(
                 # Add ppt_export=true for charts to hide controls and enable dual Y-axis
                 separator = '&' if '?' in view else '?'
                 url = f"{base_url}{view}{separator}ppt_export=true"
+                logger.info(f"📸 Capturing with ppt_export: {url}")
                 try:
                     screenshot = await screenshot_service.capture_screenshot_async(
                         url=url,
