@@ -876,10 +876,36 @@ function showMetricsUploadModal() {
                         </table>
                     </div>
                     
+                    <!-- Chart Selection -->
+                    <div class="bg-purple-50 border border-purple-200 rounded p-4 mb-4">
+                        <p class="text-sm text-purple-800 mb-3"><strong>Chart Configuration:</strong></p>
+                        <div class="mb-3">
+                            <label class="flex items-center cursor-pointer mb-2">
+                                <input type="radio" name="chartMode" value="new" id="chartModeNew" checked class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                <span class="ml-2 text-sm text-gray-700">
+                                    <strong>Create New Chart</strong> - Create a new custom metric with its own chart
+                                </span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="chartMode" value="existing" id="chartModeExisting" class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                <span class="ml-2 text-sm text-gray-700">
+                                    <strong>Add to Existing Chart</strong> - Add data to an existing metric's chart
+                                </span>
+                            </label>
+                        </div>
+                        <div id="existingChartSelector" class="hidden mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Existing Chart *</label>
+                            <select id="selectExistingChart" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="">-- Select a Chart --</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Your new data series will be added to this chart</p>
+                        </div>
+                    </div>
+                    
                     <div class="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
                         <p class="text-sm text-yellow-800 mb-3"><strong>Map your columns to metric fields:</strong></p>
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
+                            <div id="metricNameFieldContainer">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Metric Name Column *</label>
                                 <select id="mapMetricName" class="w-full px-3 py-2 border border-gray-300 rounded">
                                     <option value="">-- Select Column --</option>
@@ -1095,6 +1121,55 @@ function readExcelFile(file, resolve, reject) {
 function showMetricsFieldMapping(data) {
     const { headers, rows } = data;
     
+    // Load existing metrics and populate chart selector
+    const storageKey = 'customMetrics_' + programName;
+    const customMetrics = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const existingChartSelect = document.getElementById('selectExistingChart');
+    
+    // Populate existing charts dropdown
+    existingChartSelect.innerHTML = '<option value="">-- Select a Chart --</option>' + 
+        customMetrics.map((metric, idx) => 
+            `<option value="${idx}">${metric.name}</option>`
+        ).join('');
+    
+    // Set up chart mode radio button listeners
+    const chartModeNew = document.getElementById('chartModeNew');
+    const chartModeExisting = document.getElementById('chartModeExisting');
+    const existingChartSelector = document.getElementById('existingChartSelector');
+    const metricNameFieldContainer = document.getElementById('metricNameFieldContainer');
+    
+    function updateChartModeUI() {
+        if (chartModeExisting.checked) {
+            existingChartSelector.classList.remove('hidden');
+            // Hide metric name field when adding to existing chart
+            metricNameFieldContainer.style.opacity = '0.5';
+            metricNameFieldContainer.style.pointerEvents = 'none';
+            document.getElementById('mapMetricName').disabled = true;
+        } else {
+            existingChartSelector.classList.add('hidden');
+            metricNameFieldContainer.style.opacity = '1';
+            metricNameFieldContainer.style.pointerEvents = 'auto';
+            document.getElementById('mapMetricName').disabled = false;
+        }
+    }
+    
+    chartModeNew.addEventListener('change', updateChartModeUI);
+    chartModeExisting.addEventListener('change', updateChartModeUI);
+    
+    // Disable "Add to Existing" if no metrics exist
+    if (customMetrics.length === 0) {
+        chartModeExisting.disabled = true;
+        chartModeExisting.parentElement.style.opacity = '0.5';
+        chartModeExisting.parentElement.style.pointerEvents = 'none';
+        const noChartsNote = document.createElement('p');
+        noChartsNote.className = 'text-xs text-gray-500 ml-6 mt-1';
+        noChartsNote.textContent = 'No existing charts available. Create your first chart above.';
+        chartModeExisting.parentElement.parentElement.appendChild(noChartsNote);
+    }
+    
+    // Initialize UI state
+    updateChartModeUI();
+    
     // Helper function to format cell values (especially dates)
     function formatCellValue(value) {
         if (!value) return '';
@@ -1190,6 +1265,10 @@ async function importMetricsData() {
     const annotationCol = document.getElementById('mapAnnotation').value;
     const overwriteDuplicates = document.getElementById('overwriteDuplicates').checked;
     
+    // Get chart mode selection
+    const chartMode = document.querySelector('input[name="chartMode"]:checked').value;
+    const existingChartIndex = document.getElementById('selectExistingChart').value;
+    
     // Get all checked value columns
     const valueColumns = Array.from(document.querySelectorAll('input[name="valueColumn"]:checked'))
         .map(cb => cb.value);
@@ -1199,12 +1278,29 @@ async function importMetricsData() {
     document.getElementById('metricsError').classList.add('hidden');
     document.getElementById('metricsWarning').classList.add('hidden');
     
-    if (!metricNameCol || !dateCol || valueColumns.length === 0) {
-        document.getElementById('metricsErrorMessage').textContent = 'Please select metric name, date, and at least one value column';
-        document.getElementById('metricsError').classList.remove('hidden');
-        return;
+    // Validation
+    if (chartMode === 'existing') {
+        // When adding to existing chart, metric name column is not needed
+        if (!dateCol || valueColumns.length === 0) {
+            document.getElementById('metricsErrorMessage').textContent = 'Please select date and at least one value column';
+            document.getElementById('metricsError').classList.remove('hidden');
+            return;
+        }
+        if (!existingChartIndex) {
+            document.getElementById('metricsErrorMessage').textContent = 'Please select an existing chart to add data to';
+            document.getElementById('metricsError').classList.remove('hidden');
+            return;
+        }
+    } else {
+        // When creating new chart, metric name is required
+        if (!metricNameCol || !dateCol || valueColumns.length === 0) {
+            document.getElementById('metricsErrorMessage').textContent = 'Please select metric name, date, and at least one value column';
+            document.getElementById('metricsError').classList.remove('hidden');
+            return;
+        }
     }
     
+    console.log('Chart mode:', chartMode);
     console.log('Import mode:', overwriteDuplicates ? 'OVERWRITE' : 'MERGE (skip duplicates)');
     console.log('Import starting with mappings:', { metricNameCol, dateCol, valueColumns, annotationCol });
     console.log('Parsed file data:', parsedFileData);
@@ -1222,57 +1318,172 @@ async function importMetricsData() {
     let skippedCount = 0;
     const skippedColumns = new Set();  // Track non-numeric columns
     
-    rows.forEach((row, idx) => {
-        const baseMetricName = row[metricNameCol];
-        const dateStr = row[dateCol];
-        const annotation = annotationCol ? row[annotationCol] : '';
-        
-        if (!baseMetricName || !dateStr) {
-            console.warn('Skipping row', idx, '- missing metric name or date');
-            skippedCount++;
-            return;
-        }
-        
-        // Parse date - handle Excel serial dates
-        let date;
-        const numDate = parseFloat(dateStr);
-        if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
-            // Excel serial date
-            const excelEpoch = new Date(1899, 11, 30);
-            date = new Date(excelEpoch.getTime() + numDate * 86400000);
-        } else {
-            // Regular date string
-            date = new Date(dateStr);
-        }
-        
-        if (isNaN(date.getTime())) {
-            console.warn('Skipping - invalid date:', dateStr);
-            skippedCount++;
-            return;
-        }
-        
-        console.log('Processing row', idx, '- metric:', baseMetricName, 'date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
-        
-        // Find or create metric (one metric for all value columns)
-        let metric = customMetrics.find(m => m.name === baseMetricName);
-        
+    // If adding to existing chart, process all rows for that one metric
+    if (chartMode === 'existing') {
+        const metric = customMetrics[parseInt(existingChartIndex)];
         if (!metric) {
-            // Create new metric with series support
-            metric = {
-                name: baseMetricName,
-                value: 0,
-                unit: '',
-                target: null,
-                targetDate: null,
-                status: 'ON_TRACK',
-                lastUpdated: date.toISOString(),
-                series: {},  // Multiple series (one per value column)
-                history: []  // Legacy support - will use first series
-            };
-            customMetrics.push(metric);
-            importCount++;
-            console.log('Created new metric:', baseMetricName);
+            document.getElementById('metricsErrorMessage').textContent = 'Selected chart not found';
+            document.getElementById('metricsError').classList.remove('hidden');
+            return;
         }
+        
+        console.log('Adding data to existing metric:', metric.name);
+        
+        // Ensure series object exists
+        if (!metric.series) {
+            metric.series = {};
+        }
+        
+        rows.forEach((row, idx) => {
+            const dateStr = row[dateCol];
+            const annotation = annotationCol ? row[annotationCol] : '';
+            
+            if (!dateStr) {
+                console.warn('Skipping row', idx, '- missing date');
+                skippedCount++;
+                return;
+            }
+            
+            // Parse date - handle Excel serial dates
+            let date;
+            const numDate = parseFloat(dateStr);
+            if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
+                // Excel serial date
+                const excelEpoch = new Date(1899, 11, 30);
+                date = new Date(excelEpoch.getTime() + numDate * 86400000);
+            } else {
+                // Regular date string
+                date = new Date(dateStr);
+            }
+            
+            if (isNaN(date.getTime())) {
+                console.warn('Skipping - invalid date:', dateStr);
+                skippedCount++;
+                return;
+            }
+            
+            console.log('Processing row', idx, 'for existing metric - date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
+            
+            // Process each value column as a series
+            valueColumns.forEach(valueCol => {
+                const valueStr = row[valueCol];
+                
+                if (!valueStr) {
+                    console.warn('Skipping value column', valueCol, 'for row', idx, '- missing value');
+                    return;
+                }
+                
+                const value = parseFloat(valueStr);
+                if (isNaN(value)) {
+                    console.warn('Skipping value column', valueCol, '- invalid numeric value:', valueStr);
+                    skippedColumns.add(valueCol);
+                    return;
+                }
+                
+                // Initialize series if it doesn't exist
+                if (!metric.series[valueCol]) {
+                    metric.series[valueCol] = [];
+                }
+                
+                // Check for existing entry on this date in this series
+                const existingEntry = metric.series[valueCol].find(h => 
+                    new Date(h.date).toDateString() === date.toDateString()
+                );
+                
+                if (existingEntry) {
+                    if (overwriteDuplicates) {
+                        // Update existing entry
+                        existingEntry.value = value;
+                        if (annotation) existingEntry.annotation = annotation;
+                        updateCount++;
+                        console.log('Updated existing entry for', metric.name, '-', valueCol, 'on', dateStr);
+                    } else {
+                        // Skip duplicate
+                        console.log('Skipped duplicate for', metric.name, '-', valueCol, 'on', dateStr);
+                        skippedCount++;
+                        return;
+                    }
+                } else {
+                    // Add new history entry to this series
+                    metric.series[valueCol].push({
+                        value: value,
+                        date: date.toISOString(),
+                        annotation: annotation || undefined
+                    });
+                    updateCount++;
+                    console.log('Added data point for', metric.name, '-', valueCol);
+                }
+                
+                // Update current value to first series' latest value
+                const firstSeries = Object.keys(metric.series)[0];
+                if (valueCol === firstSeries || !firstSeries) {
+                    if (new Date(metric.lastUpdated) < date) {
+                        metric.value = value;
+                        metric.lastUpdated = date.toISOString();
+                    }
+                }
+            });
+        });
+        
+        // Update legacy history array for backward compatibility (use first series)
+        const firstSeriesKey = Object.keys(metric.series)[0];
+        if (firstSeriesKey && metric.series[firstSeriesKey]) {
+            metric.history = metric.series[firstSeriesKey];
+        }
+        
+    } else {
+        // Original logic for creating new metrics
+        rows.forEach((row, idx) => {
+            const baseMetricName = row[metricNameCol];
+            const dateStr = row[dateCol];
+            const annotation = annotationCol ? row[annotationCol] : '';
+            
+            if (!baseMetricName || !dateStr) {
+                console.warn('Skipping row', idx, '- missing metric name or date');
+                skippedCount++;
+                return;
+            }
+            
+            // Parse date - handle Excel serial dates
+            let date;
+            const numDate = parseFloat(dateStr);
+            if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
+                // Excel serial date
+                const excelEpoch = new Date(1899, 11, 30);
+                date = new Date(excelEpoch.getTime() + numDate * 86400000);
+            } else {
+                // Regular date string
+                date = new Date(dateStr);
+            }
+            
+            if (isNaN(date.getTime())) {
+                console.warn('Skipping - invalid date:', dateStr);
+                skippedCount++;
+                return;
+            }
+            
+            console.log('Processing row', idx, '- metric:', baseMetricName, 'date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
+            
+            // Find or create metric (one metric for all value columns)
+            let metric = customMetrics.find(m => m.name === baseMetricName);
+            
+            if (!metric) {
+                // Create new metric with series support
+                metric = {
+                    name: baseMetricName,
+                    value: 0,
+                    unit: '',
+                    target: null,
+                    targetDate: null,
+                    status: 'ON_TRACK',
+                    lastUpdated: date.toISOString(),
+                    series: {},  // Multiple series (one per value column)
+                    history: []  // Legacy support - will use first series
+                };
+                customMetrics.push(metric);
+                importCount++;
+                console.log('Created new metric:', baseMetricName);
+            }
         
         // Ensure series object exists
         if (!metric.series) {
@@ -1338,11 +1549,12 @@ async function importMetricsData() {
             }
         });
         
-        // Update legacy history array for backward compatibility (use first series)
-        if (valueColumns.length > 0 && metric.series[valueColumns[0]]) {
-            metric.history = metric.series[valueColumns[0]];
-        }
-    });
+            // Update legacy history array for backward compatibility (use first series)
+            if (valueColumns.length > 0 && metric.series[valueColumns[0]]) {
+                metric.history = metric.series[valueColumns[0]];
+            }
+        });
+    }  // End of if-else for chart mode
     
     // Save metrics to server first, then localStorage backup
     try {
@@ -1404,7 +1616,15 @@ async function importMetricsData() {
     // Show appropriate message
     if (importCount > 0 || updateCount > 0) {
         let message = '';
-        if (importCount > 0) message += importCount + ' new metric(s) created<br>';
+        
+        // Different message based on chart mode
+        if (chartMode === 'existing') {
+            const targetMetric = customMetrics[parseInt(existingChartIndex)];
+            message += `<strong>✓ Added data to "${targetMetric.name}" chart</strong><br>`;
+        } else {
+            if (importCount > 0) message += importCount + ' new metric(s) created<br>';
+        }
+        
         if (updateCount > 0) {
             if (overwriteDuplicates) {
                 message += updateCount + ' data point(s) ' + (updateCount === 1 ? 'updated/added' : 'updated/added') + '<br>';
