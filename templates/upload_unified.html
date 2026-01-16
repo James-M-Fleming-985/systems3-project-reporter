@@ -1362,7 +1362,11 @@ async function importMetricsData() {
                 return;
             }
             
-            console.log('Processing row', idx, 'for existing metric - date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
+            // CRITICAL: Normalize date to midnight UTC to prevent duplicate date entries
+            // This ensures 2025-11-21T00:00:00Z and 2025-11-21T12:00:00Z both become the same date
+            date = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+            
+            console.log('Processing row', idx, 'for existing metric - date:', date.toISOString(), 'value columns:', valueColumns.length);
             
             // Process each value column as a series
             valueColumns.forEach(valueCol => {
@@ -1461,6 +1465,9 @@ async function importMetricsData() {
                 skippedCount++;
                 return;
             }
+            
+            // Normalize date to midnight UTC to prevent duplicate dates with different times
+            date = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
             
             console.log('Processing row', idx, '- metric:', baseMetricName, 'date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
             
