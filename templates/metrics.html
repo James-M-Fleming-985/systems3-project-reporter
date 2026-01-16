@@ -1077,13 +1077,17 @@ function showTrendChart(index) {
             const sortedData = [...seriesData].sort((a, b) => {
                 const dateA = new Date(a.date);
                 const dateB = new Date(b.date);
-                console.log(`Sorting ${seriesName}: ${a.date} (${dateA.getTime()}) vs ${b.date} (${dateB.getTime()})`);
                 return dateA - dateB;
             });
             
-            console.log(`Series "${seriesName}" sorted data points:`, sortedData.map(d => ({ date: d.date, value: d.value })));
-            
-            const dates = sortedData.map(h => new Date(h.date).toLocaleDateString());
+            // Normalize dates to midnight UTC to prevent duplicate x-axis points
+            // (e.g., "2025-11-21T00:00:00Z" and "2025-11-21T12:00:00Z" should both map to same date)
+            const dates = sortedData.map(h => {
+                const d = new Date(h.date);
+                // Create new date at midnight UTC
+                const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+                return normalized.toLocaleDateString();
+            });
             const values = sortedData.map(h => h.value);
             
             // Collect all unique dates for target line
@@ -1113,7 +1117,13 @@ function showTrendChart(index) {
         console.log('Full history array:', metric.history);
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
         console.log('Sorted history:', sortedHistory);
-        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        
+        // Normalize dates to midnight UTC to prevent duplicate x-axis points
+        const dates = sortedHistory.map(h => {
+            const d = new Date(h.date);
+            const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+            return normalized.toLocaleDateString();
+        });
         const values = sortedHistory.map(h => h.value);
         console.log('Chart dates:', dates);
         console.log('Chart values:', values);
