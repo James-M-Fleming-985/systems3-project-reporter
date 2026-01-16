@@ -1073,7 +1073,16 @@ function showTrendChart(index) {
             const seriesData = metric.series[seriesName];
             if (!seriesData || seriesData.length === 0) return;
             
-            const sortedData = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Sort by date chronologically (CRITICAL: ensures lines don't zigzag)
+            const sortedData = [...seriesData].sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                console.log(`Sorting ${seriesName}: ${a.date} (${dateA.getTime()}) vs ${b.date} (${dateB.getTime()})`);
+                return dateA - dateB;
+            });
+            
+            console.log(`Series "${seriesName}" sorted data points:`, sortedData.map(d => ({ date: d.date, value: d.value })));
+            
             const dates = sortedData.map(h => new Date(h.date).toLocaleDateString());
             const values = sortedData.map(h => h.value);
             
