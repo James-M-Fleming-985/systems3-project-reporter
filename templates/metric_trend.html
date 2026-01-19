@@ -21,7 +21,7 @@
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-console.log('🔄 metric_trend.html v1.0.318 loaded - dual Y-axis fix active');
+console.log('🔄 metric_trend.html v1.0.319 loaded - dual Y-axis + ISO date format');
 const metricName = "{{ metric_name }}";
 const projectName = "{{ project_name }}";
 
@@ -161,7 +161,12 @@ function renderTrendChart(metric) {
             const seriesData = metric.series[seriesName];
             console.log(`Series "${seriesName}":`, seriesData.length, 'data points');
             const sortedHistory = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+            // Normalize dates to midnight UTC and format as ISO date string (YYYY-MM-DD)
+            const dates = sortedHistory.map(h => {
+                const d = new Date(h.date);
+                const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+                return normalized.toISOString().split('T')[0]; // YYYY-MM-DD format
+            });
             const values = sortedHistory.map(h => h.value);
             
             console.log(`  Dates:`, dates);
@@ -204,7 +209,12 @@ function renderTrendChart(metric) {
         // Single series (legacy) - render single line
         console.log('✅ Rendering legacy history with', metric.history.length, 'data points');
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        // Normalize dates to midnight UTC and format as ISO date string (YYYY-MM-DD)
+        const dates = sortedHistory.map(h => {
+            const d = new Date(h.date);
+            const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+            return normalized.toISOString().split('T')[0]; // YYYY-MM-DD format
+        });
         const values = sortedHistory.map(h => h.value);
         
         console.log('History dates:', dates);
@@ -331,7 +341,12 @@ function renderTrendChart(metric) {
         Object.keys(metric.series).forEach((seriesName, seriesIdx) => {
             const seriesData = metric.series[seriesName];
             const sortedHistory = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+            // Normalize dates to ISO format (YYYY-MM-DD) to match chart x-axis
+            const dates = sortedHistory.map(h => {
+                const d = new Date(h.date);
+                const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+                return normalized.toISOString().split('T')[0];
+            });
             const values = sortedHistory.map(h => h.value);
             const color = colors[seriesIdx % colors.length];
             
@@ -382,7 +397,12 @@ function renderTrendChart(metric) {
     // For single series (legacy format)
     else if (metric.history && metric.history.length > 0) {
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        // Normalize dates to ISO format (YYYY-MM-DD) to match chart x-axis
+        const dates = sortedHistory.map(h => {
+            const d = new Date(h.date);
+            const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+            return normalized.toISOString().split('T')[0];
+        });
         const values = sortedHistory.map(h => h.value);
         
         // Add current value annotation for single series

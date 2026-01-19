@@ -1102,6 +1102,41 @@ function showTrendChart(index) {
     let allDates = [];
     let targetValue = metric.target;
     
+    // Detect if we need dual Y-axes (different value ranges across series) - MUST BE BEFORE RENDERING
+    let needsDualAxis = false;
+    let yaxis2SeriesNames = [];
+    
+    if (hasSeries && Object.keys(metric.series).length > 1) {
+        const seriesKeys = Object.keys(metric.series);
+        const ranges = {};
+        
+        // Calculate range AND max value for each series
+        seriesKeys.forEach(key => {
+            const values = metric.series[key].map(h => h.value);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            ranges[key] = { min, max, range: max - min, maxValue: max };
+        });
+        
+        console.log('📊 Series ranges:', ranges);
+        
+        // Check if max values differ significantly (e.g., 6 vs 30, or 100 vs 1000)
+        const maxValues = Object.values(ranges).map(r => r.maxValue);
+        const largestMax = Math.max(...maxValues);
+        const smallestMax = Math.min(...maxValues);
+        
+        // Use dual axis if max values differ by >3x (e.g., 6 vs 30 = 5x difference)
+        if (largestMax / smallestMax > 3) {
+            needsDualAxis = true;
+            // Put the series with smaller max value on the right axis
+            const smallMaxSeries = Object.keys(ranges).find(k => ranges[k].maxValue === smallestMax);
+            yaxis2SeriesNames.push(smallMaxSeries);
+            console.log(`📊 Dual Y-axis enabled: "${smallMaxSeries}" (max: ${smallestMax}) on right axis, other series max: ${largestMax}`);
+        } else {
+            console.log(`📊 Single Y-axis: max values too similar (${smallestMax} vs ${largestMax})`);
+        }
+    }
+    
     if (hasSeries) {
         // Multi-series mode: plot each series as a separate line
         console.log('Rendering multi-series chart with series:', Object.keys(metric.series));
@@ -1144,7 +1179,7 @@ function showTrendChart(index) {
                 if (!allDates.includes(d)) allDates.push(d);
             });
             
-            data.push({
+            const trace = {
                 x: dates,
                 y: values,
                 type: 'scatter',
@@ -1154,7 +1189,14 @@ function showTrendChart(index) {
                 marker: { size: 8 },
                 text: sortedData.map(h => h.annotation || ''),
                 hovertemplate: '%{y}' + (metric.unit ? ' ' + metric.unit : '') + '<br>%{x}<br>%{text}<extra></extra>'
-            });
+            };
+            
+            // Assign to yaxis2 if this series should use the right axis
+            if (yaxis2SeriesNames.includes(seriesName)) {
+                trace.yaxis = 'y2';
+            }
+            
+            data.push(trace);
         });
         
         // Sort allDates chronologically
@@ -1200,7 +1242,7 @@ function showTrendChart(index) {
             title: 'Date',
             tickangle: -45
         },
-        margin: { t: 40, b: 60, l: 60, r: 10 },
+        margin: { t: 40, b: 60, l: 60, r: needsDualAxis ? 60 : 10 },  // Increased right margin for yaxis2
         shapes: targetValue ? [{
             type: 'line',
             x0: allDates[0],
@@ -1215,6 +1257,17 @@ function showTrendChart(index) {
         }] : [],
         annotations: []
     };
+    
+    // Add secondary Y-axis if needed
+    if (needsDualAxis) {
+        layout.yaxis2 = {
+            title: 'Percentage (%)',
+            overlaying: 'y',
+            side: 'right',
+            zeroline: false,
+            gridcolor: 'transparent'  // Don't show gridlines for secondary axis
+        };
+    }
     
     // Add target line annotation - position it higher to avoid data overlap
     if (targetValue) {
