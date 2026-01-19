@@ -1241,7 +1241,12 @@ function showTrendChart(index) {
     if (!hasSeries && metric.history) {
         // Single-series mode: get annotations from history
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const dates = sortedHistory.map(h => new Date(h.date).toLocaleDateString());
+        // Use ISO format (YYYY-MM-DD) to match chart x-axis
+        const dates = sortedHistory.map(h => {
+            const d = new Date(h.date);
+            const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+            return normalized.toISOString().split('T')[0];
+        });
         const values = sortedHistory.map(h => h.value);
         annotatedPoints = sortedHistory
             .map((h, i) => ({ ...h, index: i, date: dates[i], value: values[i] }))
@@ -1253,7 +1258,12 @@ function showTrendChart(index) {
             if (!seriesData) return;
             
             const sortedData = [...seriesData].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const dates = sortedData.map(h => new Date(h.date).toLocaleDateString());
+            // Use ISO format (YYYY-MM-DD) to match chart x-axis
+            const dates = sortedData.map(h => {
+                const d = new Date(h.date);
+                const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+                return normalized.toISOString().split('T')[0];
+            });
             const values = sortedData.map(h => h.value);
             
             sortedData
@@ -1268,7 +1278,24 @@ function showTrendChart(index) {
     try {
         const saved = localStorage.getItem(annotationPositionsKey);
         if (saved) {
-            savedPositions = JSON.parse(saved);
+            const rawPositions = JSON.parse(saved);
+            // Migrate old DD/MM/YYYY keys to new YYYY-MM-DD format
+            Object.keys(rawPositions).forEach(key => {
+                // Check if key is in DD/MM/YYYY format
+                const ddmmMatch = key.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (ddmmMatch) {
+                    // Convert DD/MM/YYYY to YYYY-MM-DD
+                    const day = ddmmMatch[1].padStart(2, '0');
+                    const month = ddmmMatch[2].padStart(2, '0');
+                    const year = ddmmMatch[3];
+                    const isoKey = `${year}-${month}-${day}`;
+                    savedPositions[isoKey] = rawPositions[key];
+                    console.log(`Migrated annotation position: ${key} -> ${isoKey}`);
+                } else {
+                    // Already in ISO format or other format
+                    savedPositions[key] = rawPositions[key];
+                }
+            });
             console.log('Loaded saved annotation positions:', savedPositions);
         }
     } catch (e) {
