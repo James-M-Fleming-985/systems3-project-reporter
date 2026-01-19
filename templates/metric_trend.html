@@ -282,7 +282,14 @@ function renderTrendChart(metric) {
             gridcolor: '#e5e7eb',
             font: { size: 14 }
         },
-        margin: { t: 80, b: 120, l: 80, r: 80 },  // Increased right margin for yaxis2
+        margin: { t: 100, b: 120, l: 80, r: 80 },  // Increased top margin for legend
+        legend: {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.02,
+            xanchor: 'left',
+            x: 0
+        },
         paper_bgcolor: '#ffffff',
         plot_bgcolor: '#f9fafb',
         shapes: [],
