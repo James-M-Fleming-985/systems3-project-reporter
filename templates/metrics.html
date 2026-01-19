@@ -1073,6 +1073,9 @@ function showTrendChart(index) {
             const seriesData = metric.series[seriesName];
             if (!seriesData || seriesData.length === 0) return;
             
+            // DEBUG: Log raw stored dates
+            console.log(`📅 Raw dates for "${seriesName}":`, seriesData.map(h => h.date));
+            
             // Sort by date chronologically (CRITICAL: ensures lines don't zigzag)
             const sortedData = [...seriesData].sort((a, b) => {
                 const dateA = new Date(a.date);
@@ -1080,15 +1083,24 @@ function showTrendChart(index) {
                 return dateA - dateB;
             });
             
-            // Normalize dates to midnight UTC to prevent duplicate x-axis points
-            // (e.g., "2025-11-21T00:00:00Z" and "2025-11-21T12:00:00Z" should both map to same date)
+            // DEBUG: Log sorted dates with timestamps
+            console.log(`📅 Sorted dates for "${seriesName}":`, sortedData.map(h => {
+                const d = new Date(h.date);
+                return `${h.date} -> ${d.toISOString()} (${d.getTime()})`;
+            }));
+            
+            // Normalize dates to midnight UTC and format as ISO date string (YYYY-MM-DD)
+            // This ensures proper chronological sorting across all series on the x-axis
             const dates = sortedData.map(h => {
                 const d = new Date(h.date);
                 // Create new date at midnight UTC
                 const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-                return normalized.toLocaleDateString();
+                return normalized.toISOString().split('T')[0]; // YYYY-MM-DD format
             });
             const values = sortedData.map(h => h.value);
+            
+            // DEBUG: Log final chart data
+            console.log(`📊 Chart data for "${seriesName}":`, dates.map((d, i) => `${d}: ${values[i]}`));
             
             // Collect all unique dates for target line
             dates.forEach(d => {
@@ -1118,11 +1130,11 @@ function showTrendChart(index) {
         const sortedHistory = [...metric.history].sort((a, b) => new Date(a.date) - new Date(b.date));
         console.log('Sorted history:', sortedHistory);
         
-        // Normalize dates to midnight UTC to prevent duplicate x-axis points
+        // Normalize dates to midnight UTC and format as ISO date string (YYYY-MM-DD)
         const dates = sortedHistory.map(h => {
             const d = new Date(h.date);
             const normalized = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-            return normalized.toLocaleDateString();
+            return normalized.toISOString().split('T')[0]; // YYYY-MM-DD format
         });
         const values = sortedHistory.map(h => h.value);
         console.log('Chart dates:', dates);
