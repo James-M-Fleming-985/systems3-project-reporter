@@ -1259,6 +1259,58 @@ function showMetricsFieldMapping(data) {
     });
 }
 
+// Helper function to parse dates that may be in DD/MM/YYYY or MM/DD/YYYY format
+function parseFlexibleDate(dateStr) {
+    // First check for Excel serial date
+    const numDate = parseFloat(dateStr);
+    if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
+        const excelEpoch = new Date(1899, 11, 30);
+        return new Date(excelEpoch.getTime() + numDate * 86400000);
+    }
+    
+    // Check for DD/MM/YYYY or DD-MM-YYYY format (European)
+    const ddmmyyyyMatch = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (ddmmyyyyMatch) {
+        const part1 = parseInt(ddmmyyyyMatch[1], 10);
+        const part2 = parseInt(ddmmyyyyMatch[2], 10);
+        const year = parseInt(ddmmyyyyMatch[3], 10);
+        
+        // If first part > 12, it must be a day (DD/MM/YYYY)
+        // If second part > 12, it must be a day (MM/DD/YYYY)
+        // If both <= 12, assume DD/MM/YYYY (European format) as default
+        let day, month;
+        if (part1 > 12) {
+            // Definitely DD/MM/YYYY
+            day = part1;
+            month = part2;
+        } else if (part2 > 12) {
+            // Definitely MM/DD/YYYY
+            month = part1;
+            day = part2;
+        } else {
+            // Ambiguous - assume DD/MM/YYYY (European format)
+            day = part1;
+            month = part2;
+        }
+        
+        // Month is 0-indexed in JavaScript
+        return new Date(Date.UTC(year, month - 1, day));
+    }
+    
+    // Check for YYYY-MM-DD format (ISO)
+    const isoMatch = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+        return new Date(Date.UTC(
+            parseInt(isoMatch[1], 10),
+            parseInt(isoMatch[2], 10) - 1,
+            parseInt(isoMatch[3], 10)
+        ));
+    }
+    
+    // Fall back to native Date parsing
+    return new Date(dateStr);
+}
+
 async function importMetricsData() {
     const metricNameCol = document.getElementById('mapMetricName').value;
     const dateCol = document.getElementById('mapDate').value;
@@ -1344,17 +1396,8 @@ async function importMetricsData() {
                 return;
             }
             
-            // Parse date - handle Excel serial dates
-            let date;
-            const numDate = parseFloat(dateStr);
-            if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
-                // Excel serial date
-                const excelEpoch = new Date(1899, 11, 30);
-                date = new Date(excelEpoch.getTime() + numDate * 86400000);
-            } else {
-                // Regular date string
-                date = new Date(dateStr);
-            }
+            // Parse date - handles DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and Excel serial dates
+            let date = parseFlexibleDate(dateStr);
             
             if (isNaN(date.getTime())) {
                 console.warn('Skipping - invalid date:', dateStr);
@@ -1362,8 +1405,7 @@ async function importMetricsData() {
                 return;
             }
             
-            // CRITICAL: Normalize date to midnight UTC to prevent duplicate date entries
-            // This ensures 2025-11-21T00:00:00Z and 2025-11-21T12:00:00Z both become the same date
+            // Ensure date is normalized to midnight UTC
             date = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
             
             console.log('Processing row', idx, 'for existing metric - date:', date.toISOString(), 'value columns:', valueColumns.length);
@@ -1452,17 +1494,8 @@ async function importMetricsData() {
                 return;
             }
             
-            // Parse date - handle Excel serial dates
-            let date;
-            const numDate = parseFloat(dateStr);
-            if (!isNaN(numDate) && numDate > 100 && numDate < 100000) {
-                // Excel serial date
-                const excelEpoch = new Date(1899, 11, 30);
-                date = new Date(excelEpoch.getTime() + numDate * 86400000);
-            } else {
-                // Regular date string
-                date = new Date(dateStr);
-            }
+            // Parse date - handles DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and Excel serial dates
+            let date = parseFlexibleDate(dateStr);
             
             if (isNaN(date.getTime())) {
                 console.warn('Skipping - invalid date:', dateStr);
@@ -1470,7 +1503,7 @@ async function importMetricsData() {
                 return;
             }
             
-            // Normalize date to midnight UTC to prevent duplicate dates with different times
+            // Ensure date is normalized to midnight UTC
             date = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
             
             console.log('Processing row', idx, '- metric:', baseMetricName, 'date:', date.toLocaleDateString(), 'value columns:', valueColumns.length);
