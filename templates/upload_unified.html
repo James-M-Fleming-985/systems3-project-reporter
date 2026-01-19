@@ -1390,9 +1390,13 @@ async function importMetricsData() {
                 }
                 
                 // Check for existing entry on this date in this series
-                const existingEntry = metric.series[valueCol].find(h => 
-                    new Date(h.date).toDateString() === date.toDateString()
-                );
+                // Use ISO date string comparison for consistency (YYYY-MM-DD)
+                const dateISOString = date.toISOString().split('T')[0];
+                const existingEntry = metric.series[valueCol].find(h => {
+                    const hDate = new Date(h.date);
+                    const hNormalized = new Date(Date.UTC(hDate.getUTCFullYear(), hDate.getUTCMonth(), hDate.getUTCDate()));
+                    return hNormalized.toISOString().split('T')[0] === dateISOString;
+                });
                 
                 if (existingEntry) {
                     if (overwriteDuplicates) {
@@ -1519,9 +1523,13 @@ async function importMetricsData() {
             }
             
             // Check for existing entry on this date in this series
-            const existingEntry = metric.series[valueCol].find(h => 
-                new Date(h.date).toDateString() === date.toDateString()
-            );
+            // Use ISO date string comparison for consistency (YYYY-MM-DD)
+            const dateISOString = date.toISOString().split('T')[0];
+            const existingEntry = metric.series[valueCol].find(h => {
+                const hDate = new Date(h.date);
+                const hNormalized = new Date(Date.UTC(hDate.getUTCFullYear(), hDate.getUTCMonth(), hDate.getUTCDate()));
+                return hNormalized.toISOString().split('T')[0] === dateISOString;
+            });
             
             if (existingEntry) {
                 if (overwriteDuplicates) {
