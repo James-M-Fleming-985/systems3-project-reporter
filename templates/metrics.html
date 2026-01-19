@@ -297,21 +297,23 @@
 
 <!-- Metric Trend Chart Modal -->
 <div id="trendChartModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+    <div id="trendChartModalContent" class="relative top-10 mx-auto p-5 border shadow-lg rounded-md bg-white" 
+         style="width: 75%; max-width: 900px; min-width: 400px; min-height: 300px; resize: both; overflow: auto;">
         <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
+            <!-- Draggable header -->
+            <div id="trendChartHeader" class="flex items-center justify-between mb-4 cursor-move select-none bg-gray-50 -mx-5 -mt-8 px-5 py-3 rounded-t-md border-b">
                 <h3 id="trendChartTitle" class="text-lg font-bold text-gray-900">Metric Trend</h3>
                 <div class="flex items-center gap-2">
                     <!-- Delete Series Dropdown -->
                     <div class="relative" id="deleteSeriesContainer">
-                        <select id="deleteSeriesSelect" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <select id="deleteSeriesSelect" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer">
                             <option value="">🗑️ Delete Series...</option>
                         </select>
                         <button id="deleteSeriesBtn" class="ml-1 px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 hidden">
                             Delete
                         </button>
                     </div>
-                    <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700">
+                    <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700 cursor-pointer">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -319,6 +321,8 @@
                 </div>
             </div>
             <div id="metricTrendChart" style="width:100%; height:400px;"></div>
+            <!-- Resize hint -->
+            <div class="text-xs text-gray-400 text-right mt-2">↘ Drag corner to resize</div>
         </div>
     </div>
 </div>
@@ -1699,7 +1703,93 @@ function initializeModalControls() {
     if (closeTrendChartBtn) {
         closeTrendChartBtn.addEventListener('click', function() {
             trendChartModal.classList.add('hidden');
+            // Reset position when closing
+            const content = document.getElementById('trendChartModalContent');
+            if (content) {
+                content.style.left = '';
+                content.style.top = '';
+                content.style.position = '';
+            }
         });
+    }
+    
+    // Make trend chart modal draggable
+    const trendChartHeader = document.getElementById('trendChartHeader');
+    const trendChartContent = document.getElementById('trendChartModalContent');
+    
+    if (trendChartHeader && trendChartContent) {
+        let isDragging = false;
+        let currentX, currentY, initialX, initialY;
+        
+        trendChartHeader.addEventListener('mousedown', function(e) {
+            // Don't drag if clicking on buttons or select
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || 
+                e.target.tagName === 'SVG' || e.target.tagName === 'PATH' ||
+                e.target.closest('button') || e.target.closest('select')) {
+                return;
+            }
+            
+            isDragging = true;
+            trendChartContent.style.position = 'absolute';
+            
+            // Get current position
+            const rect = trendChartContent.getBoundingClientRect();
+            if (!trendChartContent.style.left) {
+                trendChartContent.style.left = rect.left + 'px';
+                trendChartContent.style.top = rect.top + 'px';
+            }
+            
+            initialX = e.clientX - rect.left;
+            initialY = e.clientY - rect.top;
+            
+            trendChartHeader.style.cursor = 'grabbing';
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            // Keep within viewport bounds
+            const maxX = window.innerWidth - trendChartContent.offsetWidth;
+            const maxY = window.innerHeight - trendChartContent.offsetHeight;
+            
+            currentX = Math.max(0, Math.min(currentX, maxX));
+            currentY = Math.max(0, Math.min(currentY, maxY));
+            
+            trendChartContent.style.left = currentX + 'px';
+            trendChartContent.style.top = currentY + 'px';
+            trendChartContent.style.margin = '0';
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                trendChartHeader.style.cursor = 'move';
+            }
+        });
+        
+        // Handle resize - update Plotly chart when modal is resized
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const chartDiv = document.getElementById('metricTrendChart');
+                if (chartDiv && chartDiv.data) {
+                    // Resize the Plotly chart to fit the new container size
+                    const newWidth = entry.contentRect.width - 40; // Account for padding
+                    const newHeight = entry.contentRect.height - 120; // Account for header and margins
+                    if (newWidth > 200 && newHeight > 150) {
+                        Plotly.relayout('metricTrendChart', {
+                            width: newWidth,
+                            height: Math.max(newHeight, 300)
+                        });
+                    }
+                }
+            }
+        });
+        
+        resizeObserver.observe(trendChartContent);
     }
     
     // Delete Series functionality
