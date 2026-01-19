@@ -301,11 +301,22 @@
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 id="trendChartTitle" class="text-lg font-bold text-gray-900">Metric Trend</h3>
-                <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Delete Series Dropdown -->
+                    <div class="relative" id="deleteSeriesContainer">
+                        <select id="deleteSeriesSelect" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="">🗑️ Delete Series...</option>
+                        </select>
+                        <button id="deleteSeriesBtn" class="ml-1 px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 hidden">
+                            Delete
+                        </button>
+                    </div>
+                    <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div id="metricTrendChart" style="width:100%; height:400px;"></div>
         </div>
@@ -1059,6 +1070,28 @@ function showTrendChart(index) {
     
     document.getElementById('trendChartTitle').textContent = `${metric.name} - Trend Chart`;
     
+    // Populate delete series dropdown
+    const deleteSeriesSelect = document.getElementById('deleteSeriesSelect');
+    const deleteSeriesBtn = document.getElementById('deleteSeriesBtn');
+    const deleteSeriesContainer = document.getElementById('deleteSeriesContainer');
+    
+    if (deleteSeriesSelect) {
+        deleteSeriesSelect.innerHTML = '<option value="">🗑️ Delete Series...</option>';
+        deleteSeriesBtn.classList.add('hidden');
+        
+        if (hasSeries && Object.keys(metric.series).length > 0) {
+            Object.keys(metric.series).forEach(seriesName => {
+                const option = document.createElement('option');
+                option.value = seriesName;
+                option.textContent = seriesName;
+                deleteSeriesSelect.appendChild(option);
+            });
+            deleteSeriesContainer.classList.remove('hidden');
+        } else {
+            deleteSeriesContainer.classList.add('hidden');
+        }
+    }
+    
     const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
     const data = [];
     
@@ -1639,6 +1672,61 @@ function initializeModalControls() {
     if (closeTrendChartBtn) {
         closeTrendChartBtn.addEventListener('click', function() {
             trendChartModal.classList.add('hidden');
+        });
+    }
+    
+    // Delete Series functionality
+    const deleteSeriesSelect = document.getElementById('deleteSeriesSelect');
+    const deleteSeriesBtn = document.getElementById('deleteSeriesBtn');
+    
+    if (deleteSeriesSelect) {
+        deleteSeriesSelect.addEventListener('change', function() {
+            if (this.value) {
+                deleteSeriesBtn.classList.remove('hidden');
+            } else {
+                deleteSeriesBtn.classList.add('hidden');
+            }
+        });
+    }
+    
+    if (deleteSeriesBtn) {
+        deleteSeriesBtn.addEventListener('click', async function() {
+            const seriesName = deleteSeriesSelect.value;
+            const metricName = document.getElementById('trendChartTitle').textContent.replace(' - Trend Chart', '');
+            
+            if (!seriesName || !confirm(`Are you sure you want to delete the "${seriesName}" series from "${metricName}"? This cannot be undone.`)) {
+                return;
+            }
+            
+            // Find the metric and delete the series
+            const metric = customMetrics.find(m => m.name === metricName);
+            if (metric && metric.series && metric.series[seriesName]) {
+                delete metric.series[seriesName];
+                console.log(`✅ Deleted series "${seriesName}" from metric "${metricName}"`);
+                
+                // Update legacy history array if needed
+                const remainingSeriesKeys = Object.keys(metric.series);
+                if (remainingSeriesKeys.length > 0) {
+                    metric.history = metric.series[remainingSeriesKeys[0]];
+                } else {
+                    metric.history = [];
+                }
+                
+                // Save and refresh
+                await saveCustomMetrics();
+                renderCustomMetrics();
+                
+                // Re-open the chart to show updated data
+                trendChartModal.classList.add('hidden');
+                if (remainingSeriesKeys.length > 0) {
+                    const metricIndex = customMetrics.findIndex(m => m.name === metricName);
+                    if (metricIndex >= 0) {
+                        showTrendChart(metricIndex);
+                    }
+                }
+                
+                alert(`Series "${seriesName}" has been deleted.`);
+            }
         });
     }
     
