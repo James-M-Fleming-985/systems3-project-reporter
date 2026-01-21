@@ -232,7 +232,14 @@ class MSProjectXMLParser:
         if level2_projects:
             print(f"DEBUG: Level 2 projects: {list(level2_projects.values())[:3]}")
         
-        # Debug: Show sample UIDs in hierarchy
+        # Debug: Show level distribution
+        level_counts = {}
+        for uid, info in task_hierarchy.items():
+            lvl = info.get('level', 0)
+            level_counts[lvl] = level_counts.get(lvl, 0) + 1
+        print(f"DEBUG: Level distribution in hierarchy: {level_counts}")
+        
+        # Debug: Sample UIDs in hierarchy
         sample_uids = list(task_hierarchy.keys())[:10]
         print(f"DEBUG: Sample UIDs in hierarchy: {sample_uids}")
         
@@ -362,9 +369,21 @@ class MSProjectXMLParser:
                 # Skip if not a milestone
                 if not (has_milestone_flag or has_zero_duration or
                         has_zero_work):
+                    # Debug: Log skipped tasks at level 5+
+                    if outline_level >= 5:
+                        name_elem = self._find_element(task, 'Name')
+                        task_name = name_elem.text if name_elem is not None else 'Unknown'
+                        print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - "
+                              f"milestone_flag={has_milestone_flag}, zero_duration={has_zero_duration}, "
+                              f"zero_work={has_zero_work}")
                     continue
             
             # At this point, we know it's a milestone
+            # Debug: Log detected milestones at level 4+
+            name_elem = self._find_element(task, 'Name')
+            task_name = name_elem.text if name_elem is not None else 'Unknown'
+            print(f"DEBUG: DETECTED milestone at Level {outline_level}: '{task_name}'")
+            
             milestone_data = {}
             
             # UID (unique identifier from MS Project)
