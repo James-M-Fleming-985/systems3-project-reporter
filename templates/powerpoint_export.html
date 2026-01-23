@@ -2157,31 +2157,47 @@ function performCrop() {
     // Create clipPath in image's local coordinate system
     // Image coords: (0,0) is at center, so offset by half width/height
     // The clipPath needs to be in the image's original (unscaled) coordinate space
-    const clipWidth = canvasImage.width * (1 - cropLeft/100 - cropRight/100);
-    const clipHeight = canvasImage.height * (1 - cropTop/100 - cropBottom/100);
-    const clipLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeft / 100);
-    const clipTop = -canvasImage.height / 2 + (canvasImage.height * cropTop / 100);
+    const clipRectWidth = canvasImage.width * (1 - cropLeft/100 - cropRight/100);
+    const clipRectHeight = canvasImage.height * (1 - cropTop/100 - cropBottom/100);
+    const clipRectLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeft / 100);
+    const clipRectTop = -canvasImage.height / 2 + (canvasImage.height * cropTop / 100);
     
-    console.log('📏 ClipPath (in image coords):', { clipLeft, clipTop, clipWidth, clipHeight });
+    console.log('📏 ClipPath (in image coords):', { 
+        left: clipRectLeft, 
+        top: clipRectTop, 
+        width: clipRectWidth, 
+        height: clipRectHeight 
+    });
     console.log('📏 Image dimensions (unscaled):', { width: canvasImage.width, height: canvasImage.height });
     
     // Validate clipPath dimensions
-    if (clipWidth <= 0 || clipHeight <= 0) {
+    if (clipRectWidth <= 0 || clipRectHeight <= 0) {
         console.error('❌ Invalid clipPath dimensions');
         showNotification('Invalid crop - please try again', 'error');
         return false;
     }
     
-    canvasImage.clipPath = new fabric.Rect({
-        left: clipLeft,
-        top: clipTop,
-        width: clipWidth,
-        height: clipHeight,
-        absolutePositioned: false
+    // Create the clipPath rectangle
+    const clipPathRect = new fabric.Rect({
+        left: clipRectLeft,
+        top: clipRectTop,
+        width: clipRectWidth,
+        height: clipRectHeight,
+        absolutePositioned: false,
+        inverted: false
     });
+    
+    // Apply the clipPath to the image
+    canvasImage.set('clipPath', clipPathRect);
     
     console.log('✅ Crop applied successfully');
     console.log('   ClipPath set:', canvasImage.clipPath);
+    console.log('   ClipPath properties:', {
+        left: canvasImage.clipPath.left,
+        top: canvasImage.clipPath.top,
+        width: canvasImage.clipPath.width,
+        height: canvasImage.clipPath.height
+    });
     
     // Remove crop rectangle
     if (cropRect) {
@@ -2191,8 +2207,11 @@ function performCrop() {
     }
     
     // Force canvas to update with the new clipPath
+    canvasImage.dirty = true;
     canvasImage.setCoords();
-    fabricCanvas.renderAll();
+    fabricCanvas.requestRenderAll();
+    
+    console.log('🔄 Canvas re-rendered with clipPath');
     
     showNotification('Crop applied! Use "Fit to Slide" to enlarge if needed');
     
