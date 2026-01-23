@@ -2269,9 +2269,6 @@ function applyCanvasTransform() {
         // Persist to localStorage for future sessions
         saveSlideTransforms();
         
-        // Update visual indicators
-        updateSlideConfigIndicators();
-        
         console.log('📐 Stored and persisted transform for slide:', basePath);
         console.log('📐 Total transforms:', Object.keys(slideTransforms).length);
     }
@@ -2281,6 +2278,12 @@ function applyCanvasTransform() {
     
     // Close modal
     document.querySelector('.fixed.inset-0').remove();
+    
+    // Update visual indicators after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        updateSlideConfigIndicators();
+        console.log('✅ Updated slide configuration indicators');
+    }, 100);
     
     // Show success message
     showNotification('✅ Layout saved permanently! This configuration will be used for all future exports.');
