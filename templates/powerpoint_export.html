@@ -1067,6 +1067,15 @@ function openCanvasEditor(slideData) {
                         <button onclick="toggleCropMode()" id="cropModeBtn" class="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition">
                             ✂️ Crop Mode
                         </button>
+                        <!-- Crop action buttons - shown only when in crop mode -->
+                        <div id="cropActions" class="hidden gap-2">
+                            <button onclick="applyCrop()" class="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition font-semibold">
+                                ✓ Apply Crop
+                            </button>
+                            <button onclick="redrawCrop()" class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                                ↻ Redraw
+                            </button>
+                        </div>
                         <button onclick="fitToSlide()" class="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition" title="Enlarge image to fill slide content area">
                             📐 Fit to Slide
                         </button>
@@ -1303,6 +1312,7 @@ function updateSlideConfigIndicators() {
         }
     }
     
+    // Update indicators on checkbox view-cards (Step 1 selection area)
     document.querySelectorAll('.view-card').forEach(card => {
         const checkbox = card.querySelector('input[name="view"]');
         if (!checkbox) return;
@@ -1320,6 +1330,31 @@ function updateSlideConfigIndicators() {
                 indicator.title = 'This slide has saved crop/sizing settings';
                 card.style.position = 'relative';
                 card.appendChild(indicator);
+            }
+        } else if (indicator) {
+            indicator.remove();
+        }
+    });
+    
+    // Update indicators on slide-preview elements (Step 2 preview canvas area)
+    document.querySelectorAll('.slide-preview').forEach(preview => {
+        const viewPath = (preview.dataset.viewPath || '').split('?')[0];
+        if (!viewPath) return;
+        
+        const hasConfig = Object.keys(slideTransforms).some(key => key.split('?')[0] === viewPath);
+        
+        // Find or create indicator on the slide-preview-card
+        const previewCard = preview.querySelector('.slide-preview-card');
+        if (!previewCard) return;
+        
+        let indicator = previewCard.querySelector('.config-indicator');
+        if (hasConfig) {
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'config-indicator absolute bottom-8 left-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded';
+                indicator.textContent = '✓ Configured';
+                indicator.title = 'This slide has saved crop/sizing settings';
+                previewCard.appendChild(indicator);
             }
         } else if (indicator) {
             indicator.remove();
@@ -1859,23 +1894,33 @@ let isDrawingCrop = false;
 let cropStartPoint = null;
 
 function toggleCropMode() {
-    cropMode = !cropMode;
     const btn = document.getElementById('cropModeBtn');
     
     if (cropMode) {
-        btn.textContent = '❌ Exit Crop Mode';
-        btn.className = 'px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition';
-        enableCropMode();
-        showNotification('Draw a rectangle around the area you want to keep');
-    } else {
+        // Exiting crop mode - cancel without applying
+        cancelCropMode();
+        cropMode = false;
         btn.textContent = '✂️ Crop Mode';
         btn.className = 'px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition';
-        disableCropMode();
+    } else {
+        // Entering crop mode
+        cropMode = true;
+        btn.textContent = '❌ Cancel Crop';
+        btn.className = 'px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition';
+        enableCropMode();
+        showNotification('Draw a rectangle around the area you want to keep, then click "Apply Crop"');
     }
 }
 
 function enableCropMode() {
     if (!canvasImage) return;
+    
+    // Show crop action buttons
+    const cropActions = document.getElementById('cropActions');
+    if (cropActions) {
+        cropActions.classList.remove('hidden');
+        cropActions.classList.add('flex');
+    }
     
     // Make image non-interactive during crop
     canvasImage.set({
@@ -1949,15 +1994,67 @@ function finishCropDraw(e) {
     if (!isDrawingCrop) return;
     isDrawingCrop = false;
     
-    // If crop rectangle is too small, remove it
-    if (cropRect && (cropRect.width < 10 || cropRect.height < 10)) {
+    // Provide feedback if crop rectangle was drawn
+    if (cropRect && cropRect.width > 0 && cropRect.height > 0) {
+        showNotification('Crop area selected - click "Apply Crop" to crop or "Redraw" to try again', 'info');
+    }
+}
+
+function redrawCrop() {
+    // Remove existing crop rectangle if any
+    if (cropRect) {
         fabricCanvas.remove(cropRect);
         cropRect = null;
         cropStartPoint = null;
     }
+    showNotification('Draw a new rectangle around the area you want to keep');
 }
 
-function disableCropMode() {
+function applyCrop() {
+    if (!cropRect) {
+        showNotification('Please draw a crop area first', 'error');
+        return;
+    }
+    
+    if (cropRect.width < 10 || cropRect.height < 10) {
+        showNotification('Crop area too small - minimum 10x10 pixels required', 'error');
+        return;
+    }
+    
+    // Apply the crop
+    const success = performCrop();
+    
+    if (success) {
+        // Exit crop mode
+        cropMode = false;
+        const btn = document.getElementById('cropModeBtn');
+        btn.textContent = '✂️ Crop Mode';
+        btn.className = 'px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition';
+        
+        // Hide crop action buttons
+        const cropActions = document.getElementById('cropActions');
+        if (cropActions) {
+            cropActions.classList.add('hidden');
+            cropActions.classList.remove('flex');
+        }
+        
+        cleanupCropMode();
+    }
+}
+
+function cancelCropMode() {
+    // Hide crop action buttons
+    const cropActions = document.getElementById('cropActions');
+    if (cropActions) {
+        cropActions.classList.add('hidden');
+        cropActions.classList.remove('flex');
+    }
+    
+    cleanupCropMode();
+    showNotification('Crop canceled');
+}
+
+function cleanupCropMode() {
     // Remove mouse event handlers
     fabricCanvas.off('mouse:down', startCropDraw);
     fabricCanvas.off('mouse:move', updateCropDraw);
@@ -1966,102 +2063,128 @@ function disableCropMode() {
     fabricCanvas.defaultCursor = 'default';
     fabricCanvas.selection = true;
     
-    if (cropRect && cropRect.width > 10 && cropRect.height > 10) {
-        // Get the crop rectangle and image in absolute canvas coordinates
-        const cropBounds = {
-            left: cropRect.left,
-            top: cropRect.top,
-            width: cropRect.width,
-            height: cropRect.height
-        };
-        
-        // Get image center and dimensions
-        const imgCenterX = canvasImage.left;
-        const imgCenterY = canvasImage.top;
-        const imgWidth = canvasImage.width * canvasImage.scaleX;
-        const imgHeight = canvasImage.height * canvasImage.scaleY;
-        
-        // Calculate image bounds (top-left corner)
-        const imgLeft = imgCenterX - imgWidth / 2;
-        const imgTop = imgCenterY - imgHeight / 2;
-        
-        console.log('📏 Image:', { 
-            center: [imgCenterX, imgCenterY],
-            topLeft: [imgLeft, imgTop],
-            size: [imgWidth, imgHeight] 
-        });
-        console.log('📏 Crop rect:', cropBounds);
-        
-        // Calculate crop offsets in pixels (how much to cut from each edge)
-        const cropLeftPx = Math.max(0, cropBounds.left - imgLeft);
-        const cropTopPx = Math.max(0, cropBounds.top - imgTop);
-        const cropRightPx = Math.max(0, (imgLeft + imgWidth) - (cropBounds.left + cropBounds.width));
-        const cropBottomPx = Math.max(0, (imgTop + imgHeight) - (cropBounds.top + cropBounds.height));
-        
-        console.log('📏 Crop pixels from edges:', { cropLeftPx, cropTopPx, cropRightPx, cropBottomPx });
-        
-        // Calculate the resulting dimensions
-        const resultWidth = imgWidth - cropLeftPx - cropRightPx;
-        const resultHeight = imgHeight - cropTopPx - cropBottomPx;
-        
-        console.log('📏 Result dimensions:', { resultWidth, resultHeight });
-        
-        // Validate that we have positive dimensions
-        if (resultWidth <= 0 || resultHeight <= 0) {
-            console.error('❌ Invalid crop dimensions - crop area is outside image bounds');
-            showNotification('Crop area must be within the image bounds', 'error');
-            fabricCanvas.remove(cropRect);
-            cropRect = null;
-            cropStartPoint = null;
-            return;
-        }
-        
-        // Convert pixel offsets to percentages for storage
-        const cropLeft = (cropLeftPx / imgWidth) * 100;
-        const cropTop = (cropTopPx / imgHeight) * 100;
-        const cropRight = (cropRightPx / imgWidth) * 100;
-        const cropBottom = (cropBottomPx / imgHeight) * 100;
-        
-        // Store crop values
-        currentTransform.cropTop = cropTop;
-        currentTransform.cropLeft = cropLeft;
-        currentTransform.cropRight = cropRight;
-        currentTransform.cropBottom = cropBottom;
-        
-        console.log('✂️ Crop percentages:', { cropTop, cropLeft, cropRight, cropBottom });
-        
-        // Create clipPath in image's local coordinate system
-        // Image coords: (0,0) is at center, so offset by half width/height
-        const clipWidth = canvasImage.width * (resultWidth / imgWidth);
-        const clipHeight = canvasImage.height * (resultHeight / imgHeight);
-        const clipLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeftPx / imgWidth);
-        const clipTop = -canvasImage.height / 2 + (canvasImage.height * cropTopPx / imgHeight);
-        
-        console.log('📏 ClipPath (in image coords):', { clipLeft, clipTop, clipWidth, clipHeight });
-        
-        // Validate clipPath dimensions
-        if (clipWidth <= 0 || clipHeight <= 0) {
-            console.error('❌ Invalid clipPath dimensions');
-            showNotification('Invalid crop - please try again', 'error');
-            return;
-        }
-        
-        canvasImage.clipPath = new fabric.Rect({
-            left: clipLeft,
-            top: clipTop,
-            width: clipWidth,
-            height: clipHeight,
-            absolutePositioned: false
-        });
-        
-        console.log('✅ Crop applied successfully');
-        
-        // Auto-fit the cropped image to fill the slide content area
-        setTimeout(() => {
-            fitToSlide();
-            showNotification('Cropped and enlarged to fill slide!');
-        }, 100);
+    // Remove crop rectangle if it exists
+    if (cropRect) {
+        fabricCanvas.remove(cropRect);
+        cropRect = null;
+        cropStartPoint = null;
     }
+    
+    // Restore image interactivity
+    if (canvasImage) {
+        canvasImage.set({
+            selectable: true,
+            evented: true,
+            hoverCursor: 'move'
+        });
+        fabricCanvas.setActiveObject(canvasImage);
+    }
+    
+    fabricCanvas.renderAll();
+}
+
+function performCrop() {
+    // Check if we have a valid crop rectangle
+    if (!cropRect) {
+        return false;
+    }
+    
+    if (cropRect.width < 10 || cropRect.height < 10) {
+        showNotification('Crop area too small - minimum 10x10 pixels required', 'error');
+        return false;
+    }
+    
+    // Get the crop rectangle and image in absolute canvas coordinates
+    const cropBounds = {
+        left: cropRect.left,
+        top: cropRect.top,
+        width: cropRect.width,
+        height: cropRect.height
+    };
+    
+    // Get image center and dimensions
+    const imgCenterX = canvasImage.left;
+    const imgCenterY = canvasImage.top;
+    const imgWidth = canvasImage.width * canvasImage.scaleX;
+    const imgHeight = canvasImage.height * canvasImage.scaleY;
+    
+    // Calculate image bounds (top-left corner)
+    const imgLeft = imgCenterX - imgWidth / 2;
+    const imgTop = imgCenterY - imgHeight / 2;
+    
+    console.log('📏 Image:', { 
+        center: [imgCenterX, imgCenterY],
+        topLeft: [imgLeft, imgTop],
+        size: [imgWidth, imgHeight] 
+    });
+    console.log('📏 Crop rect:', cropBounds);
+    
+    // Calculate crop offsets in pixels (how much to cut from each edge)
+    const cropLeftPx = Math.max(0, cropBounds.left - imgLeft);
+    const cropTopPx = Math.max(0, cropBounds.top - imgTop);
+    const cropRightPx = Math.max(0, (imgLeft + imgWidth) - (cropBounds.left + cropBounds.width));
+    const cropBottomPx = Math.max(0, (imgTop + imgHeight) - (cropBounds.top + cropBounds.height));
+    
+    console.log('📏 Crop pixels from edges:', { cropLeftPx, cropTopPx, cropRightPx, cropBottomPx });
+    
+    // Calculate the resulting dimensions
+    const resultWidth = imgWidth - cropLeftPx - cropRightPx;
+    const resultHeight = imgHeight - cropTopPx - cropBottomPx;
+    
+    console.log('📏 Result dimensions:', { resultWidth, resultHeight });
+    
+    // Validate that we have positive dimensions
+    if (resultWidth <= 0 || resultHeight <= 0) {
+        console.error('❌ Invalid crop dimensions - crop area is outside image bounds');
+        showNotification('Crop area must be within the image bounds', 'error');
+        return false;
+    }
+    
+    // Convert pixel offsets to percentages for storage
+    const cropLeft = (cropLeftPx / imgWidth) * 100;
+    const cropTop = (cropTopPx / imgHeight) * 100;
+    const cropRight = (cropRightPx / imgWidth) * 100;
+    const cropBottom = (cropBottomPx / imgHeight) * 100;
+    
+    // Store crop values
+    currentTransform.cropTop = cropTop;
+    currentTransform.cropLeft = cropLeft;
+    currentTransform.cropRight = cropRight;
+    currentTransform.cropBottom = cropBottom;
+    
+    console.log('✂️ Crop percentages:', { cropTop, cropLeft, cropRight, cropBottom });
+    
+    // Create clipPath in image's local coordinate system
+    // Image coords: (0,0) is at center, so offset by half width/height
+    const clipWidth = canvasImage.width * (resultWidth / imgWidth);
+    const clipHeight = canvasImage.height * (resultHeight / imgHeight);
+    const clipLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeftPx / imgWidth);
+    const clipTop = -canvasImage.height / 2 + (canvasImage.height * cropTopPx / imgHeight);
+    
+    console.log('📏 ClipPath (in image coords):', { clipLeft, clipTop, clipWidth, clipHeight });
+    
+    // Validate clipPath dimensions
+    if (clipWidth <= 0 || clipHeight <= 0) {
+        console.error('❌ Invalid clipPath dimensions');
+        showNotification('Invalid crop - please try again', 'error');
+        return false;
+    }
+    
+    canvasImage.clipPath = new fabric.Rect({
+        left: clipLeft,
+        top: clipTop,
+        width: clipWidth,
+        height: clipHeight,
+        absolutePositioned: false
+    });
+    
+    console.log('✅ Crop applied successfully');
+    
+    // Auto-fit the cropped image to fill the slide content area
+    setTimeout(() => {
+        fitToSlide();
+        showNotification('Cropped and enlarged to fill slide!');
+    }, 100);
     
     // Remove crop rectangle
     if (cropRect) {
@@ -2070,18 +2193,18 @@ function disableCropMode() {
         cropStartPoint = null;
     }
     
-    // Restore image interactivity
-    canvasImage.set({
-        selectable: true,
-        evented: true,
-        hoverCursor: 'move'
-    });
-    
-    fabricCanvas.setActiveObject(canvasImage);
     fabricCanvas.renderAll();
+    
+    return true; // Successfully applied crop
 }
 
 function applyCanvasTransform() {
+    // If we're in crop mode, warn the user
+    if (cropMode) {
+        showNotification('Please apply or cancel crop mode first', 'error');
+        return;
+    }
+    
     if (!canvasImage) {
         showNotification('No image to apply transforms to', 'error');
         return;
