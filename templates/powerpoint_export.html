@@ -2199,6 +2199,18 @@ function performCrop() {
         height: canvasImage.clipPath.height
     });
     
+    // Calculate the offset of the clip area from the image center (in scaled coordinates)
+    const clipCenterOffsetX = (clipRectLeft + clipRectWidth / 2) * canvasImage.scaleX;
+    const clipCenterOffsetY = (clipRectTop + clipRectHeight / 2) * canvasImage.scaleY;
+    
+    // Adjust image position to center the clipped area where the image center was
+    canvasImage.set({
+        left: canvasImage.left + clipCenterOffsetX,
+        top: canvasImage.top + clipCenterOffsetY
+    });
+    
+    console.log('📍 Image position adjusted by:', { x: clipCenterOffsetX, y: clipCenterOffsetY });
+    
     // Remove crop rectangle
     if (cropRect) {
         fabricCanvas.remove(cropRect);
@@ -2206,12 +2218,12 @@ function performCrop() {
         cropStartPoint = null;
     }
     
-    // Force canvas to update with the new clipPath
+    // Force canvas to update with the new clipPath and position
     canvasImage.dirty = true;
     canvasImage.setCoords();
     fabricCanvas.requestRenderAll();
     
-    console.log('🔄 Canvas re-rendered with clipPath');
+    console.log('🔄 Canvas re-rendered with clipPath and updated bounding box');
     
     showNotification('Crop applied! Use "Fit to Slide" to enlarge if needed');
     
