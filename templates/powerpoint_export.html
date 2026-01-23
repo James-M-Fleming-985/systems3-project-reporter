@@ -2156,12 +2156,14 @@ function performCrop() {
     
     // Create clipPath in image's local coordinate system
     // Image coords: (0,0) is at center, so offset by half width/height
-    const clipWidth = canvasImage.width * (resultWidth / imgWidth);
-    const clipHeight = canvasImage.height * (resultHeight / imgHeight);
-    const clipLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeftPx / imgWidth);
-    const clipTop = -canvasImage.height / 2 + (canvasImage.height * cropTopPx / imgHeight);
+    // The clipPath needs to be in the image's original (unscaled) coordinate space
+    const clipWidth = canvasImage.width * (1 - cropLeft/100 - cropRight/100);
+    const clipHeight = canvasImage.height * (1 - cropTop/100 - cropBottom/100);
+    const clipLeft = -canvasImage.width / 2 + (canvasImage.width * cropLeft / 100);
+    const clipTop = -canvasImage.height / 2 + (canvasImage.height * cropTop / 100);
     
     console.log('📏 ClipPath (in image coords):', { clipLeft, clipTop, clipWidth, clipHeight });
+    console.log('📏 Image dimensions (unscaled):', { width: canvasImage.width, height: canvasImage.height });
     
     // Validate clipPath dimensions
     if (clipWidth <= 0 || clipHeight <= 0) {
@@ -2179,12 +2181,7 @@ function performCrop() {
     });
     
     console.log('✅ Crop applied successfully');
-    
-    // Auto-fit the cropped image to fill the slide content area
-    setTimeout(() => {
-        fitToSlide();
-        showNotification('Cropped and enlarged to fill slide!');
-    }, 100);
+    console.log('   ClipPath set:', canvasImage.clipPath);
     
     // Remove crop rectangle
     if (cropRect) {
@@ -2193,7 +2190,11 @@ function performCrop() {
         cropStartPoint = null;
     }
     
+    // Force canvas to update with the new clipPath
+    canvasImage.setCoords();
     fabricCanvas.renderAll();
+    
+    showNotification('Crop applied! Use "Fit to Slide" to enlarge if needed');
     
     return true; // Successfully applied crop
 }
