@@ -654,30 +654,27 @@ async def changes_table_preview(
             vertical-align: top;
             line-height: 1.4;
             word-wrap: break-word;
+            font-size: 16px;  /* Match risk table base font */
         }}
         tr:nth-child(even) {{ background: #F9FAFB; }}
         .old-date {{ 
             color: #DC2626; 
             text-decoration: line-through;
-            font-size: 16px;
         }}
         .new-date {{ 
             color: #16A34A; 
             font-weight: bold;
-            font-size: 16px;
         }}
         .arrow {{
             color: #6B7280;
             padding: 0 8px;
-            font-size: 16px;
         }}
         .milestone-name {{
             font-weight: 600;
             color: #1f2937;
-            font-size: 16px;
         }}
         .reason-text, .contingency-text {{
-            font-size: 15px;
+            font-size: 16px;  /* Increased to match cell base font */
             color: #374151;
         }}
         .info-box {{
