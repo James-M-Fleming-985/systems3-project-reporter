@@ -1104,7 +1104,7 @@ async def risks_table_preview(
     for risk in page_risks:
         risk_id = risk.get('id', 'N/A')
         risk_title = risk.get('title', 'Untitled')
-        project_title = risk.get('project_title', '') or risk.get('project_name', clean_name)
+        project = risk.get('project', 'N/A')
         # No truncation - allow text to wrap to multiple lines
         mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
         if isinstance(mitigation, list):
@@ -1117,7 +1117,7 @@ async def risks_table_preview(
         html += f'''            <tr>
                 <td>{risk_id}</td>
                 <td>{risk_title}</td>
-                <td>{project_title}</td>
+                <td>{project}</td>
                 <td class="mitigation">{mitigation}</td>
                 <td class="severity-{severity}">{severity.upper()}</td>
                 <td>{status}</td>
