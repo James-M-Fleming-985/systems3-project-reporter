@@ -218,6 +218,8 @@ def expand_views_for_pagination(
 @ui_router.get("/powerpoint-export", response_class=HTMLResponse)
 async def powerpoint_export_page(request: Request):
     """PowerPoint Export UI Page"""
+    from main import BUILD_VERSION
+    
     selected_project = get_selected_project(request)
     all_projects = get_all_projects()
     user = getattr(request.state, 'user', None) if hasattr(request, 'state') else None
@@ -228,7 +230,8 @@ async def powerpoint_export_page(request: Request):
             "selected_project": selected_project,
             "all_projects": all_projects,
             "project_name": selected_project.project_name if selected_project else "",
-            "user": user
+            "user": user,
+            "build_version": BUILD_VERSION
         }
     )
 
