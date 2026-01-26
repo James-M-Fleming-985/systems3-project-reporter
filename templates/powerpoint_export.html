@@ -399,6 +399,11 @@ function updatePreviewCanvas() {
         
         previewContainer.appendChild(slidePreview);
     });
+    
+    // Update configuration indicators after rebuilding the preview
+    setTimeout(() => {
+        updateSlideConfigIndicators();
+    }, 50);
 }
 
 // Preview modal functionality

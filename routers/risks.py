@@ -1091,11 +1091,11 @@ async def risks_table_preview(
             <tr>
                 <th style="width: 7%">ID</th>
                 <th style="width: 20%">Title</th>
+                <th style="width: 16%">Project Title</th>
                 <th style="width: 30%">Mitigation</th>
                 <th style="width: 9%">Severity</th>
                 <th style="width: 10%">Status</th>
                 <th style="width: 14%">Owner</th>
-                <th style="width: 10%">L/I</th>
             </tr>
         </thead>
         <tbody>
@@ -1104,6 +1104,7 @@ async def risks_table_preview(
     for risk in page_risks:
         risk_id = risk.get('id', 'N/A')
         risk_title = risk.get('title', 'Untitled')
+        project_title = risk.get('project_title', '') or risk.get('project_name', clean_name)
         # No truncation - allow text to wrap to multiple lines
         mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
         if isinstance(mitigation, list):
@@ -1112,17 +1113,15 @@ async def risks_table_preview(
         severity = risk.get('severity_normalized', 'medium').lower()
         status = risk.get('status', 'N/A')
         owner = risk.get('owner', 'Owner A')
-        likelihood = risk.get('likelihood', '?')
-        impact = risk.get('impact', '?')
         
         html += f'''            <tr>
                 <td>{risk_id}</td>
                 <td>{risk_title}</td>
+                <td>{project_title}</td>
                 <td class="mitigation">{mitigation}</td>
                 <td class="severity-{severity}">{severity.upper()}</td>
                 <td>{status}</td>
                 <td class="owner-cell">{owner}</td>
-                <td>L:{likelihood} I:{impact}</td>
             </tr>
 '''
     
