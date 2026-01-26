@@ -2282,16 +2282,24 @@ function applyCanvasTransform() {
     // Mark the checkbox as checked for this view
     if (currentEditingViewPath) {
         const basePath = currentEditingViewPath.split('?')[0];
+        console.log('🔍 Looking for checkbox with path:', basePath);
+        let foundCheckbox = false;
         document.querySelectorAll('input[name="view"]').forEach(checkbox => {
             const checkboxPath = checkbox.value.split('?')[0];
+            console.log('  Comparing with:', checkboxPath);
             if (checkboxPath === basePath) {
                 checkbox.checked = true;
+                foundCheckbox = true;
                 console.log('✅ Checked the checkbox for:', basePath);
             }
         });
+        if (!foundCheckbox) {
+            console.warn('⚠️ No checkbox found for path:', basePath);
+        }
     }
     
     // Update the preview canvas to show the slide
+    console.log('📋 Updating preview canvas...');
     updatePreviewCanvas();
     
     // Update visual indicators after a short delay to ensure DOM is ready

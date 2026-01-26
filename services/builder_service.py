@@ -181,6 +181,11 @@ class PowerPointBuilderService:
                 # Default: screenshot-based slide
                 screenshot = slide_config.get('data')
                 if screenshot:
+                    # Apply transform (crop/scale) if provided
+                    transform = slide_config.get('transform')
+                    if transform:
+                        screenshot = self._apply_transform_to_image(screenshot, transform)
+                    
                     self._create_content_slide(
                         screenshot,
                         slide_number=1,

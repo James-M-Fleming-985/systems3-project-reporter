@@ -16,11 +16,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 def get_git_hash():
     """Get current git commit hash"""
     try:
+        # Try reading from Railway's SOURCE_COMMIT env var first
+        railway_commit = os.getenv('RAILWAY_GIT_COMMIT_SHA', '')
+        if railway_commit:
+            return railway_commit[:7]  # Short hash
+        
+        # Fallback to git command (works locally)
         result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], 
                               capture_output=True, text=True, cwd=Path(__file__).parent)
-        return result.stdout.strip() if result.returncode == 0 else "unknown"
-    except:
-        return "unknown"
+        return result.stdout.strip() if result.returncode == 0 else "no-git"
+    except Exception as e:
+        logger.warning(f"Could not get git hash: {e}")
+        return "no-git"
 
 BUILD_VERSION = f"1.0.323-{get_git_hash()}"  # Fix: Mark slides as configured when applying changes
 

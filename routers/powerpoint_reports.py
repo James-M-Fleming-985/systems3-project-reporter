@@ -352,6 +352,20 @@ async def export_to_powerpoint(
             '.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
         clean_name = re.sub(r'-\d+$', '', clean_name).strip()
         
+        # Helper function to get transform for a view
+        def get_transform_for_view(view: str, idx: int) -> Optional[Dict[str, Any]]:
+            """Get transform data for a view from the export request."""
+            if not export_request.slide_transforms:
+                return None
+            # The transforms array corresponds to the original views array
+            # But we may have expanded views (e.g., multi-page risks)
+            # Try to match by index first (for non-expanded views)
+            if idx < len(export_request.slide_transforms):
+                transform = export_request.slide_transforms[idx]
+                if transform:
+                    return transform.dict() if hasattr(transform, 'dict') else transform
+            return None
+        
         # Build slides data - native tables for milestones/risks/changes (editable)
         slides_data = []
         
@@ -489,6 +503,12 @@ async def export_to_powerpoint(
                 separator = '&' if '?' in view else '?'
                 url = f"{base_url}{view}{separator}ppt_export=true"
                 logger.info(f"📸 Capturing with ppt_export: {url}")
+                
+                # Get transform for this view
+                transform = get_transform_for_view(view, idx)
+                if transform:
+                    logger.info(f"📐 Found transform for slide {idx}: crop={transform.get('cropTop', 0):.1f}%, {transform.get('cropLeft', 0):.1f}%, {transform.get('cropBottom', 0):.1f}%, {transform.get('cropRight', 0):.1f}%")
+                
                 try:
                     screenshot = await screenshot_service.capture_screenshot_async(
                         url=url,
@@ -503,7 +523,8 @@ async def export_to_powerpoint(
                     slides_data.append({
                         'type': 'screenshot',
                         'data': screenshot,
-                        'title': title
+                        'title': title,
+                        'transform': transform  # Include transform for cropping
                     })
                     logger.info(f"✅ Captured screenshot: {url}")
                 except Exception as e:
