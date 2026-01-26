@@ -669,14 +669,6 @@ async def changes_table_preview(
             color: #6B7280;
             padding: 0 8px;
         }}
-        .milestone-name {{
-            font-weight: 600;
-            color: #1f2937;
-        }}
-        .reason-text, .contingency-text {{
-            font-size: 16px;  /* Increased to match cell base font */
-            color: #374151;
-        }}
         .info-box {{
             margin-top: 16px;
             padding: 10px 14px;
@@ -712,14 +704,14 @@ async def changes_table_preview(
         
         html += f'''
             <tr>
-                <td class="milestone-name">{milestone}</td>
+                <td><strong>{milestone}</strong></td>
                 <td>
                     <span class="old-date">{old_date}</span>
                     <span class="arrow">→</span>
                     <span class="new-date">{new_date}</span>
                 </td>
-                <td class="reason-text">{reason}</td>
-                <td class="contingency-text">{contingency}</td>
+                <td>{reason}</td>
+                <td>{contingency}</td>
             </tr>'''
     
     html += '''
