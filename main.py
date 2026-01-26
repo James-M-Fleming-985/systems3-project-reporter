@@ -3,6 +3,7 @@ Systems³ Project Reporter - FastAPI Main Application
 """
 import os
 import logging
+import subprocess
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +13,16 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # Build version - INCREMENT THIS BEFORE EACH DEPLOYMENT
 
-BUILD_VERSION = "1.0.322"  # Fix: Remove duplicate middleware definition
+def get_git_hash():
+    """Get current git commit hash"""
+    try:
+        result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], 
+                              capture_output=True, text=True, cwd=Path(__file__).parent)
+        return result.stdout.strip() if result.returncode == 0 else "unknown"
+    except:
+        return "unknown"
+
+BUILD_VERSION = f"1.0.323-{get_git_hash()}"  # Fix: Mark slides as configured when applying changes
 
 
 # Setup logging
