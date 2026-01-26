@@ -723,7 +723,15 @@ async def changes_table_preview(
 </body>
 </html>'''
     
-    return HTMLResponse(content=html, status_code=200)
+    return HTMLResponse(
+        content=html, 
+        status_code=200,
+        headers={
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    )
 
 
 @router.get("/api/projects")
