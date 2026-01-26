@@ -25,6 +25,8 @@ async def subscription_page(
     sub_service: SubscriptionService = Depends(get_subscription_service)
 ):
     """Subscription management page"""
+    from main import BUILD_VERSION
+    
     usage_stats = sub_service.get_usage_stats(user.user_id)
     all_tiers = sub_service.get_all_tiers()
     upgrade_suggestions = get_upgrade_suggestions(user)
@@ -36,7 +38,8 @@ async def subscription_page(
         "usage_stats": usage_stats,
         "all_tiers": all_tiers,
         "upgrade_suggestions": upgrade_suggestions,
-        "recent_uploads": recent_uploads
+        "recent_uploads": recent_uploads,
+        "build_version": BUILD_VERSION
     })
 
 
@@ -46,9 +49,12 @@ async def subscription_success_page(
     session_id: str = None
 ):
     """Subscription upgrade success page (after Stripe checkout)"""
+    from main import BUILD_VERSION
+    
     return templates.TemplateResponse("subscription_success.html", {
         "request": request,
-        "session_id": session_id
+        "session_id": session_id,
+        "build_version": BUILD_VERSION
     })
 
 
