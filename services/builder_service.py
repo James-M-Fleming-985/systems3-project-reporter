@@ -683,7 +683,7 @@ class PowerPointBuilderService:
         
         # ============================================================
         # TABLE - 7 columns matching canvas preview
-        # ID, Title, Mitigation, Severity, Status, Owner, L/I
+        # ID, Title, Project Title, Mitigation, Severity, Status, Owner
         # ============================================================
         num_risks = min(len(risks), 8)  # Max 8 risks per slide
         num_rows = num_risks + 1  # +1 for header
@@ -699,9 +699,9 @@ class PowerPointBuilderService:
         )
         table = table_shape.table
         
-        # Column widths (percentages of table width)
-        # ID=7%, Title=20%, Project=16%, Mitigation=30%, Severity=9%, Status=10%, Owner=14%
-        col_widths = [0.07, 0.20, 0.16, 0.30, 0.09, 0.10, 0.14]
+        # Column widths (percentages of table width) - total = 100%
+        # ID=7%, Title=20%, Project=15%, Mitigation=31%, Severity=9%, Status=10%, Owner=8%
+        col_widths = [0.07, 0.20, 0.15, 0.31, 0.09, 0.10, 0.08]
         for i, pct in enumerate(col_widths):
             table.columns[i].width = Inches(table_width * pct)
         
