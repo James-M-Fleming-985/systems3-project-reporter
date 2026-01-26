@@ -2263,7 +2263,20 @@ function applyCanvasTransform() {
     // Store transform for this specific slide (keyed by view path - use base path without project param)
     if (currentEditingViewPath) {
         // Use base path so it works across project selections
-        const basePath = currentEditingViewPath.split('?')[0];
+        let basePath = currentEditingViewPath.split('?')[0];
+        
+        // Normalize paths that were switched to /table views back to their checkbox values
+        if (basePath.startsWith('/risks/table/')) {
+            basePath = '/risks/print/' + basePath.replace('/risks/table/', '');
+            console.log('🔄 Normalized risks table path to print path:', basePath);
+        } else if (basePath.startsWith('/milestones/table/')) {
+            basePath = '/dashboard/milestones';
+            console.log('🔄 Normalized milestones table path:', basePath);
+        } else if (basePath.startsWith('/dashboard/changes/table/')) {
+            basePath = '/dashboard/changes';
+            console.log('🔄 Normalized changes table path:', basePath);
+        }
+        
         slideTransforms[basePath] = transform;
         
         // Persist to localStorage for future sessions
@@ -2281,7 +2294,17 @@ function applyCanvasTransform() {
     
     // Mark the checkbox as checked for this view
     if (currentEditingViewPath) {
-        const basePath = currentEditingViewPath.split('?')[0];
+        let basePath = currentEditingViewPath.split('?')[0];
+        
+        // Normalize paths back to checkbox values
+        if (basePath.startsWith('/risks/table/')) {
+            basePath = '/risks/print/' + basePath.replace('/risks/table/', '');
+        } else if (basePath.startsWith('/milestones/table/')) {
+            basePath = '/dashboard/milestones';
+        } else if (basePath.startsWith('/dashboard/changes/table/')) {
+            basePath = '/dashboard/changes';
+        }
+        
         console.log('🔍 Looking for checkbox with path:', basePath);
         let foundCheckbox = false;
         document.querySelectorAll('input[name="view"]').forEach(checkbox => {
