@@ -107,13 +107,14 @@ class ScreenshotService:
             context = await browser.new_context(
                 viewport={'width': resolution[0], 'height': resolution[1]},
                 bypass_csp=True,  # Bypass Content Security Policy
-                ignore_https_errors=True
+                ignore_https_errors=True,
+                # Disable cache
+                extra_http_headers={
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             )
-            
-            # Disable cache at the route level
-            await context.route('**/*', lambda route: route.continue_(
-                headers={**route.request.headers, 'Cache-Control': 'no-cache, no-store, must-revalidate'}
-            ))
             
             # Set cookies if provided (for authentication)
             if cookies:
@@ -128,9 +129,14 @@ class ScreenshotService:
                 await page.set_extra_http_headers(extra_headers)
                 logger.info(f"Set extra headers: {extra_headers}")
             
-            # Navigate to URL (metric data now passed as query param, not localStorage)
+            # Navigate to URL with cache-busting timestamp
+            import time
+            cache_bust = int(time.time() * 1000)
+            separator = '&' if '?' in url else '?'
+            url_with_cache_bust = f"{url}{separator}_cb={cache_bust}"
+            
             await page.goto(
-                url, wait_until='networkidle', timeout=self.timeout
+                url_with_cache_bust, wait_until='networkidle', timeout=self.timeout
             )
             
             # Special handling for metric trend charts - wait for Plotly to render
