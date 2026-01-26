@@ -103,9 +103,17 @@ class ScreenshotService:
         
         try:
             # Create new browser context with cookies if provided
+            # Disable cache to ensure fresh content
             context = await browser.new_context(
-                viewport={'width': resolution[0], 'height': resolution[1]}
+                viewport={'width': resolution[0], 'height': resolution[1]},
+                bypass_csp=True,  # Bypass Content Security Policy
+                ignore_https_errors=True
             )
+            
+            # Disable cache at the route level
+            await context.route('**/*', lambda route: route.continue_(
+                headers={**route.request.headers, 'Cache-Control': 'no-cache, no-store, must-revalidate'}
+            ))
             
             # Set cookies if provided (for authentication)
             if cookies:
