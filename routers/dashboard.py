@@ -630,6 +630,7 @@ async def changes_table_preview(
             font-size: 32px;
             margin-bottom: 24px;
             font-weight: normal;
+            display: none;  /* Hidden - PowerPoint adds its own title */
         }}
         table {{
             width: 100%;
@@ -640,41 +641,43 @@ async def changes_table_preview(
         th {{
             background: #1E40AF;
             color: white;
-            padding: 14px 12px;
+            padding: 12px 10px;
             text-align: left;
             font-weight: bold;
             font-size: 15px;
+            white-space: nowrap;
         }}
         td {{
-            padding: 14px 12px;
+            padding: 12px 10px;
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
             vertical-align: top;
-            line-height: 1.5;
+            line-height: 1.4;
             word-wrap: break-word;
         }}
         tr:nth-child(even) {{ background: #F9FAFB; }}
         .old-date {{ 
             color: #DC2626; 
             text-decoration: line-through;
-            font-size: 15px;
+            font-size: 16px;
         }}
         .new-date {{ 
             color: #16A34A; 
             font-weight: bold;
-            font-size: 15px;
+            font-size: 16px;
         }}
         .arrow {{
             color: #6B7280;
             padding: 0 8px;
+            font-size: 16px;
         }}
         .milestone-name {{
             font-weight: 600;
             color: #1f2937;
-            font-size: 15px;
+            font-size: 16px;
         }}
         .reason-text, .contingency-text {{
-            font-size: 14px;
+            font-size: 15px;
             color: #374151;
         }}
         .info-box {{
