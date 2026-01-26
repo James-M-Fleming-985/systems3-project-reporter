@@ -565,20 +565,21 @@ async def normalize_risk_ids(program_name: str):
 async def risks_print_view(
     program_name: str, 
     page: int = 1, 
-    per_page: int = 3,
+    per_page: int = 10,
     blank_owner: bool = False
 ):
     """
     Print-friendly risk report page for PowerPoint screenshots.
-    Renders risks in card format similar to PDF export.
-    Supports pagination for multi-slide exports.
+    NOW USES TABLE FORMAT - redirects to /risks/table/ for consistency.
     
     Args:
         program_name: The program/project name
         page: Page number (1-indexed)
-        per_page: Number of risks per page (default 3)
-        blank_owner: If True, leave Owner field blank for PowerPoint text overlay
+        per_page: Number of risks per page (default 10 for table)
+        blank_owner: Ignored (kept for backwards compatibility)
     """
+    # Use the table format for all exports
+    return await risks_table_preview(program_name, page, per_page)
     from fastapi.responses import HTMLResponse
     
     # Clean program name
