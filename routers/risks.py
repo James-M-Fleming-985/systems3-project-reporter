@@ -579,6 +579,7 @@ async def risks_print_view(
         blank_owner: Ignored (kept for backwards compatibility)
     """
     # Use the table format for all exports
+    logger.info(f"🔄 /risks/print/{program_name} called - redirecting to table format (page={page}, per_page={per_page})")
     return await risks_table_preview(program_name, page, per_page)
     from fastapi.responses import HTMLResponse
     
@@ -991,6 +992,8 @@ async def risks_table_preview(
         per_page: Number of risks per page (default 10)
     """
     from fastapi.responses import HTMLResponse
+    
+    logger.info(f"📊 /risks/table/{program_name} called (page={page}, per_page={per_page})")
     
     # Clean program name
     clean_name = clean_program_name(program_name)

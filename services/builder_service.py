@@ -640,7 +640,7 @@ class PowerPointBuilderService:
         Canvas preview format (/risks/table/):
         - Title: gray #7F7F7F
         - Table with blue header row #1E40AF
-        - Columns: ID, Title, Mitigation, Severity, Status, Owner, L/I
+        - Columns: ID, Title, Project Title, Mitigation, Severity, Status, Owner
         - Owner column: yellow background (editable)
         - Alternating row colors
         
@@ -700,15 +700,15 @@ class PowerPointBuilderService:
         table = table_shape.table
         
         # Column widths (percentages of table width)
-        # ID=7%, Title=20%, Mitigation=30%, Severity=9%, Status=10%, Owner=14%, L/I=10%
-        col_widths = [0.07, 0.20, 0.30, 0.09, 0.10, 0.14, 0.10]
+        # ID=7%, Title=20%, Project=16%, Mitigation=30%, Severity=9%, Status=10%, Owner=14%
+        col_widths = [0.07, 0.20, 0.16, 0.30, 0.09, 0.10, 0.14]
         for i, pct in enumerate(col_widths):
             table.columns[i].width = Inches(table_width * pct)
         
         # ============================================================
         # HEADER ROW - Blue #1E40AF background, white text
         # ============================================================
-        headers = ["ID", "Title", "Mitigation", "Severity", "Status", "Owner", "L/I"]
+        headers = ["ID", "Title", "Project Title", "Mitigation", "Severity", "Status", "Owner"]
         for i, hdr in enumerate(headers):
             cell = table.cell(0, i)
             cell.text = hdr
@@ -740,23 +740,23 @@ class PowerPointBuilderService:
         for row_idx, risk in enumerate(risks[:8], start=1):
             risk_id = risk.get('id', 'N/A')
             risk_title = risk.get('title', 'Untitled')
+            project = risk.get('project', 'N/A')  # NEW: Project Title column
             mitigation = risk.get('mitigation', '') or risk.get('mitigations', '')
             if isinstance(mitigation, list):
                 mitigation = '; '.join(mitigation) if mitigation else ''
             severity = risk.get('severity_normalized', 'medium').lower()
             status = risk.get('status', 'N/A')
             owner = risk.get('owner', 'Owner A')
-            likelihood = risk.get('likelihood', '?')
-            impact = risk.get('impact', '?')
             
             row_data = [
                 risk_id,
                 risk_title,
+                project,  # NEW: Project Title
                 str(mitigation),
                 severity.upper(),
                 status,
-                owner,
-                f"L:{likelihood} I:{impact}"
+                owner
+                # REMOVED: L/I column
             ]
             
             # Alternating row colors
@@ -782,14 +782,14 @@ class PowerPointBuilderService:
                 cell.fill.fore_color.rgb = row_bg
                 para.font.color.rgb = RGBColor(0x37, 0x41, 0x51)  # Dark gray
                 
-                # Severity column - colored text
-                if col_idx == 3:
+                # Severity column - colored text (now column 4)
+                if col_idx == 4:
                     color = severity_colors.get(severity, severity_colors['medium'])
                     para.font.color.rgb = color
                     para.font.bold = True
                 
-                # Owner column - yellow background (editable)
-                if col_idx == 5:
+                # Owner column - yellow background (editable) (now column 6)
+                if col_idx == 6:
                     cell.fill.solid()
                     cell.fill.fore_color.rgb = RGBColor(0xFF, 0xFE, 0xF0)  # Light yellow
                     para.font.italic = True
