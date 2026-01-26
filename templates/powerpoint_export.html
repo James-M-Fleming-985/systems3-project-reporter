@@ -2279,6 +2279,21 @@ function applyCanvasTransform() {
     // Close modal
     document.querySelector('.fixed.inset-0').remove();
     
+    // Mark the checkbox as checked for this view
+    if (currentEditingViewPath) {
+        const basePath = currentEditingViewPath.split('?')[0];
+        document.querySelectorAll('input[name="view"]').forEach(checkbox => {
+            const checkboxPath = checkbox.value.split('?')[0];
+            if (checkboxPath === basePath) {
+                checkbox.checked = true;
+                console.log('✅ Checked the checkbox for:', basePath);
+            }
+        });
+    }
+    
+    // Update the preview canvas to show the slide
+    updatePreviewCanvas();
+    
     // Update visual indicators after a short delay to ensure DOM is ready
     setTimeout(() => {
         updateSlideConfigIndicators();
