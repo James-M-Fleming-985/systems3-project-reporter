@@ -476,9 +476,8 @@ function renderTrendChart(metric) {
     
     const config = {
         responsive: true,
-        displayModeBar: !isPowerPointMode,  // Hide controls for PowerPoint export
+        displayModeBar: false,  // Hide toolbar icons - they obscure the second y-axis
         staticPlot: isPowerPointMode,  // Disable all interactions for PowerPoint export
-        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
         edits: {
             annotationPosition: !isPowerPointMode,  // Only allow dragging in interactive mode
             annotationTail: !isPowerPointMode       // Only allow dragging in interactive mode
