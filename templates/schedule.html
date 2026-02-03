@@ -72,6 +72,27 @@
         text-align: left;
         font-weight: 600;
         position: relative;
+        cursor: grab;
+        user-select: none;
+    }
+    .schedule-table th.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+    }
+    .schedule-table th.drag-over {
+        border-left: 3px solid #fbbf24;
+    }
+    .schedule-table th .drag-handle {
+        position: absolute;
+        left: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+        font-size: 10px;
+        cursor: grab;
+    }
+    .schedule-table th:hover .drag-handle {
+        opacity: 1;
     }
     .schedule-table th .col-actions {
         position: absolute;
@@ -83,6 +104,9 @@
     }
     .schedule-table th:hover .col-actions {
         opacity: 1;
+    }
+    .schedule-table th .col-header-text {
+        padding-left: 16px;
     }
     .schedule-table td {
         padding: 10px;
@@ -322,16 +346,25 @@
             </div>
             
             <!-- Table -->
-            <table class="schedule-table" id="table-{{ table.id }}">
+            <table class="schedule-table" id="table-{{ table.id }}" data-table-id="{{ table.id }}">
                 <thead>
                     <tr>
                         {% for col in table.columns %}
                         <th style="width: {{ col.width or 150 }}px" 
-                            class="{% if not col.visible_in_export %}export-hidden{% endif %}">
-                            {{ col.header }}
+                            class="{% if not col.visible_in_export %}export-hidden{% endif %}"
+                            draggable="true"
+                            data-col-id="{{ col.id }}"
+                            ondragstart="handleDragStart(event, '{{ table.id }}', '{{ col.id }}')"
+                            ondragover="handleDragOver(event)"
+                            ondragenter="handleDragEnter(event)"
+                            ondragleave="handleDragLeave(event)"
+                            ondrop="handleDrop(event, '{{ table.id }}', '{{ col.id }}')"
+                            ondragend="handleDragEnd(event)">
+                            <span class="drag-handle">⋮⋮</span>
+                            <span class="col-header-text">{{ col.header }}</span>
                             <span class="col-actions">
-                                <button class="btn-icon" onclick="editColumn('{{ table.id }}', '{{ col.id }}')" title="Edit">✏️</button>
-                                <button class="btn-icon danger" onclick="deleteColumn('{{ table.id }}', '{{ col.id }}')" title="Delete">🗑️</button>
+                                <button class="btn-icon" onclick="event.stopPropagation(); editColumn('{{ table.id }}', '{{ col.id }}')" title="Edit">✏️</button>
+                                <button class="btn-icon danger" onclick="event.stopPropagation(); deleteColumn('{{ table.id }}', '{{ col.id }}')" title="Delete">🗑️</button>
                             </span>
                         </th>
                         {% endfor %}
@@ -480,7 +513,97 @@ let tablesData = {{ schedule_data | tojson }};
 console.log('📋 Schedule loaded for:', projectName);
 console.log('Tables:', tablesData.tables?.length || 0);
 
+// =============================================================================
+// Column Drag & Drop Reordering
+// =============================================================================
+let draggedColId = null;
+let draggedTableId = null;
+
+function handleDragStart(event, tableId, colId) {
+    draggedColId = colId;
+    draggedTableId = tableId;
+    event.target.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', colId);
+    console.log('🎯 Drag start:', colId);
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(event) {
+    event.preventDefault();
+    const th = event.target.closest('th');
+    if (th && th.dataset.colId && th.dataset.colId !== draggedColId) {
+        th.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(event) {
+    const th = event.target.closest('th');
+    if (th) {
+        th.classList.remove('drag-over');
+    }
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    draggedColId = null;
+    draggedTableId = null;
+}
+
+async function handleDrop(event, tableId, targetColId) {
+    event.preventDefault();
+    const th = event.target.closest('th');
+    if (th) th.classList.remove('drag-over');
+    
+    if (!draggedColId || draggedColId === targetColId || tableId !== draggedTableId) {
+        return;
+    }
+    
+    console.log('📦 Drop:', draggedColId, 'before', targetColId);
+    
+    // Get current table
+    const table = tablesData.tables?.find(t => t.id === tableId);
+    if (!table) return;
+    
+    // Reorder columns
+    const columns = [...table.columns];
+    const draggedIndex = columns.findIndex(c => c.id === draggedColId);
+    const targetIndex = columns.findIndex(c => c.id === targetColId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    
+    // Remove dragged column and insert at target position
+    const [draggedCol] = columns.splice(draggedIndex, 1);
+    columns.splice(targetIndex, 0, draggedCol);
+    
+    // Save new order
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ columns })
+        });
+        
+        if (response.ok) {
+            // Reload to reflect new order
+            window.location.reload();
+        } else {
+            alert('Failed to save column order');
+        }
+    } catch (error) {
+        console.error('Error saving column order:', error);
+        alert('Error saving column order');
+    }
+}
+
+// =============================================================================
 // Tab switching
+// =============================================================================
 function switchTab(tableId) {
     // Update tab buttons
     document.querySelectorAll('.schedule-tab').forEach(tab => {
