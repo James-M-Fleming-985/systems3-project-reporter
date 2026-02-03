@@ -264,7 +264,11 @@ async def metric_trend_page(request: Request, metric_name: str, metricData: str 
         "user": user
     }
     
-    return templates.TemplateResponse("metric_trend.html", context)
+    response = templates.TemplateResponse("metric_trend.html", context)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @router.get("/metrics", response_class=HTMLResponse)
