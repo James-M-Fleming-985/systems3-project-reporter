@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule - {{ clean_name }} | Systems³{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Tab styling */
+    .schedule-tabs {
+        display: flex;
+        border-bottom: 2px solid #e5e7eb;
+        gap: 4px;
+        margin-bottom: 0;
+        flex-wrap: wrap;
+    }
+    .schedule-tab {
+        padding: 10px 20px;
+        border: 1px solid #e5e7eb;
+        border-bottom: none;
+        background: #f9fafb;
+        color: #6b7280;
+        cursor: pointer;
+        border-radius: 8px 8px 0 0;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .schedule-tab:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .schedule-tab.active {
+        background: white;
+        color: #1e40af;
+        border-bottom: 2px solid white;
+        margin-bottom: -2px;
+    }
+    .schedule-tab-add {
+        padding: 10px 16px;
+        border: 2px dashed #d1d5db;
+        background: transparent;
+        color: #9ca3af;
+        cursor: pointer;
+        border-radius: 8px 8px 0 0;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .schedule-tab-add:hover {
+        border-color: #1e40af;
+        color: #1e40af;
+        background: #eff6ff;
+    }
+    
+    /* Table container */
+    .table-container {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        padding: 20px;
+        min-height: 400px;
+    }
+    
+    /* Editable table */
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .schedule-table th {
+        background: #1e40af;
+        color: white;
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        position: relative;
+    }
+    .schedule-table th .col-actions {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .schedule-table th:hover .col-actions {
+        opacity: 1;
+    }
+    .schedule-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: top;
+    }
+    .schedule-table tr:nth-child(even) {
+        background: #f9fafb;
+    }
+    .schedule-table tr:hover {
+        background: #eff6ff;
+    }
+    
+    /* Editable cells */
+    .cell-edit {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        font-size: 14px;
+        font-family: inherit;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .cell-edit:hover {
+        border-color: #d1d5db;
+        background: white;
+    }
+    .cell-edit:focus {
+        border-color: #1e40af;
+        background: white;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
+    }
+    
+    /* Dropdown cells */
+    .cell-dropdown {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        font-size: 14px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .cell-dropdown:hover {
+        border-color: #d1d5db;
+        background: white;
+    }
+    .cell-dropdown:focus {
+        border-color: #1e40af;
+        outline: none;
+    }
+    
+    /* Status colors */
+    .status-complete { color: #16A34A; font-weight: 600; }
+    .status-in-progress { color: #F59E0B; font-weight: 600; }
+    .status-not-started { color: #6B7280; }
+    .status-on-hold { color: #DC2626; font-weight: 600; }
+    
+    /* Action buttons */
+    .btn-icon {
+        padding: 4px 8px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 4px;
+        color: #6b7280;
+        transition: all 0.2s;
+    }
+    .btn-icon:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .btn-icon.danger:hover {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    /* Row actions */
+    .row-actions {
+        opacity: 0;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+    tr:hover .row-actions {
+        opacity: 1;
+    }
+    
+    /* Modal styling */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .modal h3 {
+        margin-bottom: 16px;
+        color: #1f2937;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    
+    /* Form styling */
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 500;
+        color: #374151;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .form-group input:focus, .form-group select:focus {
+        border-color: #1e40af;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
+    }
+    
+    /* Toolbar */
+    .table-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+    .empty-state h3 {
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    /* Export visibility indicator */
+    .export-hidden {
+        background: #fef3c7 !important;
+    }
+    .export-hidden::after {
+        content: " (hidden in export)";
+        font-size: 10px;
+        color: #92400e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">📋 Schedule</h1>
+            <p class="text-gray-600">{{ clean_name }} - Track work outside main project scope</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-500">Tables track maintenance, H&S, document updates, etc.</span>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="schedule-tabs" id="scheduleTabs">
+    {% for table in tables %}
+    <button class="schedule-tab {% if loop.first %}active{% endif %}" 
+            data-table-id="{{ table.id }}"
+            onclick="switchTab('{{ table.id }}')">
+        {{ table.name }}
+    </button>
+    {% endfor %}
+    <button class="schedule-tab-add" onclick="showCreateTableModal()">
+        + Add Table
+    </button>
+</div>
+
+<!-- Table Container -->
+<div class="table-container" id="tableContainer">
+    {% if tables %}
+        {% for table in tables %}
+        <div class="table-panel {% if not loop.first %}hidden{% endif %}" id="panel-{{ table.id }}">
+            <!-- Toolbar -->
+            <div class="table-toolbar">
+                <div class="flex items-center gap-4">
+                    <h2 class="text-lg font-semibold text-gray-800">{{ table.name }}</h2>
+                    <button class="btn-icon" onclick="showEditTableModal('{{ table.id }}')" title="Edit table settings">
+                        ⚙️
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition"
+                            onclick="addRow('{{ table.id }}')">
+                        + Add Row
+                    </button>
+                    <button class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                            onclick="showColumnModal('{{ table.id }}')">
+                        + Add Column
+                    </button>
+                    <div class="border-l pl-2 ml-2">
+                        <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                                onclick="exportTable('{{ table.id }}', 'pdf')">
+                            📄 Export PDF
+                        </button>
+                        <button class="px-3 py-1.5 text-sm bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+                                onclick="exportTable('{{ table.id }}', 'slide')">
+                            📊 Preview Slide
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Table -->
+            <table class="schedule-table" id="table-{{ table.id }}">
+                <thead>
+                    <tr>
+                        {% for col in table.columns %}
+                        <th style="width: {{ col.width or 150 }}px" 
+                            class="{% if not col.visible_in_export %}export-hidden{% endif %}">
+                            {{ col.header }}
+                            <span class="col-actions">
+                                <button class="btn-icon" onclick="editColumn('{{ table.id }}', '{{ col.id }}')" title="Edit">✏️</button>
+                                <button class="btn-icon danger" onclick="deleteColumn('{{ table.id }}', '{{ col.id }}')" title="Delete">🗑️</button>
+                            </span>
+                        </th>
+                        {% endfor %}
+                        <th style="width: 80px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-{{ table.id }}">
+                    {% for row in table.rows %}
+                    <tr data-row-id="{{ row.id }}">
+                        {% for col in table.columns %}
+                        <td>
+                            {% if col.type == 'dropdown' %}
+                            <select class="cell-dropdown" 
+                                    onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
+                                    data-col-id="{{ col.id }}">
+                                <option value="">-- Select --</option>
+                                {% for opt in col.options %}
+                                <option value="{{ opt }}" {% if row.data.get(col.id) == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                            {% elif col.type == 'date' %}
+                            <input type="date" class="cell-edit"
+                                   value="{{ row.data.get(col.id, '') }}"
+                                   onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
+                                   data-col-id="{{ col.id }}">
+                            {% else %}
+                            <input type="text" class="cell-edit"
+                                   value="{{ row.data.get(col.id, '') }}"
+                                   onblur="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
+                                   data-col-id="{{ col.id }}"
+                                   placeholder="Enter {{ col.header.lower() }}...">
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <span class="row-actions">
+                                <button class="btn-icon danger" onclick="deleteRow('{{ table.id }}', '{{ row.id }}')" title="Delete row">
+                                    🗑️
+                                </button>
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr class="empty-row">
+                        <td colspan="{{ table.columns|length + 1 }}" style="text-align: center; color: #9ca3af; padding: 40px;">
+                            No items yet. Click "+ Add Row" to get started.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state" id="emptyState">
+        <h3 class="text-xl font-semibold">No Schedule Tables Yet</h3>
+        <p class="mb-4">Create your first schedule table to track work outside main project scope.</p>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                onclick="showCreateTableModal()">
+            + Create First Table
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Table Modal -->
+<div class="modal-backdrop hidden" id="createTableModal">
+    <div class="modal">
+        <h3 class="text-xl font-semibold">Create New Schedule Table</h3>
+        <form onsubmit="createTable(event)">
+            <div class="form-group">
+                <label for="tableName">Table Name</label>
+                <input type="text" id="tableName" placeholder="e.g., Maintenance Schedule" required>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">
+                Default columns (Task, Status, Due Date, Owner, Notes) will be created. You can customize them later.
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        onclick="hideModal('createTableModal')">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Create Table
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Column Modal -->
+<div class="modal-backdrop hidden" id="columnModal">
+    <div class="modal">
+        <h3 class="text-xl font-semibold" id="columnModalTitle">Add Column</h3>
+        <form onsubmit="saveColumn(event)">
+            <input type="hidden" id="columnTableId">
+            <input type="hidden" id="columnId">
+            
+            <div class="form-group">
+                <label for="columnHeader">Column Header</label>
+                <input type="text" id="columnHeader" placeholder="e.g., Priority" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="columnType">Column Type</label>
+                <select id="columnType" onchange="toggleDropdownOptions()">
+                    <option value="text">Text</option>
+                    <option value="dropdown">Dropdown</option>
+                    <option value="date">Date</option>
+                    <option value="number">Number</option>
+                </select>
+            </div>
+            
+            <div class="form-group hidden" id="dropdownOptionsGroup">
+                <label for="dropdownOptions">Dropdown Options (one per line)</label>
+                <textarea id="dropdownOptions" rows="4" class="w-full p-2 border border-gray-300 rounded"
+                          placeholder="High&#10;Medium&#10;Low"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="columnWidth">Column Width (px)</label>
+                <input type="number" id="columnWidth" value="150" min="50" max="500">
+            </div>
+            
+            <div class="form-group">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="columnExportVisible" checked>
+                    <span>Visible in PDF/Slide export</span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">Uncheck to hide this column in exports (useful for internal notes)</p>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        onclick="hideModal('columnModal')">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Save Column
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const projectName = "{{ clean_name }}";
+let tablesData = {{ schedule_data | tojson }};
+
+console.log('📋 Schedule loaded for:', projectName);
+console.log('Tables:', tablesData.tables?.length || 0);
+
+// Tab switching
+function switchTab(tableId) {
+    // Update tab buttons
+    document.querySelectorAll('.schedule-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.tableId === tableId) {
+            tab.classList.add('active');
+        }
+    });
+    
+    // Update panels
+    document.querySelectorAll('.table-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+    const panel = document.getElementById(`panel-${tableId}`);
+    if (panel) panel.classList.remove('hidden');
+}
+
+// Modal helpers
+function showModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function hideModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+function showCreateTableModal() {
+    document.getElementById('tableName').value = '';
+    showModal('createTableModal');
+}
+
+// Create table
+async function createTable(event) {
+    event.preventDefault();
+    const name = document.getElementById('tableName').value.trim();
+    if (!name) return;
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to create table');
+        }
+    } catch (error) {
+        console.error('Error creating table:', error);
+        alert('Error creating table');
+    }
+}
+
+// Add row
+async function addRow(tableId) {
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}/rows`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: {} })
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error adding row:', error);
+    }
+}
+
+// Update cell
+let updateTimeout = {};
+async function updateCell(tableId, rowId, colId, value) {
+    // Debounce updates
+    const key = `${tableId}-${rowId}`;
+    if (updateTimeout[key]) clearTimeout(updateTimeout[key]);
+    
+    updateTimeout[key] = setTimeout(async () => {
+        // Get current row data
+        const table = tablesData.tables?.find(t => t.id === tableId);
+        const row = table?.rows?.find(r => r.id === rowId);
+        if (!row) return;
+        
+        // Update the cell value
+        const newData = { ...row.data, [colId]: value };
+        
+        try {
+            const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}/rows/${rowId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: newData })
+            });
+            
+            if (response.ok) {
+                // Update local data
+                row.data = newData;
+                console.log('✅ Cell updated:', colId, value);
+            }
+        } catch (error) {
+            console.error('Error updating cell:', error);
+        }
+    }, 300);
+}
+
+// Delete row
+async function deleteRow(tableId, rowId) {
+    if (!confirm('Delete this row?')) return;
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}/rows/${rowId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Remove from DOM
+            const row = document.querySelector(`tr[data-row-id="${rowId}"]`);
+            if (row) row.remove();
+            
+            // Update local data
+            const table = tablesData.tables?.find(t => t.id === tableId);
+            if (table) {
+                table.rows = table.rows.filter(r => r.id !== rowId);
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting row:', error);
+    }
+}
+
+// Column modal
+function showColumnModal(tableId, columnId = null) {
+    document.getElementById('columnTableId').value = tableId;
+    document.getElementById('columnId').value = columnId || '';
+    document.getElementById('columnModalTitle').textContent = columnId ? 'Edit Column' : 'Add Column';
+    
+    if (columnId) {
+        // Load existing column data
+        const table = tablesData.tables?.find(t => t.id === tableId);
+        const col = table?.columns?.find(c => c.id === columnId);
+        if (col) {
+            document.getElementById('columnHeader').value = col.header;
+            document.getElementById('columnType').value = col.type;
+            document.getElementById('columnWidth').value = col.width || 150;
+            document.getElementById('columnExportVisible').checked = col.visible_in_export !== false;
+            if (col.options) {
+                document.getElementById('dropdownOptions').value = col.options.join('\n');
+            }
+        }
+    } else {
+        document.getElementById('columnHeader').value = '';
+        document.getElementById('columnType').value = 'text';
+        document.getElementById('columnWidth').value = 150;
+        document.getElementById('columnExportVisible').checked = true;
+        document.getElementById('dropdownOptions').value = '';
+    }
+    
+    toggleDropdownOptions();
+    showModal('columnModal');
+}
+
+function editColumn(tableId, columnId) {
+    showColumnModal(tableId, columnId);
+}
+
+function toggleDropdownOptions() {
+    const type = document.getElementById('columnType').value;
+    const group = document.getElementById('dropdownOptionsGroup');
+    if (type === 'dropdown') {
+        group.classList.remove('hidden');
+    } else {
+        group.classList.add('hidden');
+    }
+}
+
+async function saveColumn(event) {
+    event.preventDefault();
+    
+    const tableId = document.getElementById('columnTableId').value;
+    const columnId = document.getElementById('columnId').value;
+    const header = document.getElementById('columnHeader').value.trim();
+    const type = document.getElementById('columnType').value;
+    const width = parseInt(document.getElementById('columnWidth').value) || 150;
+    const visibleInExport = document.getElementById('columnExportVisible').checked;
+    
+    let options = null;
+    if (type === 'dropdown') {
+        options = document.getElementById('dropdownOptions').value
+            .split('\n')
+            .map(o => o.trim())
+            .filter(o => o);
+    }
+    
+    // Get existing table data
+    const table = tablesData.tables?.find(t => t.id === tableId);
+    if (!table) return;
+    
+    let columns = [...table.columns];
+    
+    if (columnId) {
+        // Update existing column
+        columns = columns.map(c => {
+            if (c.id === columnId) {
+                return { ...c, header, type, width, visible_in_export: visibleInExport, options };
+            }
+            return c;
+        });
+    } else {
+        // Add new column
+        columns.push({
+            id: crypto.randomUUID().slice(0, 8),
+            header,
+            type,
+            width,
+            visible_in_export: visibleInExport,
+            options
+        });
+    }
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ columns })
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to save column');
+        }
+    } catch (error) {
+        console.error('Error saving column:', error);
+        alert('Error saving column');
+    }
+}
+
+async function deleteColumn(tableId, columnId) {
+    if (!confirm('Delete this column? This will remove the column from all rows.')) return;
+    
+    const table = tablesData.tables?.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const columns = table.columns.filter(c => c.id !== columnId);
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ columns })
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error deleting column:', error);
+    }
+}
+
+// Export functions
+function exportTable(tableId, format) {
+    if (format === 'pdf') {
+        // Open print-friendly view in new tab
+        window.open(`/dashboard/schedule/print/${encodeURIComponent(projectName)}/${tableId}`, '_blank');
+    } else if (format === 'slide') {
+        // Open slide preview
+        window.open(`/dashboard/schedule/slide/${encodeURIComponent(projectName)}/${tableId}`, '_blank');
+    }
+}
+
+// Delete table
+async function deleteTable(tableId) {
+    if (!confirm('Delete this entire table? This cannot be undone.')) return;
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error deleting table:', error);
+    }
+}
+
+function showEditTableModal(tableId) {
+    const table = tablesData.tables?.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const newName = prompt('Enter new table name:', table.name);
+    if (newName && newName.trim() !== table.name) {
+        updateTableName(tableId, newName.trim());
+    }
+}
+
+async function updateTableName(tableId, name) {
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error updating table name:', error);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,267 @@
+"""
+Schedule Repository - Server-side persistence for schedule tables
+Stores user-configurable schedule tables in YAML files per project
+"""
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+import yaml
+import logging
+from datetime import datetime
+import uuid
+import re
+
+logger = logging.getLogger(__name__)
+
+
+class ScheduleRepository:
+    """Repository for persisting schedule tables on the server"""
+    
+    def __init__(self, storage_dir: Path):
+        """Initialize repository with storage directory"""
+        self.storage_dir = storage_dir / "schedules"
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"ScheduleRepository initialized: {self.storage_dir}")
+    
+    def _clean_project_name(self, project_name: str) -> str:
+        """Clean project name by removing version numbers and file extensions."""
+        clean = project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '')
+        clean = re.sub(r'-\d+$', '', clean)
+        return clean.strip()
+    
+    def _get_schedules_file_path(self, project_name: str) -> Path:
+        """Get the file path for a project's schedules"""
+        clean_name = self._clean_project_name(project_name)
+        clean_name = clean_name.replace('/', '_').replace('\\', '_')
+        return self.storage_dir / f"{clean_name}_schedules.yaml"
+    
+    def get_schedules(self, project_name: str) -> Dict[str, Any]:
+        """
+        Get all schedules for a project
+        
+        Returns:
+            Dict with 'tables' list containing schedule table configurations
+        """
+        try:
+            file_path = self._get_schedules_file_path(project_name)
+            
+            if not file_path.exists():
+                # Return default structure with empty tables
+                return {
+                    'project_name': project_name,
+                    'tables': [],
+                    'last_updated': None
+                }
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+            
+            logger.info(f"📋 Loaded {len(data.get('tables', []))} schedule tables for '{project_name}'")
+            return data
+            
+        except Exception as e:
+            logger.error(f"❌ Error loading schedules for '{project_name}': {e}")
+            return {'project_name': project_name, 'tables': [], 'last_updated': None}
+    
+    def save_schedules(self, project_name: str, data: Dict[str, Any]) -> bool:
+        """
+        Save all schedules for a project
+        
+        Args:
+            project_name: Name of the project
+            data: Full schedule data including tables
+            
+        Returns:
+            True if successful
+        """
+        try:
+            file_path = self._get_schedules_file_path(project_name)
+            
+            data['project_name'] = project_name
+            data['last_updated'] = datetime.now().isoformat()
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+            
+            logger.info(f"✅ Saved {len(data.get('tables', []))} schedule tables for '{project_name}'")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error saving schedules for '{project_name}': {e}")
+            return False
+    
+    def create_table(self, project_name: str, table_name: str, columns: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Create a new schedule table
+        
+        Args:
+            project_name: Project name
+            table_name: Name for the new table
+            columns: Optional column configuration, uses defaults if not provided
+            
+        Returns:
+            The created table configuration
+        """
+        data = self.get_schedules(project_name)
+        
+        # Default columns if none provided
+        if columns is None:
+            columns = [
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Task',
+                    'type': 'text',
+                    'width': 200,
+                    'visible_in_export': True
+                },
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Status',
+                    'type': 'dropdown',
+                    'options': ['Not Started', 'In Progress', 'Complete', 'On Hold'],
+                    'width': 120,
+                    'visible_in_export': True
+                },
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Due Date',
+                    'type': 'date',
+                    'width': 120,
+                    'visible_in_export': True
+                },
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Owner',
+                    'type': 'text',
+                    'width': 120,
+                    'visible_in_export': True
+                },
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Notes',
+                    'type': 'text',
+                    'width': 200,
+                    'visible_in_export': False  # Internal notes hidden in export
+                }
+            ]
+        
+        new_table = {
+            'id': str(uuid.uuid4()),
+            'name': table_name,
+            'created_at': datetime.now().isoformat(),
+            'columns': columns,
+            'rows': []
+        }
+        
+        data['tables'].append(new_table)
+        self.save_schedules(project_name, data)
+        
+        logger.info(f"✅ Created schedule table '{table_name}' for '{project_name}'")
+        return new_table
+    
+    def get_table(self, project_name: str, table_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific table by ID"""
+        data = self.get_schedules(project_name)
+        for table in data.get('tables', []):
+            if table.get('id') == table_id:
+                return table
+        return None
+    
+    def update_table(self, project_name: str, table_id: str, updates: Dict[str, Any]) -> bool:
+        """
+        Update a schedule table
+        
+        Args:
+            project_name: Project name
+            table_id: ID of table to update
+            updates: Fields to update (name, columns, rows)
+            
+        Returns:
+            True if successful
+        """
+        data = self.get_schedules(project_name)
+        
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                # Update allowed fields
+                if 'name' in updates:
+                    data['tables'][i]['name'] = updates['name']
+                if 'columns' in updates:
+                    data['tables'][i]['columns'] = updates['columns']
+                if 'rows' in updates:
+                    data['tables'][i]['rows'] = updates['rows']
+                
+                data['tables'][i]['updated_at'] = datetime.now().isoformat()
+                return self.save_schedules(project_name, data)
+        
+        logger.warning(f"Table '{table_id}' not found for project '{project_name}'")
+        return False
+    
+    def delete_table(self, project_name: str, table_id: str) -> bool:
+        """Delete a schedule table"""
+        data = self.get_schedules(project_name)
+        
+        original_count = len(data.get('tables', []))
+        data['tables'] = [t for t in data.get('tables', []) if t.get('id') != table_id]
+        
+        if len(data['tables']) < original_count:
+            self.save_schedules(project_name, data)
+            logger.info(f"🗑️ Deleted table '{table_id}' from '{project_name}'")
+            return True
+        
+        return False
+    
+    def add_row(self, project_name: str, table_id: str, row_data: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """
+        Add a row to a schedule table
+        
+        Args:
+            project_name: Project name
+            table_id: Table to add row to
+            row_data: Optional initial row data
+            
+        Returns:
+            The created row
+        """
+        data = self.get_schedules(project_name)
+        
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                new_row = {
+                    'id': str(uuid.uuid4()),
+                    'created_at': datetime.now().isoformat(),
+                    'data': row_data or {}
+                }
+                data['tables'][i]['rows'].append(new_row)
+                self.save_schedules(project_name, data)
+                return new_row
+        
+        return None
+    
+    def update_row(self, project_name: str, table_id: str, row_id: str, row_data: Dict[str, Any]) -> bool:
+        """Update a row in a schedule table"""
+        data = self.get_schedules(project_name)
+        
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        data['tables'][i]['rows'][j]['data'] = row_data
+                        data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                        return self.save_schedules(project_name, data)
+        
+        return False
+    
+    def delete_row(self, project_name: str, table_id: str, row_id: str) -> bool:
+        """Delete a row from a schedule table"""
+        data = self.get_schedules(project_name)
+        
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                original_count = len(table.get('rows', []))
+                data['tables'][i]['rows'] = [r for r in table.get('rows', []) if r.get('id') != row_id]
+                
+                if len(data['tables'][i]['rows']) < original_count:
+                    self.save_schedules(project_name, data)
+                    return True
+        
+        return False

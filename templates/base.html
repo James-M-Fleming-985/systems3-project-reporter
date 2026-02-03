@@ -137,6 +137,10 @@
                        class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/changes' in request.url.path %}bg-white/15{% endif %}">
                         Changes
                     </a>
+                    <a href="/dashboard/schedule{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/schedule' in request.url.path %}bg-white/15{% endif %}">
+                        Schedule
+                    </a>
                 </div>
                 
                 <!-- Actions group -->

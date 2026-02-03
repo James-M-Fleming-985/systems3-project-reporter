@@ -29,7 +29,7 @@ def get_git_hash():
         logger.warning(f"Could not get git hash: {e}")
         return "no-git"
 
-BUILD_VERSION = f"1.0.323-{get_git_hash()}"  # Fix: Mark slides as configured when applying changes
+BUILD_VERSION = f"1.0.324-{get_git_hash()}"  # Add Schedule feature for tracking work outside project scope
 
 
 # Setup logging
@@ -369,6 +369,14 @@ try:
     logger.info("✅ Custom Metrics server-side persistence enabled")
 except ImportError as e:
     logger.warning(f"⚠️  Custom Metrics API disabled: {e}")
+
+# Schedule router has: /dashboard/schedule, /dashboard/api/schedule/*
+try:
+    from routers import schedule
+    app.include_router(schedule.router, prefix="/dashboard", tags=["schedule"])
+    logger.info("✅ Schedule feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Schedule feature disabled: {e}")
 
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:
