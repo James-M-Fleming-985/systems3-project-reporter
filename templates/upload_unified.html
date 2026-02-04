@@ -2145,36 +2145,49 @@ async function populateScheduleProgramDropdown() {
     const urlParams = new URLSearchParams(window.location.search);
     const currentProgram = urlParams.get('project') || localStorage.getItem('selectedProgram');
     
-    try {
-        const response = await fetch('/dashboard/api/projects');
-        if (!response.ok) {
-            console.error('Failed to fetch projects:', response.status);
-            return;
-        }
-        const projects = await response.json();
-        
-        console.log('Loaded programs for schedule upload:', projects.length);
-        
-        projects.forEach(project => {
-            const name = project.name || project;
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            
-            // Auto-select current program if matches
-            if (currentProgram && name === currentProgram) {
-                option.selected = true;
+    // First try to use server-side projects passed to template (more reliable)
+    const serverProjects = [
+        {% for project in projects %}
+        { name: "{{ project.project_name }}" },
+        {% endfor %}
+    ];
+    
+    let projects = serverProjects;
+    
+    // If no server-side projects, fallback to API call
+    if (projects.length === 0) {
+        try {
+            console.log('No server-side projects, fetching from API...');
+            const response = await fetch('/dashboard/api/projects');
+            if (response.ok) {
+                projects = await response.json();
+            } else {
+                console.error('Failed to fetch projects:', response.status);
             }
-            
-            select.appendChild(option);
-        });
-        
-        // If a program is pre-selected, load its tables
-        if (select.value) {
-            loadExistingTables();
+        } catch (error) {
+            console.error('Failed to load programs from API:', error);
         }
-    } catch (error) {
-        console.error('Failed to load programs:', error);
+    }
+    
+    console.log('Populating schedule program dropdown with', projects.length, 'programs');
+    
+    projects.forEach(project => {
+        const name = project.name || project.project_name || project;
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        
+        // Auto-select current program if matches
+        if (currentProgram && name === currentProgram) {
+            option.selected = true;
+        }
+        
+        select.appendChild(option);
+    });
+    
+    // If a program is pre-selected, load its tables
+    if (select.value) {
+        loadExistingTables();
     }
 }
 
