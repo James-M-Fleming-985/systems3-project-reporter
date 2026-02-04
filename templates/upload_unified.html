@@ -790,7 +790,7 @@ async function populateProgramDropdown() {
         // First try to use server-side projects passed to template (more reliable)
         const serverProjects = [
             {% for project in projects %}
-            { name: "{{ project.project_name }}" },
+            { name: {{ project.project_name | tojson }} },
             {% endfor %}
         ];
         
@@ -2161,7 +2161,7 @@ async function populateScheduleProgramDropdown() {
     // First try to use server-side projects passed to template (more reliable)
     const serverProjects = [
         {% for project in projects %}
-        { name: "{{ project.project_name }}" },
+        { name: {{ project.project_name | tojson }} },
         {% endfor %}
     ];
     
