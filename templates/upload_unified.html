@@ -2224,19 +2224,34 @@ async function loadExistingTables() {
     const select = document.getElementById('scheduleTableSelect');
     select.innerHTML = '<option value="">-- Select a table --</option>';
     
-    if (!program) return;
+    console.log('loadExistingTables called, program:', program);
+    
+    if (!program) {
+        console.log('No program selected, skipping table load');
+        return;
+    }
     
     try {
         // Use the correct endpoint - /api/schedule/{program} returns {tables: [...]}
-        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}`);
+        const url = `/dashboard/api/schedule/${encodeURIComponent(program)}`;
+        console.log('Fetching tables from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-            console.error('Failed to fetch schedule data');
+            console.error('Failed to fetch schedule data, status:', response.status);
             return;
         }
         const data = await response.json();
+        console.log('Schedule data received:', data);
         
         const tables = data.tables || [];
         console.log(`Loaded ${tables.length} tables for ${program}`);
+        
+        if (tables.length === 0) {
+            console.log('No existing tables found for this program');
+        }
         
         tables.forEach(table => {
             const option = document.createElement('option');
@@ -2244,10 +2259,12 @@ async function loadExistingTables() {
             option.textContent = table.name;
             option.dataset.columns = JSON.stringify(table.columns || []);
             select.appendChild(option);
+            console.log('Added table option:', table.name);
         });
     } catch (error) {
         console.error('Failed to load tables:', error);
     }
+}
 }
 
 // Setup drop zone
