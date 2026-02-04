@@ -2,7 +2,7 @@
 Schedule Router - Routes for the Schedule feature
 User-configurable tables for tracking work outside main project scope
 """
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
@@ -10,6 +10,9 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import logging
 import os
+import io
+import json
+import csv
 
 from repositories.schedule_repository import ScheduleRepository
 
@@ -332,3 +335,215 @@ async def schedule_print_view(project_name: str, table_id: str):
 async def schedule_slide_view(project_name: str, table_id: str):
     """PowerPoint slide-ready view of a schedule table"""
     return await schedule_table_view(project_name, table_id, export=True, ppt_export=True)
+
+
+# =============================================================================
+# File Import Endpoints
+# =============================================================================
+
+def parse_excel_file(file_content: bytes) -> tuple:
+    """Parse Excel file and return headers and rows"""
+    try:
+        import openpyxl
+        workbook = openpyxl.load_workbook(io.BytesIO(file_content), data_only=True)
+        sheet = workbook.active
+        
+        rows = list(sheet.iter_rows(values_only=True))
+        if not rows:
+            return [], []
+        
+        # First row is headers
+        headers = [str(h) if h else f"Column {i+1}" for i, h in enumerate(rows[0])]
+        data_rows = [[str(cell) if cell is not None else "" for cell in row] for row in rows[1:]]
+        
+        return headers, data_rows
+    except ImportError:
+        raise HTTPException(status_code=500, detail="openpyxl not installed - cannot parse Excel files")
+
+
+def parse_csv_file(file_content: bytes) -> tuple:
+    """Parse CSV file and return headers and rows"""
+    # Try to decode with different encodings
+    for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']:
+        try:
+            text = file_content.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise HTTPException(status_code=400, detail="Could not decode file - unsupported encoding")
+    
+    # Parse CSV
+    reader = csv.reader(io.StringIO(text))
+    rows = list(reader)
+    
+    if not rows:
+        return [], []
+    
+    headers = rows[0]
+    data_rows = rows[1:]
+    
+    return headers, data_rows
+
+
+@router.post("/api/schedule/preview")
+async def preview_schedule_file(file: UploadFile = File(...)):
+    """
+    Preview an uploaded file - returns headers and first 5 rows
+    """
+    try:
+        content = await file.read()
+        filename = file.filename.lower()
+        
+        if filename.endswith(('.xlsx', '.xls')):
+            headers, data_rows = parse_excel_file(content)
+        elif filename.endswith('.csv'):
+            headers, data_rows = parse_csv_file(content)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format. Use Excel (.xlsx) or CSV")
+        
+        return JSONResponse(content={
+            "headers": headers,
+            "preview_rows": data_rows[:5],
+            "total_rows": len(data_rows)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error previewing file: {e}")
+        raise HTTPException(status_code=400, detail=f"Error reading file: {str(e)}")
+
+
+@router.post("/api/schedule/{project_name}/import")
+async def import_schedule_file(
+    project_name: str,
+    file: UploadFile = File(...),
+    mode: str = Form(...),
+    table_name: Optional[str] = Form(None),
+    table_id: Optional[str] = Form(None),
+    column_mapping: Optional[str] = Form(None)
+):
+    """
+    Import data from an Excel or CSV file into a schedule table
+    
+    Args:
+        project_name: Project to import into
+        file: The uploaded file
+        mode: 'new' to create a new table, 'existing' to add to existing table
+        table_name: Name for new table (if mode=new)
+        table_id: ID of existing table (if mode=existing)
+        column_mapping: JSON mapping of table column IDs to file column names
+    """
+    try:
+        content = await file.read()
+        filename = file.filename.lower()
+        
+        # Parse file
+        if filename.endswith(('.xlsx', '.xls')):
+            headers, data_rows = parse_excel_file(content)
+        elif filename.endswith('.csv'):
+            headers, data_rows = parse_csv_file(content)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format")
+        
+        if not data_rows:
+            raise HTTPException(status_code=400, detail="No data rows found in file")
+        
+        if mode == 'new':
+            # Create new table with auto-detected columns
+            if not table_name:
+                table_name = file.filename.rsplit('.', 1)[0]
+            
+            # Create columns from headers
+            columns = []
+            for i, header in enumerate(headers):
+                columns.append({
+                    'header': header,
+                    'type': 'text',
+                    'width': 150
+                })
+            
+            # Create the table
+            table = schedule_repo.create_table(project_name, table_name, columns)
+            table_id = table['id']
+            
+            # Map headers to column IDs
+            header_to_col = {col['header']: col['id'] for col in table['columns']}
+            
+            # Add rows
+            rows_imported = 0
+            for row_values in data_rows:
+                row_data = {}
+                for i, value in enumerate(row_values):
+                    if i < len(headers):
+                        col_id = header_to_col.get(headers[i])
+                        if col_id:
+                            row_data[col_id] = value
+                
+                if any(row_data.values()):  # Skip empty rows
+                    schedule_repo.add_row(project_name, table_id, row_data)
+                    rows_imported += 1
+            
+            return JSONResponse(content={
+                "success": True,
+                "table_name": table_name,
+                "table_id": table_id,
+                "rows_imported": rows_imported,
+                "columns_created": len(columns)
+            })
+            
+        else:  # mode == 'existing'
+            if not table_id:
+                raise HTTPException(status_code=400, detail="table_id required for existing mode")
+            
+            # Get existing table
+            table = schedule_repo.get_table(project_name, table_id)
+            if not table:
+                raise HTTPException(status_code=404, detail="Table not found")
+            
+            # Parse column mapping
+            mapping = {}
+            if column_mapping:
+                try:
+                    mapping = json.loads(column_mapping)
+                except:
+                    pass
+            
+            # If no mapping, try to auto-map by header name
+            if not mapping:
+                for col in table['columns']:
+                    for header in headers:
+                        if header.lower() == col['header'].lower():
+                            mapping[col['id']] = header
+                            break
+            
+            # Reverse mapping: file column -> table column id
+            file_to_table = {v: k for k, v in mapping.items()}
+            
+            # Add rows
+            rows_imported = 0
+            for row_values in data_rows:
+                row_data = {}
+                for i, value in enumerate(row_values):
+                    if i < len(headers):
+                        col_id = file_to_table.get(headers[i])
+                        if col_id:
+                            row_data[col_id] = value
+                
+                if any(row_data.values()):  # Skip empty rows
+                    schedule_repo.add_row(project_name, table_id, row_data)
+                    rows_imported += 1
+            
+            return JSONResponse(content={
+                "success": True,
+                "table_name": table['name'],
+                "table_id": table_id,
+                "rows_imported": rows_imported
+            })
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error importing file: {e}")
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")

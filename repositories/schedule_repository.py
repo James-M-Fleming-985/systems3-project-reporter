@@ -110,14 +110,13 @@ class ScheduleRepository:
                     'id': str(uuid.uuid4())[:8],
                     'header': 'Task',
                     'type': 'text',
-                    'width': 200,
+                    'width': 250,
                     'visible_in_export': True
                 },
                 {
                     'id': str(uuid.uuid4())[:8],
-                    'header': 'Status',
-                    'type': 'dropdown',
-                    'options': ['Not Started', 'In Progress', 'Complete', 'On Hold'],
+                    'header': 'Owner',
+                    'type': 'text',
                     'width': 120,
                     'visible_in_export': True
                 },
@@ -130,17 +129,24 @@ class ScheduleRepository:
                 },
                 {
                     'id': str(uuid.uuid4())[:8],
-                    'header': 'Owner',
-                    'type': 'text',
-                    'width': 120,
-                    'visible_in_export': True
-                },
-                {
-                    'id': str(uuid.uuid4())[:8],
                     'header': 'Notes',
                     'type': 'text',
                     'width': 200,
                     'visible_in_export': False  # Internal notes hidden in export
+                },
+                {
+                    'id': str(uuid.uuid4())[:8],
+                    'header': 'Status',
+                    'type': 'status',  # Special type with color support
+                    'width': 130,
+                    'visible_in_export': True,
+                    'status_options': [
+                        {'label': 'Not Started', 'color': '#6B7280'},  # Gray
+                        {'label': 'In Progress', 'color': '#F59E0B'},  # Amber
+                        {'label': 'Complete', 'color': '#16A34A'},     # Green
+                        {'label': 'On Hold', 'color': '#DC2626'},      # Red
+                        {'label': 'Blocked', 'color': '#7C3AED'}       # Purple
+                    ]
                 }
             ]
         

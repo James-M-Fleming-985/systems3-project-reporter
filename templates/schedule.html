@@ -74,6 +74,23 @@
         position: relative;
         cursor: grab;
         user-select: none;
+        border-right: 1px solid #3b5fb8;
+    }
+    
+    /* Column resize handle */
+    .col-resize-handle {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        cursor: col-resize;
+        background: transparent;
+        z-index: 10;
+    }
+    .col-resize-handle:hover,
+    .col-resize-handle.resizing {
+        background: rgba(251, 191, 36, 0.5);
     }
     .schedule-table th.dragging {
         opacity: 0.5;
@@ -166,6 +183,60 @@
     .status-in-progress { color: #F59E0B; font-weight: 600; }
     .status-not-started { color: #6B7280; }
     .status-on-hold { color: #DC2626; font-weight: 600; }
+    
+    /* Status cells with colored backgrounds */
+    .cell-status {
+        width: 100%;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        background: #f3f4f6;
+        color: #374151;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    .cell-status:focus {
+        outline: 2px solid #1e40af;
+        outline-offset: 1px;
+    }
+    
+    /* Row action cell */
+    .row-action-cell {
+        width: 40px;
+        text-align: center;
+        vertical-align: middle !important;
+    }
+    .btn-icon-small {
+        padding: 4px 6px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #9ca3af;
+        opacity: 0;
+        transition: all 0.2s;
+    }
+    tr:hover .btn-icon-small {
+        opacity: 1;
+    }
+    .btn-icon-small.danger:hover {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    /* Status option form styling */
+    .status-color-input {
+        padding: 0;
+        border-radius: 4px;
+    }
+    .space-y-2 > * + * {
+        margin-top: 0.5rem;
+    }
     
     /* Action buttons */
     .btn-icon {
@@ -366,9 +437,11 @@
                                 <button class="btn-icon" onclick="event.stopPropagation(); editColumn('{{ table.id }}', '{{ col.id }}')" title="Edit">✏️</button>
                                 <button class="btn-icon danger" onclick="event.stopPropagation(); deleteColumn('{{ table.id }}', '{{ col.id }}')" title="Delete">🗑️</button>
                             </span>
+                            <div class="col-resize-handle" 
+                                 onmousedown="startColumnResize(event, '{{ table.id }}', '{{ col.id }}')"></div>
                         </th>
                         {% endfor %}
-                        <th style="width: 80px">Actions</th>
+                        <th style="width: 40px"></th>
                     </tr>
                 </thead>
                 <tbody id="tbody-{{ table.id }}">
@@ -376,7 +449,21 @@
                     <tr data-row-id="{{ row.id }}">
                         {% for col in table.columns %}
                         <td>
-                            {% if col.type == 'dropdown' %}
+                            {% if col.type == 'status' %}
+                            <select class="cell-status" 
+                                    onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value); updateStatusColor(this, '{{ col.id }}', '{{ table.id }}')"
+                                    data-col-id="{{ col.id }}"
+                                    data-table-id="{{ table.id }}">
+                                <option value="">-- Select --</option>
+                                {% for opt in col.status_options or [] %}
+                                <option value="{{ opt.label }}" 
+                                        data-color="{{ opt.color }}"
+                                        {% if row.data.get(col.id) == opt.label %}selected{% endif %}>
+                                    {{ opt.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% elif col.type == 'dropdown' %}
                             <select class="cell-dropdown" 
                                     onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
                                     data-col-id="{{ col.id }}">
@@ -399,12 +486,10 @@
                             {% endif %}
                         </td>
                         {% endfor %}
-                        <td>
-                            <span class="row-actions">
-                                <button class="btn-icon danger" onclick="deleteRow('{{ table.id }}', '{{ row.id }}')" title="Delete row">
-                                    🗑️
-                                </button>
-                            </span>
+                        <td class="row-action-cell">
+                            <button class="btn-icon-small danger" onclick="deleteRow('{{ table.id }}', '{{ row.id }}')" title="Delete row">
+                                ✕
+                            </button>
                         </td>
                     </tr>
                     {% else %}
@@ -473,6 +558,7 @@
                     <option value="dropdown">Dropdown</option>
                     <option value="date">Date</option>
                     <option value="number">Number</option>
+                    <option value="status">Status (with colors)</option>
                 </select>
             </div>
             
@@ -480,6 +566,17 @@
                 <label for="dropdownOptions">Dropdown Options (one per line)</label>
                 <textarea id="dropdownOptions" rows="4" class="w-full p-2 border border-gray-300 rounded"
                           placeholder="High&#10;Medium&#10;Low"></textarea>
+            </div>
+            
+            <div class="form-group hidden" id="statusOptionsGroup">
+                <label>Status Options</label>
+                <p class="text-xs text-gray-500 mb-2">Define status labels and their colors</p>
+                <div id="statusOptionsList" class="space-y-2">
+                    <!-- Status options will be rendered here -->
+                </div>
+                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addStatusOption()">
+                    + Add Status Option
+                </button>
             </div>
             
             <div class="form-group">
@@ -514,12 +611,112 @@ console.log('📋 Schedule loaded for:', projectName);
 console.log('Tables:', tablesData.tables?.length || 0);
 
 // =============================================================================
+// Column Resize by Dragging
+// =============================================================================
+let resizeState = {
+    isResizing: false,
+    tableId: null,
+    colId: null,
+    startX: 0,
+    startWidth: 0,
+    th: null
+};
+
+function startColumnResize(event, tableId, colId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const th = event.target.closest('th');
+    if (!th) return;
+    
+    resizeState = {
+        isResizing: true,
+        tableId,
+        colId,
+        startX: event.clientX,
+        startWidth: th.offsetWidth,
+        th
+    };
+    
+    th.draggable = false; // Disable drag during resize
+    event.target.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    
+    document.addEventListener('mousemove', handleColumnResize);
+    document.addEventListener('mouseup', stopColumnResize);
+}
+
+function handleColumnResize(event) {
+    if (!resizeState.isResizing) return;
+    
+    const diff = event.clientX - resizeState.startX;
+    const newWidth = Math.max(50, resizeState.startWidth + diff);
+    resizeState.th.style.width = newWidth + 'px';
+}
+
+function stopColumnResize(event) {
+    if (!resizeState.isResizing) return;
+    
+    const { tableId, colId, th } = resizeState;
+    const newWidth = th.offsetWidth;
+    
+    // Re-enable drag
+    th.draggable = true;
+    th.querySelector('.col-resize-handle')?.classList.remove('resizing');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    
+    document.removeEventListener('mousemove', handleColumnResize);
+    document.removeEventListener('mouseup', stopColumnResize);
+    
+    resizeState.isResizing = false;
+    
+    // Save the new width to server
+    saveColumnWidth(tableId, colId, newWidth);
+}
+
+async function saveColumnWidth(tableId, colId, width) {
+    const table = tablesData.tables?.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const columns = table.columns.map(c => {
+        if (c.id === colId) {
+            return { ...c, width };
+        }
+        return c;
+    });
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ columns })
+        });
+        
+        if (response.ok) {
+            // Update local data
+            const col = table.columns.find(c => c.id === colId);
+            if (col) col.width = width;
+            console.log('✅ Column width saved:', colId, width);
+        }
+    } catch (error) {
+        console.error('Error saving column width:', error);
+    }
+}
+
+// =============================================================================
 // Column Drag & Drop Reordering
 // =============================================================================
 let draggedColId = null;
 let draggedTableId = null;
 
 function handleDragStart(event, tableId, colId) {
+    // Don't start drag if we're resizing
+    if (resizeState.isResizing) {
+        event.preventDefault();
+        return;
+    }
     draggedColId = colId;
     draggedTableId = tableId;
     event.target.classList.add('dragging');
@@ -619,6 +816,20 @@ function switchTab(tableId) {
     });
     const panel = document.getElementById(`panel-${tableId}`);
     if (panel) panel.classList.remove('hidden');
+    
+    // Store active tab in localStorage for persistence
+    localStorage.setItem(`schedule_active_tab_${projectName}`, tableId);
+}
+
+// Restore active tab from localStorage
+function restoreActiveTab() {
+    const savedTab = localStorage.getItem(`schedule_active_tab_${projectName}`);
+    if (savedTab) {
+        const tabExists = document.querySelector(`.schedule-tab[data-table-id="${savedTab}"]`);
+        if (tabExists) {
+            switchTab(savedTab);
+        }
+    }
 }
 
 // Modal helpers
@@ -710,6 +921,42 @@ async function updateCell(tableId, rowId, colId, value) {
     }, 300);
 }
 
+// Update status cell color based on selected option
+function updateStatusColor(selectEl, colId, tableId) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const color = selectedOption?.dataset?.color;
+    
+    if (color) {
+        selectEl.style.backgroundColor = color;
+        // Determine text color based on background brightness
+        const rgb = hexToRgb(color);
+        if (rgb) {
+            const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+            selectEl.style.color = brightness > 128 ? '#1f2937' : '#ffffff';
+        }
+    } else {
+        selectEl.style.backgroundColor = '#f3f4f6';
+        selectEl.style.color = '#374151';
+    }
+}
+
+// Convert hex to RGB
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+// Initialize status cell colors on page load
+function initStatusColors() {
+    document.querySelectorAll('.cell-status').forEach(select => {
+        updateStatusColor(select);
+    });
+}
+
 // Delete row
 async function deleteRow(tableId, rowId) {
     if (!confirm('Delete this row?')) return;
@@ -741,6 +988,9 @@ function showColumnModal(tableId, columnId = null) {
     document.getElementById('columnId').value = columnId || '';
     document.getElementById('columnModalTitle').textContent = columnId ? 'Edit Column' : 'Add Column';
     
+    // Clear status options list
+    document.getElementById('statusOptionsList').innerHTML = '';
+    
     if (columnId) {
         // Load existing column data
         const table = tablesData.tables?.find(t => t.id === tableId);
@@ -752,6 +1002,9 @@ function showColumnModal(tableId, columnId = null) {
             document.getElementById('columnExportVisible').checked = col.visible_in_export !== false;
             if (col.options) {
                 document.getElementById('dropdownOptions').value = col.options.join('\n');
+            }
+            if (col.status_options && col.status_options.length > 0) {
+                renderStatusOptions(col.status_options);
             }
         }
     } else {
@@ -772,12 +1025,77 @@ function editColumn(tableId, columnId) {
 
 function toggleDropdownOptions() {
     const type = document.getElementById('columnType').value;
-    const group = document.getElementById('dropdownOptionsGroup');
+    const dropdownGroup = document.getElementById('dropdownOptionsGroup');
+    const statusGroup = document.getElementById('statusOptionsGroup');
+    
     if (type === 'dropdown') {
-        group.classList.remove('hidden');
+        dropdownGroup.classList.remove('hidden');
+        statusGroup.classList.add('hidden');
+    } else if (type === 'status') {
+        dropdownGroup.classList.add('hidden');
+        statusGroup.classList.remove('hidden');
+        // Initialize with default status options if empty
+        if (!document.getElementById('statusOptionsList').children.length) {
+            renderDefaultStatusOptions();
+        }
     } else {
-        group.classList.add('hidden');
+        dropdownGroup.classList.add('hidden');
+        statusGroup.classList.add('hidden');
     }
+}
+
+// Default status options with colors
+const defaultStatusOptions = [
+    { label: 'Not Started', color: '#6B7280' },
+    { label: 'In Progress', color: '#F59E0B' },
+    { label: 'Complete', color: '#16A34A' },
+    { label: 'On Hold', color: '#DC2626' }
+];
+
+function renderDefaultStatusOptions() {
+    const list = document.getElementById('statusOptionsList');
+    list.innerHTML = '';
+    defaultStatusOptions.forEach(opt => {
+        addStatusOptionRow(opt.label, opt.color);
+    });
+}
+
+function renderStatusOptions(statusOptions) {
+    const list = document.getElementById('statusOptionsList');
+    list.innerHTML = '';
+    (statusOptions || []).forEach(opt => {
+        addStatusOptionRow(opt.label, opt.color);
+    });
+}
+
+function addStatusOption() {
+    addStatusOptionRow('', '#3B82F6');
+}
+
+function addStatusOptionRow(label, color) {
+    const list = document.getElementById('statusOptionsList');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2';
+    row.innerHTML = `
+        <input type="color" value="${color}" class="status-color-input w-10 h-8 border-0 cursor-pointer rounded">
+        <input type="text" value="${label}" placeholder="Status label" class="status-label-input flex-1 p-2 border border-gray-300 rounded text-sm">
+        <button type="button" class="text-red-500 hover:text-red-700 px-2" onclick="this.parentElement.remove()">✕</button>
+    `;
+    list.appendChild(row);
+}
+
+function getStatusOptionsFromForm() {
+    const list = document.getElementById('statusOptionsList');
+    const rows = list.querySelectorAll('.flex');
+    const options = [];
+    rows.forEach(row => {
+        const color = row.querySelector('.status-color-input').value;
+        const label = row.querySelector('.status-label-input').value.trim();
+        if (label) {
+            options.push({ label, color });
+        }
+    });
+    return options;
 }
 
 async function saveColumn(event) {
@@ -791,11 +1109,15 @@ async function saveColumn(event) {
     const visibleInExport = document.getElementById('columnExportVisible').checked;
     
     let options = null;
+    let status_options = null;
+    
     if (type === 'dropdown') {
         options = document.getElementById('dropdownOptions').value
             .split('\n')
             .map(o => o.trim())
             .filter(o => o);
+    } else if (type === 'status') {
+        status_options = getStatusOptionsFromForm();
     }
     
     // Get existing table data
@@ -808,7 +1130,7 @@ async function saveColumn(event) {
         // Update existing column
         columns = columns.map(c => {
             if (c.id === columnId) {
-                return { ...c, header, type, width, visible_in_export: visibleInExport, options };
+                return { ...c, header, type, width, visible_in_export: visibleInExport, options, status_options };
             }
             return c;
         });
@@ -820,7 +1142,8 @@ async function saveColumn(event) {
             type,
             width,
             visible_in_export: visibleInExport,
-            options
+            options,
+            status_options
         });
     }
     
@@ -918,5 +1241,9 @@ async function updateTableName(tableId, name) {
         console.error('Error updating table name:', error);
     }
 }
+
+// Initialize on page load
+initStatusColors();
+restoreActiveTab();
 </script>
 {% endblock %}

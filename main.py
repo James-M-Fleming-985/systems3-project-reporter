@@ -29,7 +29,7 @@ def get_git_hash():
         logger.warning(f"Could not get git hash: {e}")
         return "no-git"
 
-BUILD_VERSION = f"1.0.324-{get_git_hash()}"  # Add Schedule feature for tracking work outside project scope
+BUILD_VERSION = f"1.0.327-{get_git_hash()}"  # Add Documents tab with SharePoint-like version control
 
 
 # Setup logging
@@ -377,6 +377,14 @@ try:
     logger.info("✅ Schedule feature enabled")
 except ImportError as e:
     logger.warning(f"⚠️  Schedule feature disabled: {e}")
+
+# Documents router has: /dashboard/documents, /dashboard/api/documents/*
+try:
+    from routers import documents
+    app.include_router(documents.router, prefix="/dashboard", tags=["documents"])
+    logger.info("✅ Documents feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Documents feature disabled: {e}")
 
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:

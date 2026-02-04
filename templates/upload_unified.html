@@ -95,6 +95,49 @@
     </div>
 </div>
 
+<!-- Schedule Data Upload Card -->
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border-l-4 border-teal-500">
+        <div class="flex items-center mb-4">
+            <svg class="w-12 h-12 text-teal-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Schedule Data</h3>
+                <p class="text-sm text-gray-600">Excel or CSV files</p>
+            </div>
+        </div>
+        
+        <p class="text-gray-700 mb-4">
+            Import schedule tables from Excel or CSV files for tracking work outside project scope.
+        </p>
+        
+        <ul class="text-sm text-gray-600 mb-4 space-y-1">
+            <li>✓ Excel (.xlsx) and CSV formats</li>
+            <li>✓ Create new tables or update existing</li>
+            <li>✓ Automatic column detection</li>
+            <li>✓ Preview before import</li>
+        </ul>
+        
+        <button id="uploadScheduleBtn" onclick="openScheduleUploadModal()" class="w-full bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors font-semibold">
+            📋 Upload Schedule Data
+        </button>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 opacity-75">
+        <div class="flex items-center mb-4">
+            <div class="bg-gray-100 rounded-lg p-3 mr-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">More upload types coming soon...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- PowerPoint Template Upload Card -->
 <div class="grid grid-cols-1 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-purple-500">
@@ -418,6 +461,143 @@
             <button id="riskUploadBtn" onclick="uploadRiskFile()" class="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-semibold" disabled>
                 Upload Risk Data
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Upload Modal -->
+<div id="scheduleUploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-800">📋 Upload Schedule Data</h3>
+                <button onclick="closeScheduleUploadModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <!-- Program Selection -->
+            <div class="mb-4">
+                <label for="scheduleProgramSelect" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Select Program <span class="text-red-500">*</span>
+                </label>
+                <select id="scheduleProgramSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    <option value="">-- Select a program --</option>
+                </select>
+            </div>
+            
+            <!-- Import Mode -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Import Mode</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-teal-50 transition">
+                        <input type="radio" name="scheduleImportMode" value="new" checked class="mr-2 text-teal-600">
+                        <span><strong>Create New Table</strong><br><span class="text-sm text-gray-500">Import as a new schedule table</span></span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-teal-50 transition">
+                        <input type="radio" name="scheduleImportMode" value="existing" class="mr-2 text-teal-600">
+                        <span><strong>Update Existing</strong><br><span class="text-sm text-gray-500">Add rows to existing table</span></span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Existing Table Selection (hidden by default) -->
+            <div id="existingTableSelect" class="hidden mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Table to Update</label>
+                <select id="scheduleTableSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    <option value="">-- Select a table --</option>
+                </select>
+            </div>
+            
+            <!-- New Table Name (shown by default) -->
+            <div id="newTableName" class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">New Table Name</label>
+                <input type="text" id="scheduleTableName" placeholder="e.g., Maintenance Schedule" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+            </div>
+            
+            <!-- Drop Zone -->
+            <div id="scheduleDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-4 cursor-pointer hover:border-teal-500 transition-colors">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="mt-4 text-lg text-gray-600">Drag and drop file here</p>
+                <p class="text-sm text-gray-500 mt-2">Excel (.xlsx) or CSV (.csv)</p>
+                <input type="file" id="scheduleFileInput" accept=".xlsx,.xls,.csv" class="hidden">
+            </div>
+            
+            <div id="scheduleFileInfo" class="hidden bg-teal-50 border border-teal-200 rounded p-4 mb-4">
+                <p class="text-sm text-teal-800"><strong>Selected:</strong> <span id="scheduleFileName"></span></p>
+                <p class="text-sm text-teal-600 mt-1" id="scheduleFileSize"></p>
+            </div>
+            
+            <!-- Preview Section -->
+            <div id="schedulePreview" class="hidden mb-4">
+                <h4 class="font-semibold text-gray-800 mb-2">Preview (first 5 rows)</h4>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="min-w-full text-sm" id="schedulePreviewTable">
+                        <thead class="bg-gray-100">
+                            <tr id="schedulePreviewHeaders"></tr>
+                        </thead>
+                        <tbody id="schedulePreviewRows"></tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" id="schedulePreviewInfo"></p>
+            </div>
+            
+            <!-- Column Mapping (for existing tables) -->
+            <div id="columnMappingSection" class="hidden mb-4">
+                <h4 class="font-semibold text-gray-800 mb-2">Column Mapping</h4>
+                <p class="text-sm text-gray-600 mb-3">Map file columns to table columns</p>
+                <div id="columnMappingContainer" class="space-y-2"></div>
+            </div>
+            
+            <!-- Progress -->
+            <div id="scheduleProgress" class="hidden bg-teal-50 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-teal-600 mr-3" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-gray-700">Importing schedule data...</span>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div id="scheduleSuccess" class="hidden bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <div class="flex items-center mb-2">
+                    <svg class="h-5 w-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-green-800 font-semibold">Import successful!</span>
+                </div>
+                <div id="scheduleSuccessDetails" class="text-sm text-green-700 ml-8"></div>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="scheduleError" class="hidden bg-red-50 border border-red-200 rounded p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-red-800 font-semibold">Import failed</span>
+                </div>
+                <p class="text-sm text-red-700 mt-2" id="scheduleErrorMessage"></p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="scheduleUploadBtn" onclick="uploadScheduleFile()" 
+                        class="flex-1 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-semibold" disabled>
+                    📋 Import Schedule Data
+                </button>
+                <a id="scheduleViewBtn" href="#" class="hidden px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center font-semibold">
+                    View Schedule →
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -1911,6 +2091,289 @@ async function confirmDeleteTemplate() {
     }
     
     templateToDelete = null;
+}
+
+// =============================================================================
+// Schedule Upload Logic
+// =============================================================================
+let scheduleFile = null;
+let schedulePreviewData = null;
+
+function openScheduleUploadModal() {
+    document.getElementById('scheduleUploadModal').classList.remove('hidden');
+    populateScheduleProgramDropdown();
+    setupScheduleImportModeToggle();
+}
+
+function closeScheduleUploadModal() {
+    document.getElementById('scheduleUploadModal').classList.add('hidden');
+    resetScheduleUpload();
+}
+
+function resetScheduleUpload() {
+    scheduleFile = null;
+    schedulePreviewData = null;
+    document.getElementById('scheduleFileInput').value = '';
+    document.getElementById('scheduleFileInfo').classList.add('hidden');
+    document.getElementById('schedulePreview').classList.add('hidden');
+    document.getElementById('columnMappingSection').classList.add('hidden');
+    document.getElementById('scheduleProgress').classList.add('hidden');
+    document.getElementById('scheduleSuccess').classList.add('hidden');
+    document.getElementById('scheduleError').classList.add('hidden');
+    document.getElementById('scheduleUploadBtn').disabled = true;
+    document.getElementById('scheduleViewBtn').classList.add('hidden');
+    document.getElementById('scheduleTableName').value = '';
+}
+
+async function populateScheduleProgramDropdown() {
+    const select = document.getElementById('scheduleProgramSelect');
+    select.innerHTML = '<option value="">-- Select a program --</option>';
+    
+    try {
+        const response = await fetch('/dashboard/api/projects');
+        const projects = await response.json();
+        
+        projects.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.name || project;
+            option.textContent = project.name || project;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load programs:', error);
+    }
+}
+
+function setupScheduleImportModeToggle() {
+    const radios = document.querySelectorAll('input[name="scheduleImportMode"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            const mode = document.querySelector('input[name="scheduleImportMode"]:checked').value;
+            document.getElementById('existingTableSelect').classList.toggle('hidden', mode !== 'existing');
+            document.getElementById('newTableName').classList.toggle('hidden', mode !== 'new');
+            document.getElementById('columnMappingSection').classList.toggle('hidden', mode !== 'existing' || !schedulePreviewData);
+        });
+    });
+    
+    // Program change loads existing tables
+    document.getElementById('scheduleProgramSelect').addEventListener('change', loadExistingTables);
+}
+
+async function loadExistingTables() {
+    const program = document.getElementById('scheduleProgramSelect').value;
+    const select = document.getElementById('scheduleTableSelect');
+    select.innerHTML = '<option value="">-- Select a table --</option>';
+    
+    if (!program) return;
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}/tables`);
+        const data = await response.json();
+        
+        (data.tables || []).forEach(table => {
+            const option = document.createElement('option');
+            option.value = table.id;
+            option.textContent = table.name;
+            option.dataset.columns = JSON.stringify(table.columns);
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load tables:', error);
+    }
+}
+
+// Setup drop zone
+document.getElementById('scheduleDropZone').addEventListener('click', () => {
+    document.getElementById('scheduleFileInput').click();
+});
+
+document.getElementById('scheduleDropZone').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-teal-500', 'bg-teal-50');
+});
+
+document.getElementById('scheduleDropZone').addEventListener('dragleave', (e) => {
+    e.currentTarget.classList.remove('border-teal-500', 'bg-teal-50');
+});
+
+document.getElementById('scheduleDropZone').addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-teal-500', 'bg-teal-50');
+    const file = e.dataTransfer.files[0];
+    if (file) handleScheduleFile(file);
+});
+
+document.getElementById('scheduleFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleScheduleFile(file);
+});
+
+async function handleScheduleFile(file) {
+    scheduleFile = file;
+    
+    document.getElementById('scheduleFileName').textContent = file.name;
+    document.getElementById('scheduleFileSize').textContent = `Size: ${(file.size / 1024).toFixed(1)} KB`;
+    document.getElementById('scheduleFileInfo').classList.remove('hidden');
+    
+    // Preview the file
+    await previewScheduleFile(file);
+    
+    updateScheduleUploadButton();
+}
+
+async function previewScheduleFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/dashboard/api/schedule/preview', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to preview file');
+        }
+        
+        schedulePreviewData = await response.json();
+        
+        // Render preview
+        const headers = schedulePreviewData.headers || [];
+        const rows = schedulePreviewData.preview_rows || [];
+        
+        const headerRow = document.getElementById('schedulePreviewHeaders');
+        headerRow.innerHTML = headers.map(h => `<th class="px-3 py-2 text-left">${h}</th>`).join('');
+        
+        const tbody = document.getElementById('schedulePreviewRows');
+        tbody.innerHTML = rows.map(row => 
+            `<tr class="border-t">${row.map(cell => `<td class="px-3 py-2">${cell ?? ''}</td>`).join('')}</tr>`
+        ).join('');
+        
+        document.getElementById('schedulePreviewInfo').textContent = 
+            `Showing ${rows.length} of ${schedulePreviewData.total_rows} rows, ${headers.length} columns detected`;
+        
+        document.getElementById('schedulePreview').classList.remove('hidden');
+        
+        // If existing mode, show column mapping
+        const mode = document.querySelector('input[name="scheduleImportMode"]:checked').value;
+        if (mode === 'existing') {
+            showColumnMapping();
+        }
+        
+    } catch (error) {
+        console.error('Preview error:', error);
+        document.getElementById('scheduleError').classList.remove('hidden');
+        document.getElementById('scheduleErrorMessage').textContent = 'Failed to preview file: ' + error.message;
+    }
+}
+
+function showColumnMapping() {
+    const tableSelect = document.getElementById('scheduleTableSelect');
+    const selectedOption = tableSelect.options[tableSelect.selectedIndex];
+    if (!selectedOption || !selectedOption.dataset.columns) return;
+    
+    const tableColumns = JSON.parse(selectedOption.dataset.columns);
+    const fileHeaders = schedulePreviewData?.headers || [];
+    
+    const container = document.getElementById('columnMappingContainer');
+    container.innerHTML = tableColumns.map(col => `
+        <div class="flex items-center gap-3">
+            <span class="w-32 font-medium">${col.header}</span>
+            <span class="text-gray-400">→</span>
+            <select class="flex-1 px-3 py-2 border rounded" data-table-col="${col.id}">
+                <option value="">-- Skip --</option>
+                ${fileHeaders.map(h => `<option value="${h}" ${h.toLowerCase() === col.header.toLowerCase() ? 'selected' : ''}>${h}</option>`).join('')}
+            </select>
+        </div>
+    `).join('');
+    
+    document.getElementById('columnMappingSection').classList.remove('hidden');
+}
+
+function updateScheduleUploadButton() {
+    const program = document.getElementById('scheduleProgramSelect').value;
+    const mode = document.querySelector('input[name="scheduleImportMode"]:checked').value;
+    const tableName = document.getElementById('scheduleTableName').value;
+    const existingTable = document.getElementById('scheduleTableSelect').value;
+    
+    let enabled = scheduleFile && program;
+    if (mode === 'new') {
+        enabled = enabled && tableName.trim();
+    } else {
+        enabled = enabled && existingTable;
+    }
+    
+    document.getElementById('scheduleUploadBtn').disabled = !enabled;
+}
+
+// Add input listeners
+document.getElementById('scheduleProgramSelect').addEventListener('change', updateScheduleUploadButton);
+document.getElementById('scheduleTableName').addEventListener('input', updateScheduleUploadButton);
+document.getElementById('scheduleTableSelect').addEventListener('change', () => {
+    updateScheduleUploadButton();
+    if (schedulePreviewData) showColumnMapping();
+});
+
+async function uploadScheduleFile() {
+    if (!scheduleFile) return;
+    
+    const program = document.getElementById('scheduleProgramSelect').value;
+    const mode = document.querySelector('input[name="scheduleImportMode"]:checked').value;
+    
+    document.getElementById('scheduleProgress').classList.remove('hidden');
+    document.getElementById('scheduleError').classList.add('hidden');
+    document.getElementById('scheduleSuccess').classList.add('hidden');
+    document.getElementById('scheduleUploadBtn').disabled = true;
+    
+    const formData = new FormData();
+    formData.append('file', scheduleFile);
+    formData.append('mode', mode);
+    
+    if (mode === 'new') {
+        formData.append('table_name', document.getElementById('scheduleTableName').value);
+    } else {
+        formData.append('table_id', document.getElementById('scheduleTableSelect').value);
+        // Get column mapping
+        const mapping = {};
+        document.querySelectorAll('#columnMappingContainer select').forEach(sel => {
+            if (sel.value) {
+                mapping[sel.dataset.tableCol] = sel.value;
+            }
+        });
+        formData.append('column_mapping', JSON.stringify(mapping));
+    }
+    
+    try {
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}/import`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        document.getElementById('scheduleProgress').classList.add('hidden');
+        
+        if (response.ok) {
+            document.getElementById('scheduleSuccess').classList.remove('hidden');
+            document.getElementById('scheduleSuccessDetails').innerHTML = 
+                `Imported ${result.rows_imported || 0} rows into "${result.table_name || 'table'}"`;
+            
+            // Show view button
+            const viewBtn = document.getElementById('scheduleViewBtn');
+            viewBtn.href = `/dashboard/schedule/${encodeURIComponent(program)}`;
+            viewBtn.classList.remove('hidden');
+        } else {
+            document.getElementById('scheduleError').classList.remove('hidden');
+            document.getElementById('scheduleErrorMessage').textContent = result.detail || 'Import failed';
+            document.getElementById('scheduleUploadBtn').disabled = false;
+        }
+        
+    } catch (error) {
+        document.getElementById('scheduleProgress').classList.add('hidden');
+        document.getElementById('scheduleError').classList.remove('hidden');
+        document.getElementById('scheduleErrorMessage').textContent = error.message;
+        document.getElementById('scheduleUploadBtn').disabled = false;
+    }
 }
 
 </script>
