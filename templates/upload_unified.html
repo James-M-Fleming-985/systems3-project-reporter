@@ -787,26 +787,39 @@ async function populateProgramDropdown() {
         // Get currently selected program from localStorage
         const selectedProgram = localStorage.getItem('selectedProgram');
         
-        // Fetch all projects
-        const response = await fetch('/dashboard/api/projects');
-        if (!response.ok) {
-            console.error('Failed to fetch projects');
-            return;
-        }
+        // First try to use server-side projects passed to template (more reliable)
+        const serverProjects = [
+            {% for project in projects %}
+            { name: "{{ project.project_name }}" },
+            {% endfor %}
+        ];
         
-        const projects = await response.json();
+        let projects = serverProjects;
+        
+        // If no server-side projects, fallback to API call
+        if (projects.length === 0) {
+            console.log('No server-side projects for risk dropdown, fetching from API...');
+            const response = await fetch('/dashboard/api/projects');
+            if (response.ok) {
+                projects = await response.json();
+            } else {
+                console.error('Failed to fetch projects');
+                return;
+            }
+        }
         
         // Clear existing options (except first)
         riskProgramSelect.innerHTML = '<option value="">-- Select a program --</option>';
         
         // Add project options
         projects.forEach(project => {
+            const name = project.name || project.project_name || project;
             const option = document.createElement('option');
-            option.value = project.name;
-            option.textContent = project.name;
+            option.value = name;
+            option.textContent = name;
             
             // Pre-select if it matches localStorage
-            if (selectedProgram && project.name === selectedProgram) {
+            if (selectedProgram && name === selectedProgram) {
                 option.selected = true;
             }
             
