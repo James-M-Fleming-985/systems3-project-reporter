@@ -95,8 +95,9 @@
     </div>
 </div>
 
-<!-- Schedule Data Upload Card -->
+<!-- Schedule Data & PowerPoint Template Cards (side by side) -->
 <div class="grid md:grid-cols-2 gap-6 mb-8">
+    <!-- Schedule Data Upload Card -->
     <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border-l-4 border-teal-500">
         <div class="flex items-center mb-4">
             <svg class="w-12 h-12 text-teal-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,23 +125,8 @@
         </button>
     </div>
     
-    <div class="bg-white rounded-lg shadow-md p-6 opacity-75">
-        <div class="flex items-center mb-4">
-            <div class="bg-gray-100 rounded-lg p-3 mr-4">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="text-gray-500 text-sm">More upload types coming soon...</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- PowerPoint Template Upload Card -->
-<div class="grid grid-cols-1 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-purple-500">
+    <!-- PowerPoint Template Upload Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border-l-4 border-purple-500">
         <div class="flex items-start mb-4">
             <div class="bg-purple-100 rounded-lg p-3 mr-4">
                 <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2129,16 +2115,38 @@ async function populateScheduleProgramDropdown() {
     const select = document.getElementById('scheduleProgramSelect');
     select.innerHTML = '<option value="">-- Select a program --</option>';
     
+    // Get currently selected program from URL or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentProgram = urlParams.get('project') || localStorage.getItem('selectedProgram');
+    
     try {
         const response = await fetch('/dashboard/api/projects');
+        if (!response.ok) {
+            console.error('Failed to fetch projects:', response.status);
+            return;
+        }
         const projects = await response.json();
         
+        console.log('Loaded programs for schedule upload:', projects.length);
+        
         projects.forEach(project => {
+            const name = project.name || project;
             const option = document.createElement('option');
-            option.value = project.name || project;
-            option.textContent = project.name || project;
+            option.value = name;
+            option.textContent = name;
+            
+            // Auto-select current program if matches
+            if (currentProgram && name === currentProgram) {
+                option.selected = true;
+            }
+            
             select.appendChild(option);
         });
+        
+        // If a program is pre-selected, load its tables
+        if (select.value) {
+            loadExistingTables();
+        }
     } catch (error) {
         console.error('Failed to load programs:', error);
     }
@@ -2167,14 +2175,22 @@ async function loadExistingTables() {
     if (!program) return;
     
     try {
-        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}/tables`);
+        // Use the correct endpoint - /api/schedule/{program} returns {tables: [...]}
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}`);
+        if (!response.ok) {
+            console.error('Failed to fetch schedule data');
+            return;
+        }
         const data = await response.json();
         
-        (data.tables || []).forEach(table => {
+        const tables = data.tables || [];
+        console.log(`Loaded ${tables.length} tables for ${program}`);
+        
+        tables.forEach(table => {
             const option = document.createElement('option');
             option.value = table.id;
             option.textContent = table.name;
-            option.dataset.columns = JSON.stringify(table.columns);
+            option.dataset.columns = JSON.stringify(table.columns || []);
             select.appendChild(option);
         });
     } catch (error) {
