@@ -783,24 +783,33 @@ const riskProgramSelect = document.getElementById('riskProgramSelect');
 
 // Populate program dropdown on modal open
 async function populateProgramDropdown() {
+    console.log('🔶 populateProgramDropdown (Risk) called');
     try {
         // Get currently selected program from localStorage
         const selectedProgram = localStorage.getItem('selectedProgram');
+        console.log('🔶 Selected program from storage:', selectedProgram);
         
         // Fetch all projects from API
-        const response = await fetch('/dashboard/api/projects');
+        const apiUrl = '/dashboard/api/projects';
+        console.log('🔶 Fetching from:', apiUrl);
+        const response = await fetch(apiUrl);
+        console.log('🔶 Response status:', response.status);
+        
         if (!response.ok) {
-            console.error('Failed to fetch projects');
+            console.error('❌ Failed to fetch projects:', response.status);
             return;
         }
         const projects = await response.json();
+        console.log('🔶 Projects received:', projects);
+        console.log('🔶 Projects count:', projects.length);
         
         // Clear existing options (except first)
         riskProgramSelect.innerHTML = '<option value="">-- Select a program --</option>';
         
         // Add project options
-        projects.forEach(project => {
+        projects.forEach((project, index) => {
             const name = project.name || project;
+            console.log(`🔶 Adding option ${index + 1}: ${name}`);
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
@@ -808,15 +817,18 @@ async function populateProgramDropdown() {
             // Pre-select if it matches localStorage
             if (selectedProgram && name === selectedProgram) {
                 option.selected = true;
+                console.log('🔶 Auto-selected:', name);
             }
             
             riskProgramSelect.appendChild(option);
         });
         
+        console.log('🔶 Final dropdown options count:', riskProgramSelect.options.length);
+        
         // Update upload button state
         updateRiskUploadButton();
     } catch (error) {
-        console.error('Error populating programs:', error);
+        console.error('❌ Error populating programs:', error);
     }
 }
 
@@ -2138,26 +2150,41 @@ function resetScheduleUpload() {
 }
 
 async function populateScheduleProgramDropdown() {
+    console.log('🔷 populateScheduleProgramDropdown called');
     const select = document.getElementById('scheduleProgramSelect');
+    if (!select) {
+        console.error('❌ scheduleProgramSelect element not found!');
+        return;
+    }
     select.innerHTML = '<option value="">-- Select a program --</option>';
     
     // Get currently selected program from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const currentProgram = urlParams.get('project') || localStorage.getItem('selectedProgram');
+    console.log('🔷 Current program from URL/storage:', currentProgram);
     
     try {
         // Fetch all projects from API
-        const response = await fetch('/dashboard/api/projects');
+        const apiUrl = '/dashboard/api/projects';
+        console.log('🔷 Fetching from:', apiUrl);
+        const response = await fetch(apiUrl);
+        console.log('🔷 Response status:', response.status);
+        
         if (!response.ok) {
-            console.error('Failed to fetch projects:', response.status);
+            console.error('❌ Failed to fetch projects:', response.status, response.statusText);
             return;
         }
         const projects = await response.json();
+        console.log('🔷 Projects received:', projects);
+        console.log('🔷 Projects count:', projects.length);
         
-        console.log('Populating schedule program dropdown with', projects.length, 'programs');
+        if (projects.length === 0) {
+            console.warn('⚠️ No projects returned from API');
+        }
         
-        projects.forEach(project => {
+        projects.forEach((project, index) => {
             const name = project.name || project;
+            console.log(`🔷 Adding option ${index + 1}: ${name}`);
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
@@ -2165,17 +2192,21 @@ async function populateScheduleProgramDropdown() {
             // Auto-select current program if matches
             if (currentProgram && name === currentProgram) {
                 option.selected = true;
+                console.log('🔷 Auto-selected:', name);
             }
             
             select.appendChild(option);
         });
         
+        console.log('🔷 Final dropdown options count:', select.options.length);
+        
         // If a program is pre-selected, load its tables
         if (select.value) {
+            console.log('🔷 Pre-selected program, loading tables...');
             loadExistingTables();
         }
     } catch (error) {
-        console.error('Failed to load programs:', error);
+        console.error('❌ Failed to load programs:', error);
     }
 }
 
