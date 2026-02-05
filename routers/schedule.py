@@ -112,7 +112,10 @@ async def schedule_page(request: Request, project: str = None):
 @router.get("/api/schedule/{project_name}")
 async def get_project_schedules(project_name: str):
     """Get all schedule tables for a project"""
+    logger.info(f"📋 API /api/schedule/{project_name} called")
     data = schedule_repo.get_schedules(project_name)
+    tables = data.get('tables', [])
+    logger.info(f"📋 Returning {len(tables)} tables for project '{project_name}'")
     return JSONResponse(content=data)
 
 

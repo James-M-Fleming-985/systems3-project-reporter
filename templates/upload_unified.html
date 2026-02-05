@@ -2226,49 +2226,53 @@ function setupScheduleImportModeToggle() {
 }
 
 async function loadExistingTables() {
+    console.log('🟢 loadExistingTables called');
     const program = document.getElementById('scheduleProgramSelect').value;
     const select = document.getElementById('scheduleTableSelect');
     select.innerHTML = '<option value="">-- Select a table --</option>';
     
-    console.log('loadExistingTables called, program:', program);
+    console.log('🟢 Program selected:', program);
     
     if (!program) {
-        console.log('No program selected, skipping table load');
+        console.log('🟢 No program selected, skipping table load');
         return;
     }
     
     try {
         // Use the correct endpoint - /api/schedule/{program} returns {tables: [...]}
         const url = `/dashboard/api/schedule/${encodeURIComponent(program)}`;
-        console.log('Fetching tables from:', url);
+        console.log('🟢 Fetching tables from:', url);
         
         const response = await fetch(url);
-        console.log('Response status:', response.status);
+        console.log('🟢 Response status:', response.status);
         
         if (!response.ok) {
-            console.error('Failed to fetch schedule data, status:', response.status);
+            console.error('🟢 ❌ Failed to fetch schedule data, status:', response.status);
             return;
         }
         const data = await response.json();
-        console.log('Schedule data received:', data);
+        console.log('🟢 Schedule data received:', JSON.stringify(data));
         
         const tables = data.tables || [];
-        console.log(`Loaded ${tables.length} tables for ${program}`);
+        console.log(`🟢 Loaded ${tables.length} tables for ${program}`);
         
         if (tables.length === 0) {
-            console.log('No existing tables found for this program');
+            console.log('🟢 ⚠️ No existing tables found for this program');
+            console.log('🟢 (Tables are created when you upload schedule data with "Create New Table" mode)');
         }
         
-        tables.forEach(table => {
+        tables.forEach((table, index) => {
             const option = document.createElement('option');
             option.value = table.id;
             option.textContent = table.name;
             option.dataset.columns = JSON.stringify(table.columns || []);
             select.appendChild(option);
-            console.log('Added table option:', table.name);
+            console.log(`🟢 Added table option ${index + 1}: ${table.name} (id: ${table.id})`);
         });
+        
+        console.log('🟢 Final table dropdown options count:', select.options.length);
     } catch (error) {
-        console.error('Failed to load tables:', error);
+        console.error('🟢 ❌ Failed to load tables:', error);
     }
 }
 
