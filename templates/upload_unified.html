@@ -2454,9 +2454,9 @@ async function uploadScheduleFile() {
             document.getElementById('scheduleSuccessDetails').innerHTML = 
                 `Imported ${result.rows_imported || 0} rows into "${result.table_name || 'table'}"`;
             
-            // Show view button
+            // Show view button - use query parameter format
             const viewBtn = document.getElementById('scheduleViewBtn');
-            viewBtn.href = `/dashboard/schedule/${encodeURIComponent(program)}`;
+            viewBtn.href = `/dashboard/schedule?project=${encodeURIComponent(program)}`;
             viewBtn.classList.remove('hidden');
         } else {
             document.getElementById('scheduleError').classList.remove('hidden');
