@@ -138,6 +138,10 @@ class ProjectRepository:
             if yaml_file.name.endswith("_documents.yaml") or yaml_file.name.endswith("_documents.yml"):
                 continue
             
+            # Skip risk files (they have a different format)
+            if yaml_file.name.endswith("_risks.yaml") or yaml_file.name.endswith("_risks.yml"):
+                continue
+            
             # Skip files in custom_metrics directory
             if "custom_metrics" in str(yaml_file):
                 continue
@@ -148,6 +152,10 @@ class ProjectRepository:
             
             # Skip files in documents directory
             if "documents" in str(yaml_file):
+                continue
+            
+            # Skip files in risks directory
+            if "risks" in str(yaml_file):
                 continue
                 
             try:
@@ -198,9 +206,12 @@ class ProjectRepository:
                     project = Project(**data)
                     projects.append(project)
             except Exception as e:
-                print(f"Error loading {yaml_file.name}: {e}")
+                import logging
+                logging.error(f"Error loading {yaml_file.name}: {e}")
                 continue
         
+        import logging
+        logging.info(f"✅ Loaded {len(projects)} projects from {self.data_dir}")
         return projects
     
     def get_project_by_code(self, project_code: str) -> Optional[Project]:
