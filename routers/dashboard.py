@@ -30,8 +30,15 @@ router = APIRouter(tags=["dashboard"])
 # Initialize services
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
+
+# Use environment variables for persistent storage paths (Railway Volumes)
+DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+
 chart_service = ChartFormatterService()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Initialize project repository for API endpoints
+project_repo = ProjectRepository(data_dir=DATA_DIR)
 
 # Add custom Jinja2 filter to remove dates from change_id
 import re
