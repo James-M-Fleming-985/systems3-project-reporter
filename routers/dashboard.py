@@ -750,11 +750,14 @@ async def get_projects():
     """
     API endpoint to get list of all projects
     Used by upload forms to populate program dropdown
+    
+    Returns both project_code (for API lookups) and project_name (for display)
     """
     try:
         projects = project_repo.load_all_projects()
         logger.info(f"📋 API /api/projects returning {len(projects)} projects")
-        return [{"name": p.project_name, "id": p.project_name} for p in projects]
+        # Return both code and name - code is used for schedule lookups
+        return [{"name": p.project_name, "code": p.project_code, "id": p.project_code} for p in projects]
     except Exception as e:
         logger.error(f"❌ Error in /api/projects: {e}")
         import traceback

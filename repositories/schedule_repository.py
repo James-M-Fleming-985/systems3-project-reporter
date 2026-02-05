@@ -29,10 +29,54 @@ class ScheduleRepository:
         return clean.strip()
     
     def _get_schedules_file_path(self, project_name: str) -> Path:
-        """Get the file path for a project's schedules"""
+        """Get the file path for a project's schedules.
+        
+        Checks multiple filename patterns to handle both project codes (ZLD-P1)
+        and project names (ZnNi Line Development Plan-16.xml).
+        """
         clean_name = self._clean_project_name(project_name)
         clean_name = clean_name.replace('/', '_').replace('\\', '_')
-        return self.storage_dir / f"{clean_name}_schedules.yaml"
+        
+        # Primary path using cleaned project name
+        primary_path = self.storage_dir / f"{clean_name}_schedules.yaml"
+        if primary_path.exists():
+            logger.info(f"📋 Found schedule file at primary path: {primary_path}")
+            return primary_path
+        
+        # Also check for project code-based filename (e.g., ZLD-P1_schedules.yaml)
+        # This handles cases where schedules were saved using project_code
+        # Extract potential project code from name (e.g., "ZLD-P1" from context)
+        # Check all existing schedule files for a match
+        for schedule_file in self.storage_dir.glob("*_schedules.yaml"):
+            logger.debug(f"📋 Checking schedule file: {schedule_file.name}")
+        
+        return primary_path
+    
+    def _find_schedule_file(self, project_identifier: str) -> Optional[Path]:
+        """Find schedule file by project name, code, or partial match."""
+        clean_name = self._clean_project_name(project_identifier)
+        clean_name = clean_name.replace('/', '_').replace('\\', '_')
+        
+        # Try exact match first
+        exact_path = self.storage_dir / f"{clean_name}_schedules.yaml"
+        if exact_path.exists():
+            return exact_path
+        
+        # Try direct project identifier (might be a code like ZLD-P1)
+        direct_path = self.storage_dir / f"{project_identifier}_schedules.yaml"
+        if direct_path.exists():
+            return direct_path
+        
+        # List all schedule files and look for potential matches
+        for schedule_file in self.storage_dir.glob("*_schedules.yaml"):
+            file_project = schedule_file.stem.replace('_schedules', '')
+            # Check if this file's project identifier is contained in the search term
+            # or vice versa (handles ZLD-P1 vs ZnNi Line Development Plan)
+            if file_project.lower() in clean_name.lower() or clean_name.lower() in file_project.lower():
+                logger.info(f"📋 Found matching schedule file by partial match: {schedule_file}")
+                return schedule_file
+        
+        return None
     
     def get_schedules(self, project_name: str) -> Dict[str, Any]:
         """
@@ -42,9 +86,11 @@ class ScheduleRepository:
             Dict with 'tables' list containing schedule table configurations
         """
         try:
-            file_path = self._get_schedules_file_path(project_name)
+            # Try to find schedule file by name, code, or partial match
+            file_path = self._find_schedule_file(project_name)
             
-            if not file_path.exists():
+            if not file_path or not file_path.exists():
+                logger.info(f"📋 No schedule file found for '{project_name}'")
                 # Return default structure with empty tables
                 return {
                     'project_name': project_name,
@@ -52,6 +98,7 @@ class ScheduleRepository:
                     'last_updated': None
                 }
             
+            logger.info(f"📋 Loading schedules from: {file_path}")
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f) or {}
             

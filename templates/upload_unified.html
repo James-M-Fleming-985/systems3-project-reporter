@@ -2183,14 +2183,16 @@ async function populateScheduleProgramDropdown() {
         }
         
         projects.forEach((project, index) => {
+            // Use code for value (for API lookups), name for display
+            const code = project.code || project.id || project.name || project;
             const name = project.name || project;
-            console.log(`🔷 Adding option ${index + 1}: ${name}`);
+            console.log(`🔷 Adding option ${index + 1}: ${name} (code: ${code})`);
             const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
+            option.value = code;  // Use code for schedule API lookups
+            option.textContent = name;  // Display friendly name
             
-            // Auto-select current program if matches
-            if (currentProgram && name === currentProgram) {
+            // Auto-select current program if matches (by code or name)
+            if (currentProgram && (code === currentProgram || name === currentProgram)) {
                 option.selected = true;
                 console.log('🔷 Auto-selected:', name);
             }
