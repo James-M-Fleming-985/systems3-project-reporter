@@ -130,8 +130,24 @@ class ProjectRepository:
             if yaml_file.name.endswith("_metrics.yaml") or yaml_file.name.endswith("_metrics.yml"):
                 continue
             
+            # Skip schedule files (they have a different format)
+            if yaml_file.name.endswith("_schedules.yaml") or yaml_file.name.endswith("_schedules.yml"):
+                continue
+            
+            # Skip document files (they have a different format)
+            if yaml_file.name.endswith("_documents.yaml") or yaml_file.name.endswith("_documents.yml"):
+                continue
+            
             # Skip files in custom_metrics directory
             if "custom_metrics" in str(yaml_file):
+                continue
+            
+            # Skip files in schedules directory  
+            if "schedules" in str(yaml_file):
+                continue
+            
+            # Skip files in documents directory
+            if "documents" in str(yaml_file):
                 continue
                 
             try:
