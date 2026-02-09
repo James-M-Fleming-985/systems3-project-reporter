@@ -767,13 +767,13 @@ let selectedFile = null;
 let contextDoc = null;
 
 // Document type mappings
-const docTypes = {{ doc_types_json | safe if doc_types_json else '{}' }};
+const docTypes = {{ doc_types_json | default('{}') | safe }};
 
 // All documents data
-const allDocuments = {{ all_documents_json | safe if all_documents_json else '[]' }};
+const allDocuments = {{ all_documents_json | default('[]') | safe }};
 
 // Category data
-const categories = {{ categories_json | safe if categories_json else '[]' }};
+const categories = {{ categories_json | default('[]') | safe }};
 
 // =============================================================================
 // File Type Helpers

@@ -298,7 +298,7 @@ function detectAvailableLevels() {
     // Find all unique parent levels from the data
     const levelSet = new Set();
     ganttData.forEach(task => {
-        if (task.ParentLevels) {
+        if (task.ParentLevels && Object.keys(task.ParentLevels).length > 0) {
             Object.keys(task.ParentLevels).forEach(level => levelSet.add(level));
         }
     });
@@ -308,8 +308,12 @@ function detectAvailableLevels() {
     
     console.log('📊 Available parent levels:', availableLevels);
     
-    // Default to lowest available level if 2 isn't available
-    if (availableLevels.length > 0 && !availableLevels.includes('2')) {
+    // If no parent levels data, hide the level dropdown and use Resource grouping
+    if (availableLevels.length === 0) {
+        console.log('📊 No parent levels detected - using Resource grouping');
+        document.querySelector('.level-dropdown').style.display = 'none';
+        selectedLevel = 'resource';  // Special value for fallback
+    } else if (!availableLevels.includes('2')) {
         selectedLevel = availableLevels[0];
     }
 }
@@ -347,10 +351,13 @@ function regroupByLevel() {
     ganttData.forEach(task => {
         let group = 'Ungrouped';
         
-        if (task.ParentLevels && task.ParentLevels[selectedLevel]) {
+        if (selectedLevel === 'resource') {
+            // Fallback: use Resource (original grouping)
+            group = task.Resource || 'Ungrouped';
+        } else if (task.ParentLevels && task.ParentLevels[selectedLevel]) {
             group = task.ParentLevels[selectedLevel];
         } else if (task.Resource) {
-            // Fallback to Resource (original grouping)
+            // Fallback to Resource
             group = task.Resource;
         }
         
@@ -385,8 +392,8 @@ async function loadSavedSettings() {
         const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
         const settings = await response.json();
         
-        // Load selected level first
-        if (settings.selected_level && availableLevels.includes(settings.selected_level)) {
+        // Load selected level first (only if we have level data available)
+        if (availableLevels.length > 0 && settings.selected_level && availableLevels.includes(settings.selected_level)) {
             selectedLevel = settings.selected_level;
             document.getElementById('levelSelect').value = selectedLevel;
             regroupByLevel();  // Regroup with loaded level

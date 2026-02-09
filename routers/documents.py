@@ -102,8 +102,8 @@ async def documents_page(request: Request, project: str = None):
             docs_by_type[doc_type].append(doc)
             all_documents_flat.append(doc)
         
-        # Build types list for the category
-        types_list = [{'id': tid, 'name': tname} for tid, tname in cat_info['types'].items()]
+        # Build types list for the category (types is a list of dicts with id, name, description)
+        types_list = cat_info['types']  # Already in correct format
         
         categories_with_docs.append({
             'id': cat_id,
