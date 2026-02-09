@@ -154,6 +154,7 @@ async def upload_xml(
     file: UploadFile = File(...),
     is_baseline: str = Form("false"),
     clear_previous_changes: str = Form("false"),
+    target_project_code: str = Form(None),
     user=Depends(get_user_or_create_anonymous),
     sub_service: SubscriptionService = Depends(get_subscription_service)
 ):
@@ -162,6 +163,7 @@ async def upload_xml(
     
     Args:
         clear_previous_changes: If "true", removes all previous changes before adding new ones
+        target_project_code: If provided, upload to this existing project instead of creating new
     """
     import logging
     logger = logging.getLogger(__name__)
@@ -205,6 +207,28 @@ async def upload_xml(
         logger.info(f"Milestones found: {len(new_project.milestones)}")
         logger.info(f"Risks found: {len(new_project.risks)}")
         logger.info(f"Changes found: {len(new_project.changes)}")
+        
+        # If target_project_code is specified, upload to that project instead
+        if target_project_code:
+            target_project = project_repo.get_project_by_code(target_project_code)
+            if target_project:
+                logger.info(f"Target project override: {target_project_code} ({target_project.project_name})")
+                # Create a new project with the target's code/name but with milestones from XML
+                from models import Project
+                parsed_project = new_project  # Keep reference to parsed data
+                new_project = Project(
+                    project_name=target_project.project_name,
+                    project_code=target_project.project_code,
+                    status=parsed_project.status,
+                    start_date=parsed_project.start_date,
+                    target_completion=parsed_project.target_completion,
+                    completion_percentage=parsed_project.completion_percentage,
+                    milestones=parsed_project.milestones,
+                    risks=parsed_project.risks,
+                    changes=parsed_project.changes
+                )
+            else:
+                logger.warning(f"Target project {target_project_code} not found, using XML project")
         
         # Debug: Log first few milestones if any exist
         if new_project.milestones:
