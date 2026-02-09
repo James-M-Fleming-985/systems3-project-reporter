@@ -1,37 +1,201 @@
 {% extends "base.html" %}
 
-{% block title %}Gantt Chart - Systems³ Project Reporter{% endblock %}
+{% block title %}Program Roadmap - Systems³ Project Reporter{% endblock %}
 
 {% block extra_head %}
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.tailwindcss.min.css">
-<!-- jQuery (required for DataTables) -->
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.tailwindcss.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+    .project-selector {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .project-checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 0.75rem;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+    
+    .project-checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .project-checkbox-item:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    
+    .project-checkbox-item.selected {
+        border-color: #3b82f6;
+        background: #dbeafe;
+    }
+    
+    .project-checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 12px;
+        accent-color: #3b82f6;
+    }
+    
+    .project-checkbox-item .project-name {
+        font-weight: 500;
+        color: #1f2937;
+        flex: 1;
+    }
+    
+    .project-checkbox-item .milestone-count {
+        font-size: 0.75rem;
+        color: #6b7280;
+        background: #e5e7eb;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    
+    .selector-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn-selector {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+    
+    .btn-secondary:hover {
+        background: #f3f4f6;
+    }
+    
+    .roadmap-empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 2px dashed #d1d5db;
+    }
+    
+    .roadmap-empty-state svg {
+        width: 64px;
+        height: 64px;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+    
+    .selection-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+    }
+    
+    .selection-badge {
+        background: #3b82f6;
+        color: white;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2" id="ganttPageTitle">📅 Program Roadmap</h2>
-    <p class="text-gray-600" id="ganttPageSubtitle">Interactive timeline view of all projects</p>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 {{ project.project_name }} - Program Roadmap</h2>
+    <p class="text-gray-600">Select which projects to display on the roadmap timeline</p>
 </div>
 
-<!-- Gantt Chart Container -->
+<!-- Project Selection Panel -->
+<div class="project-selector">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h3 class="text-lg font-bold text-gray-800">Select Projects for Roadmap</h3>
+            <p class="text-sm text-gray-600">Choose which projects/phases to display. Selection persists until changed.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-500">Quick:</span>
+            <button onclick="selectAll()" class="btn-selector btn-secondary">Select All</button>
+            <button onclick="selectNone()" class="btn-selector btn-secondary">Clear All</button>
+        </div>
+    </div>
+    
+    <div class="selection-summary">
+        <span>Showing</span>
+        <span class="selection-badge" id="selectedCount">0</span>
+        <span>of</span>
+        <span id="totalCount">0</span>
+        <span>projects</span>
+    </div>
+    
+    <div class="project-checkbox-grid" id="projectCheckboxGrid">
+        <!-- Project checkboxes will be populated by JavaScript -->
+        <div class="text-center text-gray-500 py-8">Loading projects...</div>
+    </div>
+    
+    <div class="selector-actions">
+        <button onclick="applySelection()" class="btn-selector btn-primary">
+            <span id="applyBtnText">Apply Selection</span>
+        </button>
+        <button onclick="resetToSaved()" class="btn-selector btn-secondary">Reset to Saved</button>
+    </div>
+</div>
+
+<!-- Roadmap Chart Container -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="ganttChart" style="width:100%; height:auto;"></div>
-    <p class="text-xs text-gray-500 mt-2 text-center">All projects visible - chart auto-sized for optimal viewing</p>
+    <div id="roadmapChart" style="width:100%; min-height:400px;">
+        <div class="roadmap-empty-state" id="emptyState">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mx-auto">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">No Projects Selected</h3>
+            <p class="text-gray-500 mb-4">Select one or more projects above to display on the roadmap</p>
+        </div>
+    </div>
 </div>
 
 <!-- Legend -->
 <div class="mt-6 bg-white rounded-lg shadow p-6">
     <h3 class="text-lg font-bold text-gray-800 mb-4">Status Legend</h3>
-    <div class="flex space-x-6">
+    <div class="flex flex-wrap gap-6">
         <div class="flex items-center">
             <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-            <span class="text-sm">Completed</span>
+            <span class="text-sm">Completed (100%)</span>
         </div>
         <div class="flex items-center">
             <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
@@ -41,120 +205,264 @@
             <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
             <span class="text-sm">Not Started</span>
         </div>
+        <div class="flex items-center">
+            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+            <span class="text-sm">At Risk / Blocked</span>
+        </div>
+    </div>
+</div>
+
+<!-- Tip for Risk-Led Programs -->
+<div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+    <div class="flex items-start">
+        <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+            <p class="font-semibold text-amber-800">Tip for Risk-Led Programs</p>
+            <p class="text-sm text-amber-700">For risk-led programs, select only Phase 6 (Execute) projects to show stakeholders the work that matters to them. Administrative phases can be hidden from this view.</p>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Gantt chart data from backend (pre-filtered to selected project)
-const ganttData = {{ gantt_data | tojson }};
-const projectName = "{{ project.project_name }}";
+// Project and Gantt data from backend
 const projectCode = "{{ project.project_code }}";
+const projectName = "{{ project.project_name }}";
+const ganttData = {{ gantt_data | tojson }};
 
-console.log('📊 GANTT - Rendering', ganttData.length, 'milestones for', projectName);
+// State
+let allProjectGroups = [];
+let selectedGroups = new Set();
+let savedSettings = null;
+let milestoneCountByGroup = {};
 
-// Global state
-let currentView = 'roadmap';  // Default to roadmap view
-let chartDiv = document.getElementById('ganttChart');
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadProjectGroups();
+    await loadSavedSettings();
+    renderCheckboxes();
+    applySelection();
+});
 
-// Color mapping for status
-const statusColors = {
-    'COMPLETED': '#22c55e',      // green-500
-    'IN_PROGRESS': '#eab308',    // yellow-500
-    'NOT_STARTED': '#9ca3af'     // gray-400
-};
-
-// Helper function to parse dates correctly (avoid timezone issues)
-function parseDate(dateStr) {
-    // dateStr format: "YYYY-MM-DD"
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);  // month is 0-indexed
+// Load available project groups from API
+async function loadProjectGroups() {
+    try {
+        // First, count milestones per group from gantt data
+        ganttData.forEach(task => {
+            const group = task.Resource;
+            milestoneCountByGroup[group] = (milestoneCountByGroup[group] || 0) + 1;
+        });
+        
+        // Get unique groups
+        allProjectGroups = [...new Set(ganttData.map(t => t.Resource))].sort();
+        
+        document.getElementById('totalCount').textContent = allProjectGroups.length;
+        
+        console.log('📋 Project groups:', allProjectGroups);
+    } catch (error) {
+        console.error('Error loading project groups:', error);
+    }
 }
 
-// Store annotation data for completion percentages
-let completionAnnotations = [];
-
-// Function to create roadmap view traces (grouped by project)
-function createRoadmapViewTraces() {
-    const traces = [];
-    
-    // Clear previous annotations
-    completionAnnotations = [];
-    
-    // Group tasks by Resource (which contains our project groups from backend)
-    const resourceGroups = {};
-    ganttData.forEach(task => {
-        if (!resourceGroups[task.Resource]) {
-            resourceGroups[task.Resource] = [];
+// Load saved settings from backend
+async function loadSavedSettings() {
+    try {
+        const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
+        savedSettings = await response.json();
+        
+        if (savedSettings.show_all || !savedSettings.selected_groups || savedSettings.selected_groups.length === 0) {
+            // Show all by default
+            selectedGroups = new Set(allProjectGroups);
+        } else {
+            selectedGroups = new Set(savedSettings.selected_groups);
         }
-        resourceGroups[task.Resource].push(task);
+        
+        console.log('📋 Loaded settings:', savedSettings);
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        // Default to all selected
+        selectedGroups = new Set(allProjectGroups);
+    }
+}
+
+// Render checkboxes for project selection
+function renderCheckboxes() {
+    const container = document.getElementById('projectCheckboxGrid');
+    
+    if (allProjectGroups.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full text-center py-8 text-gray-500">
+                <p>No project groups found in the program data.</p>
+                <p class="text-sm mt-2">Upload an MS Project XML file to populate the roadmap.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = allProjectGroups.map(group => {
+        const isSelected = selectedGroups.has(group);
+        const count = milestoneCountByGroup[group] || 0;
+        return `
+            <label class="project-checkbox-item ${isSelected ? 'selected' : ''}" data-group="${escapeHtml(group)}">
+                <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                       onchange="toggleGroup('${escapeHtml(group)}', this.checked)">
+                <span class="project-name">${escapeHtml(group)}</span>
+                <span class="milestone-count">${count} items</span>
+            </label>
+        `;
+    }).join('');
+    
+    updateSelectedCount();
+}
+
+// Toggle group selection
+function toggleGroup(group, isSelected) {
+    if (isSelected) {
+        selectedGroups.add(group);
+    } else {
+        selectedGroups.delete(group);
+    }
+    
+    // Update UI
+    const item = document.querySelector(`[data-group="${CSS.escape(group)}"]`);
+    if (item) {
+        item.classList.toggle('selected', isSelected);
+    }
+    
+    updateSelectedCount();
+}
+
+// Select all groups
+function selectAll() {
+    selectedGroups = new Set(allProjectGroups);
+    document.querySelectorAll('.project-checkbox-item input').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.project-checkbox-item').classList.add('selected');
+    });
+    updateSelectedCount();
+}
+
+// Clear all selections
+function selectNone() {
+    selectedGroups.clear();
+    document.querySelectorAll('.project-checkbox-item input').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.project-checkbox-item').classList.remove('selected');
+    });
+    updateSelectedCount();
+}
+
+// Reset to saved settings
+function resetToSaved() {
+    if (savedSettings && savedSettings.selected_groups && savedSettings.selected_groups.length > 0) {
+        selectedGroups = new Set(savedSettings.selected_groups);
+    } else {
+        selectedGroups = new Set(allProjectGroups);
+    }
+    renderCheckboxes();
+    applySelection();
+}
+
+// Update selected count display
+function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = selectedGroups.size;
+}
+
+// Apply selection and render roadmap
+async function applySelection() {
+    const btn = document.getElementById('applyBtnText');
+    btn.textContent = 'Saving...';
+    
+    try {
+        // Save settings to backend
+        await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                selected_groups: Array.from(selectedGroups),
+                show_all: selectedGroups.size === allProjectGroups.length
+            })
+        });
+        
+        // Render the roadmap with selected groups
+        renderRoadmap();
+        
+        btn.textContent = 'Applied ✓';
+        setTimeout(() => { btn.textContent = 'Apply Selection'; }, 1500);
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        btn.textContent = 'Error - Try Again';
+        setTimeout(() => { btn.textContent = 'Apply Selection'; }, 2000);
+    }
+}
+
+// Helper function to parse dates correctly
+function parseDate(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+// Render the roadmap chart
+function renderRoadmap() {
+    const chartDiv = document.getElementById('roadmapChart');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Filter data to selected groups
+    const filteredData = ganttData.filter(task => selectedGroups.has(task.Resource));
+    
+    if (filteredData.length === 0 || selectedGroups.size === 0) {
+        emptyState.style.display = 'block';
+        chartDiv.style.minHeight = '200px';
+        Plotly.purge(chartDiv);
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Group by Resource (project)
+    const projectGroups = {};
+    filteredData.forEach(task => {
+        if (!projectGroups[task.Resource]) {
+            projectGroups[task.Resource] = [];
+        }
+        projectGroups[task.Resource].push(task);
     });
     
-    // Enhanced color mapping for project groups - matching app colors
-    const projectGroupColors = {
-        'Surface Finish Projects': '#22c55e',        // green-500
-        'ZnNi Line Kardex': '#3b82f6',              // blue-500
-        'ZnNi Line Chiller': '#8b5cf6',             // violet-500
-        'ZnNi Line Asset': '#ec4899',               // pink-500
-        'ZnNi Line Filter': '#f59e0b',              // amber-500
-        'ICP Analysis Projects': '#ef4444',          // red-500
-        'ZnNi Line Projects': '#6366f1',            // indigo-500
-        'ZnNi Extraction': '#14b8a6',               // teal-500
-        'Vat 8 Remove & Install': '#84cc16',        // lime-500
-        'SF Documentation': '#06b6d4',              // cyan-500
-        'ZnNi Line Development Plan-08.xml': '#6b7280'  // fallback gray
-    };
+    // Create traces for roadmap
+    const traces = [];
+    const annotations = [];
     
-    // Create aggregated project timeline bars
-    Object.keys(resourceGroups).forEach(projectGroup => {
-        const projectTasks = resourceGroups[projectGroup];
+    Object.keys(projectGroups).sort().forEach(projectGroup => {
+        const tasks = projectGroups[projectGroup];
         
-        // Calculate project timeline span (earliest start to latest finish)
-        const startDates = projectTasks.map(task => parseDate(task.Start));
-        const finishDates = projectTasks.map(task => parseDate(task.Finish));
+        // Calculate project timeline
+        const startDates = tasks.map(t => parseDate(t.Start));
+        const finishDates = tasks.map(t => parseDate(t.Finish));
         
         const projectStart = new Date(Math.min(...startDates));
         const projectFinish = new Date(Math.max(...finishDates));
-        
-        // Calculate duration in milliseconds
         const duration = projectFinish - projectStart;
         
-        // Calculate completion statistics
-        const completedTasks = projectTasks.filter(t => t.Status === 'COMPLETED').length;
-        const inProgressTasks = projectTasks.filter(t => t.Status === 'IN_PROGRESS').length;
-        const totalTasks = projectTasks.length;
-        const completionPercent = Math.round((completedTasks / totalTasks) * 100);
+        // Calculate completion
+        const completed = tasks.filter(t => t.Status === 'COMPLETED').length;
+        const inProgress = tasks.filter(t => t.Status === 'IN_PROGRESS').length;
+        const total = tasks.length;
+        const pct = Math.round((completed / total) * 100);
         
-        // Determine overall project status and color based on completion
-        let projectStatus = 'NOT_STARTED';
-        let barColor = '#9ca3af';  // gray-400 for not started
-        
-        if (completedTasks === totalTasks) {
-            projectStatus = 'COMPLETED';
-            barColor = '#22c55e';  // green-500 for completed
-        } else if (inProgressTasks > 0 || completedTasks > 0) {
-            projectStatus = 'IN_PROGRESS';
-            barColor = '#eab308';  // yellow-500 for in progress
+        // Determine color
+        let barColor = '#9ca3af'; // gray - not started
+        if (completed === total) {
+            barColor = '#22c55e'; // green - complete
+        } else if (inProgress > 0 || completed > 0) {
+            barColor = '#eab308'; // yellow - in progress
         }
         
-        // Format dates for display
         const startStr = projectStart.toISOString().split('T')[0];
         const finishStr = projectFinish.toISOString().split('T')[0];
         
-        // Debug logging
-        console.log(`Project: ${projectGroup}`);
-        console.log(`  Date range: ${startStr} to ${finishStr}`);
-        console.log(`  Status: ${projectStatus} (${completedTasks}/${totalTasks} completed)`);
-        
-        // Store annotation data for this project
-        completionAnnotations.push({
-            x: projectFinish,
-            y: projectGroup,
-            text: `${completionPercent}%`
-        });
-        
-        // Create single consolidated bar per project using base + duration
         traces.push({
             x: [duration],
             y: [projectGroup],
@@ -163,160 +471,88 @@ function createRoadmapViewTraces() {
             orientation: 'h',
             marker: {
                 color: barColor,
-                line: {
-                    color: 'rgba(0,0,0,0.2)',
-                    width: 1
-                },
+                line: { color: 'rgba(0,0,0,0.2)', width: 1 },
                 opacity: 0.9
             },
             name: projectGroup,
-            text: '',
-            textposition: 'none',
-            customdata: [[projectGroup, totalTasks, completedTasks, inProgressTasks, projectStatus, startStr, finishStr, completionPercent]],
+            customdata: [[projectGroup, total, completed, inProgress, pct, startStr, finishStr]],
             hovertemplate: '<b>%{y}</b><br>' +
                           '<b>Timeline:</b> %{customdata[5]} → %{customdata[6]}<br>' +
-                          '<b>Progress:</b> %{customdata[7]}%<br>' +
-                          '<b>Status:</b> %{customdata[4]}<br>' +
-                          '<b>Tasks:</b> %{customdata[2]} of %{customdata[1]} completed (%{customdata[3]} in progress)' +
+                          '<b>Progress:</b> %{customdata[4]}%<br>' +
+                          '<b>Tasks:</b> %{customdata[2]} of %{customdata[1]} completed' +
                           '<extra></extra>',
             showlegend: false
         });
+        
+        // Add completion % annotation
+        annotations.push({
+            x: projectFinish,
+            y: projectGroup,
+            text: `${pct}%`,
+            showarrow: false,
+            font: { size: 12, color: '#1f2937', weight: 'bold' },
+            xanchor: 'left',
+            xshift: 10,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            bordercolor: '#d1d5db',
+            borderwidth: 1,
+            borderpad: 4
+        });
     });
     
-    return traces;
-}
-
-// Function to get layout configuration
-function getLayout() {
-    const title = currentView === 'detail' 
-        ? 'Project Timeline - Milestone Detail View' 
-        : 'Program Roadmap - Project Overview';
+    // Calculate chart height
+    const projectCount = Object.keys(projectGroups).length;
+    const barHeight = projectCount <= 5 ? 70 : projectCount <= 10 ? 55 : 45;
+    const chartHeight = Math.max(300, (barHeight * projectCount) + 150);
     
-    // Calculate number of unique projects/resources for height calculation
-    const uniqueResources = [...new Set(ganttData.map(task => task.Resource))];
-    const projectCount = uniqueResources.length;
-    
-    // Professional auto-sizing: Calculate optimal bar height and chart height
-    // Goal: Show all projects without scrolling, bars should be thick enough to read
-    const minBarHeight = 40;  // Minimum height per bar for readability
-    const maxBarHeight = 80;  // Maximum height per bar to avoid waste
-    const topBottomPadding = 160;  // Space for title, axis labels, margins
-    
-    // Calculate bar height based on project count (more projects = thinner bars)
-    let barHeight;
-    if (projectCount <= 5) {
-        barHeight = maxBarHeight;
-    } else if (projectCount <= 10) {
-        barHeight = 60;
-    } else if (projectCount <= 15) {
-        barHeight = 50;
-    } else {
-        barHeight = minBarHeight;
-    }
-    
-    // Total chart height = (barHeight * projectCount) + padding
-    const chartHeight = (barHeight * projectCount) + topBottomPadding;
-    
-    console.log(`📐 Auto-sizing: ${projectCount} projects × ${barHeight}px = ${chartHeight}px total height`);
-    
-    // Create annotations for completion percentages
-    const annotations = completionAnnotations.map(annot => ({
-        x: annot.x,
-        y: annot.y,
-        xref: 'x',
-        yref: 'y',
-        text: annot.text,
-        showarrow: false,
-        font: {
-            size: 14,
-            color: '#1f2937',
-            family: 'system-ui, -apple-system, sans-serif',
-            weight: 'bold'
-        },
-        xanchor: 'left',
-        xshift: 10,
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#d1d5db',
-        borderwidth: 1,
-        borderpad: 5,
-        borderradius: 3
-    }));
-    
-    return {
+    const layout = {
         title: {
-            text: title,
-            font: { 
-                size: 22,
-                family: 'system-ui, -apple-system, sans-serif',
-                weight: 'bold',
-                color: '#111827'
-            },
-            x: 0.05,
+            text: `Program Roadmap - ${selectedGroups.size} Projects Selected`,
+            font: { size: 20, color: '#111827', weight: 'bold' },
+            x: 0.02,
             xanchor: 'left'
         },
         xaxis: {
-            title: {
-                text: 'Timeline',
-                font: { size: 14, weight: 'bold' }
-            },
+            title: { text: 'Timeline', font: { size: 13 } },
             type: 'date',
-            tickformat: '%b %Y',  // Short month + year (e.g., "Jan 2025")
+            tickformat: '%b %Y',
             tickangle: -45,
-            fixedrange: true,  // Disable zoom - show everything
             showgrid: true,
-            gridcolor: '#e5e7eb',
-            zeroline: false
+            gridcolor: '#e5e7eb'
         },
         yaxis: {
-            title: {
-                text: 'Projects',
-                font: { size: 14, weight: 'bold' },
-                standoff: 20
-            },
+            title: { text: 'Projects', font: { size: 13 } },
             automargin: true,
-            autorange: 'reversed',  // First item at top
-            fixedrange: true,  // Disable zoom - show everything
+            autorange: 'reversed',
             showgrid: true,
             gridcolor: '#e5e7eb',
-            tickfont: { size: 12 }
+            tickfont: { size: 11 }
         },
         barmode: 'overlay',
-        bargap: 0.3,  // Gap between bars
+        bargap: 0.25,
         height: chartHeight,
-        margin: {
-            l: 280,  // Left margin for project names
-            r: 100,  // Right margin for completion %
-            t: 100,
-            b: 100
-        },
+        margin: { l: 250, r: 80, t: 80, b: 80 },
         hovermode: 'closest',
         plot_bgcolor: '#f9fafb',
         paper_bgcolor: 'white',
         annotations: annotations,
-        dragmode: false  // Disable dragging/panning
+        dragmode: false
     };
-}
-
-// Plotly configuration
-const config = {
-    responsive: true,
-    displayModeBar: false,  // Hide zoom controls - no interaction needed
-    displaylogo: false,
-    staticPlot: false  // Allow hover tooltips but disable zoom/pan
-};
-
-// Function to render the chart
-function renderChart() {
-    const traces = createRoadmapViewTraces();  // Always use roadmap view
-    const layout = getLayout();
+    
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        staticPlot: false
+    };
+    
     Plotly.newPlot(chartDiv, traces, layout, config);
 }
 
-// Update page title with program name
-document.getElementById('ganttPageTitle').textContent = `📅 ${projectName} - Program Roadmap`;
-document.getElementById('ganttPageSubtitle').textContent = `Interactive timeline view of ${ganttData.length} milestones`;
-
-// Initial render
-renderChart();
+// Helper: escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>
 {% endblock %}

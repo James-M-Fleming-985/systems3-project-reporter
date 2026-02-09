@@ -764,3 +764,109 @@ async def get_projects():
         logger.error(traceback.format_exc())
         # Return empty list instead of crashing
         return []
+
+
+# =============================================================================
+# Roadmap Settings API
+# =============================================================================
+
+from fastapi import Body
+from fastapi.responses import JSONResponse
+import yaml
+
+@router.get("/api/roadmap/{project_code}/project-groups")
+async def get_roadmap_project_groups(project_code: str):
+    """
+    Get all unique project groups (parent_project) for a program's roadmap.
+    These are the selectable items users can choose to display on the roadmap.
+    """
+    try:
+        projects = project_repo.load_all_projects()
+        project = next((p for p in projects if p.project_code == project_code), None)
+        
+        if not project:
+            return JSONResponse({"error": "Project not found"}, status_code=404)
+        
+        # Extract unique parent_project values from milestones
+        project_groups = set()
+        for milestone in project.milestones:
+            if milestone.parent_project:
+                project_groups.add(milestone.parent_project)
+            else:
+                # Fallback grouping logic (same as chart_formatter)
+                milestone_name = milestone.name
+                if "ZnNi Line" in milestone_name:
+                    parts = milestone_name.split()
+                    if len(parts) >= 3:
+                        project_groups.add(f"ZnNi Line {parts[2]}")
+                    else:
+                        project_groups.add("ZnNi Line Projects")
+                elif "SF " in milestone_name or "Surface Finish" in milestone_name:
+                    project_groups.add("Surface Finish Projects")
+                elif "ICP Analysis" in milestone_name:
+                    project_groups.add("ICP Analysis Projects")
+                else:
+                    project_groups.add(project.project_name)
+        
+        # Sort alphabetically
+        sorted_groups = sorted(project_groups)
+        
+        return {
+            "project_code": project_code,
+            "project_groups": sorted_groups,
+            "total_count": len(sorted_groups)
+        }
+    except Exception as e:
+        logger.error(f"❌ Error getting project groups: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/api/roadmap/{project_code}/settings")
+async def get_roadmap_settings(project_code: str):
+    """
+    Get saved roadmap display settings for a program.
+    Returns which project groups are selected for display.
+    """
+    try:
+        settings_file = DATA_DIR / f"roadmap_settings_{project_code}.yaml"
+        
+        if settings_file.exists():
+            with open(settings_file, 'r') as f:
+                settings = yaml.safe_load(f) or {}
+            return settings
+        else:
+            # Default: show all project groups
+            return {
+                "project_code": project_code,
+                "selected_groups": [],  # Empty means "show all"
+                "show_all": True
+            }
+    except Exception as e:
+        logger.error(f"❌ Error loading roadmap settings: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/api/roadmap/{project_code}/settings")
+async def save_roadmap_settings(project_code: str, settings: dict = Body(...)):
+    """
+    Save roadmap display settings for a program.
+    Persists which project groups are selected for display.
+    """
+    try:
+        settings_file = DATA_DIR / f"roadmap_settings_{project_code}.yaml"
+        
+        # Add project code to settings
+        settings["project_code"] = project_code
+        settings["updated_at"] = datetime.now().isoformat()
+        
+        with open(settings_file, 'w') as f:
+            yaml.dump(settings, f, default_flow_style=False)
+        
+        logger.info(f"✅ Saved roadmap settings for {project_code}")
+        return {"success": True, "message": "Settings saved"}
+    except Exception as e:
+        logger.error(f"❌ Error saving roadmap settings: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+from datetime import datetime
