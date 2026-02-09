@@ -1,0 +1,84 @@
+project_name: ZLD-P1
+last_updated: '2026-02-09T10:00:00'
+tables:
+  - id: test-table-001
+    name: Sample Schedule with Colors
+    created_at: '2026-02-09T10:00:00'
+    updated_at: '2026-02-09T10:00:00'
+    columns:
+      - id: col-task
+        header: Task
+        type: text
+        width: 250
+        visible_in_export: true
+      - id: col-owner
+        header: Owner
+        type: text
+        width: 120
+        visible_in_export: true
+      - id: col-status
+        header: Status
+        type: status
+        width: 130
+        visible_in_export: true
+        status_options:
+          - label: Not Started
+            color: '#6B7280'
+          - label: In Progress
+            color: '#F59E0B'
+          - label: Complete
+            color: '#16A34A'
+          - label: On Hold
+            color: '#DC2626'
+          - label: Blocked
+            color: '#7C3AED'
+      - id: col-priority
+        header: Priority
+        type: priority
+        width: 130
+        visible_in_export: true
+        priority_options:
+          - label: Critical
+            color: '#DC2626'
+          - label: High
+            color: '#F97316'
+          - label: Medium
+            color: '#EAB308'
+          - label: Low
+            color: '#22C55E'
+          - label: None
+            color: '#9CA3AF'
+      - id: col-due
+        header: Due Date
+        type: date
+        width: 120
+        visible_in_export: true
+    rows:
+      - id: row-001
+        data:
+          col-task: Design review meeting
+          col-owner: John Smith
+          col-status: In Progress
+          col-priority: High
+          col-due: '2026-02-15'
+      - id: row-002
+        data:
+          col-task: Code implementation
+          col-owner: Jane Doe
+          col-status: Not Started
+          col-priority: Critical
+          col-due: '2026-02-20'
+      - id: row-003
+        data:
+          col-task: Documentation update
+          col-owner: Bob Wilson
+          col-status: Complete
+          col-priority: Low
+          col-due: '2026-02-10'
+      - id: row-004
+        data:
+          col-task: Testing phase
+          col-owner: Alice Brown
+          col-status: On Hold
+          col-priority: Medium
+          col-due: '2026-02-25'

@@ -64,6 +64,90 @@ async def upload_page(request: Request):
     return templates.TemplateResponse("upload_unified.html", context)
 
 
+from pydantic import BaseModel
+from typing import Optional
+
+class CreateProgramRequest(BaseModel):
+    """Request model for creating a program without XML"""
+    project_name: str
+    project_code: str
+    description: Optional[str] = ""
+    status: Optional[str] = "Active"
+    start_date: Optional[str] = None
+    target_completion: Optional[str] = None
+
+
+@router.post("/upload/create-program")
+async def create_program_without_xml(
+    request: CreateProgramRequest,
+    user=Depends(get_user_or_create_anonymous)
+):
+    """
+    Create a new program without requiring an MS Project XML file.
+    Useful for risk-led projects where Gantt charts come later.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"Creating program: {request.project_name} ({request.project_code})")
+        
+        # Check if project already exists
+        existing = project_repo.get_project_by_code(request.project_code)
+        if existing:
+            return JSONResponse({
+                'success': False,
+                'error': f'A program with code {request.project_code} already exists'
+            }, status_code=400)
+        
+        # Create project directory and YAML file
+        project_dir = DATA_DIR / f"PROJECT-{request.project_code.replace('-', '_')}"
+        project_dir.mkdir(exist_ok=True)
+        
+        yaml_path = project_dir / "project_status.yaml"
+        
+        # Set default dates if not provided
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        start = request.start_date or today.strftime('%Y-%m-%d')
+        target = request.target_completion or (today + timedelta(days=180)).strftime('%Y-%m-%d')
+        
+        # Create minimal project data
+        project_data = {
+            'project_name': request.project_name,
+            'project_code': request.project_code,
+            'description': request.description or f'{request.project_name} - Risk-led program',
+            'status': request.status,
+            'start_date': start,
+            'target_completion': target,
+            'completion_percentage': 0,
+            'milestones': [],  # Empty - will be populated later via XML upload
+            'risks': [],       # Empty - can be populated via Risk upload
+            'changes': [],     # Empty
+            'created_at': datetime.now().isoformat(),
+            'created_without_gantt': True  # Flag to indicate this was created without XML
+        }
+        
+        # Save the YAML file
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(project_data, f, default_flow_style=False, allow_unicode=True)
+        
+        logger.info(f"✅ Created program: {request.project_name} at {yaml_path}")
+        
+        return JSONResponse({
+            'success': True,
+            'message': f'Program "{request.project_name}" created successfully',
+            'project_code': request.project_code,
+            'project_name': request.project_name
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating program: {e}")
+        return JSONResponse({
+            'success': False,
+            'error': str(e)
+        }, status_code=500)
+
 
 @router.post("/upload/xml")
 async def upload_xml(
