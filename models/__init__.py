@@ -2,7 +2,7 @@
 Pydantic Models for ZnNi Report Generator
 Adapted from tpl-fastapi-crud scaffolding
 """
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
 
 
@@ -15,8 +15,10 @@ class Milestone(BaseModel):
     completion_date: Optional[str] = None
     completion_percentage: Optional[int] = None
     notes: Optional[str] = None
-    parent_project: Optional[str] = None  # Parent project for roadmap grouping
+    parent_project: Optional[str] = None  # Parent project for roadmap grouping (default level)
     resources: Optional[str] = None  # Resource names assigned to milestone
+    outline_level: Optional[int] = None  # The outline level of this milestone in hierarchy
+    parent_levels: Optional[Dict[str, str]] = None  # Parents at each level: {"2": "Name", "3": "Name"}
 
 
 class Risk(BaseModel):

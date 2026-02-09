@@ -68,7 +68,9 @@ class ChartFormatterService:
                     'Resource': resource_name,
                     'Status': milestone.status,
                     'ProjectCode': project.project_code,  # Add for filtering
-                    'ProjectName': project.project_name   # Add for filtering
+                    'ProjectName': project.project_name,  # Add for filtering
+                    'OutlineLevel': getattr(milestone, 'outline_level', None),  # Add for level grouping
+                    'ParentLevels': getattr(milestone, 'parent_levels', {}) or {}  # Add parents at each level
                 })
         
         return tasks

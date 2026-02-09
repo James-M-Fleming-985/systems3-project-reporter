@@ -268,27 +268,41 @@ class MSProjectXMLParser:
 
 
         
-        # Build parent relationships by finding the nearest higher-level task before each task
-        print(f"DEBUG: Building parent_level2 relationships...")
+        # Build parent relationships at ALL levels for each task
+        print(f"DEBUG: Building parent relationships at all levels...")
         task_list = list(task_hierarchy.values())
         parent_assignments = 0
+        
         for i, task_info in enumerate(task_list):
-            if task_info['level'] > 2:  # Only for tasks below Level 2 (updated)
-                # Look backwards for the Level 2 parent
-                for j in range(i-1, -1, -1):
-                    parent_candidate = task_list[j]
-                    if parent_candidate['level'] == 2:  # Level 2 parent (updated)
-                        task_info['parent_level2'] = parent_candidate['name']
-                        # CRITICAL FIX: Update the original dict, not just the copy
-                        task_hierarchy[task_info['uid']]['parent_level2'] = parent_candidate['name']
-                        parent_assignments += 1
-                        if task_info['uid'] == '8704':  # Debug specific milestone
-                            print(f"DEBUG: Assigned parent_level2 to UID 8704: '{parent_candidate['name']}'")
-                            print(f"DEBUG: Verifying task_hierarchy['8704']['parent_level2'] = {task_hierarchy['8704'].get('parent_level2')}")
+            task_level = task_info['level']
+            parent_levels_dict = {}  # Level -> Name
+            
+            # Look backwards for parents at each level above this task
+            for j in range(i-1, -1, -1):
+                parent_candidate = task_list[j]
+                candidate_level = parent_candidate['level']
+                
+                # Only consider ancestors (lower level numbers = higher in hierarchy)
+                if candidate_level < task_level:
+                    level_key = str(candidate_level)
+                    # Only store first (nearest) parent at each level
+                    if level_key not in parent_levels_dict:
+                        parent_levels_dict[level_key] = parent_candidate['name']
+                    
+                    # Found level 1 (root), we have all parents
+                    if candidate_level == 1:
                         break
-                    elif parent_candidate['level'] < task_info['level']:
-                        # Found a higher level, but keep looking for Level 2
-                        continue
+            
+            # Store parent_levels in both task_info and task_hierarchy
+            task_info['parent_levels'] = parent_levels_dict
+            task_hierarchy[task_info['uid']]['parent_levels'] = parent_levels_dict
+            
+            # Also keep parent_level2 for backwards compatibility (if exists)
+            if '2' in parent_levels_dict:
+                task_info['parent_level2'] = parent_levels_dict['2']
+                task_hierarchy[task_info['uid']]['parent_level2'] = parent_levels_dict['2']
+                parent_assignments += 1
+                
         print(f"DEBUG: Assigned parent_level2 to {parent_assignments} tasks")
         
         for task in tasks:
@@ -448,6 +462,7 @@ class MSProjectXMLParser:
             # Find parent Level 2 project using the hierarchy (updated)
             current_task_uid = self._find_element(task, 'UID')
             parent_project = None
+            parent_levels = {}  # Will store parent at each level
             uid_text = None
             
             # Workaround: _find_element sometimes returns element with no text
@@ -474,6 +489,7 @@ class MSProjectXMLParser:
             if uid_str and uid_str in task_hierarchy:
                 task_info = task_hierarchy[uid_str]
                 parent_project = task_info.get('parent_level2')  # Updated
+                parent_levels = task_info.get('parent_levels', {})
                 
                 # Debug: Log first 3 milestones' hierarchy info
                 if len(milestones) < 3:
@@ -482,8 +498,11 @@ class MSProjectXMLParser:
                           f"Parent: {parent_project}")
                     print(f"DEBUG: task_info keys: {list(task_info.keys())}")
                     print(f"DEBUG: task_info dict: {task_info}")
+                    print(f"DEBUG: parent_levels: {parent_levels}")
             
             milestone_data['parent_project'] = parent_project
+            milestone_data['outline_level'] = outline_level
+            milestone_data['parent_levels'] = parent_levels
             
             # Resources - check resource_map first, then fallback to XML field
             if uid_str and uid_str in resource_map:
