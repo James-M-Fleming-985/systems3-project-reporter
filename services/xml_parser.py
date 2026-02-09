@@ -402,14 +402,20 @@ class MSProjectXMLParser:
                 continue
             milestone_data['name'] = self._sanitize_text(name_elem.text)
             
-            # Target date
+            # Start and Finish dates
+            start_elem = self._find_element(task, 'Start')
             finish_elem = self._find_element(task, 'Finish')
+            
             if finish_elem is not None:
-                milestone_data['target_date'] = self._parse_date(
-                    finish_elem.text
-                )
+                milestone_data['target_date'] = self._parse_date(finish_elem.text)
             else:
                 continue  # Skip if no target date
+            
+            if start_elem is not None:
+                milestone_data['start_date'] = self._parse_date(start_elem.text)
+            else:
+                # Default start to same as finish for milestones
+                milestone_data['start_date'] = milestone_data['target_date']
             
             # Status based on percent complete
             percent_elem = self._find_element(task, 'PercentComplete')

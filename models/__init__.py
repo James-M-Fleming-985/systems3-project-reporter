@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 class Milestone(BaseModel):
     """Milestone model"""
     name: str
-    target_date: str  # YYYY-MM-DD format
+    target_date: str  # YYYY-MM-DD format (Finish date from XML)
+    start_date: Optional[str] = None  # YYYY-MM-DD format (Start date from XML)
     status: str  # COMPLETED, IN_PROGRESS, NOT_STARTED
     completion_date: Optional[str] = None
     completion_percentage: Optional[int] = None

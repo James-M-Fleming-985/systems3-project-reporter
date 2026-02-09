@@ -33,17 +33,14 @@ class ChartFormatterService:
         
         for project in projects:
             for milestone in project.milestones:
-                # Calculate duration (14 days for visualization)
-                start_date = milestone.target_date
+                # Use actual start_date if available, otherwise use target_date
+                start_date = getattr(milestone, 'start_date', None) or milestone.target_date
                 
-                # Use completion date if available, otherwise target date
+                # Use completion date if available, otherwise target date (finish)
                 if milestone.completion_date:
                     finish_date = milestone.completion_date
                 else:
-                    # Add 14 days to start date for visualization
-                    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-                    finish_dt = start_dt + timedelta(days=14)
-                    finish_date = finish_dt.strftime('%Y-%m-%d')
+                    finish_date = milestone.target_date
                 
                 # Extract project grouping from milestone name (simple approach)
                 # Look for common patterns like "ZnNi Line XXX" or "SF XXX"
