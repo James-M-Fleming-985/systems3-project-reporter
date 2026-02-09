@@ -12,13 +12,8 @@
         flex-wrap: wrap;
     }
     
-    .level-dropdown {
-        display: flex;
-        align-items: center;
-    }
-    
     .level-select {
-        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        padding: 0.625rem 2.5rem 0.625rem 1rem;
         border: 2px solid #d1d5db;
         border-radius: 8px;
         font-size: 0.875rem;
@@ -27,8 +22,9 @@
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
-        background-position: right 0.5rem center;
+        background-position: right 0.75rem center;
         background-size: 1rem;
+        min-width: 180px;
     }
     
     .level-select:hover {
@@ -196,10 +192,11 @@
 <div class="bg-white rounded-lg shadow p-6">
     <!-- Controls Row -->
     <div class="roadmap-controls mb-4">
-        <!-- Level Dropdown -->
-        <div class="level-dropdown">
-            <label class="text-sm font-medium text-gray-700 mr-2">Group by:</label>
+        <!-- Level Selector -->
+        <div>
+            <label class="text-sm font-medium text-gray-700 mr-2">Project Level:</label>
             <select id="levelSelect" class="level-select" onchange="onLevelChange()">
+                <option value="">-- Select level --</option>
                 <!-- Options populated by JS -->
             </select>
         </div>
@@ -224,7 +221,7 @@
             </div>
         </div>
         
-        <span class="text-sm text-gray-500" id="selectionStatus">No projects selected</span>
+        <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
     </div>
     
     <!-- Selected pills -->
@@ -236,8 +233,8 @@
             <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
-            <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Projects to Display</h3>
-            <p class="text-gray-500 text-sm">Use the dropdown above to choose which projects to show on the roadmap</p>
+            <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Project Level and Projects</h3>
+            <p class="text-gray-500 text-sm">Choose a project level to see available projects, then select which ones to display</p>
         </div>
     </div>
 </div>
@@ -270,20 +267,26 @@ const projectName = "{{ project.project_name }}";
 const ganttData = {{ gantt_data | tojson }};
 
 // State
+let availableLevels = [];
+let selectedLevel = null;
 let allProjectGroups = [];
 let selectedGroups = new Set();
 let milestonesByGroup = {};
-let availableLevels = [];
-let selectedLevel = '2';  // Default grouping level
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async function() {
     detectAvailableLevels();
-    populateLevelDropdown();
     await loadSavedSettings();
-    regroupByLevel();
-    renderDropdownItems();
-    renderRoadmap();
+    populateLevelDropdown();
+    
+    if (selectedLevel) {
+        groupMilestonesByLevel(selectedLevel);
+        renderDropdownItems();
+        renderRoadmap();
+    } else {
+        renderDropdownItems();
+        updateStatus();
+    }
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -295,91 +298,56 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function detectAvailableLevels() {
-    // Find all unique parent levels from the data
+    // Find all levels that have parent names in ParentLevels
     const levelSet = new Set();
+    
     ganttData.forEach(task => {
-        if (task.ParentLevels && Object.keys(task.ParentLevels).length > 0) {
-            Object.keys(task.ParentLevels).forEach(level => levelSet.add(level));
-        }
+        const parentLevels = task.ParentLevels || {};
+        Object.keys(parentLevels).forEach(level => {
+            const lvl = parseInt(level);
+            if (!isNaN(lvl) && lvl >= 2) {
+                levelSet.add(lvl);
+            }
+        });
     });
     
-    // Sort levels numerically
-    availableLevels = Array.from(levelSet).sort((a, b) => parseInt(a) - parseInt(b));
-    
-    console.log('📊 Available parent levels:', availableLevels);
-    
-    // If no parent levels data, hide the level dropdown and use Resource grouping
-    if (availableLevels.length === 0) {
-        console.log('📊 No parent levels detected - using Resource grouping');
-        document.querySelector('.level-dropdown').style.display = 'none';
-        selectedLevel = 'resource';  // Special value for fallback
-    } else if (!availableLevels.includes('2')) {
-        selectedLevel = availableLevels[0];
-    }
+    availableLevels = Array.from(levelSet).sort((a, b) => a - b);
+    console.log('📊 Available project levels:', availableLevels);
 }
 
 function populateLevelDropdown() {
     const select = document.getElementById('levelSelect');
     
     if (availableLevels.length === 0) {
-        select.innerHTML = '<option value="none">No levels available</option>';
+        select.innerHTML = '<option value="">No levels available</option>';
+        select.disabled = true;
         return;
     }
     
-    // Add level options with descriptive labels
-    const levelLabels = {
-        '1': 'Level 1 (Program)',
-        '2': 'Level 2 (Phase/Project)',
-        '3': 'Level 3 (Sub-project)',
-        '4': 'Level 4 (Work Package)',
-        '5': 'Level 5',
-        '6': 'Level 6'
-    };
-    
-    select.innerHTML = availableLevels.map(level => {
-        const label = levelLabels[level] || `Level ${level}`;
-        const isSelected = level === selectedLevel ? 'selected' : '';
-        return `<option value="${level}" ${isSelected}>${label}</option>`;
-    }).join('');
-}
-
-function regroupByLevel() {
-    // Clear current grouping
-    milestonesByGroup = {};
-    
-    // Group milestones by parent at selected level
-    ganttData.forEach(task => {
-        let group = 'Ungrouped';
-        
-        if (selectedLevel === 'resource') {
-            // Fallback: use Resource (original grouping)
-            group = task.Resource || 'Ungrouped';
-        } else if (task.ParentLevels && task.ParentLevels[selectedLevel]) {
-            group = task.ParentLevels[selectedLevel];
-        } else if (task.Resource) {
-            // Fallback to Resource
-            group = task.Resource;
-        }
-        
-        if (!milestonesByGroup[group]) {
-            milestonesByGroup[group] = [];
-        }
-        milestonesByGroup[group].push(task);
-    });
-    
-    // Get sorted list of groups
-    allProjectGroups = Object.keys(milestonesByGroup).sort();
-    console.log('📋 Grouped by level', selectedLevel, ':', allProjectGroups.length, 'groups');
+    select.innerHTML = '<option value="">-- Select level --</option>' +
+        availableLevels.map(lvl => {
+            const selected = (selectedLevel === lvl) ? 'selected' : '';
+            return `<option value="${lvl}" ${selected}>Level ${lvl}</option>`;
+        }).join('');
 }
 
 function onLevelChange() {
     const select = document.getElementById('levelSelect');
-    selectedLevel = select.value;
+    const newLevel = select.value ? parseInt(select.value) : null;
     
-    regroupByLevel();
+    if (newLevel === selectedLevel) return;
     
-    // Reset selection to all groups
-    selectedGroups = new Set(allProjectGroups);
+    selectedLevel = newLevel;
+    selectedGroups.clear();
+    
+    if (selectedLevel) {
+        groupMilestonesByLevel(selectedLevel);
+        // Select all by default when changing levels
+        selectedGroups = new Set(allProjectGroups);
+    } else {
+        allProjectGroups = [];
+        milestonesByGroup = {};
+    }
     
     renderDropdownItems();
     saveSettings();
@@ -387,27 +355,43 @@ function onLevelChange() {
     renderPills();
 }
 
+function groupMilestonesByLevel(level) {
+    // Group milestones by parent at the selected level
+    milestonesByGroup = {};
+    
+    ganttData.forEach(task => {
+        const parentLevels = task.ParentLevels || {};
+        const group = parentLevels[level] || parentLevels[String(level)] || 'Ungrouped';
+        
+        if (!milestonesByGroup[group]) {
+            milestonesByGroup[group] = [];
+        }
+        milestonesByGroup[group].push(task);
+    });
+    
+    allProjectGroups = Object.keys(milestonesByGroup).sort();
+    console.log(`📋 Level ${level}: Found ${allProjectGroups.length} project groups`);
+}
+
 async function loadSavedSettings() {
     try {
         const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
         const settings = await response.json();
         
-        // Load selected level first (only if we have level data available)
-        if (availableLevels.length > 0 && settings.selected_level && availableLevels.includes(settings.selected_level)) {
+        // Load saved level
+        if (settings.selected_level && availableLevels.includes(settings.selected_level)) {
             selectedLevel = settings.selected_level;
-            document.getElementById('levelSelect').value = selectedLevel;
-            regroupByLevel();  // Regroup with loaded level
+            groupMilestonesByLevel(selectedLevel);
         }
         
-        if (settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
+        // Load saved groups
+        if (selectedLevel && settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
             selectedGroups = new Set(settings.selected_groups.filter(g => allProjectGroups.includes(g)));
-        } else {
-            // Default: select all
+        } else if (selectedLevel) {
             selectedGroups = new Set(allProjectGroups);
         }
     } catch (error) {
-        console.log('No saved settings, showing all');
-        selectedGroups = new Set(allProjectGroups);
+        console.log('No saved settings');
     }
 }
 
@@ -426,8 +410,15 @@ function closeDropdown() {
 function renderDropdownItems() {
     const container = document.getElementById('dropdownItems');
     
+    if (!selectedLevel) {
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Select a project level first</div>';
+        updateStatus();
+        return;
+    }
+    
     if (allProjectGroups.length === 0) {
-        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No projects found</div>';
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No projects at this level</div>';
+        updateStatus();
         return;
     }
     
@@ -445,7 +436,32 @@ function renderDropdownItems() {
         `;
     }).join('');
     
-    updateDropdownLabel();
+    updateStatus();
+}
+
+function updateStatus() {
+    const label = document.getElementById('dropdownLabel');
+    const status = document.getElementById('selectionStatus');
+    
+    if (!selectedLevel) {
+        label.textContent = 'Select projects...';
+        status.textContent = 'Select a project level first';
+        return;
+    }
+    
+    const count = selectedGroups.size;
+    const total = allProjectGroups.length;
+    
+    if (count === 0) {
+        label.textContent = 'Select projects...';
+        status.textContent = `Level ${selectedLevel}: No projects selected`;
+    } else if (count === total) {
+        label.textContent = `All projects (${total})`;
+        status.textContent = `Level ${selectedLevel}: Showing all ${total} projects`;
+    } else {
+        label.textContent = `${count} of ${total} selected`;
+        status.textContent = `Level ${selectedLevel}: Showing ${count} of ${total} projects`;
+    }
 }
 
 function toggleProject(group, checked) {
@@ -454,7 +470,7 @@ function toggleProject(group, checked) {
     } else {
         selectedGroups.delete(group);
     }
-    updateDropdownLabel();
+    updateStatus();
 }
 
 function selectAllProjects() {
@@ -465,24 +481,6 @@ function selectAllProjects() {
 function selectNoneProjects() {
     selectedGroups.clear();
     renderDropdownItems();
-}
-
-function updateDropdownLabel() {
-    const label = document.getElementById('dropdownLabel');
-    const status = document.getElementById('selectionStatus');
-    const count = selectedGroups.size;
-    const total = allProjectGroups.length;
-    
-    if (count === 0) {
-        label.textContent = 'Select projects...';
-        status.textContent = 'No projects selected';
-    } else if (count === total) {
-        label.textContent = `All projects (${total})`;
-        status.textContent = `Showing all ${total} projects`;
-    } else {
-        label.textContent = `${count} of ${total} selected`;
-        status.textContent = `Showing ${count} of ${total} projects`;
-    }
 }
 
 function applyAndClose() {
@@ -528,9 +526,9 @@ async function saveSettings() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                selected_level: selectedLevel,
                 selected_groups: Array.from(selectedGroups),
-                show_all: selectedGroups.size === allProjectGroups.length,
-                selected_level: selectedLevel
+                show_all: selectedGroups.size === allProjectGroups.length
             })
         });
     } catch (error) {
@@ -542,7 +540,7 @@ function renderRoadmap() {
     const chartDiv = document.getElementById('roadmapChart');
     const emptyState = document.getElementById('emptyState');
     
-    if (selectedGroups.size === 0) {
+    if (!selectedLevel || selectedGroups.size === 0) {
         emptyState.style.display = 'block';
         Plotly.purge(chartDiv);
         return;
