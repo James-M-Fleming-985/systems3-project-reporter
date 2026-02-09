@@ -44,12 +44,19 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/upload", response_class=HTMLResponse)
-async def upload_page(request: Request):
+async def upload_page(request: Request, project: str = None):
     """Unified upload page for project XML and risk files"""
     from main import BUILD_VERSION
+    from middleware.project_context import get_selected_project_code
     
     # Get existing projects
     projects = project_repo.load_all_projects()
+    
+    # Get selected project - from query param or context
+    selected_project_code = project or get_selected_project_code(request)
+    selected_project = None
+    if selected_project_code:
+        selected_project = project_repo.get_project_by_code(selected_project_code)
     
     # Get user from request state
     user = getattr(request.state, 'user', None) if hasattr(request, 'state') else None
@@ -57,6 +64,7 @@ async def upload_page(request: Request):
     context = {
         "request": request,
         "projects": projects,
+        "project": selected_project,  # Currently selected project
         "build_version": BUILD_VERSION,
         "user": user
     }

@@ -413,19 +413,22 @@
         </div>
         
         <div class="p-6">
-            <!-- Program Selection -->
-            <div class="mb-4">
-                <label for="projectProgramSelect" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Upload To <span class="text-red-500">*</span>
-                </label>
-                <select id="projectProgramSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">-- New program (from XML) --</option>
-                    {% for project in projects %}
-                    <option value="{{ project.project_code }}">{{ project.project_name }}</option>
-                    {% endfor %}
-                </select>
-                <p class="text-xs text-gray-600 mt-1">Select an existing program to update, or leave blank to create new from XML</p>
+            <!-- Selected Program Display -->
+            {% if project %}
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <span class="font-semibold">Uploading to:</span> {{ project.project_name }}
+                </p>
+                <p class="text-xs text-blue-600 mt-1">XML milestones will be imported into this program</p>
             </div>
+            {% else %}
+            <div class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-sm text-amber-800">
+                    <span class="font-semibold">No program selected</span>
+                </p>
+                <p class="text-xs text-amber-600 mt-1">A new program will be created from the XML file name</p>
+            </div>
+            {% endif %}
             
             <!-- Drop Zone -->
             <div id="projectDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-4 cursor-pointer hover:border-blue-500 transition-colors">
@@ -820,10 +823,10 @@ async function uploadProjectFile() {
         formData.append('is_baseline', 'true');
     }
     
-    // Get selected program (if any)
-    const selectedProgram = document.getElementById('projectProgramSelect').value;
-    if (selectedProgram) {
-        formData.append('target_project_code', selectedProgram);
+    // Get selected program from the page context (set by server)
+    const selectedProjectCode = '{{ project.project_code if project else "" }}';
+    if (selectedProjectCode) {
+        formData.append('target_project_code', selectedProjectCode);
     }
     
     // Hide previous messages
@@ -876,7 +879,6 @@ function resetProjectUpload() {
     document.getElementById('projectProgress').classList.add('hidden');
     document.getElementById('projectUploadBtn').disabled = true;
     document.getElementById('projectBaselineCheckbox').checked = false;
-    document.getElementById('projectProgramSelect').value = '';  // Reset program selector
     projectFileInput.value = '';
 }
 
