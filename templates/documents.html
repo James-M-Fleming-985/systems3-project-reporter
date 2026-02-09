@@ -4,279 +4,333 @@
 
 {% block extra_styles %}
 <style>
-    /* Document hierarchy styles */
-    .doc-container {
+    /* SharePoint-like Document Library Styles */
+    .doc-library {
         max-width: 1400px;
         margin: 0 auto;
     }
     
-    .doc-header {
+    /* Toolbar */
+    .doc-toolbar {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-    
-    .doc-stats {
-        display: flex;
-        gap: 16px;
-    }
-    
-    .doc-stat {
-        background: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .doc-stat-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: #1e40af;
-    }
-    
-    .doc-stat-label {
-        font-size: 12px;
-        color: #6b7280;
-        text-transform: uppercase;
-    }
-    
-    /* Category accordion */
-    .category-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    .category-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-    }
-    
-    .category-header {
-        display: flex;
-        align-items: center;
-        padding: 16px 20px;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.2s;
-    }
-    
-    .category-header:hover {
-        background: #f9fafb;
-    }
-    
-    .category-icon {
-        font-size: 24px;
-        margin-right: 12px;
-    }
-    
-    .category-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-        flex: 1;
-    }
-    
-    .category-count {
-        background: #e5e7eb;
-        color: #4b5563;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 12px;
-        margin-right: 12px;
-    }
-    
-    .category-count.has-docs {
-        background: #1e40af;
-        color: white;
-    }
-    
-    .category-toggle {
-        color: #9ca3af;
-        transition: transform 0.2s;
-    }
-    
-    .category-card.open .category-toggle {
-        transform: rotate(180deg);
-    }
-    
-    .category-content {
-        display: none;
-        border-top: 1px solid #e5e7eb;
-        background: #fafafa;
-    }
-    
-    .category-card.open .category-content {
-        display: block;
-    }
-    
-    /* Document type sections */
-    .doc-type-section {
-        padding: 16px 20px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .doc-type-section:last-child {
-        border-bottom: none;
-    }
-    
-    .doc-type-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-    
-    .doc-type-name {
-        font-weight: 600;
-        color: #374151;
-    }
-    
-    .doc-type-desc {
-        font-size: 12px;
-        color: #6b7280;
-    }
-    
-    .doc-type-upload {
-        padding: 6px 12px;
-        font-size: 13px;
-        background: #1e40af;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    
-    .doc-type-upload:hover {
-        background: #1e3a8a;
-    }
-    
-    /* Document list */
-    .doc-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .doc-item {
-        display: flex;
         align-items: center;
         padding: 12px 16px;
         background: white;
-        border-radius: 8px;
         border: 1px solid #e5e7eb;
-        transition: all 0.2s;
+        border-radius: 8px 8px 0 0;
+        border-bottom: none;
     }
     
-    .doc-item:hover {
-        border-color: #1e40af;
-        box-shadow: 0 2px 8px rgba(30, 64, 175, 0.15);
-    }
-    
-    .doc-icon {
-        width: 40px;
-        height: 40px;
+    .toolbar-left {
         display: flex;
         align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        margin-right: 12px;
-        font-size: 20px;
+        gap: 8px;
     }
     
-    .doc-icon.pdf { background: #fef2f2; color: #dc2626; }
-    .doc-icon.doc { background: #eff6ff; color: #2563eb; }
-    .doc-icon.xls { background: #f0fdf4; color: #16a34a; }
-    .doc-icon.ppt { background: #fef3c7; color: #d97706; }
-    .doc-icon.img { background: #fdf4ff; color: #a855f7; }
-    .doc-icon.default { background: #f3f4f6; color: #6b7280; }
-    
-    .doc-info {
-        flex: 1;
-        min-width: 0;
+    .toolbar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
     }
     
-    .doc-filename {
-        font-weight: 600;
-        color: #1f2937;
-        white-space: nowrap;
+    .toolbar-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+    
+    .toolbar-btn.primary {
+        background: #1e40af;
+        color: white;
+        border-color: #1e40af;
+    }
+    
+    .toolbar-btn.primary:hover {
+        background: #1e3a8a;
+    }
+    
+    .toolbar-search {
+        position: relative;
+    }
+    
+    .toolbar-search input {
+        width: 280px;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    
+    .toolbar-search input:focus {
+        outline: none;
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+    }
+    
+    .toolbar-search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 16px;
+    }
+    
+    /* Breadcrumb Navigation */
+    .doc-breadcrumb {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        font-size: 14px;
+    }
+    
+    .breadcrumb-item {
+        color: #1e40af;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item:hover {
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-separator {
+        margin: 0 8px;
+        color: #9ca3af;
+    }
+    
+    .breadcrumb-current {
+        color: #374151;
+        font-weight: 500;
+    }
+    
+    /* Document Table */
+    .doc-table-container {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
         overflow: hidden;
-        text-overflow: ellipsis;
     }
     
-    .doc-meta {
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .doc-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .doc-table th:hover {
+        background: #f3f4f6;
+    }
+    
+    .doc-table th .sort-icon {
+        margin-left: 4px;
+        opacity: 0.5;
+    }
+    
+    .doc-table th.sorted .sort-icon {
+        opacity: 1;
+    }
+    
+    .doc-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    
+    .doc-table tbody tr {
+        transition: background 0.1s;
+    }
+    
+    .doc-table tbody tr:hover {
+        background: #f0f7ff;
+    }
+    
+    .doc-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Folder Row */
+    .folder-row {
+        cursor: pointer;
+    }
+    
+    .folder-row:hover {
+        background: #eff6ff !important;
+    }
+    
+    .folder-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        margin-right: 10px;
+        font-size: 20px;
+        vertical-align: middle;
+    }
+    
+    .folder-name {
+        font-weight: 500;
+        color: #1e40af;
+    }
+    
+    .folder-count {
         font-size: 12px;
         color: #6b7280;
-        margin-top: 2px;
+        margin-left: 8px;
     }
     
-    .doc-revision {
+    /* File Row */
+    .file-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        margin-right: 10px;
+        font-size: 16px;
+        vertical-align: middle;
+    }
+    
+    .file-icon.pdf { background: #fef2f2; color: #dc2626; }
+    .file-icon.word { background: #eff6ff; color: #2563eb; }
+    .file-icon.excel { background: #f0fdf4; color: #16a34a; }
+    .file-icon.ppt { background: #fff7ed; color: #ea580c; }
+    .file-icon.image { background: #fdf4ff; color: #a855f7; }
+    .file-icon.default { background: #f3f4f6; color: #6b7280; }
+    
+    .file-link {
+        color: #1f2937;
+        text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .file-link:hover {
+        color: #1e40af;
+        text-decoration: underline;
+    }
+    
+    .file-revision {
         display: inline-block;
         background: #dbeafe;
         color: #1e40af;
         font-size: 11px;
         font-weight: 600;
-        padding: 2px 8px;
+        padding: 2px 6px;
         border-radius: 4px;
         margin-left: 8px;
     }
     
-    .doc-actions {
-        display: flex;
-        gap: 8px;
-        opacity: 0;
-        transition: opacity 0.2s;
+    .file-meta {
+        color: #6b7280;
+        font-size: 13px;
     }
     
-    .doc-item:hover .doc-actions {
+    /* Row Actions */
+    .row-actions {
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    
+    tr:hover .row-actions {
         opacity: 1;
     }
     
-    .doc-action-btn {
-        padding: 6px 10px;
+    .action-btn {
+        padding: 6px 8px;
         font-size: 12px;
-        border: 1px solid #d1d5db;
-        background: white;
-        border-radius: 6px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: background 0.1s;
     }
     
-    .doc-action-btn:hover {
-        background: #f3f4f6;
+    .action-btn:hover {
+        background: #e5e7eb;
     }
     
-    .doc-action-btn.primary {
-        background: #1e40af;
-        color: white;
-        border-color: #1e40af;
-    }
-    
-    .doc-action-btn.primary:hover {
-        background: #1e3a8a;
-    }
-    
-    .doc-action-btn.danger:hover {
+    .action-btn.danger:hover {
         background: #fef2f2;
-        border-color: #dc2626;
         color: #dc2626;
     }
     
-    /* Empty state */
-    .doc-empty {
+    /* Empty State */
+    .empty-state {
         text-align: center;
-        padding: 24px;
-        color: #9ca3af;
-        font-size: 14px;
+        padding: 48px 24px;
+        color: #6b7280;
     }
     
-    /* Modal styles */
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    .empty-state-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    /* Stats Bar */
+    .doc-stats-bar {
+        display: flex;
+        gap: 24px;
+        padding: 16px 0;
+        margin-bottom: 16px;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e40af;
+    }
+    
+    .stat-label {
+        font-size: 13px;
+        color: #6b7280;
+    }
+    
+    /* Modal Styles */
     .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -290,57 +344,82 @@
     .modal {
         background: white;
         border-radius: 12px;
-        padding: 24px;
         width: 90%;
-        max-width: 600px;
-        max-height: 80vh;
+        max-width: 500px;
+        max-height: 85vh;
         overflow-y: auto;
         box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
     
-    .modal h3 {
-        margin-bottom: 20px;
-        font-size: 20px;
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .modal-title {
+        font-size: 18px;
         font-weight: 600;
+        color: #1f2937;
     }
     
+    .modal-close {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #9ca3af;
+        font-size: 20px;
+    }
+    
+    .modal-close:hover {
+        color: #6b7280;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+    
+    /* Form Styles */
     .form-group {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
     
-    .form-group label {
+    .form-label {
         display: block;
         margin-bottom: 6px;
+        font-size: 14px;
         font-weight: 500;
         color: #374151;
     }
     
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
+    .form-input, .form-select, .form-textarea {
         width: 100%;
         padding: 10px 12px;
         border: 1px solid #d1d5db;
         border-radius: 6px;
         font-size: 14px;
+        transition: border-color 0.15s, box-shadow 0.15s;
     }
     
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
         outline: none;
         border-color: #1e40af;
         box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
     }
     
-    .modal-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        margin-top: 24px;
-    }
-    
-    /* Drop zone */
+    /* Drop Zone */
     .drop-zone {
         border: 2px dashed #d1d5db;
         border-radius: 8px;
@@ -350,25 +429,25 @@
         transition: all 0.2s;
     }
     
-    .drop-zone:hover,
-    .drop-zone.dragover {
+    .drop-zone:hover, .drop-zone.dragover {
         border-color: #1e40af;
         background: #eff6ff;
     }
     
     .drop-zone-icon {
-        font-size: 40px;
-        color: #9ca3af;
+        font-size: 36px;
         margin-bottom: 12px;
+        color: #9ca3af;
     }
     
     .drop-zone-text {
         color: #6b7280;
+        font-size: 14px;
     }
     
     .selected-file {
         margin-top: 16px;
-        padding: 12px;
+        padding: 12px 16px;
         background: #f0fdf4;
         border: 1px solid #86efac;
         border-radius: 6px;
@@ -378,22 +457,23 @@
     }
     
     .selected-file-icon {
-        font-size: 24px;
+        font-size: 20px;
     }
     
     .selected-file-name {
         font-weight: 500;
         color: #166534;
+        font-size: 14px;
     }
     
-    /* Version history */
-    .version-history {
-        margin-top: 16px;
-        padding-top: 16px;
+    /* Version History Panel */
+    .version-panel {
+        margin-top: 20px;
+        padding-top: 20px;
         border-top: 1px solid #e5e7eb;
     }
     
-    .version-history h4 {
+    .version-panel-title {
         font-size: 14px;
         font-weight: 600;
         color: #374151;
@@ -409,287 +489,552 @@
     .version-item {
         display: flex;
         align-items: center;
-        padding: 8px 12px;
+        padding: 10px 12px;
         background: #f9fafb;
         border-radius: 6px;
         font-size: 13px;
     }
     
-    .version-item .version-num {
+    .version-item.current {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
+    
+    .version-badge {
         font-weight: 600;
         color: #1e40af;
         margin-right: 12px;
+        min-width: 40px;
     }
     
-    .version-item .version-meta {
+    .version-meta {
         flex: 1;
         color: #6b7280;
     }
     
-    .version-item .version-download {
+    .version-download {
         color: #1e40af;
         text-decoration: none;
         font-size: 12px;
+        font-weight: 500;
     }
     
-    .version-item .version-download:hover {
+    .version-download:hover {
         text-decoration: underline;
-    }
-    
-    /* Search box */
-    .doc-search {
-        position: relative;
-        max-width: 400px;
-    }
-    
-    .doc-search input {
-        width: 100%;
-        padding: 10px 16px 10px 40px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-    
-    .doc-search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
     }
     
     .hidden {
         display: none !important;
     }
+    
+    /* Context Menu */
+    .context-menu {
+        position: fixed;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        padding: 8px 0;
+        min-width: 180px;
+        z-index: 1001;
+    }
+    
+    .context-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        color: #374151;
+    }
+    
+    .context-menu-item:hover {
+        background: #f3f4f6;
+    }
+    
+    .context-menu-item.danger {
+        color: #dc2626;
+    }
+    
+    .context-menu-divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 8px 0;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="doc-container">
+<div class="doc-library">
     <!-- Header -->
-    <div class="doc-header">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">📁 Documents</h1>
-            <p class="text-gray-600">{{ clean_name }} - Project Documentation Library</p>
-        </div>
-        <div class="doc-stats">
-            <div class="doc-stat">
-                <div class="doc-stat-value">{{ total_documents }}</div>
-                <div class="doc-stat-label">Total Documents</div>
-            </div>
-            <div class="doc-stat">
-                <div class="doc-stat-value">{{ categories|selectattr('doc_count', '>', 0)|list|length }}</div>
-                <div class="doc-stat-label">Active Categories</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Search -->
     <div class="mb-6">
-        <div class="doc-search">
-            <span class="doc-search-icon">🔍</span>
-            <input type="text" id="docSearch" placeholder="Search documents..." onkeyup="filterDocuments(this.value)">
+        <h1 class="text-2xl font-bold text-gray-900">📁 Document Library</h1>
+        <p class="text-gray-600">{{ clean_name }} - Structured document repository with revision control</p>
+    </div>
+    
+    <!-- Stats -->
+    <div class="doc-stats-bar">
+        <div class="stat-item">
+            <span class="stat-value">{{ total_documents }}</span>
+            <span class="stat-label">Documents</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ categories|length }}</span>
+            <span class="stat-label">Categories</span>
         </div>
     </div>
     
-    <!-- Category List -->
-    <div class="category-list" id="categoryList">
-        {% for category in categories %}
-        <div class="category-card {% if category.doc_count > 0 %}open{% endif %}" data-category="{{ category.id }}">
-            <div class="category-header" onclick="toggleCategory('{{ category.id }}')">
-                <span class="category-icon">{{ category.icon }}</span>
-                <span class="category-name">{{ category.name }}</span>
-                <span class="category-count {% if category.doc_count > 0 %}has-docs{% endif %}">
-                    {{ category.doc_count }} document{{ 's' if category.doc_count != 1 else '' }}
-                </span>
-                <span class="category-toggle">▼</span>
-            </div>
-            <div class="category-content">
-                {% for doc_type in category.types %}
-                <div class="doc-type-section" data-type="{{ doc_type.id }}">
-                    <div class="doc-type-header">
-                        <div>
-                            <div class="doc-type-name">{{ doc_type.name }}</div>
-                            <div class="doc-type-desc">{{ doc_type.description }}</div>
-                        </div>
-                        <button class="doc-type-upload" 
-                                onclick="openUploadModal('{{ category.id }}', '{{ doc_type.id }}', '{{ doc_type.name }}')">
-                            📤 Upload
-                        </button>
-                    </div>
-                    
-                    <div class="doc-list">
-                        {% set type_docs = category.docs_by_type.get(doc_type.id, []) %}
-                        {% if type_docs %}
-                            {% for doc in type_docs %}
-                            <div class="doc-item" data-doc-id="{{ doc.id }}" data-filename="{{ doc.filename|lower }}">
-                                <div class="doc-icon {{ doc.file_extension.replace('.', '') }}">
-                                    {% if doc.file_extension in ['.pdf'] %}📕
-                                    {% elif doc.file_extension in ['.doc', '.docx'] %}📘
-                                    {% elif doc.file_extension in ['.xls', '.xlsx'] %}📗
-                                    {% elif doc.file_extension in ['.ppt', '.pptx'] %}📙
-                                    {% elif doc.file_extension in ['.png', '.jpg', '.jpeg', '.gif'] %}🖼️
-                                    {% else %}📄{% endif %}
-                                </div>
-                                <div class="doc-info">
-                                    <div class="doc-filename">
-                                        {{ doc.filename }}
-                                        <span class="doc-revision">Rev {{ doc.revision }}</span>
-                                    </div>
-                                    <div class="doc-meta">
-                                        {{ doc.formatted_size }} • Uploaded by {{ doc.uploaded_by }} • {{ doc.uploaded_at[:10] }}
-                                        {% if doc.version_history|length > 0 %}
-                                        • {{ doc.version_history|length + 1 }} versions
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="doc-actions">
-                                    <button class="doc-action-btn" onclick="viewDocument('{{ doc.id }}')" title="View">
-                                        👁️ View
-                                    </button>
-                                    <button class="doc-action-btn primary" onclick="downloadDocument('{{ doc.id }}')" title="Download">
-                                        ⬇️ Download
-                                    </button>
-                                    <button class="doc-action-btn" onclick="openUploadModal('{{ category.id }}', '{{ doc_type.id }}', '{{ doc_type.name }}', '{{ doc.id }}')" title="Upload New Version">
-                                        🔄 Update
-                                    </button>
-                                    <button class="doc-action-btn" onclick="showDocumentDetails('{{ doc.id }}')" title="Details">
-                                        ℹ️
-                                    </button>
-                                    <button class="doc-action-btn danger" onclick="deleteDocument('{{ doc.id }}', '{{ doc.filename }}')" title="Delete">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="doc-empty">No documents uploaded yet</div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+    <!-- Toolbar -->
+    <div class="doc-toolbar">
+        <div class="toolbar-left">
+            <button class="toolbar-btn primary" onclick="openUploadModal()">
+                <span>📤</span> Upload
+            </button>
+            <button class="toolbar-btn" onclick="createFolder()">
+                <span>📁</span> New Folder
+            </button>
         </div>
-        {% endfor %}
+        <div class="toolbar-search">
+            <span class="toolbar-search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search documents..." onkeyup="searchDocuments(this.value)">
+        </div>
+    </div>
+    
+    <!-- Breadcrumb -->
+    <div class="doc-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item" onclick="navigateTo('root')">📁 All Documents</span>
+    </div>
+    
+    <!-- Document Table -->
+    <div class="doc-table-container">
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 40%" onclick="sortTable('name')">
+                        Name <span class="sort-icon">↕</span>
+                    </th>
+                    <th style="width: 15%" onclick="sortTable('modified')">
+                        Modified <span class="sort-icon">↕</span>
+                    </th>
+                    <th style="width: 15%" onclick="sortTable('modifiedBy')">
+                        Modified By <span class="sort-icon">↕</span>
+                    </th>
+                    <th style="width: 10%" onclick="sortTable('type')">
+                        Type <span class="sort-icon">↕</span>
+                    </th>
+                    <th style="width: 10%" onclick="sortTable('size')">
+                        Size <span class="sort-icon">↕</span>
+                    </th>
+                    <th style="width: 10%">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="docTableBody">
+                <!-- Folders (Categories) -->
+                {% for category in categories %}
+                <tr class="folder-row" data-type="folder" data-id="{{ category.id }}" onclick="openFolder('{{ category.id }}', '{{ category.name }}', event)">
+                    <td>
+                        <span class="folder-icon">{{ category.icon }}</span>
+                        <span class="folder-name">{{ category.name }}</span>
+                        <span class="folder-count">({{ category.doc_count }} items)</span>
+                    </td>
+                    <td class="file-meta">-</td>
+                    <td class="file-meta">-</td>
+                    <td class="file-meta">Folder</td>
+                    <td class="file-meta">-</td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); openUploadModal('{{ category.id }}')" title="Upload to folder">📤</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if total_documents == 0 and categories|length == 0 %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📂</div>
+            <div class="empty-state-title">No documents yet</div>
+            <p>Upload your first document to get started</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <!-- Upload Modal -->
 <div class="modal-backdrop hidden" id="uploadModal">
     <div class="modal">
-        <h3 id="uploadModalTitle">Upload Document</h3>
-        <form id="uploadForm" onsubmit="submitUpload(event)">
-            <input type="hidden" id="uploadCategory">
-            <input type="hidden" id="uploadDocType">
-            <input type="hidden" id="uploadExistingDocId">
-            
-            <div class="form-group">
-                <label>Document Type</label>
-                <div id="uploadDocTypeName" class="text-gray-700 font-medium"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="uploadDescription">Description (optional)</label>
-                <textarea id="uploadDescription" rows="2" placeholder="Brief description of the document..."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>File</label>
-                <div class="drop-zone" id="uploadDropZone" onclick="document.getElementById('uploadFileInput').click()">
-                    <div class="drop-zone-icon">📁</div>
-                    <div class="drop-zone-text">
-                        Drag & drop file here or click to browse<br>
-                        <small>PDF, Word, Excel, PowerPoint, Images (max 50MB)</small>
+        <div class="modal-header">
+            <h3 class="modal-title" id="uploadModalTitle">Upload Document</h3>
+            <button class="modal-close" onclick="closeUploadModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="uploadForm" onsubmit="submitUpload(event)">
+                <input type="hidden" id="uploadCategory" value="">
+                <input type="hidden" id="uploadDocType" value="">
+                <input type="hidden" id="uploadExistingDocId" value="">
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="categorySelect" class="form-select" onchange="loadDocTypes(this.value)">
+                        <option value="">Select a category...</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <select id="docTypeSelect" class="form-select">
+                        <option value="">Select a document type...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description (optional)</label>
+                    <textarea id="uploadDescription" class="form-textarea" rows="2" placeholder="Brief description..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">File</label>
+                    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                        <div class="drop-zone-icon">📁</div>
+                        <div class="drop-zone-text">
+                            Drag & drop file here or click to browse<br>
+                            <small>PDF, Word, Excel, PowerPoint, Images (max 50MB)</small>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(this)">
+                    <div class="selected-file hidden" id="selectedFile">
+                        <span class="selected-file-icon">📄</span>
+                        <span class="selected-file-name" id="selectedFileName"></span>
                     </div>
                 </div>
-                <input type="file" id="uploadFileInput" class="hidden" onchange="handleFileSelect(this)">
-                <div class="selected-file hidden" id="selectedFile">
-                    <span class="selected-file-icon">📄</span>
-                    <span class="selected-file-name" id="selectedFileName"></span>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                        onclick="closeUploadModal()">Cancel</button>
-                <button type="submit" id="uploadSubmitBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" disabled>
-                    📤 Upload Document
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="toolbar-btn" onclick="closeUploadModal()">Cancel</button>
+            <button type="button" class="toolbar-btn primary" id="uploadBtn" onclick="submitUpload(event)" disabled>
+                📤 Upload
+            </button>
+        </div>
     </div>
 </div>
 
 <!-- Document Details Modal -->
 <div class="modal-backdrop hidden" id="detailsModal">
     <div class="modal">
-        <h3>Document Details</h3>
-        <div id="detailsContent">
+        <div class="modal-header">
+            <h3 class="modal-title">Document Details</h3>
+            <button class="modal-close" onclick="closeDetailsModal()">✕</button>
+        </div>
+        <div class="modal-body" id="detailsContent">
             <!-- Populated by JS -->
         </div>
-        <div class="modal-actions">
-            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                    onclick="closeModal('detailsModal')">Close</button>
+        <div class="modal-footer">
+            <button type="button" class="toolbar-btn" onclick="closeDetailsModal()">Close</button>
         </div>
+    </div>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu hidden" id="contextMenu">
+    <div class="context-menu-item" onclick="openContextDoc()">
+        <span>📄</span> Open
+    </div>
+    <div class="context-menu-item" onclick="downloadContextDoc()">
+        <span>⬇️</span> Download
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="showVersionHistory()">
+        <span>📜</span> Version History
+    </div>
+    <div class="context-menu-item" onclick="uploadNewVersion()">
+        <span>🔄</span> Upload New Version
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" onclick="deleteContextDoc()">
+        <span>🗑️</span> Delete
     </div>
 </div>
 
 <script>
 const projectName = "{{ clean_name }}";
+let currentFolder = 'root';
+let selectedFile = null;
+let contextDoc = null;
+
+// Document type mappings
+const docTypes = {{ doc_types_json | safe if doc_types_json else '{}' }};
+
+// All documents data
+const allDocuments = {{ all_documents_json | safe if all_documents_json else '[]' }};
+
+// Category data
+const categories = {{ categories_json | safe if categories_json else '[]' }};
 
 // =============================================================================
-// Category Accordion
+// File Type Helpers
 // =============================================================================
-function toggleCategory(categoryId) {
-    const card = document.querySelector(`.category-card[data-category="${categoryId}"]`);
-    if (card) {
-        card.classList.toggle('open');
+function getFileIcon(extension) {
+    const ext = (extension || '').toLowerCase().replace('.', '');
+    const icons = {
+        'pdf': { class: 'pdf', icon: '📕' },
+        'doc': { class: 'word', icon: '📘' },
+        'docx': { class: 'word', icon: '📘' },
+        'xls': { class: 'excel', icon: '📗' },
+        'xlsx': { class: 'excel', icon: '📗' },
+        'ppt': { class: 'ppt', icon: '📙' },
+        'pptx': { class: 'ppt', icon: '📙' },
+        'png': { class: 'image', icon: '🖼️' },
+        'jpg': { class: 'image', icon: '🖼️' },
+        'jpeg': { class: 'image', icon: '🖼️' },
+        'gif': { class: 'image', icon: '🖼️' }
+    };
+    return icons[ext] || { class: 'default', icon: '📄' };
+}
+
+function getFileTypeLabel(extension) {
+    const ext = (extension || '').toLowerCase().replace('.', '');
+    const labels = {
+        'pdf': 'PDF',
+        'doc': 'Word',
+        'docx': 'Word',
+        'xls': 'Excel',
+        'xlsx': 'Excel',
+        'ppt': 'PowerPoint',
+        'pptx': 'PowerPoint',
+        'png': 'Image',
+        'jpg': 'Image',
+        'jpeg': 'Image',
+        'gif': 'Image'
+    };
+    return labels[ext] || ext.toUpperCase() || 'File';
+}
+
+// =============================================================================
+// Navigation
+// =============================================================================
+function navigateTo(folderId, folderName = null) {
+    currentFolder = folderId;
+    updateBreadcrumb(folderId, folderName);
+    renderDocuments();
+}
+
+function openFolder(categoryId, categoryName, event) {
+    if (event) event.stopPropagation();
+    navigateTo(categoryId, categoryName);
+}
+
+function updateBreadcrumb(folderId, folderName) {
+    const breadcrumb = document.getElementById('breadcrumb');
+    
+    if (folderId === 'root') {
+        breadcrumb.innerHTML = '<span class="breadcrumb-current">📁 All Documents</span>';
+    } else {
+        breadcrumb.innerHTML = `
+            <span class="breadcrumb-item" onclick="navigateTo('root')">📁 All Documents</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">${folderName}</span>
+        `;
     }
 }
 
 // =============================================================================
-// Document Search/Filter
+// Render Documents
 // =============================================================================
-function filterDocuments(query) {
-    query = query.toLowerCase().trim();
+function renderDocuments() {
+    const tbody = document.getElementById('docTableBody');
+    let html = '';
     
-    document.querySelectorAll('.doc-item').forEach(item => {
-        const filename = item.dataset.filename || '';
-        if (!query || filename.includes(query)) {
-            item.classList.remove('hidden');
-        } else {
-            item.classList.add('hidden');
-        }
-    });
-    
-    // Show all categories if searching
-    if (query) {
-        document.querySelectorAll('.category-card').forEach(card => {
-            card.classList.add('open');
+    if (currentFolder === 'root') {
+        // Show categories as folders
+        categories.forEach(cat => {
+            html += `
+                <tr class="folder-row" data-type="folder" data-id="${cat.id}" onclick="openFolder('${cat.id}', '${cat.name}', event)">
+                    <td>
+                        <span class="folder-icon">${cat.icon}</span>
+                        <span class="folder-name">${cat.name}</span>
+                        <span class="folder-count">(${cat.doc_count} items)</span>
+                    </td>
+                    <td class="file-meta">-</td>
+                    <td class="file-meta">-</td>
+                    <td class="file-meta">Folder</td>
+                    <td class="file-meta">-</td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); openUploadModal('${cat.id}')" title="Upload">📤</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
+    } else {
+        // Show documents in current category
+        const docs = allDocuments.filter(d => d.category === currentFolder);
+        
+        if (docs.length === 0) {
+            html = `
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <div class="empty-state-title">No documents in this folder</div>
+                            <p>Upload a document to get started</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            docs.forEach(doc => {
+                const iconInfo = getFileIcon(doc.file_extension);
+                const typeLabel = getFileTypeLabel(doc.file_extension);
+                
+                html += `
+                    <tr class="doc-row" data-type="file" data-id="${doc.id}" 
+                        oncontextmenu="showContextMenu(event, '${doc.id}')"
+                        ondblclick="openDocument('${doc.id}')">
+                        <td>
+                            <span class="file-icon ${iconInfo.class}">${iconInfo.icon}</span>
+                            <a class="file-link" onclick="openDocument('${doc.id}')" title="Click to open">${doc.filename}</a>
+                            <span class="file-revision">v${doc.revision}</span>
+                        </td>
+                        <td class="file-meta">${doc.uploaded_at ? doc.uploaded_at.slice(0, 10) : '-'}</td>
+                        <td class="file-meta">${doc.uploaded_by || '-'}</td>
+                        <td class="file-meta">${typeLabel}</td>
+                        <td class="file-meta">${doc.formatted_size || '-'}</td>
+                        <td>
+                            <div class="row-actions">
+                                <button class="action-btn" onclick="event.stopPropagation(); openDocument('${doc.id}')" title="Open">📄</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); downloadDocument('${doc.id}')" title="Download">⬇️</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); showDocumentDetails('${doc.id}')" title="Details">ℹ️</button>
+                                <button class="action-btn danger" onclick="event.stopPropagation(); deleteDocument('${doc.id}', '${doc.filename}')" title="Delete">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
     }
+    
+    tbody.innerHTML = html;
+}
+
+// =============================================================================
+// Document Actions
+// =============================================================================
+function openDocument(docId) {
+    // Opens in new tab - browser will handle based on file type
+    window.open(`/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}/view`, '_blank');
+}
+
+function downloadDocument(docId, revision = null) {
+    let url = `/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}/download`;
+    if (revision) url += `?revision=${revision}`;
+    window.location.href = url;
+}
+
+async function deleteDocument(docId, filename) {
+    if (!confirm(`Delete "${filename}" and all its versions?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to delete document');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert('Failed to delete document');
+    }
+}
+
+// =============================================================================
+// Context Menu
+// =============================================================================
+function showContextMenu(event, docId) {
+    event.preventDefault();
+    contextDoc = docId;
+    
+    const menu = document.getElementById('contextMenu');
+    menu.style.left = event.pageX + 'px';
+    menu.style.top = event.pageY + 'px';
+    menu.classList.remove('hidden');
+    
+    // Close on click outside
+    document.addEventListener('click', hideContextMenu);
+}
+
+function hideContextMenu() {
+    document.getElementById('contextMenu').classList.add('hidden');
+    document.removeEventListener('click', hideContextMenu);
+}
+
+function openContextDoc() {
+    if (contextDoc) openDocument(contextDoc);
+}
+
+function downloadContextDoc() {
+    if (contextDoc) downloadDocument(contextDoc);
+}
+
+function uploadNewVersion() {
+    if (contextDoc) {
+        const doc = allDocuments.find(d => d.id === contextDoc);
+        if (doc) {
+            openUploadModal(doc.category, doc.doc_type, contextDoc);
+        }
+    }
+}
+
+function deleteContextDoc() {
+    if (contextDoc) {
+        const doc = allDocuments.find(d => d.id === contextDoc);
+        if (doc) {
+            deleteDocument(contextDoc, doc.filename);
+        }
+    }
+}
+
+function showVersionHistory() {
+    if (contextDoc) showDocumentDetails(contextDoc);
 }
 
 // =============================================================================
 // Upload Modal
 // =============================================================================
-let selectedFile = null;
-
-function openUploadModal(category, docType, docTypeName, existingDocId = null) {
-    document.getElementById('uploadCategory').value = category;
-    document.getElementById('uploadDocType').value = docType;
+function openUploadModal(category = null, docType = null, existingDocId = null) {
+    document.getElementById('uploadCategory').value = category || currentFolder || '';
+    document.getElementById('uploadDocType').value = docType || '';
     document.getElementById('uploadExistingDocId').value = existingDocId || '';
-    document.getElementById('uploadDocTypeName').textContent = docTypeName;
     document.getElementById('uploadDescription').value = '';
+    
+    // Set category dropdown
+    const categorySelect = document.getElementById('categorySelect');
+    categorySelect.value = category || (currentFolder !== 'root' ? currentFolder : '');
+    
+    if (categorySelect.value) {
+        loadDocTypes(categorySelect.value);
+    }
+    
+    // Update title
     document.getElementById('uploadModalTitle').textContent = existingDocId 
         ? 'Upload New Version' 
         : 'Upload Document';
     
     // Reset file selection
     selectedFile = null;
-    document.getElementById('uploadFileInput').value = '';
+    document.getElementById('fileInput').value = '';
     document.getElementById('selectedFile').classList.add('hidden');
-    document.getElementById('uploadSubmitBtn').disabled = true;
+    document.getElementById('uploadBtn').disabled = true;
     
     document.getElementById('uploadModal').classList.remove('hidden');
 }
@@ -699,38 +1044,54 @@ function closeUploadModal() {
     selectedFile = null;
 }
 
+function loadDocTypes(categoryId) {
+    const docTypeSelect = document.getElementById('docTypeSelect');
+    docTypeSelect.innerHTML = '<option value="">Select a document type...</option>';
+    
+    const category = categories.find(c => c.id === categoryId);
+    if (category && category.types) {
+        category.types.forEach(type => {
+            docTypeSelect.innerHTML += `<option value="${type.id}">${type.name}</option>`;
+        });
+    }
+    
+    document.getElementById('uploadCategory').value = categoryId;
+}
+
 function handleFileSelect(input) {
     if (input.files && input.files[0]) {
         selectedFile = input.files[0];
         document.getElementById('selectedFileName').textContent = selectedFile.name;
         document.getElementById('selectedFile').classList.remove('hidden');
-        document.getElementById('uploadSubmitBtn').disabled = false;
+        document.getElementById('uploadBtn').disabled = false;
     }
 }
 
-// Drag and drop
-const dropZone = document.getElementById('uploadDropZone');
-if (dropZone) {
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-    
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            selectedFile = e.dataTransfer.files[0];
-            document.getElementById('selectedFileName').textContent = selectedFile.name;
-            document.getElementById('selectedFile').classList.remove('hidden');
-            document.getElementById('uploadSubmitBtn').disabled = false;
-        }
-    });
-}
+// Drag and drop handlers
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                selectedFile = e.dataTransfer.files[0];
+                document.getElementById('selectedFileName').textContent = selectedFile.name;
+                document.getElementById('selectedFile').classList.remove('hidden');
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+    }
+});
 
 async function submitUpload(event) {
     event.preventDefault();
@@ -740,10 +1101,23 @@ async function submitUpload(event) {
         return;
     }
     
+    const category = document.getElementById('categorySelect').value;
+    const docType = document.getElementById('docTypeSelect').value;
+    
+    if (!category) {
+        alert('Please select a category');
+        return;
+    }
+    
+    if (!docType) {
+        alert('Please select a document type');
+        return;
+    }
+    
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('category', document.getElementById('uploadCategory').value);
-    formData.append('doc_type', document.getElementById('uploadDocType').value);
+    formData.append('category', category);
+    formData.append('doc_type', docType);
     formData.append('description', document.getElementById('uploadDescription').value);
     
     const existingDocId = document.getElementById('uploadExistingDocId').value;
@@ -751,7 +1125,7 @@ async function submitUpload(event) {
         formData.append('existing_doc_id', existingDocId);
     }
     
-    const btn = document.getElementById('uploadSubmitBtn');
+    const btn = document.getElementById('uploadBtn');
     btn.disabled = true;
     btn.textContent = '⏳ Uploading...';
     
@@ -774,72 +1148,53 @@ async function submitUpload(event) {
         alert('Upload failed: ' + error.message);
     } finally {
         btn.disabled = false;
-        btn.textContent = '📤 Upload Document';
+        btn.textContent = '📤 Upload';
     }
 }
 
 // =============================================================================
-// Document Actions
+// Document Details Modal
 // =============================================================================
-function viewDocument(docId) {
-    window.open(`/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}/view`, '_blank');
-}
-
-function downloadDocument(docId, revision = null) {
-    let url = `/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}/download`;
-    if (revision) {
-        url += `?revision=${revision}`;
-    }
-    window.location.href = url;
-}
-
-async function deleteDocument(docId, filename) {
-    if (!confirm(`Delete "${filename}" and all its versions? This cannot be undone.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            alert('Failed to delete document');
-        }
-    } catch (error) {
-        console.error('Delete error:', error);
-        alert('Failed to delete document');
-    }
-}
-
 async function showDocumentDetails(docId) {
     try {
         const response = await fetch(`/dashboard/api/documents/${encodeURIComponent(projectName)}/${docId}`);
         const doc = await response.json();
         
+        const iconInfo = getFileIcon(doc.file_extension);
+        
         let html = `
-            <div class="space-y-3">
-                <p><strong>Filename:</strong> ${doc.filename}</p>
-                <p><strong>Category:</strong> ${doc.category}</p>
-                <p><strong>Type:</strong> ${doc.doc_type}</p>
-                <p><strong>Current Revision:</strong> ${doc.revision}</p>
-                <p><strong>File Size:</strong> ${doc.formatted_size}</p>
-                <p><strong>Uploaded By:</strong> ${doc.uploaded_by}</p>
-                <p><strong>Uploaded At:</strong> ${doc.uploaded_at}</p>
-                ${doc.description ? `<p><strong>Description:</strong> ${doc.description}</p>` : ''}
+            <div class="flex items-start gap-4 mb-6">
+                <div class="file-icon ${iconInfo.class}" style="width:48px;height:48px;font-size:24px;">${iconInfo.icon}</div>
+                <div>
+                    <h4 class="text-lg font-semibold">${doc.filename}</h4>
+                    <p class="text-sm text-gray-600">${doc.formatted_size} • ${getFileTypeLabel(doc.file_extension)}</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><strong>Category:</strong> ${doc.category}</div>
+                <div><strong>Type:</strong> ${doc.doc_type}</div>
+                <div><strong>Revision:</strong> v${doc.revision}</div>
+                <div><strong>Uploaded:</strong> ${doc.uploaded_at ? doc.uploaded_at.slice(0, 10) : '-'}</div>
+                <div class="col-span-2"><strong>Uploaded By:</strong> ${doc.uploaded_by || '-'}</div>
+                ${doc.description ? `<div class="col-span-2"><strong>Description:</strong> ${doc.description}</div>` : ''}
+            </div>
+            
+            <div class="mt-4 flex gap-2">
+                <button class="toolbar-btn primary" onclick="openDocument('${docId}')">📄 Open</button>
+                <button class="toolbar-btn" onclick="downloadDocument('${docId}')">⬇️ Download</button>
             </div>
         `;
         
+        // Version history
         if (doc.version_history && doc.version_history.length > 0) {
             html += `
-                <div class="version-history">
-                    <h4>📜 Version History</h4>
+                <div class="version-panel">
+                    <h4 class="version-panel-title">📜 Version History</h4>
                     <div class="version-list">
-                        <div class="version-item">
-                            <span class="version-num">v${doc.revision}</span>
-                            <span class="version-meta">${doc.uploaded_by} • ${doc.uploaded_at.slice(0,10)} (current)</span>
+                        <div class="version-item current">
+                            <span class="version-badge">v${doc.revision}</span>
+                            <span class="version-meta">${doc.uploaded_by || 'Unknown'} • ${doc.uploaded_at ? doc.uploaded_at.slice(0, 10) : '-'} (current)</span>
                             <a href="#" class="version-download" onclick="downloadDocument('${docId}'); return false;">Download</a>
                         </div>
             `;
@@ -847,8 +1202,8 @@ async function showDocumentDetails(docId) {
             doc.version_history.slice().reverse().forEach(hist => {
                 html += `
                     <div class="version-item">
-                        <span class="version-num">v${hist.revision}</span>
-                        <span class="version-meta">${hist.uploaded_by} • ${hist.uploaded_at.slice(0,10)}</span>
+                        <span class="version-badge">v${hist.revision}</span>
+                        <span class="version-meta">${hist.uploaded_by || 'Unknown'} • ${hist.uploaded_at ? hist.uploaded_at.slice(0, 10) : '-'}</span>
                         <a href="#" class="version-download" onclick="downloadDocument('${docId}', ${hist.revision}); return false;">Download</a>
                     </div>
                 `;
@@ -866,9 +1221,110 @@ async function showDocumentDetails(docId) {
     }
 }
 
-function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.add('hidden');
 }
+
+// =============================================================================
+// Search
+// =============================================================================
+function searchDocuments(query) {
+    query = query.toLowerCase().trim();
+    
+    if (!query) {
+        renderDocuments();
+        return;
+    }
+    
+    // Search all documents
+    const results = allDocuments.filter(d => 
+        d.filename.toLowerCase().includes(query) ||
+        (d.description && d.description.toLowerCase().includes(query))
+    );
+    
+    const tbody = document.getElementById('docTableBody');
+    
+    if (results.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">No results found</div>
+                        <p>Try a different search term</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    results.forEach(doc => {
+        const iconInfo = getFileIcon(doc.file_extension);
+        const typeLabel = getFileTypeLabel(doc.file_extension);
+        
+        html += `
+            <tr class="doc-row" data-type="file" data-id="${doc.id}">
+                <td>
+                    <span class="file-icon ${iconInfo.class}">${iconInfo.icon}</span>
+                    <a class="file-link" onclick="openDocument('${doc.id}')">${doc.filename}</a>
+                    <span class="file-revision">v${doc.revision}</span>
+                </td>
+                <td class="file-meta">${doc.uploaded_at ? doc.uploaded_at.slice(0, 10) : '-'}</td>
+                <td class="file-meta">${doc.uploaded_by || '-'}</td>
+                <td class="file-meta">${typeLabel}</td>
+                <td class="file-meta">${doc.formatted_size || '-'}</td>
+                <td>
+                    <div class="row-actions" style="opacity:1;">
+                        <button class="action-btn" onclick="openDocument('${doc.id}')" title="Open">📄</button>
+                        <button class="action-btn" onclick="downloadDocument('${doc.id}')" title="Download">⬇️</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Update breadcrumb
+    document.getElementById('breadcrumb').innerHTML = `
+        <span class="breadcrumb-item" onclick="navigateTo('root'); document.getElementById('searchInput').value='';">📁 All Documents</span>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">Search: "${query}" (${results.length} results)</span>
+    `;
+}
+
+// =============================================================================
+// Sort
+// =============================================================================
+let sortColumn = 'name';
+let sortDirection = 'asc';
+
+function sortTable(column) {
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    
+    renderDocuments();
+}
+
+// =============================================================================
+// Folder Creation (placeholder)
+// =============================================================================
+function createFolder() {
+    alert('Folder creation is managed through category configuration. Contact your administrator to add new categories.');
+}
+
+// =============================================================================
+// Initialize
+// =============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial render is done by Jinja
+});
 
 // Close modals on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(backdrop => {

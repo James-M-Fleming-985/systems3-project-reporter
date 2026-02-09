@@ -12,6 +12,7 @@ import logging
 import os
 import io
 import re
+import json
 
 from repositories.document_repository import DocumentRepository, DOCUMENT_CATEGORIES
 
@@ -85,6 +86,8 @@ async def documents_page(request: Request, project: str = None):
     
     # Build category structure with documents
     categories_with_docs = []
+    all_documents_flat = []  # For JavaScript
+    
     for cat_id, cat_info in DOCUMENT_CATEGORIES.items():
         cat_docs = docs_by_category.get(cat_id, [])
         
@@ -97,12 +100,16 @@ async def documents_page(request: Request, project: str = None):
             # Add formatted file size
             doc['formatted_size'] = format_file_size(doc.get('file_size', 0))
             docs_by_type[doc_type].append(doc)
+            all_documents_flat.append(doc)
+        
+        # Build types list for the category
+        types_list = [{'id': tid, 'name': tname} for tid, tname in cat_info['types'].items()]
         
         categories_with_docs.append({
             'id': cat_id,
             'name': cat_info['name'],
             'icon': cat_info['icon'],
-            'types': cat_info['types'],
+            'types': types_list,
             'documents': cat_docs,
             'docs_by_type': docs_by_type,
             'doc_count': len(cat_docs)
@@ -116,7 +123,11 @@ async def documents_page(request: Request, project: str = None):
         "all_categories": DOCUMENT_CATEGORIES,
         "total_documents": len(doc_data.get('documents', [])),
         "build_version": get_build_version(),
-        "user": getattr(request.state, 'user', None)
+        "user": getattr(request.state, 'user', None),
+        # JSON data for JavaScript
+        "categories_json": json.dumps(categories_with_docs, default=str),
+        "all_documents_json": json.dumps(all_documents_flat, default=str),
+        "doc_types_json": json.dumps(DOCUMENT_CATEGORIES, default=str)
     }
     
     response = templates.TemplateResponse("documents.html", context)
