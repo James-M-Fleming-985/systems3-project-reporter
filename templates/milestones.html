@@ -240,6 +240,12 @@ const allMilestones = {{ quadrants | tojson | safe }};
 const projectName = "{{ project.project_name }}";
 const projectCode = "{{ project.project_code }}";
 
+// Ensure all arrays exist (defensive programming)
+allMilestones.completed_past = allMilestones.completed_past || [];
+allMilestones.open = allMilestones.open || [];
+allMilestones.upcoming_future = allMilestones.upcoming_future || [];
+allMilestones.delayed = allMilestones.delayed || [];
+
 const totalMilestones = allMilestones.completed_past.length + 
                        allMilestones.open.length + 
                        allMilestones.upcoming_future.length + 
@@ -375,6 +381,7 @@ function renderMilestone(milestone, showStatus = true, cardHeight = 'min-h-[140p
 
 // Populate week view
 function populateWeekView() {
+    console.log('📅 Populating week view...');
     const today = new Date();
     const lastWeek = new Date(today);
     lastWeek.setDate(lastWeek.getDate() - 7);
@@ -389,13 +396,14 @@ function populateWeekView() {
     document.getElementById('thisWeekRange').textContent = formatDateRange(thisWeekRange.start, thisWeekRange.end);
     document.getElementById('nextWeekRange').textContent = formatDateRange(nextWeekRange.start, nextWeekRange.end);
     
-    // Build flat array for editing with indices
+    // Build flat array for editing with indices (with null safety)
     allMilestonesFlat = [
-        ...allMilestones.completed_past,
-        ...allMilestones.open,
-        ...allMilestones.upcoming_future,
-        ...allMilestones.delayed
+        ...(allMilestones.completed_past || []),
+        ...(allMilestones.open || []),
+        ...(allMilestones.upcoming_future || []),
+        ...(allMilestones.delayed || [])
     ];
+    console.log('📅 Week view: total milestones:', allMilestonesFlat.length);
     
     const lastWeekCompleted = allMilestonesFlat.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastWeekRange.start, lastWeekRange.end)
@@ -445,6 +453,7 @@ function populateWeekView() {
 
 // Populate month view
 function populateMonthView() {
+    console.log('📆 Populating month view...');
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
@@ -457,13 +466,14 @@ function populateMonthView() {
     document.getElementById('thisMonthRange').textContent = formatDateRange(thisMonthRange.start, thisMonthRange.end);
     document.getElementById('nextMonthRange').textContent = formatDateRange(nextMonthRange.start, nextMonthRange.end);
     
-    // Build flat array for editing with indices
+    // Build flat array for editing with indices (with null safety)
     allMilestonesFlat = [
-        ...allMilestones.completed_past,
-        ...allMilestones.open,
-        ...allMilestones.upcoming_future,
-        ...allMilestones.delayed
+        ...(allMilestones.completed_past || []),
+        ...(allMilestones.open || []),
+        ...(allMilestones.upcoming_future || []),
+        ...(allMilestones.delayed || [])
     ];
+    console.log('📆 Month view: total milestones:', allMilestonesFlat.length);
     
     let lastMonthCompleted = allMilestonesFlat.filter(m => 
         m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
