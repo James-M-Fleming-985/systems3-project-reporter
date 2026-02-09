@@ -5,222 +5,220 @@
 {% block extra_head %}
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
-    .project-selector {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .project-checkbox-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 0.75rem;
-        max-height: 300px;
-        overflow-y: auto;
-        padding: 0.5rem;
-    }
-    
-    .project-checkbox-item {
+    .roadmap-controls {
         display: flex;
         align-items: center;
-        padding: 0.75rem 1rem;
-        background: #f9fafb;
-        border: 2px solid #e5e7eb;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .project-dropdown {
+        position: relative;
+        min-width: 300px;
+    }
+    
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.625rem 1rem;
+        background: white;
+        border: 2px solid #d1d5db;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.2s;
+        font-size: 0.875rem;
+        transition: all 0.15s;
     }
     
-    .project-checkbox-item:hover {
+    .dropdown-toggle:hover {
         border-color: #3b82f6;
-        background: #eff6ff;
     }
     
-    .project-checkbox-item.selected {
+    .dropdown-toggle.open {
         border-color: #3b82f6;
-        background: #dbeafe;
+        border-radius: 8px 8px 0 0;
     }
     
-    .project-checkbox-item input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        margin-right: 12px;
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 320px;
+        overflow-y: auto;
+        background: white;
+        border: 2px solid #3b82f6;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        z-index: 50;
+        display: none;
+    }
+    
+    .dropdown-menu.show {
+        display: block;
+    }
+    
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background 0.1s;
+    }
+    
+    .dropdown-item:hover {
+        background: #f3f4f6;
+    }
+    
+    .dropdown-item input {
+        margin-right: 0.75rem;
+        width: 16px;
+        height: 16px;
         accent-color: #3b82f6;
     }
     
-    .project-checkbox-item .project-name {
-        font-weight: 500;
-        color: #1f2937;
+    .dropdown-item .item-name {
         flex: 1;
+        font-size: 0.875rem;
     }
     
-    .project-checkbox-item .milestone-count {
+    .dropdown-item .item-count {
         font-size: 0.75rem;
         color: #6b7280;
         background: #e5e7eb;
-        padding: 2px 8px;
-        border-radius: 10px;
+        padding: 1px 6px;
+        border-radius: 8px;
     }
     
-    .selector-actions {
+    .dropdown-actions {
         display: flex;
-        gap: 0.75rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
+        padding: 0.5rem;
         border-top: 1px solid #e5e7eb;
+        gap: 0.5rem;
     }
     
-    .btn-selector {
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 0.875rem;
+    .dropdown-actions button {
+        flex: 1;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.1s;
     }
     
-    .btn-primary {
+    .btn-sm-primary {
         background: #3b82f6;
         color: white;
         border: none;
     }
     
-    .btn-primary:hover {
-        background: #2563eb;
-    }
-    
-    .btn-secondary {
-        background: white;
+    .btn-sm-secondary {
+        background: #f3f4f6;
         color: #374151;
         border: 1px solid #d1d5db;
     }
     
-    .btn-secondary:hover {
-        background: #f3f4f6;
+    .selection-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-top: 0.5rem;
+    }
+    
+    .selection-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        background: #dbeafe;
+        color: #1e40af;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .selection-pill .remove-pill {
+        cursor: pointer;
+        opacity: 0.7;
+    }
+    
+    .selection-pill .remove-pill:hover {
+        opacity: 1;
     }
     
     .roadmap-empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 3rem 2rem;
         background: #f9fafb;
         border-radius: 8px;
         border: 2px dashed #d1d5db;
-    }
-    
-    .roadmap-empty-state svg {
-        width: 64px;
-        height: 64px;
-        color: #9ca3af;
-        margin-bottom: 1rem;
-    }
-    
-    .selection-summary {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 1rem;
-    }
-    
-    .selection-badge {
-        background: #3b82f6;
-        color: white;
-        padding: 2px 10px;
-        border-radius: 12px;
-        font-weight: 600;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="mb-8">
+<div class="mb-6">
     <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 {{ project.project_name }} - Program Roadmap</h2>
-    <p class="text-gray-600">Select which projects to display on the roadmap timeline</p>
+    <p class="text-gray-600">Timeline view of selected projects</p>
 </div>
 
-<!-- Project Selection Panel -->
-<div class="project-selector">
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h3 class="text-lg font-bold text-gray-800">Select Projects for Roadmap</h3>
-            <p class="text-sm text-gray-600">Choose which projects/phases to display. Selection persists until changed.</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Quick:</span>
-            <button onclick="selectAll()" class="btn-selector btn-secondary">Select All</button>
-            <button onclick="selectNone()" class="btn-selector btn-secondary">Clear All</button>
-        </div>
-    </div>
-    
-    <div class="selection-summary">
-        <span>Showing</span>
-        <span class="selection-badge" id="selectedCount">0</span>
-        <span>of</span>
-        <span id="totalCount">0</span>
-        <span>projects</span>
-    </div>
-    
-    <div class="project-checkbox-grid" id="projectCheckboxGrid">
-        <!-- Project checkboxes will be populated by JavaScript -->
-        <div class="text-center text-gray-500 py-8">Loading projects...</div>
-    </div>
-    
-    <div class="selector-actions">
-        <button onclick="applySelection()" class="btn-selector btn-primary">
-            <span id="applyBtnText">Apply Selection</span>
-        </button>
-        <button onclick="resetToSaved()" class="btn-selector btn-secondary">Reset to Saved</button>
-    </div>
-</div>
-
-<!-- Roadmap Chart Container -->
+<!-- Roadmap with inline controls -->
 <div class="bg-white rounded-lg shadow p-6">
-    <div id="roadmapChart" style="width:100%; min-height:400px;">
+    <!-- Controls Row -->
+    <div class="roadmap-controls mb-4">
+        <div class="project-dropdown" id="projectDropdown">
+            <div class="dropdown-toggle" onclick="toggleDropdown()">
+                <span id="dropdownLabel">Select projects...</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <div id="dropdownItems">
+                    <!-- Items populated by JS -->
+                </div>
+                <div class="dropdown-actions">
+                    <button class="btn-sm-secondary" onclick="selectAllProjects()">All</button>
+                    <button class="btn-sm-secondary" onclick="selectNoneProjects()">None</button>
+                    <button class="btn-sm-primary" onclick="applyAndClose()">Apply</button>
+                </div>
+            </div>
+        </div>
+        
+        <span class="text-sm text-gray-500" id="selectionStatus">No projects selected</span>
+    </div>
+    
+    <!-- Selected pills -->
+    <div class="selection-pills" id="selectionPills"></div>
+    
+    <!-- Chart -->
+    <div id="roadmapChart" style="width:100%; min-height:400px; margin-top: 1rem;">
         <div class="roadmap-empty-state" id="emptyState">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mx-auto">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
-            <h3 class="text-xl font-bold text-gray-700 mb-2">No Projects Selected</h3>
-            <p class="text-gray-500 mb-4">Select one or more projects above to display on the roadmap</p>
+            <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Projects to Display</h3>
+            <p class="text-gray-500 text-sm">Use the dropdown above to choose which projects to show on the roadmap</p>
         </div>
     </div>
 </div>
 
 <!-- Legend -->
-<div class="mt-6 bg-white rounded-lg shadow p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Status Legend</h3>
-    <div class="flex flex-wrap gap-6">
+<div class="mt-4 bg-white rounded-lg shadow p-4">
+    <div class="flex flex-wrap items-center gap-6">
+        <span class="text-sm font-semibold text-gray-700">Legend:</span>
         <div class="flex items-center">
-            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-            <span class="text-sm">Completed (100%)</span>
+            <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+            <span class="text-sm text-gray-600">Completed</span>
         </div>
         <div class="flex items-center">
-            <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-            <span class="text-sm">In Progress</span>
+            <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
+            <span class="text-sm text-gray-600">In Progress</span>
         </div>
         <div class="flex items-center">
-            <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
-            <span class="text-sm">Not Started</span>
-        </div>
-        <div class="flex items-center">
-            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-            <span class="text-sm">At Risk / Blocked</span>
-        </div>
-    </div>
-</div>
-
-<!-- Tip for Risk-Led Programs -->
-<div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
-    <div class="flex items-start">
-        <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div>
-            <p class="font-semibold text-amber-800">Tip for Risk-Led Programs</p>
-            <p class="text-sm text-amber-700">For risk-led programs, select only Phase 6 (Execute) projects to show stakeholders the work that matters to them. Administrative phases can be hidden from this view.</p>
+            <div class="w-3 h-3 bg-gray-400 rounded mr-2"></div>
+            <span class="text-sm text-gray-600">Not Started</span>
         </div>
     </div>
 </div>
@@ -228,7 +226,7 @@
 
 {% block scripts %}
 <script>
-// Project and Gantt data from backend
+// Data from backend
 const projectCode = "{{ project.project_code }}";
 const projectName = "{{ project.project_name }}";
 const ganttData = {{ gantt_data | tojson }};
@@ -236,148 +234,169 @@ const ganttData = {{ gantt_data | tojson }};
 // State
 let allProjectGroups = [];
 let selectedGroups = new Set();
-let savedSettings = null;
-let milestoneCountByGroup = {};
+let milestonesByGroup = {};
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadProjectGroups();
-    await loadSavedSettings();
-    renderCheckboxes();
-    applySelection();
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeData();
+    loadSavedSettings();
+    renderDropdownItems();
+    renderRoadmap();
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('projectDropdown');
+        if (!dropdown.contains(e.target)) {
+            closeDropdown();
+        }
+    });
 });
 
-// Load available project groups from API
-async function loadProjectGroups() {
-    try {
-        // First, count milestones per group from gantt data
-        ganttData.forEach(task => {
-            const group = task.Resource;
-            milestoneCountByGroup[group] = (milestoneCountByGroup[group] || 0) + 1;
-        });
-        
-        // Get unique groups
-        allProjectGroups = [...new Set(ganttData.map(t => t.Resource))].sort();
-        
-        document.getElementById('totalCount').textContent = allProjectGroups.length;
-        
-        console.log('📋 Project groups:', allProjectGroups);
-    } catch (error) {
-        console.error('Error loading project groups:', error);
-    }
+function initializeData() {
+    // Group milestones by Resource (parent_project)
+    ganttData.forEach(task => {
+        const group = task.Resource || 'Ungrouped';
+        if (!milestonesByGroup[group]) {
+            milestonesByGroup[group] = [];
+        }
+        milestonesByGroup[group].push(task);
+    });
+    
+    // Get sorted list of groups
+    allProjectGroups = Object.keys(milestonesByGroup).sort();
+    console.log('📋 Found', allProjectGroups.length, 'project groups');
 }
 
-// Load saved settings from backend
 async function loadSavedSettings() {
     try {
         const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
-        savedSettings = await response.json();
+        const settings = await response.json();
         
-        if (savedSettings.show_all || !savedSettings.selected_groups || savedSettings.selected_groups.length === 0) {
-            // Show all by default
-            selectedGroups = new Set(allProjectGroups);
+        if (settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
+            selectedGroups = new Set(settings.selected_groups.filter(g => allProjectGroups.includes(g)));
         } else {
-            selectedGroups = new Set(savedSettings.selected_groups);
+            // Default: select all
+            selectedGroups = new Set(allProjectGroups);
         }
-        
-        console.log('📋 Loaded settings:', savedSettings);
     } catch (error) {
-        console.error('Error loading settings:', error);
-        // Default to all selected
+        console.log('No saved settings, showing all');
         selectedGroups = new Set(allProjectGroups);
     }
 }
 
-// Render checkboxes for project selection
-function renderCheckboxes() {
-    const container = document.getElementById('projectCheckboxGrid');
+function toggleDropdown() {
+    const toggle = document.querySelector('.dropdown-toggle');
+    const menu = document.getElementById('dropdownMenu');
+    toggle.classList.toggle('open');
+    menu.classList.toggle('show');
+}
+
+function closeDropdown() {
+    document.querySelector('.dropdown-toggle').classList.remove('open');
+    document.getElementById('dropdownMenu').classList.remove('show');
+}
+
+function renderDropdownItems() {
+    const container = document.getElementById('dropdownItems');
     
     if (allProjectGroups.length === 0) {
-        container.innerHTML = `
-            <div class="col-span-full text-center py-8 text-gray-500">
-                <p>No project groups found in the program data.</p>
-                <p class="text-sm mt-2">Upload an MS Project XML file to populate the roadmap.</p>
-            </div>
-        `;
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No projects found</div>';
         return;
     }
     
     container.innerHTML = allProjectGroups.map(group => {
-        const isSelected = selectedGroups.has(group);
-        const count = milestoneCountByGroup[group] || 0;
+        const count = milestonesByGroup[group]?.length || 0;
+        const checked = selectedGroups.has(group) ? 'checked' : '';
+        const escapedGroup = group.replace(/'/g, "\\'");
+        
         return `
-            <label class="project-checkbox-item ${isSelected ? 'selected' : ''}" data-group="${escapeHtml(group)}">
-                <input type="checkbox" ${isSelected ? 'checked' : ''} 
-                       onchange="toggleGroup('${escapeHtml(group)}', this.checked)">
-                <span class="project-name">${escapeHtml(group)}</span>
-                <span class="milestone-count">${count} items</span>
+            <label class="dropdown-item">
+                <input type="checkbox" ${checked} onchange="toggleProject('${escapedGroup}', this.checked)">
+                <span class="item-name">${escapeHtml(group)}</span>
+                <span class="item-count">${count}</span>
             </label>
         `;
     }).join('');
     
-    updateSelectedCount();
+    updateDropdownLabel();
 }
 
-// Toggle group selection
-function toggleGroup(group, isSelected) {
-    if (isSelected) {
+function toggleProject(group, checked) {
+    if (checked) {
         selectedGroups.add(group);
     } else {
         selectedGroups.delete(group);
     }
-    
-    // Update UI
-    const item = document.querySelector(`[data-group="${CSS.escape(group)}"]`);
-    if (item) {
-        item.classList.toggle('selected', isSelected);
-    }
-    
-    updateSelectedCount();
+    updateDropdownLabel();
 }
 
-// Select all groups
-function selectAll() {
+function selectAllProjects() {
     selectedGroups = new Set(allProjectGroups);
-    document.querySelectorAll('.project-checkbox-item input').forEach(cb => {
-        cb.checked = true;
-        cb.closest('.project-checkbox-item').classList.add('selected');
-    });
-    updateSelectedCount();
+    renderDropdownItems();
 }
 
-// Clear all selections
-function selectNone() {
+function selectNoneProjects() {
     selectedGroups.clear();
-    document.querySelectorAll('.project-checkbox-item input').forEach(cb => {
-        cb.checked = false;
-        cb.closest('.project-checkbox-item').classList.remove('selected');
-    });
-    updateSelectedCount();
+    renderDropdownItems();
 }
 
-// Reset to saved settings
-function resetToSaved() {
-    if (savedSettings && savedSettings.selected_groups && savedSettings.selected_groups.length > 0) {
-        selectedGroups = new Set(savedSettings.selected_groups);
-    } else {
-        selectedGroups = new Set(allProjectGroups);
-    }
-    renderCheckboxes();
-    applySelection();
-}
-
-// Update selected count display
-function updateSelectedCount() {
-    document.getElementById('selectedCount').textContent = selectedGroups.size;
-}
-
-// Apply selection and render roadmap
-async function applySelection() {
-    const btn = document.getElementById('applyBtnText');
-    btn.textContent = 'Saving...';
+function updateDropdownLabel() {
+    const label = document.getElementById('dropdownLabel');
+    const status = document.getElementById('selectionStatus');
+    const count = selectedGroups.size;
+    const total = allProjectGroups.length;
     
+    if (count === 0) {
+        label.textContent = 'Select projects...';
+        status.textContent = 'No projects selected';
+    } else if (count === total) {
+        label.textContent = `All projects (${total})`;
+        status.textContent = `Showing all ${total} projects`;
+    } else {
+        label.textContent = `${count} of ${total} selected`;
+        status.textContent = `Showing ${count} of ${total} projects`;
+    }
+}
+
+function applyAndClose() {
+    closeDropdown();
+    saveSettings();
+    renderRoadmap();
+    renderPills();
+}
+
+function renderPills() {
+    const container = document.getElementById('selectionPills');
+    
+    if (selectedGroups.size === allProjectGroups.length || selectedGroups.size === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    // Only show pills if subset is selected (not too many)
+    if (selectedGroups.size > 5) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = Array.from(selectedGroups).map(group => `
+        <span class="selection-pill">
+            ${escapeHtml(group)}
+            <span class="remove-pill" onclick="removePill('${group.replace(/'/g, "\\'")}')">×</span>
+        </span>
+    `).join('');
+}
+
+function removePill(group) {
+    selectedGroups.delete(group);
+    renderDropdownItems();
+    saveSettings();
+    renderRoadmap();
+    renderPills();
+}
+
+async function saveSettings() {
     try {
-        // Save settings to backend
         await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -386,169 +405,124 @@ async function applySelection() {
                 show_all: selectedGroups.size === allProjectGroups.length
             })
         });
-        
-        // Render the roadmap with selected groups
-        renderRoadmap();
-        
-        btn.textContent = 'Applied ✓';
-        setTimeout(() => { btn.textContent = 'Apply Selection'; }, 1500);
     } catch (error) {
-        console.error('Error saving settings:', error);
-        btn.textContent = 'Error - Try Again';
-        setTimeout(() => { btn.textContent = 'Apply Selection'; }, 2000);
+        console.error('Failed to save settings:', error);
     }
 }
 
-// Helper function to parse dates correctly
-function parseDate(dateStr) {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
-}
-
-// Render the roadmap chart
 function renderRoadmap() {
     const chartDiv = document.getElementById('roadmapChart');
     const emptyState = document.getElementById('emptyState');
     
-    // Filter data to selected groups
-    const filteredData = ganttData.filter(task => selectedGroups.has(task.Resource));
-    
-    if (filteredData.length === 0 || selectedGroups.size === 0) {
+    if (selectedGroups.size === 0) {
         emptyState.style.display = 'block';
-        chartDiv.style.minHeight = '200px';
         Plotly.purge(chartDiv);
         return;
     }
     
     emptyState.style.display = 'none';
     
-    // Group by Resource (project)
-    const projectGroups = {};
-    filteredData.forEach(task => {
-        if (!projectGroups[task.Resource]) {
-            projectGroups[task.Resource] = [];
-        }
-        projectGroups[task.Resource].push(task);
-    });
-    
-    // Create traces for roadmap
+    // Build traces for selected groups
     const traces = [];
     const annotations = [];
     
-    Object.keys(projectGroups).sort().forEach(projectGroup => {
-        const tasks = projectGroups[projectGroup];
+    const sortedGroups = Array.from(selectedGroups).sort();
+    
+    sortedGroups.forEach(group => {
+        const tasks = milestonesByGroup[group] || [];
+        if (tasks.length === 0) return;
         
-        // Calculate project timeline
-        const startDates = tasks.map(t => parseDate(t.Start));
-        const finishDates = tasks.map(t => parseDate(t.Finish));
+        // Calculate timeline from actual milestone dates
+        const startDates = tasks.map(t => new Date(t.Start));
+        const finishDates = tasks.map(t => new Date(t.Finish));
         
         const projectStart = new Date(Math.min(...startDates));
         const projectFinish = new Date(Math.max(...finishDates));
+        
+        // Ensure minimum duration of 1 day for display
+        if (projectFinish <= projectStart) {
+            projectFinish.setDate(projectFinish.getDate() + 1);
+        }
+        
         const duration = projectFinish - projectStart;
         
         // Calculate completion
         const completed = tasks.filter(t => t.Status === 'COMPLETED').length;
         const inProgress = tasks.filter(t => t.Status === 'IN_PROGRESS').length;
         const total = tasks.length;
-        const pct = Math.round((completed / total) * 100);
+        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
         
-        // Determine color
+        // Color by status
         let barColor = '#9ca3af'; // gray - not started
-        if (completed === total) {
+        if (completed === total && total > 0) {
             barColor = '#22c55e'; // green - complete
         } else if (inProgress > 0 || completed > 0) {
             barColor = '#eab308'; // yellow - in progress
         }
         
-        const startStr = projectStart.toISOString().split('T')[0];
-        const finishStr = projectFinish.toISOString().split('T')[0];
-        
         traces.push({
             x: [duration],
-            y: [projectGroup],
+            y: [group],
             base: projectStart,
             type: 'bar',
             orientation: 'h',
-            marker: {
-                color: barColor,
-                line: { color: 'rgba(0,0,0,0.2)', width: 1 },
-                opacity: 0.9
-            },
-            name: projectGroup,
-            customdata: [[projectGroup, total, completed, inProgress, pct, startStr, finishStr]],
-            hovertemplate: '<b>%{y}</b><br>' +
-                          '<b>Timeline:</b> %{customdata[5]} → %{customdata[6]}<br>' +
-                          '<b>Progress:</b> %{customdata[4]}%<br>' +
-                          '<b>Tasks:</b> %{customdata[2]} of %{customdata[1]} completed' +
-                          '<extra></extra>',
+            marker: { color: barColor, opacity: 0.85 },
+            name: group,
+            hovertemplate: `<b>${escapeHtml(group)}</b><br>` +
+                          `Start: ${projectStart.toLocaleDateString()}<br>` +
+                          `End: ${projectFinish.toLocaleDateString()}<br>` +
+                          `Progress: ${pct}% (${completed}/${total})<extra></extra>`,
             showlegend: false
         });
         
-        // Add completion % annotation
+        // Add percentage annotation
         annotations.push({
             x: projectFinish,
-            y: projectGroup,
+            y: group,
             text: `${pct}%`,
             showarrow: false,
-            font: { size: 12, color: '#1f2937', weight: 'bold' },
+            font: { size: 11, color: '#374151' },
             xanchor: 'left',
-            xshift: 10,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            bordercolor: '#d1d5db',
-            borderwidth: 1,
-            borderpad: 4
+            xshift: 8
         });
     });
     
-    // Calculate chart height
-    const projectCount = Object.keys(projectGroups).length;
-    const barHeight = projectCount <= 5 ? 70 : projectCount <= 10 ? 55 : 45;
-    const chartHeight = Math.max(300, (barHeight * projectCount) + 150);
+    // Calculate chart height based on rows
+    const rowCount = sortedGroups.length;
+    const barHeight = rowCount <= 3 ? 60 : rowCount <= 8 ? 45 : 35;
+    const chartHeight = Math.max(250, (barHeight * rowCount) + 120);
     
     const layout = {
-        title: {
-            text: `Program Roadmap - ${selectedGroups.size} Projects Selected`,
-            font: { size: 20, color: '#111827', weight: 'bold' },
-            x: 0.02,
-            xanchor: 'left'
-        },
+        title: null,
         xaxis: {
-            title: { text: 'Timeline', font: { size: 13 } },
+            title: { text: 'Timeline', font: { size: 12 } },
             type: 'date',
             tickformat: '%b %Y',
-            tickangle: -45,
             showgrid: true,
             gridcolor: '#e5e7eb'
         },
         yaxis: {
-            title: { text: 'Projects', font: { size: 13 } },
             automargin: true,
             autorange: 'reversed',
-            showgrid: true,
-            gridcolor: '#e5e7eb',
+            showgrid: false,
             tickfont: { size: 11 }
         },
         barmode: 'overlay',
-        bargap: 0.25,
+        bargap: 0.3,
         height: chartHeight,
-        margin: { l: 250, r: 80, t: 80, b: 80 },
+        margin: { l: 200, r: 60, t: 20, b: 60 },
         hovermode: 'closest',
-        plot_bgcolor: '#f9fafb',
+        plot_bgcolor: 'white',
         paper_bgcolor: 'white',
-        annotations: annotations,
-        dragmode: false
+        annotations: annotations
     };
     
-    const config = {
+    Plotly.newPlot(chartDiv, traces, layout, {
         responsive: true,
-        displayModeBar: false,
-        staticPlot: false
-    };
-    
-    Plotly.newPlot(chartDiv, traces, layout, config);
+        displayModeBar: false
+    });
 }
 
-// Helper: escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
