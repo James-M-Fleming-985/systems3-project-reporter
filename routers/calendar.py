@@ -163,11 +163,34 @@ async def get_calendar_events(request: Request):
                 events.append(event)
         
         # 2. Load schedule items from all programs
+        # Collect schedule files from BOTH the main schedules dir AND user-specific dirs
         schedule_repo = ScheduleRepository(Path(DATA_DIR))
         schedules_dir = schedule_repo.storage_dir
         
+        schedule_files_seen = set()
+        schedule_dirs_to_scan = []
+        
+        # Main schedules directory
         if schedules_dir.exists():
-            for schedule_file in schedules_dir.glob("*_schedules.yaml"):
+            schedule_dirs_to_scan.append(schedules_dir)
+        
+        # Also scan user-specific schedule directories
+        users_dir = DATA_DIR / "users"
+        if users_dir.exists():
+            for user_dir in users_dir.iterdir():
+                if user_dir.is_dir():
+                    user_sched_dir = user_dir / "schedules"
+                    if user_sched_dir.exists():
+                        schedule_dirs_to_scan.append(user_sched_dir)
+        
+        for sched_dir in schedule_dirs_to_scan:
+            for schedule_file in sched_dir.glob("*_schedules.yaml"):
+                # Avoid processing the same file twice
+                abs_path = str(schedule_file.resolve())
+                if abs_path in schedule_files_seen:
+                    continue
+                schedule_files_seen.add(abs_path)
+                
                 try:
                     with open(schedule_file, 'r', encoding='utf-8') as f:
                         data = yaml.safe_load(f) or {}
@@ -180,44 +203,94 @@ async def get_calendar_events(request: Request):
                         
                         # Find date columns
                         date_cols = [c for c in columns if c.get('type') == 'date']
-                        # Find a title/name column
+                        
+                        # Also detect date values in ANY column by scanning row data
+                        # Some users store dates in text columns or columns without explicit date type
+                        date_pattern = re.compile(r'^\d{4}-\d{2}-\d{2}')
+                        
+                        # Build a column lookup for headers
+                        col_lookup = {c.get('id'): c for c in columns}
+                        
+                        # Find a title/name column - prefer columns named task/activity/item/description
                         title_col = None
+                        task_keywords = ('task', 'activity', 'item', 'description', 'name', 'requirement', 'topic', 'test', 'action')
                         for c in columns:
                             if c.get('type') == 'text':
-                                title_col = c.get('id')
-                                break
+                                header_lower = (c.get('header', '') or '').lower()
+                                if any(kw in header_lower for kw in task_keywords):
+                                    title_col = c.get('id')
+                                    break
+                        # Fallback: use first text column
+                        if not title_col:
+                            for c in columns:
+                                if c.get('type') == 'text':
+                                    title_col = c.get('id')
+                                    break
                         
+                        # Find status column - check 'dropdown', 'status', or header containing 'status'
                         status_col = None
                         for c in columns:
-                            if c.get('type') == 'dropdown':
+                            if c.get('type') in ('dropdown', 'status'):
                                 status_col = c.get('id')
                                 break
+                        if not status_col:
+                            for c in columns:
+                                if 'status' in (c.get('header', '') or '').lower():
+                                    status_col = c.get('id')
+                                    break
                         
                         for row in table.get('rows', []):
                             row_data = row.get('data', {})
                             title = row_data.get(title_col, 'Schedule Item') if title_col else 'Schedule Item'
                             status = row_data.get(status_col, '') if status_col else ''
                             
-                            for date_col in date_cols:
-                                date_val = row_data.get(date_col.get('id'), '')
-                                if not date_val:
+                            # Collect all date values from this row
+                            # 1. From explicit date-typed columns
+                            date_entries = []
+                            for dc in date_cols:
+                                date_val = row_data.get(dc.get('id'), '')
+                                if date_val:
+                                    date_entries.append((dc.get('id'), dc.get('header', 'Due Date'), str(date_val)))
+                            
+                            # 2. Also scan non-date columns for date-formatted values
+                            date_col_ids = {dc.get('id') for dc in date_cols}
+                            for col_id, val in row_data.items():
+                                if col_id in date_col_ids or col_id == title_col or col_id == status_col:
+                                    continue
+                                val_str = str(val).strip()
+                                if date_pattern.match(val_str):
+                                    col_info = col_lookup.get(col_id, {})
+                                    col_header = col_info.get('header', col_id)
+                                    date_entries.append((col_id, col_header, val_str))
+                            
+                            for col_id, col_header, date_val in date_entries:
+                                # Validate date format
+                                try:
+                                    datetime.fromisoformat(date_val.split('T')[0])
+                                except (ValueError, AttributeError):
                                     continue
                                 
                                 # Determine color based on status
-                                sched_color = '#6366F1'
+                                sched_color = '#6366F1'  # Default indigo
                                 if status:
                                     sl = status.lower()
-                                    if sl in ('complete', 'completed', 'done'):
-                                        sched_color = '#22C55E'
-                                    elif sl in ('in progress', 'in-progress', 'active'):
-                                        sched_color = '#3B82F6'
-                                    elif sl in ('on hold', 'blocked'):
-                                        sched_color = '#EF4444'
+                                    if sl in ('complete', 'completed', 'done', 'approved', 'delivered', 'closed'):
+                                        sched_color = '#22C55E'  # Green
+                                    elif sl in ('in progress', 'in-progress', 'active', 'shipped', 'submitted'):
+                                        sched_color = '#3B82F6'  # Blue
+                                    elif sl in ('on hold', 'blocked', 'rejected', 'cancelled'):
+                                        sched_color = '#EF4444'  # Red
+                                    elif sl in ('not started', 'pending', 'pending quote', 'scheduled'):
+                                        sched_color = '#9CA3AF'  # Gray
+                                    elif 'awaiting' in sl or 'waiting' in sl:
+                                        sched_color = '#F59E0B'  # Amber/Yellow
+                                    elif 'delayed' in sl or 'overdue' in sl or 'late' in sl:
+                                        sched_color = '#EF4444'  # Red
                                 
-                                col_header = date_col.get('header', 'Due Date')
+                                # Use unique ID per row+column combination
                                 event = {
-                                    'id': f'schedule-{sched_program}-{row.get("id", "")}',
-                                    'title': f'📅 {title}',
+                                    'id': f'schedule-{sched_program}-{table.get("id","")}-{row.get("id","")}-{col_id}',
+                                    'title': f'📅 {title}' + (f' ({col_header})' if len(date_entries) > 1 else ''),
                                     'start': date_val,
                                     'backgroundColor': sched_color,
                                     'borderColor': sched_color,
