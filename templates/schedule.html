@@ -129,6 +129,36 @@
         padding: 10px;
         border-bottom: 1px solid #e5e7eb;
         vertical-align: top;
+        position: relative;
+        max-width: 0; /* Forces text-overflow on children */
+    }
+
+    /* Hover tooltip for truncated cells */
+    .cell-tooltip {
+        display: none;
+        position: absolute;
+        z-index: 1000;
+        background: #1F2937;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        max-width: 400px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        pointer-events: none;
+        left: 0;
+        bottom: calc(100% + 4px);
+        line-height: 1.4;
+    }
+    .cell-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 16px;
+        border: 5px solid transparent;
+        border-top-color: #1F2937;
     }
     .schedule-table tr:nth-child(even) {
         background: #f9fafb;
@@ -147,6 +177,9 @@
         font-family: inherit;
         border-radius: 4px;
         transition: all 0.2s;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
     }
     .cell-edit:hover {
         border-color: #d1d5db;
@@ -168,6 +201,9 @@
         font-size: 14px;
         border-radius: 4px;
         cursor: pointer;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
     }
     .cell-dropdown:hover {
         border-color: #d1d5db;
@@ -509,7 +545,8 @@
                                    value="{{ row.data.get(col.id, '') }}"
                                    onblur="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
                                    data-col-id="{{ col.id }}"
-                                   placeholder="Enter {{ col.header.lower() }}...">
+                                   placeholder="Enter {{ col.header.lower() }}..."
+                                   title="{{ row.data.get(col.id, '') }}">
                             {% endif %}
                         </td>
                         {% endfor %}
@@ -1693,6 +1730,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing status colors...');
     initStatusColors();
     restoreActiveTab();
+    initCellTooltips();
 });
 
 // Also run immediately in case DOM is already loaded
@@ -1700,6 +1738,88 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     console.log('DOM already ready, initializing status colors immediately...');
     initStatusColors();
     restoreActiveTab();
+    initCellTooltips();
+}
+
+// ============================================================
+// Cell overflow tooltip system
+// Shows a rich tooltip when hovering over any cell whose text
+// is truncated (scrollWidth > clientWidth)
+// ============================================================
+function initCellTooltips() {
+    // Create a single shared tooltip element
+    let tooltip = document.getElementById('cellTooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'cellTooltip';
+        tooltip.className = 'cell-tooltip';
+        document.body.appendChild(tooltip);
+        // Override positioning to be fixed (body-level)
+        tooltip.style.position = 'fixed';
+        tooltip.style.bottom = 'auto';
+        tooltip.style.left = 'auto';
+    }
+    
+    // Delegate events on the schedule tables
+    document.querySelectorAll('.schedule-table').forEach(table => {
+        table.addEventListener('mouseover', handleCellMouseOver);
+        table.addEventListener('mouseout', handleCellMouseOut);
+    });
+}
+
+function handleCellMouseOver(e) {
+    const cell = e.target.closest('.cell-edit, .cell-dropdown, .cell-status, .cell-priority');
+    if (!cell) return;
+    
+    let text = '';
+    if (cell.tagName === 'INPUT') {
+        text = cell.value;
+    } else if (cell.tagName === 'SELECT') {
+        text = cell.options[cell.selectedIndex]?.text || '';
+    }
+    
+    if (!text || text.trim() === '' || text === '-- Select --') return;
+    
+    // Check if text is actually truncated
+    const isTruncated = cell.tagName === 'INPUT' 
+        ? cell.scrollWidth > cell.clientWidth
+        : false;
+    // For selects/dropdowns, check by comparing rendered width to text length estimate
+    const isLongText = text.length > 15;
+    
+    // Show tooltip for truncated inputs OR long select values
+    if (!isTruncated && !isLongText) return;
+    
+    const tooltip = document.getElementById('cellTooltip');
+    if (!tooltip) return;
+    
+    tooltip.textContent = text;
+    tooltip.style.display = 'block';
+    
+    // Position above the cell
+    const rect = cell.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    
+    let top = rect.top - tooltipRect.height - 8;
+    let left = rect.left;
+    
+    // Keep within viewport
+    if (top < 4) top = rect.bottom + 8;
+    if (left + tooltipRect.width > window.innerWidth - 8) {
+        left = window.innerWidth - tooltipRect.width - 8;
+    }
+    if (left < 4) left = 4;
+    
+    tooltip.style.top = top + 'px';
+    tooltip.style.left = left + 'px';
+}
+
+function handleCellMouseOut(e) {
+    const cell = e.target.closest('.cell-edit, .cell-dropdown, .cell-status, .cell-priority');
+    if (!cell) return;
+    
+    const tooltip = document.getElementById('cellTooltip');
+    if (tooltip) tooltip.style.display = 'none';
 }
 </script>
 {% endblock %}
