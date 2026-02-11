@@ -633,8 +633,8 @@ async def copy_table_from_program(project_name: str, request: CopyTableRequest):
         rows_copied = 0
         if request.include_data and source_table.get('rows'):
             for row in source_table['rows']:
-                # Copy row data (without the original row id)
-                row_data = {k: v for k, v in row.items() if k != 'id'}
+                # Copy the cell data from the row's 'data' field
+                row_data = row.get('data', {})
                 schedule_repo.add_row(project_name, new_table['id'], row_data)
                 rows_copied += 1
         
