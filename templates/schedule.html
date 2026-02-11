@@ -558,8 +558,7 @@
                                    value="{{ row.data.get(col.id, '') }}"
                                    onblur="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
                                    data-col-id="{{ col.id }}"
-                                   placeholder="Enter {{ col.header.lower() }}..."
-                                   title="{{ row.data.get(col.id, '') }}">
+                                   placeholder="Enter {{ col.header.lower() }}...">
                             {% endif %}
                         </td>
                         {% endfor %}
