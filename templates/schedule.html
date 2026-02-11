@@ -221,7 +221,7 @@
     .status-on-hold { color: #DC2626; font-weight: 600; }
     
     /* Status cells with colored backgrounds */
-    .cell-status, .cell-priority {
+    .cell-status, .cell-priority, .cell-dropdown-colored {
         width: 100%;
         padding: 6px 10px;
         border: none;
@@ -235,7 +235,7 @@
         appearance: none;
         -webkit-appearance: none;
     }
-    .cell-status:focus, .cell-priority:focus {
+    .cell-status:focus, .cell-priority:focus, .cell-dropdown-colored:focus {
         outline: 2px solid #1e40af;
         outline-offset: 1px;
     }
@@ -527,6 +527,18 @@
                                 {% endfor %}
                             </select>
                             {% elif col.type == 'dropdown' %}
+                            {% if col.dropdown_options %}
+                            <select class="cell-dropdown cell-dropdown-colored" 
+                                    onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value); updateDropdownColor(this)"
+                                    data-col-id="{{ col.id }}"
+                                    data-table-id="{{ table.id }}">
+                                <option value="">-- Select --</option>
+                                {% for opt in col.dropdown_options %}
+                                <option value="{{ opt.label }}" data-color="{{ opt.color }}"
+                                        {% if row.data.get(col.id) == opt.label %}selected{% endif %}>{{ opt.label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
                             <select class="cell-dropdown" 
                                     onchange="updateCell('{{ table.id }}', '{{ row.id }}', '{{ col.id }}', this.value)"
                                     data-col-id="{{ col.id }}">
@@ -535,6 +547,7 @@
                                 <option value="{{ opt }}" {% if row.data.get(col.id) == opt %}selected{% endif %}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
+                            {% endif %}
                             {% elif col.type == 'date' %}
                             <input type="date" class="cell-edit"
                                    value="{{ row.data.get(col.id, '') }}"
@@ -678,9 +691,14 @@
             </div>
             
             <div class="form-group hidden" id="dropdownOptionsGroup">
-                <label for="dropdownOptions">Dropdown Options (one per line)</label>
-                <textarea id="dropdownOptions" rows="4" class="w-full p-2 border border-gray-300 rounded"
-                          placeholder="High&#10;Medium&#10;Low"></textarea>
+                <label>Dropdown Options</label>
+                <p class="text-xs text-gray-500 mb-2">Define options with optional colors. Leave color as default for no coloring.</p>
+                <div id="dropdownOptionsList" class="space-y-2">
+                    <!-- Dropdown options will be rendered here -->
+                </div>
+                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addDropdownOptionRow('', '')">
+                    + Add Option
+                </button>
             </div>
             
             <div class="form-group hidden" id="statusOptionsGroup">
@@ -1338,17 +1356,81 @@ function hexToRgb(hex) {
     } : null;
 }
 
-// Initialize status and priority cell colors on page load
+// Update dropdown cell color based on selected option
+function updateDropdownColor(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const color = selectedOption?.dataset?.color;
+    
+    if (color && color !== '') {
+        selectEl.style.setProperty('background-color', color, 'important');
+        selectEl.style.setProperty('background', color, 'important');
+        selectEl.style.setProperty('border-radius', '6px', 'important');
+        selectEl.style.setProperty('font-weight', '600', 'important');
+        selectEl.style.setProperty('text-align', 'center', 'important');
+        const rgb = hexToRgb(color);
+        if (rgb) {
+            const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+            selectEl.style.setProperty('color', brightness > 128 ? '#1f2937' : '#ffffff', 'important');
+        }
+    } else {
+        selectEl.style.removeProperty('background-color');
+        selectEl.style.removeProperty('background');
+        selectEl.style.removeProperty('color');
+        selectEl.style.removeProperty('font-weight');
+        selectEl.style.removeProperty('text-align');
+    }
+}
+
+// Dropdown option form helpers
+function addDropdownOptionRow(label, color) {
+    const list = document.getElementById('dropdownOptionsList');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2';
+    row.innerHTML = `
+        <input type="color" value="${color || '#3B82F6'}" class="dropdown-color-input w-10 h-8 border-0 cursor-pointer rounded">
+        <input type="text" value="${label}" placeholder="Option label" class="dropdown-label-input flex-1 p-2 border border-gray-300 rounded text-sm">
+        <button type="button" class="text-red-500 hover:text-red-700 px-2" onclick="this.parentElement.remove()">✕</button>
+    `;
+    list.appendChild(row);
+}
+
+function renderDropdownOptions(dropdownOptions) {
+    const list = document.getElementById('dropdownOptionsList');
+    list.innerHTML = '';
+    (dropdownOptions || []).forEach(opt => {
+        addDropdownOptionRow(opt.label || opt, opt.color || '');
+    });
+}
+
+function getDropdownOptionsFromForm() {
+    const list = document.getElementById('dropdownOptionsList');
+    const rows = list.querySelectorAll('.flex');
+    const options = [];
+    rows.forEach(row => {
+        const color = row.querySelector('.dropdown-color-input').value;
+        const label = row.querySelector('.dropdown-label-input').value.trim();
+        if (label) {
+            options.push({ label, color });
+        }
+    });
+    return options;
+}
+
+// Initialize status, priority, and dropdown cell colors on page load
 function initStatusColors() {
     const statusSelects = document.querySelectorAll('.cell-status');
     const prioritySelects = document.querySelectorAll('.cell-priority');
-    console.log('initStatusColors: Found', statusSelects.length, 'status cells and', prioritySelects.length, 'priority cells');
+    const dropdownColoredSelects = document.querySelectorAll('.cell-dropdown-colored');
+    console.log('initStatusColors: Found', statusSelects.length, 'status,', prioritySelects.length, 'priority,', dropdownColoredSelects.length, 'colored dropdown cells');
     
     statusSelects.forEach(select => {
         updateStatusColor(select);
     });
     prioritySelects.forEach(select => {
         updatePriorityColor(select);
+    });
+    dropdownColoredSelects.forEach(select => {
+        updateDropdownColor(select);
     });
 }
 
@@ -1388,9 +1470,10 @@ function showColumnModal(tableId, columnId = null) {
     document.getElementById('columnId').value = columnId || '';
     document.getElementById('columnModalTitle').textContent = columnId ? 'Edit Column' : 'Add Column';
     
-    // Clear status and priority options lists
+    // Clear all options lists
     document.getElementById('statusOptionsList').innerHTML = '';
     document.getElementById('priorityOptionsList').innerHTML = '';
+    document.getElementById('dropdownOptionsList').innerHTML = '';
     
     if (columnId) {
         // Load existing column data
@@ -1401,8 +1484,11 @@ function showColumnModal(tableId, columnId = null) {
             document.getElementById('columnType').value = col.type;
             document.getElementById('columnWidth').value = col.width || 150;
             document.getElementById('columnExportVisible').checked = col.visible_in_export !== false;
-            if (col.options) {
-                document.getElementById('dropdownOptions').value = col.options.join('\\n');
+            if (col.dropdown_options && col.dropdown_options.length > 0) {
+                renderDropdownOptions(col.dropdown_options);
+            } else if (col.options) {
+                // Legacy: convert plain options to dropdown_options format
+                renderDropdownOptions(col.options.map(o => ({ label: o, color: '' })));
             }
             if (col.status_options && col.status_options.length > 0) {
                 renderStatusOptions(col.status_options);
@@ -1416,7 +1502,6 @@ function showColumnModal(tableId, columnId = null) {
         document.getElementById('columnType').value = 'text';
         document.getElementById('columnWidth').value = 150;
         document.getElementById('columnExportVisible').checked = true;
-        document.getElementById('dropdownOptions').value = '';
     }
     
     toggleDropdownOptions();
@@ -1440,6 +1525,13 @@ function toggleDropdownOptions() {
     
     if (type === 'dropdown') {
         dropdownGroup.classList.remove('hidden');
+        // Initialize with empty rows if none exist
+        if (!document.getElementById('dropdownOptionsList').children.length) {
+            // Add a few empty rows to start
+            addDropdownOptionRow('', '');
+            addDropdownOptionRow('', '');
+            addDropdownOptionRow('', '');
+        }
     } else if (type === 'status') {
         statusGroup.classList.remove('hidden');
         // Initialize with default status options if empty
@@ -1578,12 +1670,21 @@ async function saveColumn(event) {
     let options = null;
     let status_options = null;
     let priority_options = null;
+    let dropdown_options = null;
     
     if (type === 'dropdown') {
-        options = document.getElementById('dropdownOptions').value
-            .split('\n')
-            .map(o => o.trim())
-            .filter(o => o);
+        // Collect dropdown options with colors from the new UI
+        const dropdownOpts = getDropdownOptionsFromForm();
+        if (dropdownOpts.length > 0) {
+            // Check if ANY option has a non-default color
+            const hasColors = dropdownOpts.some(o => o.color && o.color !== '' && o.color !== '#000000');
+            if (hasColors) {
+                // Save as dropdown_options (with colors)
+                dropdown_options = dropdownOpts;
+            }
+            // Always save plain options list for backward compatibility
+            options = dropdownOpts.map(o => o.label);
+        }
     } else if (type === 'status') {
         status_options = getStatusOptionsFromForm();
     } else if (type === 'priority') {
@@ -1600,7 +1701,7 @@ async function saveColumn(event) {
         // Update existing column
         columns = columns.map(c => {
             if (c.id === columnId) {
-                return { ...c, header, type, width, visible_in_export: visibleInExport, options, status_options, priority_options };
+                return { ...c, header, type, width, visible_in_export: visibleInExport, options, status_options, priority_options, dropdown_options };
             }
             return c;
         });
@@ -1614,7 +1715,8 @@ async function saveColumn(event) {
             visible_in_export: visibleInExport,
             options,
             status_options,
-            priority_options
+            priority_options,
+            dropdown_options
         });
     }
     
