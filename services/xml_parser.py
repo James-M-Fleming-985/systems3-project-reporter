@@ -318,85 +318,59 @@ class MSProjectXMLParser:
             if outline_level <= 1:
                 continue
             
-            # Skip summary tasks EXCEPT if they might be milestones
-            # (Level 2 projects can be summary tasks but also milestones)
+            # Check if this is a summary task
             summary = task.find('Summary')
             is_summary = summary is not None and summary.text == '1'
             
-            # If it's a summary task, only skip if it's NOT a milestone
-            if is_summary:
-                # Check milestone indicators before skipping
-                is_milestone_flag = self._find_element(task, 'Milestone')
-                has_milestone_flag = (
-                    is_milestone_flag is not None and
-                    is_milestone_flag.text == '1'
-                )
-                
-                duration_elem = self._find_element(task, 'Duration')
-                has_zero_duration = False
-                if duration_elem is not None and duration_elem.text:
-                    has_zero_duration = (
-                        'PT0H0M0S' in duration_elem.text or
-                        duration_elem.text.startswith('PT0')
-                    )
-                
-                work_elem = self._find_element(task, 'Work')
-                has_zero_work = False
-                if work_elem is not None and work_elem.text:
-                    has_zero_work = (
-                        'PT0H0M0S' in work_elem.text or
-                        work_elem.text.startswith('PT0') or
-                        work_elem.text == '0'
-                    )
-                
-                # Skip summary task only if it's NOT a milestone
-                if not (has_milestone_flag or has_zero_duration or
-                        has_zero_work):
-                    continue
+            # Check milestone indicators
+            is_milestone_flag = self._find_element(task, 'Milestone')
+            has_milestone_flag = (
+                is_milestone_flag is not None and
+                is_milestone_flag.text == '1'
+            )
             
-            # Now check if this task is actually a milestone
-            # (For non-summary tasks, we need to verify milestone status)
-            if not is_summary:
-                is_milestone_flag = self._find_element(task, 'Milestone')
-                has_milestone_flag = (
-                    is_milestone_flag is not None and
-                    is_milestone_flag.text == '1'
+            duration_elem = self._find_element(task, 'Duration')
+            has_zero_duration = False
+            if duration_elem is not None and duration_elem.text:
+                has_zero_duration = (
+                    'PT0H0M0S' in duration_elem.text or
+                    duration_elem.text.startswith('PT0')
                 )
-                
-                duration_elem = self._find_element(task, 'Duration')
-                has_zero_duration = False
-                if duration_elem is not None and duration_elem.text:
-                    has_zero_duration = (
-                        'PT0H0M0S' in duration_elem.text or
-                        duration_elem.text.startswith('PT0')
-                    )
-                
-                work_elem = self._find_element(task, 'Work')
-                has_zero_work = False
-                if work_elem is not None and work_elem.text:
-                    has_zero_work = (
-                        'PT0H0M0S' in work_elem.text or
-                        work_elem.text.startswith('PT0') or
-                        work_elem.text == '0'
-                    )
-                
-                # Skip if not a milestone
-                if not (has_milestone_flag or has_zero_duration or
-                        has_zero_work):
-                    # Debug: Log skipped tasks at level 5+
-                    if outline_level >= 5:
-                        name_elem = self._find_element(task, 'Name')
-                        task_name = name_elem.text if name_elem is not None else 'Unknown'
-                        print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - "
-                              f"milestone_flag={has_milestone_flag}, zero_duration={has_zero_duration}, "
-                              f"zero_work={has_zero_work}")
-                    continue
             
-            # At this point, we know it's a milestone
-            # Debug: Log detected milestones at level 4+
+            work_elem = self._find_element(task, 'Work')
+            has_zero_work = False
+            if work_elem is not None and work_elem.text:
+                has_zero_work = (
+                    'PT0H0M0S' in work_elem.text or
+                    work_elem.text.startswith('PT0') or
+                    work_elem.text == '0'
+                )
+            
+            is_milestone = has_milestone_flag or has_zero_duration or has_zero_work
+            
+            # Include: milestones (any level) + summary tasks at level 2+ (for roadmap)
+            # ALSO include regular tasks at levels 2-4 for the roadmap view
+            # (e.g. "Project Place Holder" items that are project-level work items)
+            is_roadmap_level_task = (outline_level >= 2 and outline_level <= 4)
+            
+            if not is_milestone and not is_summary and not is_roadmap_level_task:
+                # Regular non-milestone, non-summary task at level 5+ — skip
+                name_elem = self._find_element(task, 'Name')
+                task_name = name_elem.text if name_elem is not None else 'Unknown'
+                print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - "
+                      f"not milestone, not summary, not roadmap level")
+                continue
+            
+            # At this point: milestone, summary, or roadmap-level task
             name_elem = self._find_element(task, 'Name')
             task_name = name_elem.text if name_elem is not None else 'Unknown'
-            print(f"DEBUG: DETECTED milestone at Level {outline_level}: '{task_name}'")
+            if is_milestone:
+                task_type = 'milestone'
+            elif is_summary:
+                task_type = 'summary'
+            else:
+                task_type = 'task'
+            print(f"DEBUG: DETECTED {task_type} at Level {outline_level}: '{task_name}'")
             
             milestone_data = {}
             
