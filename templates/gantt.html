@@ -301,6 +301,13 @@ function detectAvailableLevels() {
     // Find all levels that have parent names in ParentLevels
     const levelSet = new Set();
     
+    console.log('🔍 ganttData length:', ganttData.length);
+    if (ganttData.length > 0) {
+        console.log('🔍 First task keys:', Object.keys(ganttData[0]));
+        console.log('🔍 First task ParentLevels:', ganttData[0].ParentLevels);
+        console.log('🔍 First task full:', JSON.stringify(ganttData[0]).substring(0, 300));
+    }
+    
     ganttData.forEach(task => {
         const parentLevels = task.ParentLevels || {};
         Object.keys(parentLevels).forEach(level => {
