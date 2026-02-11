@@ -86,7 +86,7 @@ async def schedule_page(request: Request, project: str = None):
         return templates.TemplateResponse("select_project.html", {
             "request": request,
             "redirect_to": "/dashboard/schedule",
-            "build_version": BUILD_VERSION,
+            "build_version": get_build_version(),
             "user": get_user_from_request(request)
         })
     
