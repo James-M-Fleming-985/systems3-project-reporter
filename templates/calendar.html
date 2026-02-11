@@ -273,9 +273,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         calendarInstance.render();
         
         // Show calendar, hide loading
+        // NOTE: Must show container BEFORE render for correct sizing,
+        // but we render first then updateSize to handle the transition
         document.getElementById('calendarLoading').style.display = 'none';
         document.getElementById('calendarContainer').style.display = 'block';
         document.getElementById('calendarStats').style.display = 'grid';
+        
+        // Force recalculate after container is visible
+        calendarInstance.updateSize();
         
         updateStats();
         
