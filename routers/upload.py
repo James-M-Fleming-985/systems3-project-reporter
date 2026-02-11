@@ -453,6 +453,7 @@ async def upload_xml(
                         'completion_percentage': new_milestone.completion_percentage,  # XML
                         'notes': existing.notes,  # PRESERVE user edits
                         'parent_project': new_milestone.parent_project,  # XML
+                        'parent_levels': getattr(new_milestone, 'parent_levels', None),  # XML hierarchy
                         'resources': existing.resources,  # PRESERVE user edits
                         'project': new_project.project_code
                     }
@@ -468,6 +469,7 @@ async def upload_xml(
                         'completion_percentage': new_milestone.completion_percentage,
                         'notes': new_milestone.notes,
                         'parent_project': new_milestone.parent_project,
+                        'parent_levels': getattr(new_milestone, 'parent_levels', None),
                         'resources': new_milestone.resources,
                         'project': new_project.project_code
                     })
@@ -493,6 +495,7 @@ async def upload_xml(
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
                     'parent_project': m.parent_project,
+                    'parent_levels': getattr(m, 'parent_levels', None),
                     'resources': m.resources,
                     'project': new_project.project_code
                 })

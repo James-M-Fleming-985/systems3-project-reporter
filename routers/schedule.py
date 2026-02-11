@@ -13,6 +13,7 @@ import os
 import io
 import json
 import csv
+import yaml
 
 from repositories.schedule_repository import ScheduleRepository
 
@@ -63,6 +64,13 @@ class RowData(BaseModel):
     data: Dict[str, Any]
 
 
+class CopyTableRequest(BaseModel):
+    source_project: str
+    source_table_id: str
+    new_table_name: Optional[str] = None
+    include_data: bool = True
+
+
 def get_user_from_request(request: Request):
     """Get user from request state"""
     return getattr(request.state, 'user', None)
@@ -103,6 +111,48 @@ async def schedule_page(request: Request, project: str = None):
     response = templates.TemplateResponse("schedule.html", context)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
+
+
+# =============================================================================
+# Cross-Program Table Operations (must be before {project_name} routes)
+# =============================================================================
+
+@router.get("/api/schedule/all-programs/tables")
+async def get_all_programs_with_tables():
+    """
+    Get all programs that have schedule tables.
+    Used for "Copy from another program" feature.
+    
+    Returns:
+        List of programs with their tables (name and id only, no row data)
+    """
+    try:
+        programs_with_tables = []
+        
+        # Scan the schedules directory for all schedule files
+        if schedule_repo.storage_dir.exists():
+            for schedule_file in schedule_repo.storage_dir.glob("*_schedules.yaml"):
+                try:
+                    with open(schedule_file, 'r', encoding='utf-8') as f:
+                        data = yaml.safe_load(f) or {}
+                    
+                    tables = data.get('tables', [])
+                    if tables:  # Only include programs that have tables
+                        project_name = data.get('project_name', schedule_file.stem.replace('_schedules', ''))
+                        programs_with_tables.append({
+                            'project_name': project_name,
+                            'tables': [{'id': t['id'], 'name': t['name'], 'row_count': len(t.get('rows', []))} 
+                                      for t in tables]
+                        })
+                except Exception as e:
+                    logger.warning(f"Error reading schedule file {schedule_file}: {e}")
+                    continue
+        
+        return JSONResponse(content={"programs": programs_with_tables})
+        
+    except Exception as e:
+        logger.error(f"Error getting all programs with tables: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -550,3 +600,59 @@ async def import_schedule_file(
     except Exception as e:
         logger.error(f"Error importing file: {e}")
         raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+
+
+@router.post("/api/schedule/{project_name}/tables/copy")
+async def copy_table_from_program(project_name: str, request: CopyTableRequest):
+    """
+    Copy a table from another program to the current program.
+    
+    Args:
+        project_name: Target project to copy the table to
+        request.source_project: Source project name
+        request.source_table_id: ID of the table to copy
+        request.new_table_name: Optional new name for the copied table
+        request.include_data: Whether to include row data (default: True)
+    
+    Returns:
+        The newly created table
+    """
+    try:
+        # Get source table
+        source_table = schedule_repo.get_table(request.source_project, request.source_table_id)
+        if not source_table:
+            raise HTTPException(status_code=404, detail=f"Source table not found in {request.source_project}")
+        
+        # Prepare new table data
+        new_table_name = request.new_table_name or f"{source_table['name']} (Copy)"
+        
+        # Create new table with same columns
+        new_table = schedule_repo.create_table(project_name, new_table_name, source_table.get('columns', []))
+        
+        # Copy rows if requested
+        rows_copied = 0
+        if request.include_data and source_table.get('rows'):
+            for row in source_table['rows']:
+                # Copy row data (without the original row id)
+                row_data = {k: v for k, v in row.items() if k != 'id'}
+                schedule_repo.add_row(project_name, new_table['id'], row_data)
+                rows_copied += 1
+        
+        # Get the updated table with rows
+        final_table = schedule_repo.get_table(project_name, new_table['id'])
+        
+        logger.info(f"✅ Copied table '{source_table['name']}' from '{request.source_project}' to '{project_name}' "
+                   f"(columns: {len(source_table.get('columns', []))}, rows: {rows_copied})")
+        
+        return JSONResponse(content={
+            "success": True,
+            "table": final_table,
+            "source_table_name": source_table['name'],
+            "rows_copied": rows_copied
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error copying table: {e}")
+        raise HTTPException(status_code=500, detail=f"Copy failed: {str(e)}")

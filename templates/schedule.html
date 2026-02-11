@@ -538,20 +538,70 @@
 
 <!-- Create Table Modal -->
 <div class="modal-backdrop hidden" id="createTableModal">
-    <div class="modal">
-        <h3 class="text-xl font-semibold">Create New Schedule Table</h3>
-        <form onsubmit="createTable(event)">
-            <div class="form-group">
-                <label for="tableName">Table Name</label>
-                <input type="text" id="tableName" placeholder="e.g., Maintenance Schedule" required>
+    <div class="modal" style="max-width: 500px;">
+        <h3 class="text-xl font-semibold mb-4">Add Schedule Table</h3>
+        
+        <!-- Mode Toggle -->
+        <div class="flex gap-2 mb-4 p-1 bg-gray-100 rounded-lg">
+            <button type="button" id="modeNewBtn" 
+                    class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white shadow text-blue-600"
+                    onclick="setTableMode('new')">
+                Create New
+            </button>
+            <button type="button" id="modeCopyBtn"
+                    class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-gray-600 hover:bg-gray-50"
+                    onclick="setTableMode('copy')">
+                Copy from Program
+            </button>
+        </div>
+        
+        <form onsubmit="createOrCopyTable(event)">
+            <!-- New Table Mode -->
+            <div id="newTableSection">
+                <div class="form-group">
+                    <label for="tableName">Table Name</label>
+                    <input type="text" id="tableName" placeholder="e.g., Maintenance Schedule">
+                </div>
+                <p class="text-sm text-gray-500 mb-4">
+                    Default columns (Task, Status, Due Date, Owner, Notes) will be created. You can customize them later.
+                </p>
             </div>
-            <p class="text-sm text-gray-500 mb-4">
-                Default columns (Task, Status, Due Date, Owner, Notes) will be created. You can customize them later.
-            </p>
+            
+            <!-- Copy Table Mode -->
+            <div id="copyTableSection" class="hidden">
+                <div class="form-group">
+                    <label for="sourceProgram">Source Program</label>
+                    <select id="sourceProgram" class="w-full p-2 border border-gray-300 rounded" onchange="loadSourceTables()">
+                        <option value="">-- Select a program --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sourceTable">Select Table to Copy</label>
+                    <select id="sourceTable" class="w-full p-2 border border-gray-300 rounded" disabled>
+                        <option value="">-- Select source program first --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="copyTableName">New Table Name (optional)</label>
+                    <input type="text" id="copyTableName" placeholder="Leave blank to use original name + (Copy)">
+                </div>
+                
+                <div class="flex items-center gap-2 mb-4">
+                    <input type="checkbox" id="includeData" checked class="w-4 h-4 accent-blue-600">
+                    <label for="includeData" class="text-sm text-gray-700">Include row data</label>
+                </div>
+                
+                <div id="copyPreview" class="hidden p-3 bg-blue-50 border border-blue-200 rounded text-sm mb-4">
+                    <!-- Preview info will be shown here -->
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                         onclick="hideModal('createTableModal')">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <button type="submit" id="createTableBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                     Create Table
                 </button>
             </div>
@@ -933,16 +983,142 @@ function hideModal(id) {
     document.getElementById(id).classList.add('hidden');
 }
 
+// State for table creation mode
+let tableMode = 'new';
+let availablePrograms = [];
+
 function showCreateTableModal() {
+    // Reset form
     document.getElementById('tableName').value = '';
+    document.getElementById('copyTableName').value = '';
+    document.getElementById('sourceProgram').value = '';
+    document.getElementById('sourceTable').innerHTML = '<option value="">-- Select source program first --</option>';
+    document.getElementById('sourceTable').disabled = true;
+    document.getElementById('includeData').checked = true;
+    document.getElementById('copyPreview').classList.add('hidden');
+    
+    // Reset to 'new' mode
+    setTableMode('new');
+    
+    // Load available programs for copy feature
+    loadAvailablePrograms();
+    
     showModal('createTableModal');
 }
 
-// Create table
-async function createTable(event) {
+function setTableMode(mode) {
+    tableMode = mode;
+    
+    const newBtn = document.getElementById('modeNewBtn');
+    const copyBtn = document.getElementById('modeCopyBtn');
+    const newSection = document.getElementById('newTableSection');
+    const copySection = document.getElementById('copyTableSection');
+    const submitBtn = document.getElementById('createTableBtn');
+    
+    if (mode === 'new') {
+        newBtn.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white shadow text-blue-600';
+        copyBtn.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-gray-600 hover:bg-gray-50';
+        newSection.classList.remove('hidden');
+        copySection.classList.add('hidden');
+        submitBtn.textContent = 'Create Table';
+    } else {
+        copyBtn.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white shadow text-blue-600';
+        newBtn.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-gray-600 hover:bg-gray-50';
+        newSection.classList.add('hidden');
+        copySection.classList.remove('hidden');
+        submitBtn.textContent = 'Copy Table';
+    }
+}
+
+async function loadAvailablePrograms() {
+    try {
+        const response = await fetch('/dashboard/api/schedule/all-programs/tables');
+        const data = await response.json();
+        availablePrograms = data.programs || [];
+        
+        // Filter out current program
+        const filteredPrograms = availablePrograms.filter(p => p.project_name !== projectName);
+        
+        const select = document.getElementById('sourceProgram');
+        select.innerHTML = '<option value="">-- Select a program --</option>';
+        
+        if (filteredPrograms.length === 0) {
+            select.innerHTML = '<option value="">No other programs with tables found</option>';
+            return;
+        }
+        
+        filteredPrograms.forEach(program => {
+            const option = document.createElement('option');
+            option.value = program.project_name;
+            option.textContent = `${program.project_name} (${program.tables.length} table${program.tables.length !== 1 ? 's' : ''})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading programs:', error);
+    }
+}
+
+function loadSourceTables() {
+    const sourceProgramName = document.getElementById('sourceProgram').value;
+    const sourceTableSelect = document.getElementById('sourceTable');
+    const preview = document.getElementById('copyPreview');
+    
+    preview.classList.add('hidden');
+    
+    if (!sourceProgramName) {
+        sourceTableSelect.innerHTML = '<option value="">-- Select source program first --</option>';
+        sourceTableSelect.disabled = true;
+        return;
+    }
+    
+    const program = availablePrograms.find(p => p.project_name === sourceProgramName);
+    if (!program || !program.tables.length) {
+        sourceTableSelect.innerHTML = '<option value="">No tables found</option>';
+        sourceTableSelect.disabled = true;
+        return;
+    }
+    
+    sourceTableSelect.innerHTML = '<option value="">-- Select a table --</option>';
+    program.tables.forEach(table => {
+        const option = document.createElement('option');
+        option.value = table.id;
+        option.textContent = `${table.name} (${table.row_count} rows)`;
+        option.dataset.name = table.name;
+        option.dataset.rows = table.row_count;
+        sourceTableSelect.appendChild(option);
+    });
+    sourceTableSelect.disabled = false;
+    
+    // Add change handler for preview
+    sourceTableSelect.onchange = function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (this.value) {
+            preview.innerHTML = `<strong>📋 ${selectedOption.dataset.name}</strong><br>
+                <span class="text-gray-600">${selectedOption.dataset.rows} rows will be copied</span>`;
+            preview.classList.remove('hidden');
+        } else {
+            preview.classList.add('hidden');
+        }
+    };
+}
+
+// Create or copy table based on mode
+async function createOrCopyTable(event) {
     event.preventDefault();
+    
+    if (tableMode === 'new') {
+        await createNewTable();
+    } else {
+        await copyTableFromProgram();
+    }
+}
+
+async function createNewTable() {
     const name = document.getElementById('tableName').value.trim();
-    if (!name) return;
+    if (!name) {
+        alert('Please enter a table name');
+        return;
+    }
     
     try {
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables`, {
@@ -959,6 +1135,50 @@ async function createTable(event) {
     } catch (error) {
         console.error('Error creating table:', error);
         alert('Error creating table');
+    }
+}
+
+async function copyTableFromProgram() {
+    const sourceProject = document.getElementById('sourceProgram').value;
+    const sourceTableId = document.getElementById('sourceTable').value;
+    const newTableName = document.getElementById('copyTableName').value.trim();
+    const includeData = document.getElementById('includeData').checked;
+    
+    if (!sourceProject || !sourceTableId) {
+        alert('Please select a source program and table');
+        return;
+    }
+    
+    try {
+        const submitBtn = document.getElementById('createTableBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Copying...';
+        
+        const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/copy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source_project: sourceProject,
+                source_table_id: sourceTableId,
+                new_table_name: newTableName || null,
+                include_data: includeData
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert('Failed to copy table: ' + (error.detail || 'Unknown error'));
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Copy Table';
+        }
+    } catch (error) {
+        console.error('Error copying table:', error);
+        alert('Error copying table');
+        document.getElementById('createTableBtn').disabled = false;
+        document.getElementById('createTableBtn').textContent = 'Copy Table';
     }
 }
 
