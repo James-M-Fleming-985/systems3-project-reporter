@@ -112,6 +112,9 @@
                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}">
                         📊 Portfolio
                     </a>
+                    <a href="/calendar" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/calendar' in request.url.path %}bg-white/15{% endif %}">
+                        📅 Calendar
+                    </a>
                     
                     <!-- Divider -->
                     <span class="text-blue-400 mx-1">|</span>

@@ -386,6 +386,14 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️  Documents feature disabled: {e}")
 
+# Calendar router has: /calendar, /api/calendar/events
+try:
+    from routers import calendar
+    app.include_router(calendar.router, tags=["calendar"])
+    logger.info("✅ Calendar feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Calendar feature disabled: {e}")
+
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:
     from routers import powerpoint_reports

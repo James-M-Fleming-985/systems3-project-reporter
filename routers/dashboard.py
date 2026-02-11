@@ -8,7 +8,7 @@ single project scope - prevents data mixing between projects
 SECURITY: User data isolation - users only see their own projects.
 """
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import os
@@ -389,6 +389,168 @@ async def program_metrics(request: Request):
     
     return templates.TemplateResponse("metrics.html", context)
 
+
+@router.get("/api/metrics/analytics/{project_code}")
+async def get_metrics_analytics(request: Request, project_code: str):
+    """
+    API endpoint returning all available metric data for the analytics dashboard.
+    Returns milestones, risks, changes, schedule data, and custom metrics
+    for building draggable widgets (donuts, cards, charts).
+    """
+    from services.metrics_calculator import MetricsCalculator
+    from repositories.risk_repository import RiskRepository
+    from repositories.schedule_repository import ScheduleRepository
+    from repositories.custom_metrics_repository import CustomMetricsRepository
+    import json
+    
+    project = get_selected_project(request)
+    if not project:
+        return JSONResponse(content={"error": "No project selected"}, status_code=400)
+    
+    metrics_calculator = MetricsCalculator()
+    risk_repo = RiskRepository()
+    schedule_repo = ScheduleRepository(Path(DATA_DIR))
+    
+    # Core metrics
+    core_metrics = metrics_calculator.calculate_program_metrics([project])
+    
+    # Risk metrics
+    all_risks = list(getattr(project, 'risks', []))
+    import re as _re
+    clean_name = project.project_name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '').strip()
+    clean_name = _re.sub(r'-\d+$', '', clean_name).strip()
+    repo_risks = risk_repo.load_risks(clean_name)
+    if repo_risks:
+        all_risks.extend(repo_risks)
+    
+    risks_dicts = []
+    for r in all_risks:
+        if hasattr(r, 'dict'):
+            risks_dicts.append(r.dict())
+        elif isinstance(r, dict):
+            risks_dicts.append(r)
+    
+    risk_metrics = metrics_calculator.calculate_risk_metrics(risks_dicts) if risks_dicts else {
+        'risk_score': 0, 'risk_distribution': {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}, 'total_risks': 0
+    }
+    
+    # Milestone breakdowns
+    milestones = getattr(project, 'milestones', [])
+    milestone_by_parent = {}
+    milestone_by_status = {'COMPLETED': 0, 'IN_PROGRESS': 0, 'NOT_STARTED': 0}
+    milestone_timeline = []
+    
+    for m in milestones:
+        status = getattr(m, 'status', 'NOT_STARTED')
+        milestone_by_status[status] = milestone_by_status.get(status, 0) + 1
+        
+        parent = getattr(m, 'parent_project', '') or 'Ungrouped'
+        if parent not in milestone_by_parent:
+            milestone_by_parent[parent] = {'total': 0, 'completed': 0, 'in_progress': 0, 'not_started': 0}
+        milestone_by_parent[parent]['total'] += 1
+        if status == 'COMPLETED':
+            milestone_by_parent[parent]['completed'] += 1
+        elif status == 'IN_PROGRESS':
+            milestone_by_parent[parent]['in_progress'] += 1
+        else:
+            milestone_by_parent[parent]['not_started'] += 1
+        
+        milestone_timeline.append({
+            'name': getattr(m, 'name', ''),
+            'target_date': getattr(m, 'target_date', ''),
+            'start_date': getattr(m, 'start_date', ''),
+            'status': status,
+            'completion_pct': getattr(m, 'completion_percentage', 0) or 0,
+            'parent_project': parent
+        })
+    
+    # Changes data
+    changes = getattr(project, 'changes', [])
+    changes_list = []
+    for c in changes:
+        changes_list.append({
+            'change_id': getattr(c, 'change_id', ''),
+            'old_date': getattr(c, 'old_date', ''),
+            'new_date': getattr(c, 'new_date', ''),
+            'reason': getattr(c, 'reason', ''),
+            'impact': getattr(c, 'impact', '')
+        })
+    
+    # Schedule data
+    schedule_data = schedule_repo.get_schedules(project.project_name)
+    schedule_tables = schedule_data.get('tables', [])
+    schedule_summary = []
+    for table in schedule_tables:
+        cols = table.get('columns', [])
+        rows = table.get('rows', [])
+        status_col = next((c for c in cols if c.get('type') == 'dropdown'), None)
+        status_counts = {}
+        if status_col:
+            for row in rows:
+                val = row.get('data', {}).get(status_col.get('id'), 'Unknown')
+                status_counts[val] = status_counts.get(val, 0) + 1
+        schedule_summary.append({
+            'name': table.get('name', 'Table'),
+            'total_rows': len(rows),
+            'status_breakdown': status_counts
+        })
+    
+    # Custom metrics
+    try:
+        metrics_storage = DATA_DIR / "custom_metrics"
+        metrics_repo = CustomMetricsRepository(storage_dir=metrics_storage)
+        custom_metrics = metrics_repo.load_metrics(project.project_name)
+    except:
+        custom_metrics = []
+    
+    # Available metrics catalog (what users can pick from)
+    available_metrics = [
+        {'id': 'spi', 'name': 'Schedule Performance Index', 'type': 'card', 'category': 'Performance'},
+        {'id': 'completion_rate', 'name': 'Completion Rate', 'type': 'card', 'category': 'Performance'},
+        {'id': 'risk_score', 'name': 'Risk Score', 'type': 'card', 'category': 'Risks'},
+        {'id': 'total_milestones', 'name': 'Total Milestones', 'type': 'card', 'category': 'Milestones'},
+        {'id': 'total_risks', 'name': 'Total Risks', 'type': 'card', 'category': 'Risks'},
+        {'id': 'total_changes', 'name': 'Total Changes', 'type': 'card', 'category': 'Changes'},
+        {'id': 'milestone_health', 'name': 'Milestone Health', 'type': 'donut', 'category': 'Milestones'},
+        {'id': 'risk_distribution', 'name': 'Risk Distribution', 'type': 'bar', 'category': 'Risks'},
+        {'id': 'schedule_trend', 'name': 'Schedule Trend', 'type': 'line', 'category': 'Performance'},
+        {'id': 'milestone_by_parent', 'name': 'Milestones by Project Group', 'type': 'bar', 'category': 'Milestones'},
+        {'id': 'milestone_timeline', 'name': 'Milestone Timeline', 'type': 'timeline', 'category': 'Milestones'},
+        {'id': 'changes_over_time', 'name': 'Changes Over Time', 'type': 'line', 'category': 'Changes'},
+        {'id': 'completion_by_group', 'name': 'Completion by Project Group', 'type': 'stacked_bar', 'category': 'Milestones'},
+        {'id': 'schedule_tables', 'name': 'Schedule Tables Summary', 'type': 'table', 'category': 'Schedule'},
+    ]
+    
+    # Add custom metrics to catalog
+    for cm in custom_metrics:
+        available_metrics.append({
+            'id': f'custom_{cm.get("name", "")}',
+            'name': cm.get('name', 'Custom Metric'),
+            'type': 'card',
+            'category': 'Custom Metrics'
+        })
+        if cm.get('history') and len(cm['history']) > 1:
+            available_metrics.append({
+                'id': f'custom_trend_{cm.get("name", "")}',
+                'name': f'{cm.get("name", "")} Trend',
+                'type': 'line',
+                'category': 'Custom Metrics'
+            })
+    
+    return JSONResponse(content={
+        "program": project.project_name,
+        "programCode": project.project_code,
+        "core_metrics": core_metrics,
+        "risk_metrics": risk_metrics,
+        "milestone_by_status": milestone_by_status,
+        "milestone_by_parent": milestone_by_parent,
+        "milestone_timeline": milestone_timeline,
+        "changes": changes_list,
+        "schedule_summary": schedule_summary,
+        "custom_metrics": custom_metrics,
+        "available_metrics": available_metrics,
+        "risks": risks_dicts[:50],  # Limit for payload size
+    })
 
 
 @router.get("/risks", response_class=HTMLResponse)

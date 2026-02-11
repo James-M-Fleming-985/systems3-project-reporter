@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - Systems³ Project Reporter{% endblock %}
+
+{% block extra_head %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+<style>
+    /* Calendar Styling */
+    .fc {
+        font-family: inherit;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.4rem !important;
+        font-weight: 700;
+        color: #1F2937;
+    }
+    .fc .fc-button {
+        background-color: #3B82F6 !important;
+        border-color: #3B82F6 !important;
+        font-size: 0.85rem !important;
+        padding: 0.4rem 0.8rem !important;
+        border-radius: 6px !important;
+    }
+    .fc .fc-button:hover {
+        background-color: #2563EB !important;
+        border-color: #2563EB !important;
+    }
+    .fc .fc-button-active {
+        background-color: #1D4ED8 !important;
+        border-color: #1D4ED8 !important;
+    }
+    .fc .fc-daygrid-day-number {
+        font-weight: 600;
+        color: #374151;
+    }
+    .fc .fc-daygrid-day.fc-day-today {
+        background-color: #EFF6FF !important;
+    }
+    .fc .fc-event {
+        border-radius: 4px !important;
+        padding: 2px 4px !important;
+        font-size: 0.78rem !important;
+        cursor: pointer;
+    }
+    .fc .fc-event:hover {
+        filter: brightness(0.9);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .fc .fc-daygrid-more-link {
+        color: #3B82F6 !important;
+        font-weight: 600;
+    }
+    /* Legend styling */
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    /* Modal animation */
+    .event-modal {
+        animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    /* Status badges */
+    .status-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-completed { background: #D1FAE5; color: #065F46; }
+    .status-in-progress { background: #FEF3C7; color: #92400E; }
+    .status-not-started { background: #F3F4F6; color: #374151; }
+    .status-overdue { background: #FEE2E2; color: #991B1B; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">📅 Calendar</h2>
+    <p class="text-gray-600">All program milestones, actions, and deadlines across all programs</p>
+</div>
+
+<!-- Filters & Legend -->
+<div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- Filters -->
+        <div class="flex flex-wrap items-center gap-3">
+            <label class="text-sm font-semibold text-gray-600">Filter:</label>
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input type="checkbox" id="filterMilestones" checked class="rounded text-blue-600 focus:ring-blue-500">
+                Milestones
+            </label>
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input type="checkbox" id="filterChanges" checked class="rounded text-yellow-600 focus:ring-yellow-500">
+                Changes
+            </label>
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input type="checkbox" id="filterSchedule" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                Schedule Items
+            </label>
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input type="checkbox" id="filterMetrics" checked class="rounded text-purple-600 focus:ring-purple-500">
+                Metric Targets
+            </label>
+            
+            <!-- Program filter -->
+            <span class="text-gray-300 mx-1">|</span>
+            <label class="text-sm font-semibold text-gray-600">Program:</label>
+            <select id="programFilter" class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Programs</option>
+            </select>
+        </div>
+        
+        <!-- Legend -->
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div> In Progress</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22C55E"></div> Completed</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#9CA3AF"></div> Not Started</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div> Overdue</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div> Change</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#6366F1"></div> Schedule</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div> Metric Target</div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="calendarLoading" class="bg-white rounded-lg shadow p-12 text-center mb-6">
+    <div class="inline-block animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mr-3"></div>
+    <span class="text-gray-600 text-lg">Loading calendar events from all programs...</span>
+</div>
+
+<!-- Calendar Container -->
+<div class="bg-white rounded-lg shadow p-4" id="calendarContainer" style="display: none;">
+    <div id="calendar"></div>
+</div>
+
+<!-- Summary Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6" id="calendarStats" style="display: none;">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-blue-600" id="statMilestones">0</p>
+        <p class="text-sm text-gray-500">Milestones</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-yellow-600" id="statChanges">0</p>
+        <p class="text-sm text-gray-500">Changes</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-indigo-600" id="statSchedule">0</p>
+        <p class="text-sm text-gray-500">Schedule Items</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-red-600" id="statOverdue">0</p>
+        <p class="text-sm text-gray-500">Overdue</p>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="event-modal relative top-10 mx-auto p-0 border w-[550px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]">
+        <!-- Modal Header -->
+        <div id="eventModalHeader" class="px-6 py-4 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 mr-4">
+                    <p class="text-xs uppercase tracking-wider opacity-80" id="eventModalType">Milestone</p>
+                    <h3 class="text-lg font-bold mt-1" id="eventModalTitle">Event Title</h3>
+                </div>
+                <button id="closeEventModal" class="text-white/80 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="px-6 py-5 overflow-y-auto" style="max-height: 60vh;">
+            <div id="eventModalBody" class="space-y-4">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
+            <span class="text-xs text-gray-400" id="eventModalProgram">Program Name</span>
+            <button id="closeEventModalBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<script>
+let calendarInstance = null;
+let allEvents = [];
+let filteredEvents = [];
+
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('📅 Calendar: Initializing...');
+    
+    try {
+        // Fetch events from API
+        const resp = await fetch('/api/calendar/events');
+        const data = await resp.json();
+        allEvents = data.events || [];
+        
+        console.log(`📅 Calendar: Loaded ${allEvents.length} events`);
+        
+        // Populate program filter
+        const programs = [...new Set(allEvents.map(e => e.extendedProps?.program).filter(Boolean))];
+        const programSelect = document.getElementById('programFilter');
+        programs.sort().forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p.length > 40 ? p.substring(0, 37) + '...' : p;
+            programSelect.appendChild(opt);
+        });
+        
+        // Apply initial filters
+        applyFilters();
+        
+        // Initialize FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        calendarInstance = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listMonth'
+            },
+            events: filteredEvents,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                showEventModal(info.event);
+            },
+            eventDidMount: function(info) {
+                // Add tooltip
+                info.el.title = `${info.event.title}\n${info.event.extendedProps.program || ''}`;
+            },
+            height: 'auto',
+            dayMaxEvents: 4,
+            navLinks: true,
+            nowIndicator: true,
+            weekNumbers: false,
+            fixedWeekCount: false,
+            eventDisplay: 'block',
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: 'short'
+            }
+        });
+        
+        calendarInstance.render();
+        
+        // Show calendar, hide loading
+        document.getElementById('calendarLoading').style.display = 'none';
+        document.getElementById('calendarContainer').style.display = 'block';
+        document.getElementById('calendarStats').style.display = 'grid';
+        
+        updateStats();
+        
+    } catch (error) {
+        console.error('📅 Calendar error:', error);
+        document.getElementById('calendarLoading').innerHTML = `
+            <div class="text-red-500">
+                <p class="text-lg font-bold mb-2">Error loading calendar</p>
+                <p class="text-sm">${error.message}</p>
+            </div>
+        `;
+    }
+    
+    // Filter event listeners
+    document.getElementById('filterMilestones').addEventListener('change', refreshCalendar);
+    document.getElementById('filterChanges').addEventListener('change', refreshCalendar);
+    document.getElementById('filterSchedule').addEventListener('change', refreshCalendar);
+    document.getElementById('filterMetrics').addEventListener('change', refreshCalendar);
+    document.getElementById('programFilter').addEventListener('change', refreshCalendar);
+    
+    // Modal close handlers
+    document.getElementById('closeEventModal').addEventListener('click', closeEventModal);
+    document.getElementById('closeEventModalBtn').addEventListener('click', closeEventModal);
+    document.getElementById('eventModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEventModal();
+    });
+});
+
+function applyFilters() {
+    const showMilestones = document.getElementById('filterMilestones').checked;
+    const showChanges = document.getElementById('filterChanges').checked;
+    const showSchedule = document.getElementById('filterSchedule').checked;
+    const showMetrics = document.getElementById('filterMetrics').checked;
+    const programFilter = document.getElementById('programFilter').value;
+    
+    filteredEvents = allEvents.filter(e => {
+        const type = e.extendedProps?.type;
+        const program = e.extendedProps?.program;
+        
+        // Type filter
+        if (type === 'milestone' && !showMilestones) return false;
+        if (type === 'change' && !showChanges) return false;
+        if (type === 'schedule' && !showSchedule) return false;
+        if (type === 'metric_target' && !showMetrics) return false;
+        
+        // Program filter
+        if (programFilter !== 'all' && program !== programFilter) return false;
+        
+        return true;
+    });
+}
+
+function refreshCalendar() {
+    applyFilters();
+    
+    if (calendarInstance) {
+        calendarInstance.removeAllEvents();
+        calendarInstance.addEventSource(filteredEvents);
+    }
+    
+    updateStats();
+}
+
+function updateStats() {
+    const milestones = filteredEvents.filter(e => e.extendedProps?.type === 'milestone').length;
+    const changes = filteredEvents.filter(e => e.extendedProps?.type === 'change').length;
+    const schedule = filteredEvents.filter(e => e.extendedProps?.type === 'schedule').length;
+    const overdue = filteredEvents.filter(e => {
+        const ep = e.extendedProps;
+        if (ep?.type === 'milestone' && ep?.status !== 'COMPLETED') {
+            try {
+                return new Date(ep.targetDate) < new Date();
+            } catch (err) { return false; }
+        }
+        return false;
+    }).length;
+    
+    document.getElementById('statMilestones').textContent = milestones;
+    document.getElementById('statChanges').textContent = changes;
+    document.getElementById('statSchedule').textContent = schedule;
+    document.getElementById('statOverdue').textContent = overdue;
+}
+
+function showEventModal(event) {
+    const modal = document.getElementById('eventModal');
+    const ep = event.extendedProps || {};
+    const type = ep.type || 'unknown';
+    
+    // Set header color based on type
+    const headerColors = {
+        'milestone': event.backgroundColor || '#3B82F6',
+        'change': '#F59E0B',
+        'schedule': '#6366F1',
+        'metric_target': '#8B5CF6'
+    };
+    document.getElementById('eventModalHeader').style.backgroundColor = headerColors[type] || '#3B82F6';
+    
+    // Set type label
+    const typeLabels = {
+        'milestone': '📌 Milestone',
+        'change': '📋 Schedule Change',
+        'schedule': '📅 Schedule Item',
+        'metric_target': '🎯 Metric Target'
+    };
+    document.getElementById('eventModalType').textContent = typeLabels[type] || type;
+    
+    // Set title
+    document.getElementById('eventModalTitle').textContent = event.title.replace(/^[📋📅🎯]\s*/, '');
+    
+    // Set program
+    document.getElementById('eventModalProgram').textContent = ep.program || '';
+    
+    // Build body content based on type
+    let bodyHtml = '';
+    
+    if (type === 'milestone') {
+        const status = ep.status || 'NOT_STARTED';
+        const statusClass = status === 'COMPLETED' ? 'status-completed' : 
+                           status === 'IN_PROGRESS' ? 'status-in-progress' : 'status-not-started';
+        
+        // Check if overdue
+        let isOverdue = false;
+        try {
+            if (status !== 'COMPLETED' && new Date(ep.targetDate) < new Date()) isOverdue = true;
+        } catch(e) {}
+        
+        bodyHtml = `
+            <div class="flex items-center gap-2 mb-3">
+                <span class="status-badge ${isOverdue ? 'status-overdue' : statusClass}">${isOverdue ? 'OVERDUE' : status.replace('_', ' ')}</span>
+                ${ep.completionPct ? `<span class="text-sm text-gray-500">${ep.completionPct}% complete</span>` : ''}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                ${ep.startDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Start Date</p><p class="text-sm font-medium">${formatDate(ep.startDate)}</p></div>` : ''}
+                <div><p class="text-xs text-gray-500 uppercase font-semibold">Target Date</p><p class="text-sm font-medium">${formatDate(ep.targetDate)}</p></div>
+                ${ep.completionDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Completed</p><p class="text-sm font-medium text-green-600">${formatDate(ep.completionDate)}</p></div>` : ''}
+            </div>
+            
+            ${ep.parentProject ? `
+                <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-blue-600 uppercase font-semibold">Project Group</p>
+                    <p class="text-sm font-medium text-blue-800">${ep.parentProject}</p>
+                </div>
+            ` : ''}
+            
+            ${ep.resources ? `
+                <div class="mt-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Resources</p>
+                    <p class="text-sm">${ep.resources}</p>
+                </div>
+            ` : ''}
+            
+            ${ep.notes ? `
+                <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Notes</p>
+                    <p class="text-sm text-gray-700">${ep.notes}</p>
+                </div>
+            ` : ''}
+        `;
+    } else if (type === 'change') {
+        bodyHtml = `
+            <div class="p-3 bg-yellow-50 rounded-lg mb-3">
+                <p class="text-xs text-yellow-700 uppercase font-semibold mb-2">Date Change</p>
+                <div class="flex items-center gap-3">
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">From</p>
+                        <p class="text-sm font-bold text-red-600 line-through">${formatDate(ep.oldDate)}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">To</p>
+                        <p class="text-sm font-bold text-green-600">${formatDate(ep.newDate)}</p>
+                    </div>
+                </div>
+            </div>
+            
+            ${ep.reason ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Reason</p>
+                    <p class="text-sm text-gray-700">${ep.reason}</p>
+                </div>
+            ` : ''}
+            
+            ${ep.impact ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Impact / Contingency</p>
+                    <p class="text-sm text-gray-700">${ep.impact}</p>
+                </div>
+            ` : ''}
+        `;
+    } else if (type === 'schedule') {
+        bodyHtml = `
+            ${ep.tableName ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Schedule Table</p>
+                    <p class="text-sm font-medium">${ep.tableName}</p>
+                </div>
+            ` : ''}
+            
+            ${ep.status ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">Status</p>
+                    <span class="status-badge ${ep.status.toLowerCase().includes('complete') ? 'status-completed' : 
+                        ep.status.toLowerCase().includes('progress') ? 'status-in-progress' : 'status-not-started'}">${ep.status}</span>
+                </div>
+            ` : ''}
+            
+            ${ep.dateField ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-500 uppercase font-semibold">${ep.dateField}</p>
+                    <p class="text-sm font-medium">${formatDate(event.startStr)}</p>
+                </div>
+            ` : ''}
+            
+            ${ep.allData ? `
+                <div class="mt-3 p-3 bg-indigo-50 rounded-lg">
+                    <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
+                    <div class="space-y-1">
+                        ${Object.entries(ep.allData).map(([k,v]) => `
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">${k}</span>
+                                <span class="font-medium text-gray-800">${v}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    } else if (type === 'metric_target') {
+        bodyHtml = `
+            <div class="text-center py-4">
+                <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Target Date</p>
+                <p class="text-lg font-bold">${formatDate(event.startStr)}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg">
+                <div class="text-center">
+                    <p class="text-xs text-purple-600 uppercase font-semibold">Current</p>
+                    <p class="text-2xl font-bold text-gray-900">${ep.currentValue}${ep.unit ? ' ' + ep.unit : ''}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-purple-600 uppercase font-semibold">Target</p>
+                    <p class="text-2xl font-bold text-purple-700">${ep.targetValue}${ep.unit ? ' ' + ep.unit : ''}</p>
+                </div>
+            </div>
+            
+            ${ep.currentValue && ep.targetValue ? `
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Progress</span>
+                        <span>${Math.min(100, Math.round((ep.currentValue / ep.targetValue) * 100))}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-purple-600 h-2.5 rounded-full" style="width: ${Math.min(100, Math.round((ep.currentValue / ep.targetValue) * 100))}%"></div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    }
+    
+    document.getElementById('eventModalBody').innerHTML = bodyHtml;
+    modal.classList.remove('hidden');
+}
+
+function closeEventModal() {
+    document.getElementById('eventModal').classList.add('hidden');
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) {
+        return dateStr;
+    }
+}
+</script>
+{% endblock %}

@@ -127,6 +127,95 @@
         <div id="scheduleTrendChart" style="width:100%; height:400px;"></div>
     </div>
 
+    <!-- ============================================================= -->
+    <!-- Analytics Dashboard - Draggable Widgets -->
+    <!-- ============================================================= -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">📊 Analytics Dashboard</h3>
+                <p class="text-sm text-gray-500">Select metrics and arrange widgets. Drag to reorder.</p>
+            </div>
+            <div class="flex space-x-2">
+                <button id="addWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Add Widget
+                </button>
+                <button id="resetLayoutBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
+                    🔄 Reset Layout
+                </button>
+            </div>
+        </div>
+
+        <!-- Widget Grid - Drag & Drop enabled -->
+        <div id="widgetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[100px]">
+            <!-- Widgets will be dynamically inserted here -->
+            <div id="widgetPlaceholder" class="col-span-full flex items-center justify-center py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <p>Click <strong>Add Widget</strong> to build your analytics dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Widget Modal -->
+    <div id="addWidgetModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-6 border w-[600px] max-w-[95vw] shadow-lg rounded-lg bg-white max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Add Metric Widget</h3>
+                <button id="closeWidgetModalBtn" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Select a metric and choose how to display it.</p>
+            
+            <!-- Category Filter -->
+            <div class="flex flex-wrap gap-2 mb-4" id="categoryFilters">
+                <button class="widget-cat-filter active px-3 py-1 rounded-full text-sm bg-blue-600 text-white" data-cat="all">All</button>
+            </div>
+
+            <!-- Metric Selection List -->
+            <div id="metricSelectionList" class="space-y-2 mb-4 max-h-[40vh] overflow-y-auto">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Widget Type Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Display Type</label>
+                <div id="widgetTypeSelector" class="grid grid-cols-4 gap-2">
+                    <button class="widget-type-btn active px-3 py-2 border-2 border-blue-500 bg-blue-50 rounded text-sm text-center" data-type="card">
+                        <div class="text-2xl mb-1">🔢</div>Card
+                    </button>
+                    <button class="widget-type-btn px-3 py-2 border-2 border-gray-200 rounded text-sm text-center hover:border-blue-300" data-type="donut">
+                        <div class="text-2xl mb-1">🍩</div>Donut
+                    </button>
+                    <button class="widget-type-btn px-3 py-2 border-2 border-gray-200 rounded text-sm text-center hover:border-blue-300" data-type="bar">
+                        <div class="text-2xl mb-1">📊</div>Bar Chart
+                    </button>
+                    <button class="widget-type-btn px-3 py-2 border-2 border-gray-200 rounded text-sm text-center hover:border-blue-300" data-type="line">
+                        <div class="text-2xl mb-1">📈</div>Line Chart
+                    </button>
+                </div>
+            </div>
+
+            <!-- Widget Size -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Widget Size</label>
+                <div class="flex gap-2">
+                    <button class="widget-size-btn active px-4 py-2 border-2 border-blue-500 bg-blue-50 rounded text-sm" data-size="small">Small (1 col)</button>
+                    <button class="widget-size-btn px-4 py-2 border-2 border-gray-200 rounded text-sm hover:border-blue-300" data-size="medium">Medium (2 col)</button>
+                    <button class="widget-size-btn px-4 py-2 border-2 border-gray-200 rounded text-sm hover:border-blue-300" data-size="large">Large (3 col)</button>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="cancelWidgetBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">Cancel</button>
+                <button id="confirmAddWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Add Widget</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Metrics Table -->
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-4">
@@ -2210,6 +2299,485 @@ async function importMetricsData(data, metricNameCol, dateCol, valueCol) {
     
     alert(`Import complete!\n\nMetrics imported: ${importCount}\nData points added: ${updateCount}`);
 }
+
+// ============================================================
+// Analytics Dashboard - Draggable Widget System
+// ============================================================
+let analyticsData = null;
+let dashboardWidgets = [];
+let selectedMetricId = null;
+let selectedWidgetType = 'card';
+let selectedWidgetSize = 'small';
+let draggedWidget = null;
+
+const WIDGET_STORAGE_KEY = `analytics_widgets_${projectCode}`;
+
+// Load analytics data from API
+async function loadAnalyticsData() {
+    try {
+        // Pass project query param so middleware can resolve the selected project
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectParam = urlParams.get('project') || projectCode;
+        const resp = await fetch(`/dashboard/api/metrics/analytics/${projectCode}?project=${encodeURIComponent(projectParam)}`);
+        if (resp.ok) {
+            analyticsData = await resp.json();
+            console.log('📊 Analytics data loaded:', analyticsData);
+            return true;
+        }
+    } catch (e) {
+        console.warn('Failed to load analytics data:', e);
+    }
+    return false;
+}
+
+// Load saved widget layout
+function loadWidgetLayout() {
+    try {
+        const saved = localStorage.getItem(WIDGET_STORAGE_KEY);
+        if (saved) {
+            dashboardWidgets = JSON.parse(saved);
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+function saveWidgetLayout() {
+    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(dashboardWidgets));
+}
+
+// Get metric display value
+function getMetricValue(metricId) {
+    if (!analyticsData) return {value: '-', label: '', detail: ''};
+    
+    const core = analyticsData.core_metrics || {};
+    const risk = analyticsData.risk_metrics || {};
+    const byStatus = analyticsData.milestone_by_status || {};
+    const byParent = analyticsData.milestone_by_parent || {};
+    
+    switch (metricId) {
+        case 'spi': return {value: core.spi || '1.00', label: 'Schedule Performance Index', detail: 'SPI (Target: ≥1.0)'};
+        case 'completion_rate': return {value: (core.completion_rate || 0) + '%', label: 'Completion Rate', detail: 'Milestones completed'};
+        case 'risk_score': return {value: risk.risk_score || 0, label: 'Risk Score', detail: `${risk.total_risks || 0} total risks`};
+        case 'total_milestones': return {value: core.total_milestones || 0, label: 'Total Milestones', detail: `${byStatus.COMPLETED || 0} completed`};
+        case 'total_risks': return {value: risk.total_risks || 0, label: 'Total Risks', detail: `${risk.open_risks || 0} open`};
+        case 'total_changes': return {value: (analyticsData.changes || []).length, label: 'Total Changes', detail: 'Schedule changes'};
+        default:
+            // Check custom metrics
+            if (metricId.startsWith('custom_') && !metricId.startsWith('custom_trend_')) {
+                const name = metricId.replace('custom_', '');
+                const cm = (analyticsData.custom_metrics || []).find(m => m.name === name);
+                if (cm) return {value: cm.value + (cm.unit ? ' ' + cm.unit : ''), label: cm.name, detail: cm.target ? `Target: ${cm.target}` : ''};
+            }
+            return {value: '-', label: metricId, detail: ''};
+    }
+}
+
+// Get chart data for a metric
+function getChartData(metricId) {
+    if (!analyticsData) return null;
+    
+    const core = analyticsData.core_metrics || {};
+    const risk = analyticsData.risk_metrics || {};
+    const byParent = analyticsData.milestone_by_parent || {};
+    
+    switch (metricId) {
+        case 'milestone_health': {
+            const h = core.milestone_health || {};
+            return {
+                type: 'pie',
+                data: [{
+                    values: [h.completed||0, h.in_progress||0, h.not_started||0, h.late||0],
+                    labels: ['Completed', 'In Progress', 'Not Started', 'Late'],
+                    type: 'pie', hole: 0.5,
+                    marker: {colors: ['#22c55e', '#eab308', '#9ca3af', '#ef4444']}
+                }],
+                layout: {showlegend: true, margin: {t:10,b:10,l:10,r:10}}
+            };
+        }
+        case 'risk_distribution': {
+            const rd = risk.risk_distribution || {};
+            return {
+                data: [{
+                    x: ['Critical', 'High', 'Medium', 'Low'],
+                    y: [rd.critical||0, rd.high||0, rd.medium||0, rd.low||0],
+                    type: 'bar',
+                    marker: {color: ['#7f1d1d', '#ef4444', '#f59e0b', '#10b981']}
+                }],
+                layout: {margin: {t:10,b:40,l:40,r:10}, yaxis: {title: 'Count'}}
+            };
+        }
+        case 'schedule_trend': {
+            const st = core.schedule_trend || {};
+            if (!st.periods || st.periods.length === 0) return null;
+            return {
+                data: [{
+                    x: st.periods, y: st.spi_values,
+                    type: 'scatter', mode: 'lines+markers',
+                    line: {color: '#3b82f6', width: 3}, marker: {size: 8}
+                }],
+                layout: {margin: {t:10,b:40,l:50,r:10}, yaxis: {title: 'SPI'}}
+            };
+        }
+        case 'milestone_by_parent': {
+            const parents = Object.keys(byParent);
+            const completed = parents.map(p => byParent[p].completed || 0);
+            const inProgress = parents.map(p => byParent[p].in_progress || 0);
+            const notStarted = parents.map(p => byParent[p].not_started || 0);
+            // Truncate long labels
+            const labels = parents.map(p => p.length > 30 ? p.substring(0, 27) + '...' : p);
+            return {
+                data: [
+                    {x: labels, y: completed, name: 'Completed', type: 'bar', marker: {color: '#22c55e'}},
+                    {x: labels, y: inProgress, name: 'In Progress', type: 'bar', marker: {color: '#eab308'}},
+                    {x: labels, y: notStarted, name: 'Not Started', type: 'bar', marker: {color: '#9ca3af'}}
+                ],
+                layout: {barmode: 'stack', margin: {t:10,b:80,l:40,r:10}, xaxis: {tickangle: -30}}
+            };
+        }
+        case 'completion_by_group': {
+            const parents2 = Object.keys(byParent);
+            const labels2 = parents2.map(p => p.length > 25 ? p.substring(0, 22) + '...' : p);
+            const pcts = parents2.map(p => {
+                const g = byParent[p];
+                return g.total > 0 ? Math.round((g.completed / g.total) * 100) : 0;
+            });
+            return {
+                data: [{
+                    x: labels2, y: pcts, type: 'bar',
+                    marker: {color: pcts.map(v => v >= 75 ? '#22c55e' : v >= 50 ? '#eab308' : '#ef4444')}
+                }],
+                layout: {margin: {t:10,b:80,l:40,r:10}, yaxis: {title: '% Complete', range: [0, 100]}, xaxis: {tickangle: -30}}
+            };
+        }
+        case 'changes_over_time': {
+            const changes = analyticsData.changes || [];
+            const months = {};
+            changes.forEach(c => {
+                const d = c.new_date || c.old_date || '';
+                const month = d.substring(0, 7);
+                if (month) months[month] = (months[month] || 0) + 1;
+            });
+            const sortedMonths = Object.keys(months).sort();
+            return {
+                data: [{
+                    x: sortedMonths, y: sortedMonths.map(m => months[m]),
+                    type: 'scatter', mode: 'lines+markers',
+                    line: {color: '#f59e0b', width: 3}, marker: {size: 8}
+                }],
+                layout: {margin: {t:10,b:40,l:40,r:10}, yaxis: {title: 'Changes'}}
+            };
+        }
+        default:
+            // Custom metric trends
+            if (metricId.startsWith('custom_trend_')) {
+                const name = metricId.replace('custom_trend_', '');
+                const cm = (analyticsData.custom_metrics || []).find(m => m.name === name);
+                if (cm && cm.history && cm.history.length > 1) {
+                    const sorted = [...cm.history].sort((a,b) => new Date(a.date) - new Date(b.date));
+                    return {
+                        data: [{
+                            x: sorted.map(h => h.date), y: sorted.map(h => h.value),
+                            type: 'scatter', mode: 'lines+markers',
+                            line: {color: '#8b5cf6', width: 3}, marker: {size: 8}
+                        }],
+                        layout: {margin: {t:10,b:40,l:50,r:10}, yaxis: {title: cm.unit || 'Value'}}
+                    };
+                }
+            }
+            return null;
+    }
+}
+
+// Render a single widget
+function renderWidget(widget, container) {
+    const el = document.createElement('div');
+    el.id = `widget-${widget.id}`;
+    el.dataset.widgetId = widget.id;
+    el.className = `widget-item bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${
+        widget.size === 'large' ? 'lg:col-span-3 md:col-span-2' : 
+        widget.size === 'medium' ? 'md:col-span-2' : ''
+    }`;
+    el.draggable = true;
+    
+    const chartId = `chart-${widget.id}`;
+    const metricVal = getMetricValue(widget.metricId);
+    
+    el.innerHTML = `
+        <div class="widget-header flex items-center justify-between px-3 py-2 bg-gray-50 border-b cursor-move select-none">
+            <span class="text-sm font-semibold text-gray-700 truncate" title="${metricVal.label}">
+                <span class="mr-1">≡</span> ${metricVal.label}
+            </span>
+            <button class="widget-remove text-gray-400 hover:text-red-500 transition" data-id="${widget.id}" title="Remove widget">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="widget-body p-4">
+            ${widget.displayType === 'card' ? `
+                <div class="text-center py-4">
+                    <p class="text-4xl font-bold text-gray-900">${metricVal.value}</p>
+                    <p class="text-sm text-gray-500 mt-2">${metricVal.detail}</p>
+                </div>
+            ` : `
+                <div id="${chartId}" style="width:100%; height:${widget.size === 'small' ? '200px' : '280px'};"></div>
+            `}
+        </div>
+    `;
+    
+    container.appendChild(el);
+    
+    // Render chart if needed
+    if (widget.displayType !== 'card') {
+        const chartData = getChartData(widget.metricId);
+        if (chartData) {
+            setTimeout(() => {
+                try {
+                    Plotly.newPlot(chartId, chartData.data, chartData.layout || {}, {
+                        responsive: true, displayModeBar: false
+                    });
+                } catch (e) {
+                    console.warn('Chart render error:', e);
+                }
+            }, 100);
+        } else {
+            document.getElementById(chartId).innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">No data available</div>';
+        }
+    }
+    
+    // Remove button handler
+    el.querySelector('.widget-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeWidget(widget.id);
+    });
+    
+    // Drag events
+    el.addEventListener('dragstart', (e) => {
+        draggedWidget = widget.id;
+        el.classList.add('opacity-50');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+        el.classList.remove('opacity-50');
+        draggedWidget = null;
+        document.querySelectorAll('.widget-item').forEach(w => w.classList.remove('border-blue-500', 'border-2'));
+    });
+    el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        el.classList.add('border-blue-500', 'border-2');
+    });
+    el.addEventListener('dragleave', () => {
+        el.classList.remove('border-blue-500', 'border-2');
+    });
+    el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.classList.remove('border-blue-500', 'border-2');
+        if (draggedWidget && draggedWidget !== widget.id) {
+            reorderWidgets(draggedWidget, widget.id);
+        }
+    });
+}
+
+function reorderWidgets(fromId, toId) {
+    const fromIdx = dashboardWidgets.findIndex(w => w.id === fromId);
+    const toIdx = dashboardWidgets.findIndex(w => w.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    
+    const [moved] = dashboardWidgets.splice(fromIdx, 1);
+    dashboardWidgets.splice(toIdx, 0, moved);
+    saveWidgetLayout();
+    renderAllWidgets();
+}
+
+function removeWidget(widgetId) {
+    dashboardWidgets = dashboardWidgets.filter(w => w.id !== widgetId);
+    saveWidgetLayout();
+    renderAllWidgets();
+}
+
+function renderAllWidgets() {
+    const grid = document.getElementById('widgetGrid');
+    const placeholder = document.getElementById('widgetPlaceholder');
+    
+    // Clear existing widgets (keep placeholder)
+    grid.querySelectorAll('.widget-item').forEach(w => w.remove());
+    
+    if (dashboardWidgets.length === 0) {
+        placeholder.classList.remove('hidden');
+        return;
+    }
+    
+    placeholder.classList.add('hidden');
+    
+    dashboardWidgets.forEach(widget => {
+        renderWidget(widget, grid);
+    });
+}
+
+// Add Widget Modal Logic
+function openAddWidgetModal() {
+    if (!analyticsData) {
+        alert('Loading analytics data... Please try again in a moment.');
+        return;
+    }
+    
+    const modal = document.getElementById('addWidgetModal');
+    modal.classList.remove('hidden');
+    
+    // Populate categories
+    const categories = [...new Set((analyticsData.available_metrics || []).map(m => m.category))];
+    const filterContainer = document.getElementById('categoryFilters');
+    filterContainer.innerHTML = '<button class="widget-cat-filter active px-3 py-1 rounded-full text-sm bg-blue-600 text-white" data-cat="all">All</button>';
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'widget-cat-filter px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-700 hover:bg-gray-300';
+        btn.dataset.cat = cat;
+        btn.textContent = cat;
+        btn.addEventListener('click', () => filterMetrics(cat));
+        filterContainer.appendChild(btn);
+    });
+    
+    // Populate metrics list
+    populateMetricsList('all');
+    
+    selectedMetricId = null;
+    selectedWidgetType = 'card';
+    selectedWidgetSize = 'small';
+}
+
+function filterMetrics(category) {
+    document.querySelectorAll('.widget-cat-filter').forEach(b => {
+        b.classList.remove('active', 'bg-blue-600', 'text-white');
+        b.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    const activeBtn = document.querySelector(`.widget-cat-filter[data-cat="${category}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+        activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+    }
+    populateMetricsList(category);
+}
+
+function populateMetricsList(category) {
+    const list = document.getElementById('metricSelectionList');
+    const metrics = (analyticsData.available_metrics || []).filter(m => category === 'all' || m.category === category);
+    
+    list.innerHTML = metrics.map(m => `
+        <div class="metric-option flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition ${selectedMetricId === m.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}" data-metric-id="${m.id}">
+            <div>
+                <p class="font-medium text-gray-800">${m.name}</p>
+                <p class="text-xs text-gray-500">${m.category} · Suggested: ${m.type}</p>
+            </div>
+            <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">${m.type}</span>
+        </div>
+    `).join('');
+    
+    list.querySelectorAll('.metric-option').forEach(el => {
+        el.addEventListener('click', () => {
+            selectedMetricId = el.dataset.metricId;
+            list.querySelectorAll('.metric-option').forEach(o => {
+                o.classList.remove('border-blue-500', 'bg-blue-50');
+                o.classList.add('border-gray-200');
+            });
+            el.classList.add('border-blue-500', 'bg-blue-50');
+            el.classList.remove('border-gray-200');
+            
+            // Auto-select the suggested widget type
+            const metric = (analyticsData.available_metrics || []).find(m => m.id === selectedMetricId);
+            if (metric) {
+                selectWidgetType(metric.type === 'stacked_bar' ? 'bar' : metric.type === 'timeline' ? 'bar' : metric.type);
+            }
+        });
+    });
+}
+
+function selectWidgetType(type) {
+    selectedWidgetType = type;
+    document.querySelectorAll('.widget-type-btn').forEach(b => {
+        b.classList.remove('active', 'border-blue-500', 'bg-blue-50');
+        b.classList.add('border-gray-200');
+    });
+    const btn = document.querySelector(`.widget-type-btn[data-type="${type}"]`);
+    if (btn) {
+        btn.classList.add('active', 'border-blue-500', 'bg-blue-50');
+        btn.classList.remove('border-gray-200');
+    }
+}
+
+function addWidgetToGrid() {
+    if (!selectedMetricId) {
+        alert('Please select a metric first.');
+        return;
+    }
+    
+    const widget = {
+        id: 'w_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        metricId: selectedMetricId,
+        displayType: selectedWidgetType,
+        size: selectedWidgetSize
+    };
+    
+    dashboardWidgets.push(widget);
+    saveWidgetLayout();
+    renderAllWidgets();
+    
+    document.getElementById('addWidgetModal').classList.add('hidden');
+}
+
+// Initialize Analytics Dashboard
+async function initAnalyticsDashboard() {
+    console.log('🎯 Initializing Analytics Dashboard...');
+    
+    const loaded = await loadAnalyticsData();
+    if (!loaded) {
+        console.warn('Could not load analytics data');
+        return;
+    }
+    
+    // Load saved layout or show placeholder
+    loadWidgetLayout();
+    renderAllWidgets();
+    
+    // Event listeners
+    document.getElementById('addWidgetBtn').addEventListener('click', openAddWidgetModal);
+    document.getElementById('closeWidgetModalBtn').addEventListener('click', () => {
+        document.getElementById('addWidgetModal').classList.add('hidden');
+    });
+    document.getElementById('cancelWidgetBtn').addEventListener('click', () => {
+        document.getElementById('addWidgetModal').classList.add('hidden');
+    });
+    document.getElementById('confirmAddWidgetBtn').addEventListener('click', addWidgetToGrid);
+    document.getElementById('resetLayoutBtn').addEventListener('click', () => {
+        if (confirm('Reset the analytics dashboard? This will remove all widgets.')) {
+            dashboardWidgets = [];
+            saveWidgetLayout();
+            renderAllWidgets();
+        }
+    });
+    
+    // Widget type selection
+    document.querySelectorAll('.widget-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectWidgetType(btn.dataset.type));
+    });
+    
+    // Widget size selection
+    document.querySelectorAll('.widget-size-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedWidgetSize = btn.dataset.size;
+            document.querySelectorAll('.widget-size-btn').forEach(b => {
+                b.classList.remove('active', 'border-blue-500', 'bg-blue-50');
+                b.classList.add('border-gray-200');
+            });
+            btn.classList.add('active', 'border-blue-500', 'bg-blue-50');
+            btn.classList.remove('border-gray-200');
+        });
+    });
+    
+    console.log('✅ Analytics Dashboard initialized');
+}
+
+// Trigger analytics init after DOM load (it's already inside DOMContentLoaded context)
+initAnalyticsDashboard();
 </script>
 {% endblock %}
 
