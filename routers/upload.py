@@ -454,6 +454,7 @@ async def upload_xml(
                         'notes': existing.notes,  # PRESERVE user edits
                         'parent_project': new_milestone.parent_project,  # XML
                         'parent_levels': getattr(new_milestone, 'parent_levels', None),  # XML hierarchy
+                        'outline_level': getattr(new_milestone, 'outline_level', None),  # XML hierarchy level
                         'resources': existing.resources,  # PRESERVE user edits
                         'project': new_project.project_code
                     }
@@ -470,6 +471,7 @@ async def upload_xml(
                         'notes': new_milestone.notes,
                         'parent_project': new_milestone.parent_project,
                         'parent_levels': getattr(new_milestone, 'parent_levels', None),
+                        'outline_level': getattr(new_milestone, 'outline_level', None),
                         'resources': new_milestone.resources,
                         'project': new_project.project_code
                     })
@@ -496,6 +498,7 @@ async def upload_xml(
                     'notes': m.notes,
                     'parent_project': m.parent_project,
                     'parent_levels': getattr(m, 'parent_levels', None),
+                    'outline_level': getattr(m, 'outline_level', None),
                     'resources': m.resources,
                     'project': new_project.project_code
                 })
