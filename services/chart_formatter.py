@@ -70,10 +70,27 @@ class ChartFormatterService:
                     'ProjectCode': project.project_code,  # Add for filtering
                     'ProjectName': project.project_name,  # Add for filtering
                     'OutlineLevel': getattr(milestone, 'outline_level', None),  # Add for level grouping
-                    'ParentLevels': getattr(milestone, 'parent_levels', {}) or {}  # Add parents at each level
+                    'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone)  # Parents + own level
                 })
         
         return tasks
+    
+    @staticmethod
+    def _build_full_parent_levels(milestone) -> dict:
+        """Build ParentLevels dict including the milestone's own level.
+        
+        parent_levels from XML only has ancestor levels (above the task).
+        E.g. a level 3 task has parent_levels: {"1": "Program", "2": "Phase"}
+        We add {"3": task_name} so the task's own level is also available
+        for grouping in the roadmap view.
+        """
+        parent_levels = dict(getattr(milestone, 'parent_levels', {}) or {})
+        outline_level = getattr(milestone, 'outline_level', None)
+        if outline_level and outline_level >= 2:
+            level_key = str(outline_level)
+            if level_key not in parent_levels:
+                parent_levels[level_key] = milestone.name
+        return parent_levels
     
     @staticmethod
     def calculate_milestone_quadrants(
