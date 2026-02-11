@@ -1,6 +1,6 @@
 INFO:     Will watch for changes in these directories: ['/workspaces/control_tower/systems3-project-reporter']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [85869] using WatchFiles
+INFO:     Started reloader process [25576] using WatchFiles
 INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
 INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
 INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
@@ -20,12 +20,13 @@ INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspace
 INFO:main:✅ Schedule feature enabled
 INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
 INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
 INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
 INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
 INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
 INFO:main:✅ Enhanced PowerPoint Reports feature enabled
 INFO:main:✅ Subscription and Stripe features enabled
-INFO:     Started server process [85883]
+INFO:     Started server process [25586]
 INFO:     Waiting for application startup.
 INFO:main:Starting Systems³ Project Reporter...
 INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
@@ -34,18 +35,28 @@ INFO:init_data:✅ Data already initialized
 INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
 INFO:main:Loaded 3 projects successfully
 INFO:main:Project ZCP-P1: 0 milestones, 0 risks
-INFO:main:Project ZLD-P1: 184 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
 INFO:main:Project AMP-P1: 46 milestones, 0 risks
 INFO:main:Systems³ Project Reporter started successfully!
 INFO:     Application startup complete.
 ⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
    Get your keys from: https://dashboard.stripe.com/test/apikeys
-INFO:     127.0.0.1:38286 - "GET /health HTTP/1.1" 200 OK
-WARNING:  WatchFiles detected changes in 'routers/upload.py'. Reloading...
+INFO:     127.0.0.1:34860 - "GET /api/calendar/events HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57020 - "GET /api/calendar/events HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46086 - "GET /health HTTP/1.1" 200 OK
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+INFO:     127.0.0.1:38462 - "GET /api/calendar/events HTTP/1.1" 200 OK
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+INFO:     127.0.0.1:58308 - "GET /api/calendar/events HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/chart_formatter.py'. Reloading...
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [85883]
+INFO:     Finished server process [25586]
 INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
 INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
 INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
@@ -65,12 +76,13 @@ INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspace
 INFO:main:✅ Schedule feature enabled
 INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
 INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
 INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
 INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
 INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
 INFO:main:✅ Enhanced PowerPoint Reports feature enabled
 INFO:main:✅ Subscription and Stripe features enabled
-INFO:     Started server process [88709]
+INFO:     Started server process [29807]
 INFO:     Waiting for application startup.
 INFO:main:Starting Systems³ Project Reporter...
 INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
@@ -79,7 +91,230 @@ INFO:init_data:✅ Data already initialized
 INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
 INFO:main:Loaded 3 projects successfully
 INFO:main:Project ZCP-P1: 0 milestones, 0 risks
-INFO:main:Project ZLD-P1: 184 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
+INFO:main:Project AMP-P1: 46 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/chart_formatter.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29807]
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ No-cache middleware enabled for HTML responses
+INFO:main:✅ Authentication middleware enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Authentication routes enabled
+INFO:main:✅ Canvas Editor Phase 2 enabled
+INFO:repositories.custom_metrics_repository:CustomMetricsRepository initialized: data/custom_metrics
+INFO:main:✅ Custom Metrics server-side persistence enabled
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:main:✅ Schedule feature enabled
+INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
+INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Enhanced PowerPoint Reports feature enabled
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [29935]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:init_data:✅ Data already initialized
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Loaded 3 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
+INFO:main:Project AMP-P1: 46 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:     127.0.0.1:45200 - "GET /api/calendar/events HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/chart_formatter.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29935]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ No-cache middleware enabled for HTML responses
+INFO:main:✅ Authentication middleware enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Authentication routes enabled
+INFO:main:✅ Canvas Editor Phase 2 enabled
+INFO:repositories.custom_metrics_repository:CustomMetricsRepository initialized: data/custom_metrics
+INFO:main:✅ Custom Metrics server-side persistence enabled
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:main:✅ Schedule feature enabled
+INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
+INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Enhanced PowerPoint Reports feature enabled
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [30241]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:init_data:✅ Data already initialized
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Loaded 3 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
+INFO:main:Project AMP-P1: 46 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+INFO:middleware.project_context:📌 Selected project from query: ZnNi Line Development Plan-12.xml
+INFO:root:✅ Loaded 0 projects from /workspaces/control_tower/systems3-project-reporter/mock_data/users/6d32bd1b-6d58-4ca5-9e87-08fdf77155eb
+ERROR:middleware.project_context:❌ Project ZnNi Line Development Plan-12.xml not found in repository
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:     127.0.0.1:50920 - "GET /dashboard/api/metrics/analytics/ZLD-P1?project=ZnNi+Line+Development+Plan-12.xml HTTP/1.1" 400 Bad Request
+INFO:middleware.project_context:📌 Selected project from query: ZnNi Line Development Plan-12.xml
+INFO:root:✅ Loaded 0 projects from /workspaces/control_tower/systems3-project-reporter/mock_data/users/6d32bd1b-6d58-4ca5-9e87-08fdf77155eb
+ERROR:middleware.project_context:❌ Project ZnNi Line Development Plan-12.xml not found in repository
+INFO:     127.0.0.1:58794 - "GET /dashboard/api/metrics/analytics/ZLD-P1?project=ZnNi%20Line%20Development%20Plan-12.xml HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:41566 - "GET /calendar HTTP/1.1" 200 OK
+INFO:middleware.project_context:📌 Selected project from query: ZLD-P1
+INFO:root:✅ Loaded 0 projects from /workspaces/control_tower/systems3-project-reporter/mock_data/users/6d32bd1b-6d58-4ca5-9e87-08fdf77155eb
+ERROR:middleware.project_context:❌ Project ZLD-P1 not found in repository
+INFO:     127.0.0.1:54218 - "GET /dashboard/metrics?project=ZLD-P1 HTTP/1.1" 200 OK
+INFO:middleware.project_context:📌 Selected project from query: ZLD-P1
+INFO:root:✅ Loaded 0 projects from /workspaces/control_tower/systems3-project-reporter/mock_data/users/6d32bd1b-6d58-4ca5-9e87-08fdf77155eb
+ERROR:middleware.project_context:❌ Project ZLD-P1 not found in repository
+INFO:     127.0.0.1:47346 - "GET /dashboard/metrics?project=ZLD-P1 HTTP/1.1" 200 OK
+INFO:middleware.project_context:📌 Selected project from query: ZLD-P1
+INFO:root:✅ Loaded 0 projects from /workspaces/control_tower/systems3-project-reporter/mock_data/users/6d32bd1b-6d58-4ca5-9e87-08fdf77155eb
+ERROR:middleware.project_context:❌ Project ZLD-P1 not found in repository
+INFO:     127.0.0.1:41984 - "GET /dashboard/metrics?project=ZLD-P1 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/schedule.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [30241]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ No-cache middleware enabled for HTML responses
+INFO:main:✅ Authentication middleware enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Authentication routes enabled
+INFO:main:✅ Canvas Editor Phase 2 enabled
+INFO:repositories.custom_metrics_repository:CustomMetricsRepository initialized: data/custom_metrics
+INFO:main:✅ Custom Metrics server-side persistence enabled
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:main:✅ Schedule feature enabled
+INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
+INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Enhanced PowerPoint Reports feature enabled
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [33267]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:init_data:✅ Data already initialized
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Loaded 3 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
+INFO:main:Project AMP-P1: 46 milestones, 0 risks
+INFO:main:Systems³ Project Reporter started successfully!
+INFO:     Application startup complete.
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+⚠️  WARNING: Using placeholder Stripe API key. Please set STRIPE_SECRET_KEY in .env
+   Get your keys from: https://dashboard.stripe.com/test/apikeys
+INFO:     127.0.0.1:38036 - "GET /api/calendar/events HTTP/1.1" 200 OK
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+INFO:     127.0.0.1:51980 - "GET /api/calendar/events HTTP/1.1" 200 OK
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+INFO:     127.0.0.1:45062 - "GET /api/calendar/events HTTP/1.1" 200 OK
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:routers.calendar:📅 Calendar: returning 236 events from 3 programs
+INFO:     127.0.0.1:51984 - "GET /api/calendar/events HTTP/1.1" 200 OK
+WARNING:middleware.project_context:⚠️ No project selected - will show all projects
+INFO:     127.0.0.1:52440 - "GET /dashboard/api/metrics/analytics/ZLD-P1 HTTP/1.1" 400 Bad Request
+WARNING:  WatchFiles detected changes in 'routers/dashboard.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [33267]
+INFO:main:Base directory: /workspaces/control_tower/systems3-project-reporter
+INFO:main:Static directory: /workspaces/control_tower/systems3-project-reporter/static
+INFO:main:Templates directory: /workspaces/control_tower/systems3-project-reporter/templates
+INFO:main:Mock data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Data directory: /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ No-cache middleware enabled for HTML responses
+INFO:main:✅ Authentication middleware enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Authentication routes enabled
+INFO:main:✅ Canvas Editor Phase 2 enabled
+INFO:repositories.custom_metrics_repository:CustomMetricsRepository initialized: data/custom_metrics
+INFO:main:✅ Custom Metrics server-side persistence enabled
+INFO:repositories.schedule_repository:ScheduleRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/schedules
+INFO:main:✅ Schedule feature enabled
+INFO:repositories.document_repository:DocumentRepository initialized: /workspaces/control_tower/systems3-project-reporter/mock_data/documents
+INFO:main:✅ Documents feature enabled
+INFO:main:✅ Calendar feature enabled
+INFO:repositories.risk_repository:RiskRepository initialized with storage_dir: /workspaces/control_tower/systems3-project-reporter/data/risks
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:repositories.risk_repository:DATA_STORAGE_PATH env var: NOT SET
+INFO:main:✅ Enhanced PowerPoint Reports feature enabled
+INFO:main:✅ Subscription and Stripe features enabled
+INFO:     Started server process [37062]
+INFO:     Waiting for application startup.
+INFO:main:Starting Systems³ Project Reporter...
+INFO:main:Python version: 3.12.11 (main, Jul 22 2025, 04:27:29) [GCC 10.2.1 20210110]
+INFO:main:PORT: not set
+INFO:init_data:✅ Data already initialized
+INFO:root:✅ Loaded 3 projects from /workspaces/control_tower/systems3-project-reporter/mock_data
+INFO:main:Loaded 3 projects successfully
+INFO:main:Project ZCP-P1: 0 milestones, 0 risks
+INFO:main:Project ZLD-P1: 186 milestones, 0 risks
 INFO:main:Project AMP-P1: 46 milestones, 0 risks
 INFO:main:Systems³ Project Reporter started successfully!
 INFO:     Application startup complete.

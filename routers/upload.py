@@ -448,6 +448,7 @@ async def upload_xml(
                         'id': new_id,
                         'name': final_name,  # Use XML name for renamed milestones
                         'target_date': new_milestone.target_date,  # XML
+                        'start_date': getattr(new_milestone, 'start_date', None),  # XML
                         'status': new_milestone.status,  # XML
                         'completion_date': new_milestone.completion_date,  # XML
                         'completion_percentage': new_milestone.completion_percentage,  # XML
@@ -465,6 +466,7 @@ async def upload_xml(
                         'id': new_id,
                         'name': new_milestone.name,
                         'target_date': new_milestone.target_date,
+                        'start_date': getattr(new_milestone, 'start_date', None),
                         'status': new_milestone.status,
                         'completion_date': new_milestone.completion_date,
                         'completion_percentage': new_milestone.completion_percentage,
@@ -492,6 +494,7 @@ async def upload_xml(
                     'id': getattr(m, 'id', None),
                     'name': m.name,
                     'target_date': m.target_date,
+                    'start_date': getattr(m, 'start_date', None),
                     'status': m.status,
                     'completion_date': m.completion_date,
                     'completion_percentage': m.completion_percentage,
@@ -692,11 +695,14 @@ async def confirm_upload(
                 {
                     'name': m.name,
                     'target_date': m.target_date,
+                    'start_date': getattr(m, 'start_date', None),
                     'status': m.status,
                     'completion_date': m.completion_date,
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
                     'parent_project': m.parent_project,
+                    'parent_levels': getattr(m, 'parent_levels', None),
+                    'outline_level': getattr(m, 'outline_level', None),
                     'resources': m.resources,
                     'project': new_project.project_code  # Add project code for frontend
                 }
@@ -801,11 +807,14 @@ async def update_change_reason(
                 {
                     'name': m.name,
                     'target_date': m.target_date,
+                    'start_date': getattr(m, 'start_date', None),
                     'status': m.status,
                     'completion_date': m.completion_date,
                     'completion_percentage': m.completion_percentage,
                     'notes': m.notes,
                     'parent_project': getattr(m, 'parent_project', None),
+                    'parent_levels': getattr(m, 'parent_levels', None),
+                    'outline_level': getattr(m, 'outline_level', None),
                     'resources': getattr(m, 'resources', None),
                     'project': project.project_code  # Add project code for frontend
                 }

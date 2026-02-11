@@ -269,9 +269,8 @@ const ganttData = {{ gantt_data | tojson }};
 // State
 let availableLevels = [];
 let selectedLevel = null;
-let allProjectGroups = [];
-let selectedGroups = new Set();
-let milestonesByGroup = {};
+let levelItems = [];       // Tasks AT the selected level
+let selectedItems = new Set(); // Selected task names
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async function() {
@@ -280,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     populateLevelDropdown();
     
     if (selectedLevel) {
-        groupMilestonesByLevel(selectedLevel);
+        buildLevelItems(selectedLevel);
         renderDropdownItems();
         renderRoadmap();
     } else {
@@ -298,28 +297,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function detectAvailableLevels() {
-    // Find all levels that have parent names in ParentLevels
+    // Find unique OutlineLevel values >= 2
     const levelSet = new Set();
     
-    console.log('🔍 ganttData length:', ganttData.length);
-    if (ganttData.length > 0) {
-        console.log('🔍 First task keys:', Object.keys(ganttData[0]));
-        console.log('🔍 First task ParentLevels:', ganttData[0].ParentLevels);
-        console.log('🔍 First task full:', JSON.stringify(ganttData[0]).substring(0, 300));
-    }
-    
     ganttData.forEach(task => {
-        const parentLevels = task.ParentLevels || {};
-        Object.keys(parentLevels).forEach(level => {
-            const lvl = parseInt(level);
-            if (!isNaN(lvl) && lvl >= 2) {
-                levelSet.add(lvl);
-            }
-        });
+        const ol = task.OutlineLevel;
+        if (ol && ol >= 2) {
+            levelSet.add(ol);
+        }
     });
     
     availableLevels = Array.from(levelSet).sort((a, b) => a - b);
-    console.log('📊 Available project levels:', availableLevels);
+    console.log('📊 Available levels (from OutlineLevel):', availableLevels);
 }
 
 function populateLevelDropdown() {
@@ -334,7 +323,9 @@ function populateLevelDropdown() {
     select.innerHTML = '<option value="">-- Select level --</option>' +
         availableLevels.map(lvl => {
             const selected = (selectedLevel === lvl) ? 'selected' : '';
-            return `<option value="${lvl}" ${selected}>Level ${lvl}</option>`;
+            // Count items at this level
+            const count = ganttData.filter(t => t.OutlineLevel === lvl).length;
+            return `<option value="${lvl}" ${selected}>Level ${lvl} (${count} items)</option>`;
         }).join('');
 }
 
@@ -345,15 +336,14 @@ function onLevelChange() {
     if (newLevel === selectedLevel) return;
     
     selectedLevel = newLevel;
-    selectedGroups.clear();
+    selectedItems.clear();
     
     if (selectedLevel) {
-        groupMilestonesByLevel(selectedLevel);
-        // Select all by default when changing levels
-        selectedGroups = new Set(allProjectGroups);
+        buildLevelItems(selectedLevel);
+        // Select all by default
+        selectedItems = new Set(levelItems.map(t => t.Task));
     } else {
-        allProjectGroups = [];
-        milestonesByGroup = {};
+        levelItems = [];
     }
     
     renderDropdownItems();
@@ -362,22 +352,14 @@ function onLevelChange() {
     renderPills();
 }
 
-function groupMilestonesByLevel(level) {
-    // Group milestones by parent at the selected level
-    milestonesByGroup = {};
+function buildLevelItems(level) {
+    // Get all tasks AT the selected outline level
+    levelItems = ganttData.filter(task => task.OutlineLevel === level);
     
-    ganttData.forEach(task => {
-        const parentLevels = task.ParentLevels || {};
-        const group = parentLevels[level] || parentLevels[String(level)] || 'Ungrouped';
-        
-        if (!milestonesByGroup[group]) {
-            milestonesByGroup[group] = [];
-        }
-        milestonesByGroup[group].push(task);
-    });
+    // Sort by start date
+    levelItems.sort((a, b) => new Date(a.Start) - new Date(b.Start));
     
-    allProjectGroups = Object.keys(milestonesByGroup).sort();
-    console.log(`📋 Level ${level}: Found ${allProjectGroups.length} project groups`);
+    console.log(`📋 Level ${level}: Found ${levelItems.length} items`);
 }
 
 async function loadSavedSettings() {
@@ -388,14 +370,15 @@ async function loadSavedSettings() {
         // Load saved level
         if (settings.selected_level && availableLevels.includes(settings.selected_level)) {
             selectedLevel = settings.selected_level;
-            groupMilestonesByLevel(selectedLevel);
+            buildLevelItems(selectedLevel);
         }
         
-        // Load saved groups
+        // Load saved selections
         if (selectedLevel && settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
-            selectedGroups = new Set(settings.selected_groups.filter(g => allProjectGroups.includes(g)));
+            const validNames = new Set(levelItems.map(t => t.Task));
+            selectedItems = new Set(settings.selected_groups.filter(g => validNames.has(g)));
         } else if (selectedLevel) {
-            selectedGroups = new Set(allProjectGroups);
+            selectedItems = new Set(levelItems.map(t => t.Task));
         }
     } catch (error) {
         console.log('No saved settings');
@@ -423,22 +406,21 @@ function renderDropdownItems() {
         return;
     }
     
-    if (allProjectGroups.length === 0) {
-        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No projects at this level</div>';
+    if (levelItems.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No items at this level</div>';
         updateStatus();
         return;
     }
     
-    container.innerHTML = allProjectGroups.map(group => {
-        const count = milestonesByGroup[group]?.length || 0;
-        const checked = selectedGroups.has(group) ? 'checked' : '';
-        const escapedGroup = group.replace(/'/g, "\\'");
+    container.innerHTML = levelItems.map(task => {
+        const checked = selectedItems.has(task.Task) ? 'checked' : '';
+        const escapedName = task.Task.replace(/'/g, "\\'");
+        const statusIcon = task.Status === 'COMPLETED' ? '🟢' : task.Status === 'IN_PROGRESS' ? '🟡' : '⚪';
         
         return `
             <label class="dropdown-item">
-                <input type="checkbox" ${checked} onchange="toggleProject('${escapedGroup}', this.checked)">
-                <span class="item-name">${escapeHtml(group)}</span>
-                <span class="item-count">${count}</span>
+                <input type="checkbox" ${checked} onchange="toggleProject('${escapedName}', this.checked)">
+                <span class="item-name">${statusIcon} ${escapeHtml(task.Task)}</span>
             </label>
         `;
     }).join('');
@@ -451,42 +433,42 @@ function updateStatus() {
     const status = document.getElementById('selectionStatus');
     
     if (!selectedLevel) {
-        label.textContent = 'Select projects...';
+        label.textContent = 'Select items...';
         status.textContent = 'Select a project level first';
         return;
     }
     
-    const count = selectedGroups.size;
-    const total = allProjectGroups.length;
+    const count = selectedItems.size;
+    const total = levelItems.length;
     
     if (count === 0) {
-        label.textContent = 'Select projects...';
-        status.textContent = `Level ${selectedLevel}: No projects selected`;
+        label.textContent = 'Select items...';
+        status.textContent = `Level ${selectedLevel}: No items selected`;
     } else if (count === total) {
-        label.textContent = `All projects (${total})`;
-        status.textContent = `Level ${selectedLevel}: Showing all ${total} projects`;
+        label.textContent = `All items (${total})`;
+        status.textContent = `Level ${selectedLevel}: Showing all ${total} items`;
     } else {
         label.textContent = `${count} of ${total} selected`;
-        status.textContent = `Level ${selectedLevel}: Showing ${count} of ${total} projects`;
+        status.textContent = `Level ${selectedLevel}: Showing ${count} of ${total} items`;
     }
 }
 
-function toggleProject(group, checked) {
+function toggleProject(name, checked) {
     if (checked) {
-        selectedGroups.add(group);
+        selectedItems.add(name);
     } else {
-        selectedGroups.delete(group);
+        selectedItems.delete(name);
     }
     updateStatus();
 }
 
 function selectAllProjects() {
-    selectedGroups = new Set(allProjectGroups);
+    selectedItems = new Set(levelItems.map(t => t.Task));
     renderDropdownItems();
 }
 
 function selectNoneProjects() {
-    selectedGroups.clear();
+    selectedItems.clear();
     renderDropdownItems();
 }
 
@@ -500,27 +482,26 @@ function applyAndClose() {
 function renderPills() {
     const container = document.getElementById('selectionPills');
     
-    if (selectedGroups.size === allProjectGroups.length || selectedGroups.size === 0) {
+    if (selectedItems.size === levelItems.length || selectedItems.size === 0) {
         container.innerHTML = '';
         return;
     }
     
-    // Only show pills if subset is selected (not too many)
-    if (selectedGroups.size > 5) {
+    if (selectedItems.size > 8) {
         container.innerHTML = '';
         return;
     }
     
-    container.innerHTML = Array.from(selectedGroups).map(group => `
+    container.innerHTML = Array.from(selectedItems).map(name => `
         <span class="selection-pill">
-            ${escapeHtml(group)}
-            <span class="remove-pill" onclick="removePill('${group.replace(/'/g, "\\'")}')">×</span>
+            ${escapeHtml(name)}
+            <span class="remove-pill" onclick="removePill('${name.replace(/'/g, "\\'")}')">×</span>
         </span>
     `).join('');
 }
 
-function removePill(group) {
-    selectedGroups.delete(group);
+function removePill(name) {
+    selectedItems.delete(name);
     renderDropdownItems();
     saveSettings();
     renderRoadmap();
@@ -534,8 +515,8 @@ async function saveSettings() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 selected_level: selectedLevel,
-                selected_groups: Array.from(selectedGroups),
-                show_all: selectedGroups.size === allProjectGroups.length
+                selected_groups: Array.from(selectedItems),
+                show_all: selectedItems.size === levelItems.length
             })
         });
     } catch (error) {
@@ -547,7 +528,7 @@ function renderRoadmap() {
     const chartDiv = document.getElementById('roadmapChart');
     const emptyState = document.getElementById('emptyState');
     
-    if (!selectedLevel || selectedGroups.size === 0) {
+    if (!selectedLevel || selectedItems.size === 0) {
         emptyState.style.display = 'block';
         Plotly.purge(chartDiv);
         return;
@@ -555,63 +536,55 @@ function renderRoadmap() {
     
     emptyState.style.display = 'none';
     
-    // Build traces for selected groups
+    // Build traces — each selected item is its own bar
     const traces = [];
     const annotations = [];
     
-    const sortedGroups = Array.from(selectedGroups).sort();
+    // Get selected items in order
+    const selected = levelItems.filter(t => selectedItems.has(t.Task));
     
-    sortedGroups.forEach(group => {
-        const tasks = milestonesByGroup[group] || [];
-        if (tasks.length === 0) return;
+    selected.forEach(task => {
+        const taskStart = new Date(task.Start);
+        const taskFinish = new Date(task.Finish);
         
-        // Calculate timeline from actual milestone dates
-        const startDates = tasks.map(t => new Date(t.Start));
-        const finishDates = tasks.map(t => new Date(t.Finish));
-        
-        const projectStart = new Date(Math.min(...startDates));
-        const projectFinish = new Date(Math.max(...finishDates));
-        
-        // Ensure minimum duration of 1 day for display
-        if (projectFinish <= projectStart) {
-            projectFinish.setDate(projectFinish.getDate() + 1);
+        // Ensure minimum 1 day for visibility
+        if (taskFinish <= taskStart) {
+            taskFinish.setDate(taskFinish.getDate() + 1);
         }
         
-        const duration = projectFinish - projectStart;
+        const duration = taskFinish - taskStart;
         
-        // Calculate completion
-        const completed = tasks.filter(t => t.Status === 'COMPLETED').length;
-        const inProgress = tasks.filter(t => t.Status === 'IN_PROGRESS').length;
-        const total = tasks.length;
-        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+        // Completion percentage from task data
+        const pct = task.CompletionPct || 0;
         
         // Color by status
         let barColor = '#9ca3af'; // gray - not started
-        if (completed === total && total > 0) {
-            barColor = '#22c55e'; // green - complete
-        } else if (inProgress > 0 || completed > 0) {
-            barColor = '#eab308'; // yellow - in progress
+        if (task.Status === 'COMPLETED') {
+            barColor = '#22c55e'; // green
+        } else if (task.Status === 'IN_PROGRESS') {
+            barColor = '#eab308'; // yellow
         }
         
         traces.push({
             x: [duration],
-            y: [group],
-            base: projectStart,
+            y: [task.Task],
+            base: taskStart,
             type: 'bar',
             orientation: 'h',
             marker: { color: barColor, opacity: 0.85 },
-            name: group,
-            hovertemplate: `<b>${escapeHtml(group)}</b><br>` +
-                          `Start: ${projectStart.toLocaleDateString()}<br>` +
-                          `End: ${projectFinish.toLocaleDateString()}<br>` +
-                          `Progress: ${pct}% (${completed}/${total})<extra></extra>`,
+            name: task.Task,
+            hovertemplate: `<b>${escapeHtml(task.Task)}</b><br>` +
+                          `Start: ${taskStart.toLocaleDateString()}<br>` +
+                          `End: ${taskFinish.toLocaleDateString()}<br>` +
+                          `Status: ${task.Status}<br>` +
+                          `Progress: ${pct}%<extra></extra>`,
             showlegend: false
         });
         
         // Add percentage annotation
         annotations.push({
-            x: projectFinish,
-            y: group,
+            x: taskFinish,
+            y: task.Task,
             text: `${pct}%`,
             showarrow: false,
             font: { size: 11, color: '#374151' },
@@ -620,8 +593,8 @@ function renderRoadmap() {
         });
     });
     
-    // Calculate chart height based on rows
-    const rowCount = sortedGroups.length;
+    // Chart height
+    const rowCount = selected.length;
     const barHeight = rowCount <= 3 ? 60 : rowCount <= 8 ? 45 : 35;
     const chartHeight = Math.max(250, (barHeight * rowCount) + 120);
     
@@ -643,7 +616,7 @@ function renderRoadmap() {
         barmode: 'overlay',
         bargap: 0.3,
         height: chartHeight,
-        margin: { l: 200, r: 60, t: 20, b: 60 },
+        margin: { l: 250, r: 80, t: 20, b: 60 },
         hovermode: 'closest',
         plot_bgcolor: 'white',
         paper_bgcolor: 'white',

@@ -67,10 +67,11 @@ class ChartFormatterService:
                     'Finish': finish_date,
                     'Resource': resource_name,
                     'Status': milestone.status,
-                    'ProjectCode': project.project_code,  # Add for filtering
-                    'ProjectName': project.project_name,  # Add for filtering
-                    'OutlineLevel': getattr(milestone, 'outline_level', None),  # Add for level grouping
-                    'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone)  # Parents + own level
+                    'CompletionPct': getattr(milestone, 'completion_percentage', None) or 0,
+                    'ProjectCode': project.project_code,
+                    'ProjectName': project.project_name,
+                    'OutlineLevel': getattr(milestone, 'outline_level', None),
+                    'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone)
                 })
         
         return tasks
@@ -83,9 +84,21 @@ class ChartFormatterService:
         E.g. a level 3 task has parent_levels: {"1": "Program", "2": "Phase"}
         We add {"3": task_name} so the task's own level is also available
         for grouping in the roadmap view.
+        
+        If outline_level is not stored (older data), we derive it from
+        the parent_levels keys: own_level = max(parent_keys) + 1.
         """
         parent_levels = dict(getattr(milestone, 'parent_levels', {}) or {})
         outline_level = getattr(milestone, 'outline_level', None)
+        
+        # Derive outline_level from parent_levels if not available
+        if not outline_level and parent_levels:
+            try:
+                max_parent = max(int(k) for k in parent_levels.keys())
+                outline_level = max_parent + 1
+            except (ValueError, TypeError):
+                pass
+        
         if outline_level and outline_level >= 2:
             level_key = str(outline_level)
             if level_key not in parent_levels:

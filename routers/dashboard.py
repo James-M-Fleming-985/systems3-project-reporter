@@ -403,7 +403,13 @@ async def get_metrics_analytics(request: Request, project_code: str):
     from repositories.custom_metrics_repository import CustomMetricsRepository
     import json
     
+    # Try middleware first, fall back to path variable lookup
     project = get_selected_project(request)
+    if not project:
+        # Look up by path variable using user-scoped repository
+        from middleware.project_context import _get_user_repo
+        repo = _get_user_repo(request)
+        project = repo.get_project_by_code(project_code)
     if not project:
         return JSONResponse(content={"error": "No project selected"}, status_code=400)
     
