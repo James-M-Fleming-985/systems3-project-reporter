@@ -301,7 +301,10 @@ async def get_calendar_events(request: Request):
                                         'tableName': table_name,
                                         'status': status,
                                         'dateField': col_header,
-                                        'allData': {k: str(v) for k, v in row_data.items() if v}
+                                        'allData': {
+                                            col_lookup.get(k, {}).get('header', k): str(v) 
+                                            for k, v in row_data.items() if v
+                                        }
                                     }
                                 }
                                 events.append(event)
