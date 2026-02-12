@@ -480,24 +480,9 @@ function applyAndClose() {
 }
 
 function renderPills() {
+    // Pills removed per user request — dropdown already shows selections
     const container = document.getElementById('selectionPills');
-    
-    if (selectedItems.size === levelItems.length || selectedItems.size === 0) {
-        container.innerHTML = '';
-        return;
-    }
-    
-    if (selectedItems.size > 8) {
-        container.innerHTML = '';
-        return;
-    }
-    
-    container.innerHTML = Array.from(selectedItems).map(name => `
-        <span class="selection-pill">
-            ${escapeHtml(name)}
-            <span class="remove-pill" onclick="removePill('${name.replace(/'/g, "\\'")}')">×</span>
-        </span>
-    `).join('');
+    container.innerHTML = '';
 }
 
 function removePill(name) {
@@ -536,30 +521,30 @@ function renderRoadmap() {
     
     emptyState.style.display = 'none';
     
-    // Get selected items in order
-    const selected = levelItems.filter(t => selectedItems.has(t.Task));
+    // Get selected items sorted by start date (earliest first)
+    const selected = levelItems
+        .filter(t => selectedItems.has(t.Task))
+        .sort((a, b) => new Date(a.Start) - new Date(b.Start));
     
-    // Build Gantt using shapes (rectangles) for reliable date rendering
-    // This avoids all issues with bar base+duration on date axes
-    const shapes = [];
+    // Build Gantt using one scatter trace per task (line from start to finish)
+    // This approach uses date strings on x-axis and category strings on y-axis
+    // which Plotly handles reliably without any base/duration conversion issues
+    const traces = [];
     const annotations = [];
-    const taskNames = [];
-    const hoverX = [];
-    const hoverY = [];
-    const hoverText = [];
+    // Reversed so earliest-start appears at top of chart
+    const taskNames = selected.map(t => t.Task).reverse();
 
-    selected.forEach((task, idx) => {
+    selected.forEach(task => {
         let startStr = task.Start;
         let finishStr = task.Finish;
         
-        // Ensure minimum visible duration (3 days) for point milestones
         const taskStart = new Date(startStr);
         let taskFinish = new Date(finishStr);
-        const isMilestone = (taskFinish <= taskStart);
         
+        // Ensure minimum visible duration (7 days) for milestones
         if (taskFinish <= taskStart) {
             taskFinish = new Date(taskStart);
-            taskFinish.setDate(taskFinish.getDate() + 3);
+            taskFinish.setDate(taskFinish.getDate() + 7);
             finishStr = taskFinish.toISOString().split('T')[0];
         }
         
@@ -574,47 +559,22 @@ function renderRoadmap() {
             barColor = '#eab308'; // yellow
         }
         
-        taskNames.push(task.Task);
-        
-        // Shape rectangle: x0/x1 are date strings, y0/y1 are category indices
-        shapes.push({
-            type: 'rect',
-            xref: 'x',
-            yref: 'y',
-            x0: startStr,
-            x1: finishStr,
-            y0: idx - 0.35,
-            y1: idx + 0.35,
-            fillcolor: barColor,
+        // Each task is a thick horizontal line from start to finish
+        traces.push({
+            x: [startStr, finishStr],
+            y: [task.Task, task.Task],
+            mode: 'lines',
+            line: { width: 20, color: barColor },
             opacity: 0.85,
-            line: { width: isMilestone ? 2 : 0, color: barColor }
+            name: task.Task,
+            showlegend: false,
+            hovertemplate:
+                `<b>${escapeHtml(task.Task)}</b><br>` +
+                `Start: ${taskStart.toLocaleDateString()}<br>` +
+                `End: ${taskFinish.toLocaleDateString()}<br>` +
+                `Status: ${task.Status}<br>` +
+                `Progress: ${pct}%<extra></extra>`
         });
-        
-        // For milestones (zero-duration), add a diamond marker
-        if (isMilestone) {
-            shapes.push({
-                type: 'line',
-                xref: 'x',
-                yref: 'y',
-                x0: startStr,
-                x1: startStr,
-                y0: idx - 0.3,
-                y1: idx + 0.3,
-                line: { width: 3, color: barColor }
-            });
-        }
-        
-        // Hover point at midpoint of bar
-        const midDate = new Date((taskStart.getTime() + taskFinish.getTime()) / 2);
-        hoverX.push(midDate.toISOString().split('T')[0]);
-        hoverY.push(task.Task);
-        hoverText.push(
-            `<b>${escapeHtml(task.Task)}</b><br>` +
-            `Start: ${taskStart.toLocaleDateString()}<br>` +
-            `End: ${new Date(finishStr).toLocaleDateString()}<br>` +
-            `Status: ${task.Status}<br>` +
-            `Progress: ${pct}%`
-        );
         
         // Add percentage annotation at the end of the bar
         annotations.push({
@@ -627,18 +587,6 @@ function renderRoadmap() {
             xshift: 8
         });
     });
-    
-    // Invisible scatter trace to establish the categorical y-axis and enable hover
-    const traces = [{
-        x: hoverX,
-        y: hoverY,
-        type: 'scatter',
-        mode: 'markers',
-        marker: { size: 10, opacity: 0 },
-        hovertemplate: '%{text}<extra></extra>',
-        text: hoverText,
-        showlegend: false
-    }];
     
     // Chart height
     const rowCount = selected.length;
@@ -656,12 +604,12 @@ function renderRoadmap() {
         },
         yaxis: {
             automargin: true,
+            type: 'category',
             categoryorder: 'array',
             categoryarray: taskNames,
             showgrid: false,
             tickfont: { size: 11 }
         },
-        shapes: shapes,
         height: chartHeight,
         margin: { l: 250, r: 80, t: 20, b: 60 },
         hovermode: 'closest',
