@@ -53,6 +53,7 @@ class Project(BaseModel):
     milestones: List[Milestone] = []
     risks: List[Risk] = []
     changes: List[Change] = []
+    archived: bool = False  # When True, program is hidden from portfolio and calendar
     
     class Config:
         populate_by_name = True  # Allow both snake_case and field names

@@ -104,9 +104,18 @@
         <div class="p-6 flex flex-col">
             <div class="flex items-start justify-between mb-2 min-h-[3.5rem]">
                 <h3 class="text-xl font-bold text-gray-800 leading-tight">{{ project.project_name }}</h3>
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold whitespace-nowrap ml-2">
-                    {{ project.status }}
-                </span>
+                <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold whitespace-nowrap">
+                        {{ project.status }}
+                    </span>
+                    <button onclick="event.stopPropagation(); archiveProgram('{{ project.project_code }}', '{{ project.project_name }}')" 
+                            class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" 
+                            title="Archive this program">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
             
             <p class="text-gray-600 text-sm mb-4">Code: {{ project.project_code }}</p>
@@ -160,6 +169,63 @@
         </div>
     </a>
 </div>
+
+<!-- Archived Programs Section -->
+{% if archived_projects %}
+<div class="mt-8">
+    <button onclick="toggleArchivedSection()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors mb-4">
+        <svg id="archivedChevron" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+        </svg>
+        <h3 class="text-lg font-semibold">Archived Programs ({{ archived_projects|length }})</h3>
+    </button>
+    
+    <div id="archivedSection" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for project in archived_projects %}
+            <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200 opacity-75 hover:opacity-100 transition-opacity">
+                <div class="p-5 flex flex-col">
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="text-lg font-semibold text-gray-600 leading-tight">{{ project.project_name }}</h3>
+                        <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                            <span class="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs font-medium">Archived</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-3">Code: {{ project.project_code }}</p>
+                    
+                    <!-- Metrics summary -->
+                    <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                        <div>
+                            <p class="text-lg font-bold text-gray-400">{{ project.milestones|length }}</p>
+                            <p class="text-xs text-gray-400">Milestones</p>
+                        </div>
+                        <div>
+                            <p class="text-lg font-bold text-gray-400">{{ project.risks|length }}</p>
+                            <p class="text-xs text-gray-400">Risks</p>
+                        </div>
+                        <div>
+                            <p class="text-lg font-bold text-gray-400">{{ project.changes|length }}</p>
+                            <p class="text-xs text-gray-400">Changes</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="unarchiveProgram('{{ project.project_code }}', '{{ project.project_name }}')" 
+                            class="w-full mt-auto px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Restore Program
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Export Button -->
 <div class="mt-8 text-center">
@@ -266,6 +332,141 @@ function selectProgram(programName, programCode) {
 function clearProgramSelection() {
     // Navigate to dashboard without query param
     window.location.href = '/dashboard';
+}
+
+// Archive/Unarchive Functions
+function toggleArchivedSection() {
+    const section = document.getElementById('archivedSection');
+    const chevron = document.getElementById('archivedChevron');
+    section.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-90');
+}
+
+async function archiveProgram(projectCode, projectName) {
+    // Show confirmation modal
+    const confirmed = await showArchiveConfirmModal(projectName);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/dashboard/api/programs/${encodeURIComponent(projectCode)}/archive`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showNotification(`"${projectName}" has been archived. Its tasks and schedules have been removed from the calendar.`, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showNotification(`Failed to archive: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Archive error:', error);
+        showNotification('Failed to archive program: ' + error.message, 'error');
+    }
+}
+
+async function unarchiveProgram(projectCode, projectName) {
+    try {
+        const response = await fetch(`/dashboard/api/programs/${encodeURIComponent(projectCode)}/unarchive`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showNotification(`"${projectName}" has been restored to the portfolio.`, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showNotification(`Failed to restore: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Unarchive error:', error);
+        showNotification('Failed to restore program: ' + error.message, 'error');
+    }
+}
+
+function showArchiveConfirmModal(programName) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                <div class="flex items-start mb-4">
+                    <div class="flex-shrink-0">
+                        <svg class="h-10 w-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Archive Program?</h3>
+                        <p class="mt-2 text-sm text-gray-600">
+                            Are you sure you want to archive <strong>${programName}</strong>?
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-3 mb-4">
+                    <p class="text-sm text-amber-800">
+                        <strong>What happens:</strong>
+                    </p>
+                    <ul class="text-sm text-amber-700 mt-1 list-disc list-inside">
+                        <li>Program removed from portfolio dashboard</li>
+                        <li>All tasks, schedules, and milestones removed from calendar</li>
+                        <li>Data is preserved - you can restore it anytime</li>
+                    </ul>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="cancelArchive" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button id="confirmArchive" class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium">
+                        Archive Program
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        modal.querySelector('#cancelArchive').addEventListener('click', () => {
+            modal.remove();
+            resolve(false);
+        });
+        modal.querySelector('#confirmArchive').addEventListener('click', () => {
+            modal.remove();
+            resolve(true);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                resolve(false);
+            }
+        });
+    });
+}
+
+function showNotification(message, type) {
+    const colors = {
+        success: { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-800', icon: '✓' },
+        error: { bg: 'bg-red-50', border: 'border-red-500', text: 'text-red-800', icon: '✗' }
+    };
+    const c = colors[type] || colors.success;
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 ${c.bg} ${c.border} border-l-4 p-4 rounded-lg shadow-lg max-w-md transition-all transform`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <span class="text-lg mr-2 ${c.text}">${c.icon}</span>
+            <p class="text-sm font-medium ${c.text}">${message}</p>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
 }
 
 function updateSelectionDisplay() {

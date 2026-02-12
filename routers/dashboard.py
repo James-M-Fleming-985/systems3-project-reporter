@@ -72,10 +72,14 @@ async def home(request: Request):
     import re
     
     # Dashboard shows projects for the current user (respects data isolation)
-    projects = get_all_projects(request)
+    all_projects = get_all_projects(request)
     risk_repo = RiskRepository()
     
-    # Calculate summary metrics
+    # Separate active and archived programs
+    projects = [p for p in all_projects if not getattr(p, 'archived', False)]
+    archived_projects = [p for p in all_projects if getattr(p, 'archived', False)]
+    
+    # Calculate summary metrics (only for active programs)
     total_milestones = sum(len(p.milestones) for p in projects)
     
     # Count risks from TWO sources:
@@ -110,6 +114,7 @@ async def home(request: Request):
     context = {
         "request": request,
         "projects": projects,
+        "archived_projects": archived_projects,
         "total_milestones": total_milestones,
         "total_risks": total_risks,
         "total_changes": total_changes,
@@ -914,24 +919,72 @@ async def changes_table_preview(
 
 
 @router.get("/api/projects")
-async def get_projects():
+async def get_projects(include_archived: bool = False):
     """
     API endpoint to get list of all projects
     Used by upload forms to populate program dropdown
     
     Returns both project_code (for API lookups) and project_name (for display)
+    Query param include_archived=true to include archived programs
     """
     try:
         projects = project_repo.load_all_projects()
-        logger.info(f"📋 API /api/projects returning {len(projects)} projects")
+        if not include_archived:
+            projects = [p for p in projects if not getattr(p, 'archived', False)]
+        logger.info(f"📋 API /api/projects returning {len(projects)} projects (include_archived={include_archived})")
         # Return both code and name - code is used for schedule lookups
-        return [{"name": p.project_name, "code": p.project_code, "id": p.project_code} for p in projects]
+        return [{"name": p.project_name, "code": p.project_code, "id": p.project_code, "archived": getattr(p, 'archived', False)} for p in projects]
     except Exception as e:
         logger.error(f"❌ Error in /api/projects: {e}")
         import traceback
         logger.error(traceback.format_exc())
         # Return empty list instead of crashing
         return []
+
+
+# =============================================================================
+# Program Archive API
+# =============================================================================
+
+@router.post("/api/programs/{project_code}/archive")
+async def archive_program(project_code: str):
+    """
+    Archive a program. Archived programs are hidden from the portfolio dashboard
+    and their tasks/schedules/milestones are removed from the calendar.
+    """
+    try:
+        success = project_repo.set_project_archived(project_code, archived=True)
+        if success:
+            logger.info(f"📦 Program {project_code} archived")
+            return {"success": True, "message": f"Program {project_code} archived"}
+        else:
+            return JSONResponse(
+                {"success": False, "error": f"Program {project_code} not found"},
+                status_code=404
+            )
+    except Exception as e:
+        logger.error(f"❌ Error archiving program {project_code}: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/programs/{project_code}/unarchive")
+async def unarchive_program(project_code: str):
+    """
+    Unarchive a program. Restores it to the portfolio dashboard and calendar.
+    """
+    try:
+        success = project_repo.set_project_archived(project_code, archived=False)
+        if success:
+            logger.info(f"📂 Program {project_code} unarchived")
+            return {"success": True, "message": f"Program {project_code} unarchived"}
+        else:
+            return JSONResponse(
+                {"success": False, "error": f"Program {project_code} not found"},
+                status_code=404
+            )
+    except Exception as e:
+        logger.error(f"❌ Error unarchiving program {project_code}: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 # =============================================================================

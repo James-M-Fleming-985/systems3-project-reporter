@@ -262,3 +262,58 @@ class ProjectRepository:
                 changes.append((project, change))
         
         return changes
+
+    def set_project_archived(self, project_code: str, archived: bool) -> bool:
+        """
+        Set the archived flag on a project's YAML file.
+        
+        Args:
+            project_code: The project code to archive/unarchive
+            archived: True to archive, False to unarchive
+            
+        Returns:
+            True if successful, False if project not found
+        """
+        if not self.data_dir.exists():
+            return False
+        
+        # Find all YAML files  
+        yaml_files = (list(self.data_dir.glob("**/*.yaml")) + 
+                     list(self.data_dir.glob("**/*.yml")))
+        
+        for yaml_file in yaml_files:
+            # Skip non-project files (same filters as load_all_projects)
+            if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
+                continue
+            if yaml_file.name.endswith(("_metrics.yaml", "_metrics.yml", "_schedules.yaml", 
+                                        "_schedules.yml", "_documents.yaml", "_documents.yml",
+                                        "_risks.yaml", "_risks.yml")):
+                continue
+            if any(d in str(yaml_file) for d in ("custom_metrics", "schedules", "documents", "risks")):
+                continue
+            
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                
+                if not data or not isinstance(data, dict):
+                    continue
+                if data.get('project_code') != project_code:
+                    continue
+                
+                # Found the right file - update archived flag
+                data['archived'] = archived
+                
+                with open(yaml_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                
+                import logging
+                logging.info(f"{'📦' if archived else '📂'} Project {project_code} {'archived' if archived else 'unarchived'}")
+                return True
+                
+            except Exception as e:
+                import logging
+                logging.error(f"Error updating {yaml_file.name}: {e}")
+                continue
+        
+        return False

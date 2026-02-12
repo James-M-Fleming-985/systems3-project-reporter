@@ -69,7 +69,18 @@ async def get_calendar_events(request: Request):
     try:
         # 1. Load all projects and their milestones/changes
         project_repo = ProjectRepository(data_dir=DATA_DIR)
-        projects = project_repo.load_all_projects()
+        all_loaded_projects = project_repo.load_all_projects()
+        
+        # Filter out archived programs from calendar
+        archived_codes = set()
+        archived_names = set()
+        projects = []
+        for p in all_loaded_projects:
+            if getattr(p, 'archived', False):
+                archived_codes.add(p.project_code)
+                archived_names.add(p.project_name)
+            else:
+                projects.append(p)
         
         # Color palette for programs
         program_colors = [
@@ -196,6 +207,10 @@ async def get_calendar_events(request: Request):
                         data = yaml.safe_load(f) or {}
                     
                     sched_program = data.get('project_name', schedule_file.stem.replace('_schedules', ''))
+                    
+                    # Skip schedule files belonging to archived programs
+                    if sched_program in archived_names:
+                        continue
                     
                     for table in data.get('tables', []):
                         table_name = table.get('name', 'Schedule')
@@ -324,6 +339,11 @@ async def get_calendar_events(request: Request):
                             metrics_data = yaml.safe_load(f) or {}
                         
                         program_name = metrics_data.get('project_name', metrics_file.stem)
+                        
+                        # Skip metrics belonging to archived programs
+                        if program_name in archived_names:
+                            continue
+                        
                         for metric in metrics_data.get('metrics', []):
                             target_date = metric.get('targetDate')
                             if target_date:
