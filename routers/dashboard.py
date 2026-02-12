@@ -956,16 +956,23 @@ async def archive_program(project_code: str, request: Request):
         # Use user-scoped repository to find the correct data directory
         from middleware.project_context import _get_user_repo
         user_repo = _get_user_repo(request)
+        logger.info(f"📦 Archive {project_code}: user_repo.data_dir={user_repo.data_dir}, exists={user_repo.data_dir.exists()}")
         success = user_repo.set_project_archived(project_code, archived=True)
         
         # Also try the global repo if user repo didn't find it
         if not success:
+            logger.info(f"📦 Archive {project_code}: user_repo failed, trying global repo at {project_repo.data_dir}")
             success = project_repo.set_project_archived(project_code, archived=True)
         
         if success:
-            logger.info(f"📦 Program {project_code} archived")
-            return {"success": True, "message": f"Program {project_code} archived"}
+            # Verify the write persisted by re-reading
+            verify_repo = _get_user_repo(request)
+            verify_project = verify_repo.get_project_by_code(project_code)
+            verified = getattr(verify_project, 'archived', False) if verify_project else False
+            logger.info(f"📦 Program {project_code} archived (verified={verified})")
+            return {"success": True, "message": f"Program {project_code} archived", "verified": verified}
         else:
+            logger.warning(f"⚠️ Archive {project_code}: project not found in user_repo or global repo")
             return JSONResponse(
                 {"success": False, "error": f"Program {project_code} not found"},
                 status_code=404

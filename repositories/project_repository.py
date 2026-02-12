@@ -274,13 +274,18 @@ class ProjectRepository:
         Returns:
             True if successful, False if project not found
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not self.data_dir.exists():
+            logger.warning(f"set_project_archived: data_dir {self.data_dir} does not exist")
             return False
         
         # Find all YAML files  
         yaml_files = (list(self.data_dir.glob("**/*.yaml")) + 
                      list(self.data_dir.glob("**/*.yml")))
         
+        candidate_files = []
         for yaml_file in yaml_files:
             # Skip non-project files (same filters as load_all_projects)
             if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
@@ -291,7 +296,11 @@ class ProjectRepository:
                 continue
             if any(d in str(yaml_file) for d in ("custom_metrics", "schedules", "documents", "risks")):
                 continue
-            
+            candidate_files.append(yaml_file)
+        
+        logger.info(f"set_project_archived({project_code}, {archived}): scanning {len(candidate_files)} project files in {self.data_dir}")
+        
+        for yaml_file in candidate_files:
             try:
                 with open(yaml_file, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
@@ -307,13 +316,17 @@ class ProjectRepository:
                 with open(yaml_file, 'w', encoding='utf-8') as f:
                     yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
                 
-                import logging
-                logging.info(f"{'📦' if archived else '📂'} Project {project_code} {'archived' if archived else 'unarchived'}")
+                # Verify write by re-reading
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    verify = yaml.safe_load(f)
+                verified = verify.get('archived') == archived
+                
+                logger.info(f"{'📦' if archived else '📂'} Project {project_code} {'archived' if archived else 'unarchived'} in {yaml_file} (write verified={verified})")
                 return True
                 
             except Exception as e:
-                import logging
-                logging.error(f"Error updating {yaml_file.name}: {e}")
+                logger.error(f"Error updating {yaml_file.name}: {e}")
                 continue
         
+        logger.warning(f"set_project_archived: project_code '{project_code}' not found in any of {len(candidate_files)} files")
         return False
