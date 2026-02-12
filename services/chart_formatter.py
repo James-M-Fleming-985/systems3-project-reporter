@@ -32,15 +32,28 @@ class ChartFormatterService:
         tasks = []
         
         for project in projects:
+            # Build a lookup of child date ranges per parent level
+            # so summary tasks can derive their span from children
+            child_ranges = ChartFormatterService._compute_child_date_ranges(
+                project.milestones
+            )
+            
             for milestone in project.milestones:
                 # Use actual start_date if available, otherwise use target_date
                 start_date = getattr(milestone, 'start_date', None) or milestone.target_date
                 
-                # Use completion date if available, otherwise target date (finish)
-                if milestone.completion_date:
-                    finish_date = milestone.completion_date
-                else:
-                    finish_date = milestone.target_date
+                # Use target_date as the finish (planned end from XML)
+                finish_date = milestone.target_date
+                
+                # For summary tasks where start == finish, try to derive
+                # the actual span from child task date ranges
+                outline_level = getattr(milestone, 'outline_level', None)
+                if start_date == finish_date and outline_level:
+                    child_key = (outline_level, milestone.name)
+                    if child_key in child_ranges:
+                        cr = child_ranges[child_key]
+                        start_date = cr['min_start']
+                        finish_date = cr['max_finish']
                 
                 # Extract project grouping from milestone name (simple approach)
                 # Look for common patterns like "ZnNi Line XXX" or "SF XXX"
@@ -104,6 +117,40 @@ class ChartFormatterService:
             if level_key not in parent_levels:
                 parent_levels[level_key] = milestone.name
         return parent_levels
+    
+    @staticmethod
+    def _compute_child_date_ranges(milestones) -> dict:
+        """Compute min start / max finish for each parent task based on its children.
+        
+        Returns dict keyed by (parent_level, parent_name) with values
+        {'min_start': date_str, 'max_finish': date_str}.
+        
+        This allows summary tasks with start == finish to derive their actual
+        span from child tasks.
+        """
+        from collections import defaultdict
+        ranges = defaultdict(lambda: {'min_start': '9999-12-31', 'max_finish': '0000-01-01'})
+        
+        for m in milestones:
+            parent_levels = getattr(m, 'parent_levels', None) or {}
+            start = getattr(m, 'start_date', None) or m.target_date
+            finish = m.target_date
+            
+            # Register this milestone's dates under each of its parent levels
+            for level_str, parent_name in parent_levels.items():
+                try:
+                    level = int(level_str)
+                except (ValueError, TypeError):
+                    continue
+                key = (level, parent_name)
+                if start < ranges[key]['min_start']:
+                    ranges[key]['min_start'] = start
+                if finish > ranges[key]['max_finish']:
+                    ranges[key]['max_finish'] = finish
+        
+        # Only keep entries with valid ranges
+        return {k: v for k, v in ranges.items()
+                if v['min_start'] != '9999-12-31' and v['max_finish'] != '0000-01-01'}
     
     @staticmethod
     def calculate_milestone_quadrants(

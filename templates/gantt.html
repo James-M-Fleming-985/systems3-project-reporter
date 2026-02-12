@@ -536,30 +536,32 @@ function renderRoadmap() {
     
     emptyState.style.display = 'none';
     
-    // Build traces — each selected item is its own bar
-    const traces = [];
-    const annotations = [];
-    
     // Get selected items in order
     const selected = levelItems.filter(t => selectedItems.has(t.Task));
     
-    selected.forEach(task => {
-        const taskStart = new Date(task.Start);
-        let taskFinish = new Date(task.Finish);
+    // Build Gantt using shapes (rectangles) for reliable date rendering
+    // This avoids all issues with bar base+duration on date axes
+    const shapes = [];
+    const annotations = [];
+    const taskNames = [];
+    const hoverX = [];
+    const hoverY = [];
+    const hoverText = [];
+
+    selected.forEach((task, idx) => {
+        let startStr = task.Start;
+        let finishStr = task.Finish;
         
-        // Ensure minimum 1 day for visibility
+        // Ensure minimum visible duration (3 days) for point milestones
+        const taskStart = new Date(startStr);
+        let taskFinish = new Date(finishStr);
+        const isMilestone = (taskFinish <= taskStart);
+        
         if (taskFinish <= taskStart) {
             taskFinish = new Date(taskStart);
-            taskFinish.setDate(taskFinish.getDate() + 1);
+            taskFinish.setDate(taskFinish.getDate() + 3);
+            finishStr = taskFinish.toISOString().split('T')[0];
         }
-        
-        // Duration in milliseconds for bar width
-        const duration = taskFinish.getTime() - taskStart.getTime();
-        
-        // Use ISO date strings for Plotly (not Date objects — Plotly's date axis
-        // d2c only handles 'string' and 'number' types, not Date objects)
-        const startStr = task.Start;
-        const finishStr = taskFinish.toISOString().split('T')[0];
         
         // Completion percentage from task data
         const pct = task.CompletionPct || 0;
@@ -572,23 +574,49 @@ function renderRoadmap() {
             barColor = '#eab308'; // yellow
         }
         
-        traces.push({
-            x: [duration],
-            y: [task.Task],
-            base: [startStr],
-            type: 'bar',
-            orientation: 'h',
-            marker: { color: barColor, opacity: 0.85 },
-            name: task.Task,
-            hovertemplate: `<b>${escapeHtml(task.Task)}</b><br>` +
-                          `Start: ${taskStart.toLocaleDateString()}<br>` +
-                          `End: ${taskFinish.toLocaleDateString()}<br>` +
-                          `Status: ${task.Status}<br>` +
-                          `Progress: ${pct}%<extra></extra>`,
-            showlegend: false
+        taskNames.push(task.Task);
+        
+        // Shape rectangle: x0/x1 are date strings, y0/y1 are category indices
+        shapes.push({
+            type: 'rect',
+            xref: 'x',
+            yref: 'y',
+            x0: startStr,
+            x1: finishStr,
+            y0: idx - 0.35,
+            y1: idx + 0.35,
+            fillcolor: barColor,
+            opacity: 0.85,
+            line: { width: isMilestone ? 2 : 0, color: barColor }
         });
         
-        // Add percentage annotation
+        // For milestones (zero-duration), add a diamond marker
+        if (isMilestone) {
+            shapes.push({
+                type: 'line',
+                xref: 'x',
+                yref: 'y',
+                x0: startStr,
+                x1: startStr,
+                y0: idx - 0.3,
+                y1: idx + 0.3,
+                line: { width: 3, color: barColor }
+            });
+        }
+        
+        // Hover point at midpoint of bar
+        const midDate = new Date((taskStart.getTime() + taskFinish.getTime()) / 2);
+        hoverX.push(midDate.toISOString().split('T')[0]);
+        hoverY.push(task.Task);
+        hoverText.push(
+            `<b>${escapeHtml(task.Task)}</b><br>` +
+            `Start: ${taskStart.toLocaleDateString()}<br>` +
+            `End: ${new Date(finishStr).toLocaleDateString()}<br>` +
+            `Status: ${task.Status}<br>` +
+            `Progress: ${pct}%`
+        );
+        
+        // Add percentage annotation at the end of the bar
         annotations.push({
             x: finishStr,
             y: task.Task,
@@ -599,6 +627,18 @@ function renderRoadmap() {
             xshift: 8
         });
     });
+    
+    // Invisible scatter trace to establish the categorical y-axis and enable hover
+    const traces = [{
+        x: hoverX,
+        y: hoverY,
+        type: 'scatter',
+        mode: 'markers',
+        marker: { size: 10, opacity: 0 },
+        hovertemplate: '%{text}<extra></extra>',
+        text: hoverText,
+        showlegend: false
+    }];
     
     // Chart height
     const rowCount = selected.length;
@@ -616,12 +656,12 @@ function renderRoadmap() {
         },
         yaxis: {
             automargin: true,
-            autorange: 'reversed',
+            categoryorder: 'array',
+            categoryarray: taskNames,
             showgrid: false,
             tickfont: { size: 11 }
         },
-        barmode: 'overlay',
-        bargap: 0.3,
+        shapes: shapes,
         height: chartHeight,
         margin: { l: 250, r: 80, t: 20, b: 60 },
         hovermode: 'closest',
