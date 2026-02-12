@@ -17,6 +17,18 @@ from repositories.project_repository import ProjectRepository
 from repositories.schedule_repository import ScheduleRepository
 from repositories.custom_metrics_repository import CustomMetricsRepository
 
+
+def _clean_project_name(name: str) -> str:
+    """Clean project name by removing file extensions and version suffixes.
+    
+    Schedule and metrics files store cleaned names (e.g. 'ZnNi Line Development Plan')
+    while project YAML stores raw names (e.g. 'ZnNi Line Development Plan-12.xml').
+    This function applies the same cleaning so archived identifiers match both forms.
+    """
+    clean = name.replace('.xml', '').replace('.xlsx', '').replace('.yaml', '')
+    clean = re.sub(r'-\d+$', '', clean)
+    return clean.strip()
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -95,8 +107,15 @@ async def get_calendar_events(request: Request):
             else:
                 projects.append(p)
         
-        # Combined set for filtering schedule/metric files (which may use code OR name)
-        archived_identifiers = archived_codes | archived_names
+        # Combined set for filtering schedule/metric files (which may use code OR name).
+        # Schedule and metrics files store CLEANED names (extensions/versions removed),
+        # so include cleaned variants to ensure matching.
+        archived_cleaned = set()
+        for name in archived_names:
+            archived_cleaned.add(_clean_project_name(name))
+        for code in archived_codes:
+            archived_cleaned.add(_clean_project_name(code))
+        archived_identifiers = archived_codes | archived_names | archived_cleaned
         
         # Color palette for programs
         program_colors = [
@@ -229,9 +248,11 @@ async def get_calendar_events(request: Request):
                     # Skip schedule files belonging to archived programs
                     # Schedule files may store project_code or project_name in the project_name field
                     # Also check the file stem (e.g., "ZLD-P1_schedules.yaml" → "ZLD-P1")
+                    # Also check cleaned variants (extensions/version numbers stripped)
                     if (sched_program in archived_identifiers or 
                         sched_code in archived_identifiers or
-                        sched_file_id in archived_identifiers):
+                        sched_file_id in archived_identifiers or
+                        _clean_project_name(sched_program) in archived_identifiers):
                         continue
                     
                     for table in data.get('tables', []):
@@ -362,13 +383,15 @@ async def get_calendar_events(request: Request):
                         
                         program_name = metrics_data.get('project_name', metrics_file.stem)
                         metrics_code = metrics_data.get('project_code', '')
-                        metrics_file_id = metrics_file.stem
+                        # Strip _metrics suffix from file stem for matching (e.g. "ZnNi Line Development Plan_metrics" → "ZnNi Line Development Plan")
+                        metrics_file_id = metrics_file.stem.replace('_metrics', '')
                         
                         # Skip metrics belonging to archived programs
-                        # Check project_name, project_code, and file stem
+                        # Check project_name, project_code, file stem, and cleaned variants
                         if (program_name in archived_identifiers or 
                             metrics_code in archived_identifiers or
-                            metrics_file_id in archived_identifiers):
+                            metrics_file_id in archived_identifiers or
+                            _clean_project_name(program_name) in archived_identifiers):
                             continue
                         
                         for metric in metrics_data.get('metrics', []):
@@ -396,8 +419,11 @@ async def get_calendar_events(request: Request):
         except Exception as e:
             logger.warning(f"Error loading metric targets for calendar: {e}")
         
-        logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs")
-        return JSONResponse(content={"events": events, "total": len(events)})
+        logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs"
+                    f" (filtered {len(archived_identifiers)} archived identifiers)")
+        response = JSONResponse(content={"events": events, "total": len(events)})
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
         
     except Exception as e:
         logger.error(f"❌ Error loading calendar events: {e}")
