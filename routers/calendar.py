@@ -128,14 +128,16 @@ async def get_calendar_events(request: Request):
             program_name = project.project_name
             program_code = project.project_code
             
-            # Add milestones as events
+            # Add milestones as single-day calendar markers (not Gantt-style spans).
+            # Show separate events for Start Date and Finish Date so the calendar
+            # isn't flooded with multi-day bars.
             for milestone in project.milestones:
                 status = getattr(milestone, 'status', 'NOT_STARTED')
                 target_date = getattr(milestone, 'target_date', None)
                 start_date = getattr(milestone, 'start_date', None)
                 completion_date = getattr(milestone, 'completion_date', None)
                 
-                if not target_date:
+                if not target_date and not start_date:
                     continue
                 
                 # Determine event color based on status
@@ -151,36 +153,56 @@ async def get_calendar_events(request: Request):
                 
                 # Check if overdue
                 try:
-                    td = datetime.fromisoformat(target_date.replace('Z', '+00:00')).date()
-                    if td < datetime.now().date() and status != 'COMPLETED':
-                        event_color = '#EF4444'
-                        border_color = '#DC2626'
+                    if target_date:
+                        td = datetime.fromisoformat(target_date.replace('Z', '+00:00')).date()
+                        if td < datetime.now().date() and status != 'COMPLETED':
+                            event_color = '#EF4444'
+                            border_color = '#DC2626'
                 except:
                     pass
                 
-                event = {
-                    'id': f'milestone-{program_code}-{milestone.name[:30]}',
-                    'title': milestone.name,
-                    'start': start_date or target_date,
-                    'end': target_date,
-                    'backgroundColor': event_color,
-                    'borderColor': border_color,
-                    'textColor': '#FFFFFF',
-                    'extendedProps': {
-                        'type': 'milestone',
-                        'program': program_name,
-                        'programCode': program_code,
-                        'status': status,
-                        'targetDate': target_date,
-                        'startDate': start_date,
-                        'completionDate': completion_date,
-                        'completionPct': getattr(milestone, 'completion_percentage', 0),
-                        'notes': getattr(milestone, 'notes', '') or '',
-                        'parentProject': getattr(milestone, 'parent_project', '') or '',
-                        'resources': getattr(milestone, 'resources', '') or ''
-                    }
+                base_props = {
+                    'type': 'milestone',
+                    'program': program_name,
+                    'programCode': program_code,
+                    'status': status,
+                    'targetDate': target_date,
+                    'startDate': start_date,
+                    'completionDate': completion_date,
+                    'completionPct': getattr(milestone, 'completion_percentage', 0),
+                    'notes': getattr(milestone, 'notes', '') or '',
+                    'parentProject': getattr(milestone, 'parent_project', '') or '',
+                    'resources': getattr(milestone, 'resources', '') or ''
                 }
-                events.append(event)
+                
+                # Determine which date markers to show
+                has_both = start_date and target_date and start_date != target_date
+                
+                # Start Date event
+                if start_date:
+                    events.append({
+                        'id': f'milestone-start-{program_code}-{milestone.name[:30]}',
+                        'title': f'{milestone.name}' + (' (Start Date)' if has_both else ''),
+                        'start': start_date,
+                        'allDay': True,
+                        'backgroundColor': event_color,
+                        'borderColor': border_color,
+                        'textColor': '#FFFFFF',
+                        'extendedProps': {**base_props, 'dateType': 'start'}
+                    })
+                
+                # Finish Date event (only if different from start)
+                if target_date and target_date != start_date:
+                    events.append({
+                        'id': f'milestone-end-{program_code}-{milestone.name[:30]}',
+                        'title': f'{milestone.name}' + (' (Finish Date)' if has_both else ''),
+                        'start': target_date,
+                        'allDay': True,
+                        'backgroundColor': event_color,
+                        'borderColor': border_color,
+                        'textColor': '#FFFFFF',
+                        'extendedProps': {**base_props, 'dateType': 'finish'}
+                    })
             
             # Add changes as events
             for change in project.changes:
