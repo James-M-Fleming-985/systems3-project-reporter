@@ -545,14 +545,21 @@ function renderRoadmap() {
     
     selected.forEach(task => {
         const taskStart = new Date(task.Start);
-        const taskFinish = new Date(task.Finish);
+        let taskFinish = new Date(task.Finish);
         
         // Ensure minimum 1 day for visibility
         if (taskFinish <= taskStart) {
+            taskFinish = new Date(taskStart);
             taskFinish.setDate(taskFinish.getDate() + 1);
         }
         
-        const duration = taskFinish - taskStart;
+        // Duration in milliseconds for bar width
+        const duration = taskFinish.getTime() - taskStart.getTime();
+        
+        // Use ISO date strings for Plotly (not Date objects — Plotly's date axis
+        // d2c only handles 'string' and 'number' types, not Date objects)
+        const startStr = task.Start;
+        const finishStr = taskFinish.toISOString().split('T')[0];
         
         // Completion percentage from task data
         const pct = task.CompletionPct || 0;
@@ -568,7 +575,7 @@ function renderRoadmap() {
         traces.push({
             x: [duration],
             y: [task.Task],
-            base: taskStart,
+            base: [startStr],
             type: 'bar',
             orientation: 'h',
             marker: { color: barColor, opacity: 0.85 },
@@ -583,7 +590,7 @@ function renderRoadmap() {
         
         // Add percentage annotation
         annotations.push({
-            x: taskFinish,
+            x: finishStr,
             y: task.Task,
             text: `${pct}%`,
             showarrow: false,
