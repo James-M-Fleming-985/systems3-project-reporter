@@ -68,8 +68,21 @@ async def get_calendar_events(request: Request):
     
     try:
         # 1. Load all projects and their milestones/changes
-        project_repo = ProjectRepository(data_dir=DATA_DIR)
+        # Use user-scoped repository to respect data isolation and archived status
+        from middleware.project_context import _get_user_repo
+        project_repo = _get_user_repo(request)
         all_loaded_projects = project_repo.load_all_projects()
+        
+        # Also load from global repo so we don't miss shared projects 
+        global_repo = ProjectRepository(data_dir=DATA_DIR)
+        global_projects = global_repo.load_all_projects()
+        
+        # Merge: user projects take precedence, add global projects not already present
+        seen_codes = {p.project_code for p in all_loaded_projects}
+        for gp in global_projects:
+            if gp.project_code not in seen_codes:
+                all_loaded_projects.append(gp)
+                seen_codes.add(gp.project_code)
         
         # Filter out archived programs from calendar
         archived_codes = set()
@@ -81,6 +94,9 @@ async def get_calendar_events(request: Request):
                 archived_names.add(p.project_name)
             else:
                 projects.append(p)
+        
+        # Combined set for filtering schedule/metric files (which may use code OR name)
+        archived_identifiers = archived_codes | archived_names
         
         # Color palette for programs
         program_colors = [
@@ -207,9 +223,15 @@ async def get_calendar_events(request: Request):
                         data = yaml.safe_load(f) or {}
                     
                     sched_program = data.get('project_name', schedule_file.stem.replace('_schedules', ''))
+                    sched_code = data.get('project_code', '')
+                    sched_file_id = schedule_file.stem.replace('_schedules', '')
                     
                     # Skip schedule files belonging to archived programs
-                    if sched_program in archived_names:
+                    # Schedule files may store project_code or project_name in the project_name field
+                    # Also check the file stem (e.g., "ZLD-P1_schedules.yaml" → "ZLD-P1")
+                    if (sched_program in archived_identifiers or 
+                        sched_code in archived_identifiers or
+                        sched_file_id in archived_identifiers):
                         continue
                     
                     for table in data.get('tables', []):
@@ -339,9 +361,14 @@ async def get_calendar_events(request: Request):
                             metrics_data = yaml.safe_load(f) or {}
                         
                         program_name = metrics_data.get('project_name', metrics_file.stem)
+                        metrics_code = metrics_data.get('project_code', '')
+                        metrics_file_id = metrics_file.stem
                         
                         # Skip metrics belonging to archived programs
-                        if program_name in archived_names:
+                        # Check project_name, project_code, and file stem
+                        if (program_name in archived_identifiers or 
+                            metrics_code in archived_identifiers or
+                            metrics_file_id in archived_identifiers):
                             continue
                         
                         for metric in metrics_data.get('metrics', []):

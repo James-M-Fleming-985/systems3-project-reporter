@@ -947,13 +947,21 @@ async def get_projects(include_archived: bool = False):
 # =============================================================================
 
 @router.post("/api/programs/{project_code}/archive")
-async def archive_program(project_code: str):
+async def archive_program(project_code: str, request: Request):
     """
     Archive a program. Archived programs are hidden from the portfolio dashboard
     and their tasks/schedules/milestones are removed from the calendar.
     """
     try:
-        success = project_repo.set_project_archived(project_code, archived=True)
+        # Use user-scoped repository to find the correct data directory
+        from middleware.project_context import _get_user_repo
+        user_repo = _get_user_repo(request)
+        success = user_repo.set_project_archived(project_code, archived=True)
+        
+        # Also try the global repo if user repo didn't find it
+        if not success:
+            success = project_repo.set_project_archived(project_code, archived=True)
+        
         if success:
             logger.info(f"📦 Program {project_code} archived")
             return {"success": True, "message": f"Program {project_code} archived"}
@@ -964,16 +972,26 @@ async def archive_program(project_code: str):
             )
     except Exception as e:
         logger.error(f"❌ Error archiving program {project_code}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.post("/api/programs/{project_code}/unarchive")
-async def unarchive_program(project_code: str):
+async def unarchive_program(project_code: str, request: Request):
     """
     Unarchive a program. Restores it to the portfolio dashboard and calendar.
     """
     try:
-        success = project_repo.set_project_archived(project_code, archived=False)
+        # Use user-scoped repository to find the correct data directory
+        from middleware.project_context import _get_user_repo
+        user_repo = _get_user_repo(request)
+        success = user_repo.set_project_archived(project_code, archived=False)
+        
+        # Also try the global repo if user repo didn't find it
+        if not success:
+            success = project_repo.set_project_archived(project_code, archived=False)
+        
         if success:
             logger.info(f"📂 Program {project_code} unarchived")
             return {"success": True, "message": f"Program {project_code} unarchived"}
@@ -984,6 +1002,8 @@ async def unarchive_program(project_code: str):
             )
     except Exception as e:
         logger.error(f"❌ Error unarchiving program {project_code}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
