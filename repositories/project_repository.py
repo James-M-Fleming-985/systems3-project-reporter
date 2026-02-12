@@ -17,6 +17,40 @@ import re
 from models import Project
 
 
+def _is_project_file(yaml_file: Path) -> bool:
+    """Return True only if the YAML file looks like it could be a project status file.
+    
+    Excludes roadmap settings, schedules, metrics, documents, risks,
+    templates, and other ancillary data files.
+    """
+    name = yaml_file.name
+    path_str = str(yaml_file)
+
+    # Roadmap settings files (roadmap_settings_*.yaml)
+    if name.startswith("roadmap_settings_"):
+        return False
+
+    # PowerPoint template metadata
+    if yaml_file.parent.name == "powerpoint_templates" or "template_" in name:
+        return False
+
+    # Suffix-based ancillary files
+    _skip_suffixes = (
+        "_metrics.yaml", "_metrics.yml",
+        "_schedules.yaml", "_schedules.yml",
+        "_documents.yaml", "_documents.yml",
+        "_risks.yaml", "_risks.yml",
+    )
+    if name.endswith(_skip_suffixes):
+        return False
+
+    # Directory-based ancillary files
+    if any(d in path_str for d in ("custom_metrics", "schedules", "documents", "risks")):
+        return False
+
+    return True
+
+
 # Sensitive words to replace for privacy
 SENSITIVE_REPLACEMENTS = {
     'Safran': 'Client 1',
@@ -122,40 +156,8 @@ class ProjectRepository:
                      list(self.data_dir.glob("**/*.yml")))
         
         for yaml_file in yaml_files:
-            # Skip PowerPoint template metadata files
-            if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
-                continue
-            
-            # Skip custom metrics files (they have a different format)
-            if yaml_file.name.endswith("_metrics.yaml") or yaml_file.name.endswith("_metrics.yml"):
-                continue
-            
-            # Skip schedule files (they have a different format)
-            if yaml_file.name.endswith("_schedules.yaml") or yaml_file.name.endswith("_schedules.yml"):
-                continue
-            
-            # Skip document files (they have a different format)
-            if yaml_file.name.endswith("_documents.yaml") or yaml_file.name.endswith("_documents.yml"):
-                continue
-            
-            # Skip risk files (they have a different format)
-            if yaml_file.name.endswith("_risks.yaml") or yaml_file.name.endswith("_risks.yml"):
-                continue
-            
-            # Skip files in custom_metrics directory
-            if "custom_metrics" in str(yaml_file):
-                continue
-            
-            # Skip files in schedules directory  
-            if "schedules" in str(yaml_file):
-                continue
-            
-            # Skip files in documents directory
-            if "documents" in str(yaml_file):
-                continue
-            
-            # Skip files in risks directory
-            if "risks" in str(yaml_file):
+            # Skip non-project data files
+            if not _is_project_file(yaml_file):
                 continue
                 
             try:
@@ -285,18 +287,7 @@ class ProjectRepository:
         yaml_files = (list(self.data_dir.glob("**/*.yaml")) + 
                      list(self.data_dir.glob("**/*.yml")))
         
-        candidate_files = []
-        for yaml_file in yaml_files:
-            # Skip non-project files (same filters as load_all_projects)
-            if yaml_file.parent.name == "powerpoint_templates" or "template_" in yaml_file.name:
-                continue
-            if yaml_file.name.endswith(("_metrics.yaml", "_metrics.yml", "_schedules.yaml", 
-                                        "_schedules.yml", "_documents.yaml", "_documents.yml",
-                                        "_risks.yaml", "_risks.yml")):
-                continue
-            if any(d in str(yaml_file) for d in ("custom_metrics", "schedules", "documents", "risks")):
-                continue
-            candidate_files.append(yaml_file)
+        candidate_files = [f for f in yaml_files if _is_project_file(f)]
         
         logger.info(f"set_project_archived({project_code}, {archived}): scanning {len(candidate_files)} project files in {self.data_dir}")
         
