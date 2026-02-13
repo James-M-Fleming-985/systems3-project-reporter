@@ -113,8 +113,13 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 
 # Export version for use in routers
 def get_template_context(request: Request, **kwargs):
-    """Helper to create template context with build_version"""
-    context = {"request": request, "build_version": BUILD_VERSION}
+    """Helper to create template context with build_version and csrf_token"""
+    csrf_token = getattr(request.state, 'csrf_token', '')
+    context = {
+        "request": request,
+        "build_version": BUILD_VERSION,
+        "csrf_token": csrf_token,
+    }
     context.update(kwargs)
     return context
 
@@ -198,13 +203,63 @@ async def health_check():
 
 # Import and add authentication middleware
 from middleware.auth_middleware import AuthMiddleware
+from middleware.security_middleware import SecurityHeadersMiddleware, CSRFMiddleware
 
-# Add no-cache middleware FIRST (before auth) to prevent template caching
+# CORS configuration
+from starlette.middleware.cors import CORSMiddleware
+
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://systems3-project-reporter-production.up.railway.app"
+    ).split(",")
+    if origin.strip()
+]
+# In dev/codespaces, allow localhost and codespace URLs
+if not os.getenv("RAILWAY_ENVIRONMENT"):
+    ALLOWED_ORIGINS += [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+    codespace_name = os.getenv("CODESPACE_NAME", "")
+    if codespace_name:
+        ALLOWED_ORIGINS.append(
+            f"https://{codespace_name}-8000.app.github.dev"
+        )
+
+# Middleware stack — order matters (outermost first in add_middleware = last to run)
+# Execution order: SecurityHeaders → NoCacheMiddleware → CSRF → Auth → Route handler
+
+app.add_middleware(SecurityHeadersMiddleware)
+logger.info("✅ Security headers middleware enabled (CSP, HSTS, X-Frame-Options)")
+
 app.add_middleware(NoCacheMiddleware)
 logger.info("✅ No-cache middleware enabled for HTML responses")
 
+app.add_middleware(CSRFMiddleware)
+logger.info("✅ CSRF protection middleware enabled")
+
 app.add_middleware(AuthMiddleware)
 logger.info("✅ Authentication middleware enabled")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["*"],
+)
+logger.info(f"✅ CORS configured for origins: {ALLOWED_ORIGINS}")
+
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Import routers
 from routers import dashboard, upload, export, risks, milestones, admin

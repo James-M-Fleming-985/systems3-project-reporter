@@ -1,22 +1,24 @@
 """
 Authentication Service
 Handles user registration, login, password hashing, and JWT tokens
+Uses PyJWT for standard, auditable JWT token handling.
 """
 import os
 import secrets
 import hashlib
 import hmac
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from pathlib import Path
 import json
 import logging
-import base64
+
+import jwt  # PyJWT
 
 logger = logging.getLogger(__name__)
 
-# JWT-like token handling (simplified, stateless tokens)
-# In production, consider using python-jose or PyJWT
+JWT_ALGORITHM = "HS256"
+
 
 def _get_or_create_secret_key() -> str:
     """Get secret key from env, file, or generate and persist one"""
@@ -24,18 +26,18 @@ def _get_or_create_secret_key() -> str:
     env_key = os.getenv("AUTH_SECRET_KEY")
     if env_key:
         return env_key
-    
+
     # Try to load from file
     base_dir = Path(__file__).parent.parent
     user_data_dir = Path(os.getenv("USER_DATA_PATH", str(base_dir / "user_data")))
     secret_file = user_data_dir / ".secret_key"
-    
+
     if secret_file.exists():
         try:
             return secret_file.read_text().strip()
         except Exception:
             pass
-    
+
     # Generate new key and persist it
     new_key = secrets.token_hex(32)
     try:
@@ -44,8 +46,9 @@ def _get_or_create_secret_key() -> str:
         logger.info("Generated and persisted new auth secret key")
     except Exception as e:
         logger.warning(f"Could not persist secret key: {e}")
-    
+
     return new_key
+
 
 SECRET_KEY = _get_or_create_secret_key()
 TOKEN_EXPIRY_HOURS = 24 * 7  # 1 week
@@ -99,66 +102,34 @@ class AuthService:
         return hmac.compare_digest(computed_hash, stored_hash)
     
     def _generate_token(self, user_id: str, email: str, is_admin: bool = False) -> str:
-        """Generate a secure authentication token"""
-        # Token payload
-        expires_at = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRY_HOURS)
+        """Generate a JWT authentication token using PyJWT"""
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRY_HOURS)
         payload = {
             "user_id": user_id,
             "email": email,
             "is_admin": is_admin,
-            "exp": expires_at.isoformat()
+            "exp": expires_at,
+            "iat": datetime.now(timezone.utc),
         }
-        
-        # Encode payload
-        payload_json = json.dumps(payload)
-        payload_b64 = base64.urlsafe_b64encode(payload_json.encode()).decode()
-        
-        # Create signature
-        signature = hmac.new(
-            SECRET_KEY.encode(),
-            payload_b64.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        
-        # Return token as payload.signature
-        return f"{payload_b64}.{signature}"
-    
+        return jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)
+
     def _verify_token(self, token: str) -> Optional[dict]:
-        """Verify and decode a token"""
+        """Verify and decode a JWT token using PyJWT"""
         try:
-            parts = token.split('.')
-            if len(parts) != 2:
-                return None
-            
-            payload_b64, signature = parts
-            
-            # Verify signature
-            expected_signature = hmac.new(
-                SECRET_KEY.encode(),
-                payload_b64.encode(),
-                hashlib.sha256
-            ).hexdigest()
-            
-            if not hmac.compare_digest(signature, expected_signature):
-                logger.warning("Token signature mismatch")
-                return None
-            
-            # Decode payload
-            payload_json = base64.urlsafe_b64decode(payload_b64.encode()).decode()
-            payload = json.loads(payload_json)
-            
-            # Check expiry
-            exp = datetime.fromisoformat(payload["exp"])
-            if datetime.utcnow() > exp:
-                logger.info("Token expired")
-                return None
-            
+            payload = jwt.decode(
+                token,
+                SECRET_KEY,
+                algorithms=[JWT_ALGORITHM],
+                options={"require": ["exp", "user_id", "email"]},
+            )
             return payload
-            
-        except Exception as e:
-            logger.error(f"Token verification error: {e}")
+        except jwt.ExpiredSignatureError:
+            logger.info("Token expired")
             return None
-    
+        except jwt.InvalidTokenError as e:
+            logger.warning(f"Invalid token: {e}")
+            return None
+
     def register_user(
         self,
         email: str,

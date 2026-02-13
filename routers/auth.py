@@ -8,6 +8,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pathlib import Path
 from typing import Optional
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import os
 import logging
 
@@ -15,6 +17,7 @@ from services.auth_service import AuthService
 
 router = APIRouter(tags=["auth"])
 logger = logging.getLogger(__name__)
+limiter = Limiter(key_func=get_remote_address)
 
 # Setup
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +31,11 @@ auth_service = AuthService(DATA_DIR)
 
 # Security
 security = HTTPBearer(auto_error=False)
+
+
+def _csrf_token(request: Request) -> str:
+    """Extract CSRF token from request state (set by CSRFMiddleware)"""
+    return getattr(request.state, 'csrf_token', '')
 
 # Cookie settings
 AUTH_COOKIE_NAME = "systems3_auth"
@@ -111,12 +119,14 @@ async def login_page(request: Request, error: str = None, message: str = None):
     return templates.TemplateResponse("login.html", {
         "request": request,
         "build_version": BUILD_VERSION,
+        "csrf_token": _csrf_token(request),
         "error": error,
         "message": message
     })
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(
     request: Request,
     response: Response,
@@ -132,6 +142,7 @@ async def login(
         return templates.TemplateResponse("login.html", {
             "request": request,
             "build_version": BUILD_VERSION,
+            "csrf_token": _csrf_token(request),
             "error": message,
             "email": email
         })
@@ -168,12 +179,14 @@ async def register_page(request: Request, error: str = None):
     return templates.TemplateResponse("register.html", {
         "request": request,
         "build_version": BUILD_VERSION,
+        "csrf_token": _csrf_token(request),
         "error": error,
         "is_first_user": is_first_user
     })
 
 
 @router.post("/register")
+@limiter.limit("3/minute")
 async def register(
     request: Request,
     email: str = Form(...),
@@ -189,6 +202,7 @@ async def register(
         return templates.TemplateResponse("register.html", {
             "request": request,
             "build_version": BUILD_VERSION,
+            "csrf_token": _csrf_token(request),
             "error": "Passwords do not match",
             "email": email,
             "full_name": full_name
@@ -209,6 +223,7 @@ async def register(
         return templates.TemplateResponse("register.html", {
             "request": request,
             "build_version": BUILD_VERSION,
+            "csrf_token": _csrf_token(request),
             "error": message,
             "email": email,
             "full_name": full_name

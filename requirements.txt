@@ -1,10 +1,10 @@
 # Systems³ Project Reporter - Web Application Dependencies
 
 # FastAPI Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-jinja2==3.1.2
-python-multipart==0.0.6
+fastapi>=0.115.0
+uvicorn[standard]>=0.24.0
+jinja2>=3.1.6
+python-multipart>=0.0.22
 
 # Data Handling
 pydantic>=2.0.0
@@ -28,6 +28,9 @@ reportlab>=4.0.0
 # Payment Processing
 stripe>=5.0.0
 python-dotenv>=1.0.0
+
+# Security
+slowapi>=0.1.9
 
 # Development & Testing (optional)
 pytest>=7.4.3

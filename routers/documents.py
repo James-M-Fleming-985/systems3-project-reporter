@@ -174,7 +174,33 @@ async def upload_document(
     """
     Upload a new document or new version of existing document
     """
+    # Allowed file extensions
+    ALLOWED_EXTENSIONS = {
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.txt', '.csv', '.xml', '.yaml', '.yml', '.json',
+        '.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp',
+        '.zip', '.tar', '.gz',
+    }
+    
     try:
+        # Validate filename and extension
+        filename = file.filename or ""
+        if not filename:
+            raise HTTPException(status_code=400, detail="No filename provided")
+        
+        import os as _os
+        _, ext = _os.path.splitext(filename.lower())
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type '{ext}' not allowed. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            )
+        
+        # Sanitize filename — remove path traversal characters
+        safe_filename = _os.path.basename(filename).replace("..", "").strip()
+        if not safe_filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+        
         content = await file.read()
         
         if len(content) == 0:
