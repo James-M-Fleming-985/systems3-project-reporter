@@ -2,6 +2,101 @@
 
 {% block title %}Metrics - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<!-- GridStack.js for draggable/resizable widget grid -->
+<link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-extra.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
+<style>
+    .grid-stack { min-height: 200px; }
+    .grid-stack-item-content {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .gs-widget-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        cursor: move;
+        user-select: none;
+        min-height: 36px;
+    }
+    .gs-widget-header .widget-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .gs-widget-header .widget-actions {
+        display: flex;
+        gap: 0.25rem;
+        flex-shrink: 0;
+    }
+    .gs-widget-header .widget-actions button {
+        padding: 2px 4px;
+        color: #9ca3af;
+        transition: color 0.15s;
+        cursor: pointer;
+        background: none;
+        border: none;
+    }
+    .gs-widget-header .widget-actions button:hover {
+        color: #ef4444;
+    }
+    .gs-widget-body {
+        flex: 1;
+        padding: 0.75rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .gs-widget-body .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.2;
+    }
+    .gs-widget-body .kpi-detail {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    /* Drag placeholder styling */
+    .grid-stack-placeholder > .placeholder-content {
+        border: 2px dashed #3b82f6 !important;
+        border-radius: 0.5rem;
+        background: rgba(59, 130, 246, 0.05) !important;
+    }
+    /* Resize handle */
+    .grid-stack > .grid-stack-item > .ui-resizable-se {
+        width: 16px;
+        height: 16px;
+        background: none;
+    }
+    .grid-stack > .grid-stack-item > .ui-resizable-se::after {
+        content: '';
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid #d1d5db;
+        border-bottom: 2px solid #d1d5db;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2" id="metricsPageTitle">📈 {{ program_name }} Metrics</h2>
@@ -46,115 +141,34 @@
         </div>
     </div>
 
-    <!-- KPI Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <!-- Schedule Performance Index (SPI) -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold text-gray-600">Schedule Performance</h3>
-                <div class="bg-green-100 rounded-full p-2">
-                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900" id="spiValue">-</p>
-            <p class="text-xs text-gray-500 mt-1">SPI (Target: ≥1.0)</p>
-        </div>
-
-        <!-- Completion Rate -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold text-gray-600">Completion Rate</h3>
-                <div class="bg-blue-100 rounded-full p-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                    </svg>
-                </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900" id="completionRate">-</p>
-            <p class="text-xs text-gray-500 mt-1">Milestones Completed</p>
-        </div>
-
-        <!-- Risk Score -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold text-gray-600">Risk Score</h3>
-                <div class="bg-red-100 rounded-full p-2">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900" id="riskScore">-</p>
-            <p class="text-xs text-gray-500 mt-1">Open Risks</p>
-        </div>
-
-        <!-- Change Velocity -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold text-gray-600">Change Velocity</h3>
-                <div class="bg-yellow-100 rounded-full p-2">
-                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                    </svg>
-                </div>
-            </div>
-            <p class="text-3xl font-bold text-gray-900" id="changeVelocity">-</p>
-            <p class="text-xs text-gray-500 mt-1">Changes This Month</p>
-        </div>
-    </div>
-
-    <!-- Detailed Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        
-        <!-- Milestone Health Chart -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Milestone Health</h3>
-            <div id="milestoneHealthChart" style="width:100%; height:300px;"></div>
-        </div>
-
-        <!-- Risk Distribution -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Risk Distribution</h3>
-            <div id="riskDistributionChart" style="width:100%; height:300px;"></div>
-        </div>
-    </div>
-
-    <!-- Timeline Metrics -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Schedule Trend</h3>
-        <div id="scheduleTrendChart" style="width:100%; height:400px;"></div>
-    </div>
-
-    <!-- ============================================================= -->
-    <!-- Analytics Dashboard - Draggable Widgets -->
-    <!-- ============================================================= -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <!-- Metrics Dashboard - GridStack Widget Grid -->
+    <div class="bg-white rounded-lg shadow p-4 mb-8">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h3 class="text-lg font-bold text-gray-800">📊 Analytics Dashboard</h3>
-                <p class="text-sm text-gray-500">Select metrics and arrange widgets. Drag to reorder.</p>
+                <h3 class="text-lg font-bold text-gray-800">📊 Metrics Dashboard</h3>
+                <p class="text-sm text-gray-500">Drag to reorder, resize from corners. All widgets persist across sessions.</p>
             </div>
             <div class="flex space-x-2">
                 <button id="addWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Add Widget
                 </button>
-                <button id="resetLayoutBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
-                    🔄 Reset Layout
+                <button id="resetLayoutBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm" title="Reset to default layout">
+                    🔄 Reset
                 </button>
             </div>
         </div>
 
-        <!-- Widget Grid - Drag & Drop enabled -->
-        <div id="widgetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[100px]">
-            <!-- Widgets will be dynamically inserted here -->
-            <div id="widgetPlaceholder" class="col-span-full flex items-center justify-center py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
-                <div class="text-center">
-                    <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    <p>Click <strong>Add Widget</strong> to build your analytics dashboard</p>
-                </div>
+        <!-- GridStack container -->
+        <div class="grid-stack" id="metricsGrid"></div>
+
+        <!-- Empty state placeholder (shown when no widgets) -->
+        <div id="widgetPlaceholder" class="hidden flex items-center justify-center py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 mt-2">
+            <div class="text-center">
+                <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <p>Click <strong>Add Widget</strong> to build your metrics dashboard</p>
             </div>
         </div>
     </div>
@@ -470,7 +484,6 @@ console.log('📊 METRICS - Rendering metrics for', projectName);
 // All initialization in one DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function() {
     // Set selectedProgram in localStorage for custom metrics
-    // This ensures custom metrics are loaded for the correct project
     localStorage.setItem('selectedProgram', projectName);
     console.log('🔧 Set selectedProgram to:', projectName);
     
@@ -480,201 +493,21 @@ document.addEventListener('DOMContentLoaded', function() {
         programNameSpan.textContent = projectName;
     }
     
-    // Load metrics data (already provided by backend)
-    loadMetricsData(projectName);
+    // Update last updated timestamp from server data
+    const lastUpdatedSpan = document.getElementById('lastUpdated');
+    if (lastUpdatedSpan && METRICS_DATA && METRICS_DATA.last_updated) {
+        lastUpdatedSpan.textContent = new Date(METRICS_DATA.last_updated).toLocaleString();
+    }
     
-    // Initialize modal controls
+    // Initialize modal controls (custom metrics)
     initializeModalControls();
     
-    // Load custom metrics
+    // Load custom metrics table
     loadCustomMetrics();
+    
+    // Initialize GridStack dashboard
+    initGridStackDashboard();
 });
-
-function loadMetricsData(programName) {
-    try {
-        // Use metrics data from global variable (set by server)
-        const metrics = METRICS_DATA;
-        
-        if (!metrics) {
-            console.error('No metrics data available');
-            return;
-        }
-        
-        console.log('Loading metrics data:', metrics);
-        
-        // Update KPI cards with real data
-        console.log('Updating KPI cards...');
-        const spiEl = document.getElementById('spiValue');
-        const completionEl = document.getElementById('completionRate');
-        const riskEl = document.getElementById('riskScore');
-        const changeEl = document.getElementById('changeVelocity');
-        
-        console.log('Found elements:', {spiEl, completionEl, riskEl, changeEl});
-        
-        if (spiEl) spiEl.textContent = metrics.spi || '1.00';
-        if (completionEl) completionEl.textContent = (metrics.completion_rate || 0) + '%';
-        if (riskEl) riskEl.textContent = metrics.risk_score !== undefined ? metrics.risk_score : '-';
-        if (changeEl) changeEl.textContent = '-'; // TODO: calculate from changes
-        
-        // Update last updated timestamp
-        const lastUpdatedSpan = document.getElementById('lastUpdated');
-        if (lastUpdatedSpan && metrics.last_updated) {
-            const date = new Date(metrics.last_updated);
-            lastUpdatedSpan.textContent = date.toLocaleString();
-        }
-        
-        // Create charts with real data
-        console.log('Creating milestone health chart...');
-        createMilestoneHealthChart(metrics.milestone_health || {completed: 0, in_progress: 0, not_started: 0, late: 0});
-        
-        console.log('Creating risk distribution chart...');
-        createRiskDistributionChart(metrics.risk_distribution || {critical: 0, high: 0, medium: 0, low: 0});
-        
-        console.log('Creating schedule trend chart...');
-        createScheduleTrendChart(metrics.schedule_trend || {periods: [], spi_values: []});
-        
-        console.log('✅ All charts created successfully');
-    } catch (error) {
-        console.error('❌ Error loading metrics data:', error);
-        console.error('Error stack:', error.stack);
-    }
-}
-
-function createMilestoneHealthChart(healthData) {
-    console.log('createMilestoneHealthChart called with:', healthData);
-    const chartDiv = document.getElementById('milestoneHealthChart');
-    console.log('milestoneHealthChart div found:', chartDiv);
-    
-    if (!chartDiv) {
-        console.error('❌ milestoneHealthChart div not found!');
-        return;
-    }
-    
-    // Use real milestone health data
-    const data = [{
-        values: [
-            healthData.completed || 0,
-            healthData.in_progress || 0,
-            healthData.not_started || 0,
-            healthData.late || 0
-        ],
-        labels: ['Completed', 'In Progress', 'Not Started', 'Late/Overdue'],
-        type: 'pie',
-        marker: {
-            colors: ['#22c55e', '#eab308', '#9ca3af', '#ef4444']
-        }
-    }];
-    
-    const layout = {
-        showlegend: true,
-        margin: { t: 0, b: 0, l: 0, r: 0 }
-    };
-    
-    console.log('Plotting milestone health chart...');
-    Plotly.newPlot('milestoneHealthChart', data, layout, {responsive: true});
-    console.log('✅ Milestone health chart plotted');
-}
-
-function createRiskDistributionChart(riskDistribution) {
-    console.log('createRiskDistributionChart called with:', riskDistribution);
-    const chartDiv = document.getElementById('riskDistributionChart');
-    console.log('riskDistributionChart div found:', chartDiv);
-    
-    if (!chartDiv) {
-        console.error('❌ riskDistributionChart div not found!');
-        return;
-    }
-    
-    // Use real risk distribution data
-    const data = [{
-        x: ['Critical', 'High', 'Medium', 'Low'],
-        y: [
-            riskDistribution.critical || 0,
-            riskDistribution.high || 0,
-            riskDistribution.medium || 0,
-            riskDistribution.low || 0
-        ],
-        type: 'bar',
-        marker: {
-            color: ['#7f1d1d', '#ef4444', '#f59e0b', '#10b981']
-        }
-    }];
-    
-    const layout = {
-        yaxis: { title: 'Count' },
-        margin: { t: 10, b: 40, l: 40, r: 10 }
-    };
-    
-    console.log('Plotting risk distribution chart...');
-    Plotly.newPlot('riskDistributionChart', data, layout, {responsive: true});
-    console.log('✅ Risk distribution chart plotted');
-}
-
-function createScheduleTrendChart(trendData) {
-    console.log('createScheduleTrendChart called with:', trendData);
-    const chartDiv = document.getElementById('scheduleTrendChart');
-    console.log('scheduleTrendChart div found:', chartDiv);
-    
-    if (!chartDiv) {
-        console.error('❌ scheduleTrendChart div not found!');
-        return;
-    }
-    
-    if (!trendData || !trendData.periods || trendData.periods.length === 0) {
-        console.log('No trend data available, showing empty state');
-        // Show empty state
-        document.getElementById('scheduleTrendChart').innerHTML = 
-            '<div class="flex items-center justify-center h-full text-gray-500">No trend data available yet</div>';
-        return;
-    }
-    
-    // Use real schedule trend data
-    const data = [{
-        x: trendData.periods,
-        y: trendData.spi_values,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: 'SPI Trend',
-        line: { color: '#3b82f6', width: 3 },
-        marker: { size: 8 }
-    }];
-    
-    const layout = {
-        yaxis: { 
-            title: 'Schedule Performance Index',
-            zeroline: false
-        },
-        xaxis: { 
-            title: 'Time Period',
-            tickangle: -45
-        },
-        margin: { t: 10, b: 60, l: 50, r: 10 },
-        shapes: [{
-            type: 'line',
-            x0: trendData.periods[0],
-            y0: 1.0,
-            x1: trendData.periods[trendData.periods.length - 1],
-            y1: 1.0,
-            line: {
-                color: '#22c55e',
-                width: 2,
-                dash: 'dash'
-            }
-        }],
-        annotations: [{
-            x: trendData.periods[Math.floor(trendData.periods.length / 2)],
-            y: 1.0,
-            text: 'Target (1.0)',
-            showarrow: false,
-            yshift: 10,
-            font: { size: 10, color: '#22c55e' }
-        }]
-    };
-    
-    console.log('Plotting schedule trend chart...');
-    Plotly.newPlot('scheduleTrendChart', data, layout, {responsive: true});
-    console.log('✅ Schedule trend chart plotted');
-}
 
 // Custom Metrics Management - Server-side persistence
 let customMetrics = [];
@@ -2301,21 +2134,30 @@ async function importMetricsData(data, metricNameCol, dateCol, valueCol) {
 }
 
 // ============================================================
-// Analytics Dashboard - Draggable Widget System
+// GridStack Metrics Dashboard
 // ============================================================
 let analyticsData = null;
-let dashboardWidgets = [];
 let selectedMetricId = null;
 let selectedWidgetType = 'card';
 let selectedWidgetSize = 'small';
-let draggedWidget = null;
+let gsGrid = null;
 
-const WIDGET_STORAGE_KEY = `analytics_widgets_${projectCode}`;
+const WIDGET_STORAGE_KEY = `gridstack_widgets_${projectCode}`;
+
+// Default layout: 4 KPI cards (top row) + 2 charts (middle row) + 1 full-width chart (bottom row)
+const DEFAULT_WIDGETS = [
+    { id: 'w_spi',              metricId: 'spi',               displayType: 'card',  x: 0, y: 0, w: 3, h: 2 },
+    { id: 'w_completion',       metricId: 'completion_rate',    displayType: 'card',  x: 3, y: 0, w: 3, h: 2 },
+    { id: 'w_risk',             metricId: 'risk_score',         displayType: 'card',  x: 6, y: 0, w: 3, h: 2 },
+    { id: 'w_changes',          metricId: 'total_changes',      displayType: 'card',  x: 9, y: 0, w: 3, h: 2 },
+    { id: 'w_milestone_health', metricId: 'milestone_health',   displayType: 'donut', x: 0, y: 2, w: 6, h: 5 },
+    { id: 'w_risk_dist',        metricId: 'risk_distribution',  displayType: 'bar',   x: 6, y: 2, w: 6, h: 5 },
+    { id: 'w_schedule_trend',   metricId: 'schedule_trend',     displayType: 'line',  x: 0, y: 7, w: 12, h: 5 },
+];
 
 // Load analytics data from API
 async function loadAnalyticsData() {
     try {
-        // Pass project query param so middleware can resolve the selected project
         const urlParams = new URLSearchParams(window.location.search);
         const projectParam = urlParams.get('project') || projectCode;
         const resp = await fetch(`/dashboard/api/metrics/analytics/${projectCode}?project=${encodeURIComponent(projectParam)}`);
@@ -2330,20 +2172,37 @@ async function loadAnalyticsData() {
     return false;
 }
 
-// Load saved widget layout
-function loadWidgetLayout() {
+// Load saved widget layout from localStorage
+function loadSavedLayout() {
     try {
         const saved = localStorage.getItem(WIDGET_STORAGE_KEY);
         if (saved) {
-            dashboardWidgets = JSON.parse(saved);
-            return true;
+            return JSON.parse(saved);
         }
-    } catch (e) {}
-    return false;
+    } catch (e) {
+        console.warn('Failed to load saved layout:', e);
+    }
+    return null;
 }
 
-function saveWidgetLayout() {
-    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(dashboardWidgets));
+// Save widget layout to localStorage
+function saveLayout() {
+    if (!gsGrid) return;
+    const items = gsGrid.getGridItems();
+    const layout = items.map(el => {
+        const node = el.gridstackNode;
+        return {
+            id: node.id || el.dataset.gsId,
+            metricId: el.dataset.metricId,
+            displayType: el.dataset.displayType,
+            x: node.x,
+            y: node.y,
+            w: node.w,
+            h: node.h
+        };
+    });
+    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(layout));
+    console.log('💾 Layout saved:', layout.length, 'widgets');
 }
 
 // Get metric display value
@@ -2362,6 +2221,15 @@ function getMetricValue(metricId) {
         case 'total_milestones': return {value: core.total_milestones || 0, label: 'Total Milestones', detail: `${byStatus.COMPLETED || 0} completed`};
         case 'total_risks': return {value: risk.total_risks || 0, label: 'Total Risks', detail: `${risk.open_risks || 0} open`};
         case 'total_changes': return {value: (analyticsData.changes || []).length, label: 'Total Changes', detail: 'Schedule changes'};
+        case 'change_velocity': {
+            const changes = analyticsData.changes || [];
+            const now = new Date();
+            const thisMonth = changes.filter(c => {
+                const d = new Date(c.new_date || c.old_date || '');
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            }).length;
+            return {value: thisMonth, label: 'Change Velocity', detail: 'Changes this month'};
+        }
         default:
             // Check custom metrics
             if (metricId.startsWith('custom_') && !metricId.startsWith('custom_trend_')) {
@@ -2414,9 +2282,19 @@ function getChartData(metricId) {
                 data: [{
                     x: st.periods, y: st.spi_values,
                     type: 'scatter', mode: 'lines+markers',
-                    line: {color: '#3b82f6', width: 3}, marker: {size: 8}
+                    line: {color: '#3b82f6', width: 3}, marker: {size: 8},
+                    name: 'SPI Trend'
                 }],
-                layout: {margin: {t:10,b:40,l:50,r:10}, yaxis: {title: 'SPI'}}
+                layout: {
+                    margin: {t:10,b:40,l:50,r:10},
+                    yaxis: {title: 'SPI'},
+                    shapes: [{
+                        type: 'line',
+                        x0: st.periods[0], y0: 1.0,
+                        x1: st.periods[st.periods.length - 1], y1: 1.0,
+                        line: {color: '#22c55e', width: 2, dash: 'dash'}
+                    }]
+                }
             };
         }
         case 'milestone_by_parent': {
@@ -2424,7 +2302,6 @@ function getChartData(metricId) {
             const completed = parents.map(p => byParent[p].completed || 0);
             const inProgress = parents.map(p => byParent[p].in_progress || 0);
             const notStarted = parents.map(p => byParent[p].not_started || 0);
-            // Truncate long labels
             const labels = parents.map(p => p.length > 30 ? p.substring(0, 27) + '...' : p);
             return {
                 data: [
@@ -2489,128 +2366,159 @@ function getChartData(metricId) {
     }
 }
 
-// Render a single widget
-function renderWidget(widget, container) {
-    const el = document.createElement('div');
-    el.id = `widget-${widget.id}`;
-    el.dataset.widgetId = widget.id;
-    el.className = `widget-item bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${
-        widget.size === 'large' ? 'lg:col-span-3 md:col-span-2' : 
-        widget.size === 'medium' ? 'md:col-span-2' : ''
-    }`;
-    el.draggable = true;
+// Build widget HTML content (for GridStack item-content)
+function buildWidgetContent(widget) {
+    const metricVal = getMetricValue(widget.metricId);
+    const chartId = `chart-${widget.id}`;
+    
+    let bodyHTML;
+    if (widget.displayType === 'card') {
+        bodyHTML = `
+            <div class="gs-widget-body" style="flex-direction: column;">
+                <div class="kpi-value">${metricVal.value}</div>
+                <div class="kpi-detail">${metricVal.detail}</div>
+            </div>`;
+    } else {
+        bodyHTML = `
+            <div class="gs-widget-body" style="padding: 4px;">
+                <div id="${chartId}" style="width:100%; height:100%;"></div>
+            </div>`;
+    }
+    
+    return `
+        <div class="gs-widget-header">
+            <span class="widget-title" title="${metricVal.label}">
+                <span style="margin-right:4px; opacity:0.4;">⋮⋮</span>${metricVal.label}
+            </span>
+            <div class="widget-actions">
+                <button class="widget-remove-btn" data-widget-id="${widget.id}" title="Remove widget">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        ${bodyHTML}`;
+}
+
+// Render a Plotly chart inside a GridStack widget
+function renderWidgetChart(widget) {
+    if (widget.displayType === 'card') return;
     
     const chartId = `chart-${widget.id}`;
-    const metricVal = getMetricValue(widget.metricId);
+    const chartDiv = document.getElementById(chartId);
+    if (!chartDiv) return;
     
-    el.innerHTML = `
-        <div class="widget-header flex items-center justify-between px-3 py-2 bg-gray-50 border-b cursor-move select-none">
-            <span class="text-sm font-semibold text-gray-700 truncate" title="${metricVal.label}">
-                <span class="mr-1">≡</span> ${metricVal.label}
-            </span>
-            <button class="widget-remove text-gray-400 hover:text-red-500 transition" data-id="${widget.id}" title="Remove widget">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="widget-body p-4">
-            ${widget.displayType === 'card' ? `
-                <div class="text-center py-4">
-                    <p class="text-4xl font-bold text-gray-900">${metricVal.value}</p>
-                    <p class="text-sm text-gray-500 mt-2">${metricVal.detail}</p>
-                </div>
-            ` : `
-                <div id="${chartId}" style="width:100%; height:${widget.size === 'small' ? '200px' : '280px'};"></div>
-            `}
-        </div>
-    `;
-    
-    container.appendChild(el);
-    
-    // Render chart if needed
-    if (widget.displayType !== 'card') {
-        const chartData = getChartData(widget.metricId);
-        if (chartData) {
-            setTimeout(() => {
-                try {
-                    Plotly.newPlot(chartId, chartData.data, chartData.layout || {}, {
-                        responsive: true, displayModeBar: false
-                    });
-                } catch (e) {
-                    console.warn('Chart render error:', e);
-                }
-            }, 100);
-        } else {
-            document.getElementById(chartId).innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">No data available</div>';
+    const chartData = getChartData(widget.metricId);
+    if (chartData) {
+        try {
+            Plotly.newPlot(chartId, chartData.data, {
+                ...(chartData.layout || {}),
+                autosize: true
+            }, {
+                responsive: true,
+                displayModeBar: false
+            });
+        } catch (e) {
+            console.warn('Chart render error for', widget.metricId, ':', e);
         }
+    } else {
+        chartDiv.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#9ca3af; font-size:0.875rem;">No data available</div>';
+    }
+}
+
+// Add a single widget to the GridStack grid
+function addWidgetToGridStack(widget, batchMode) {
+    const content = buildWidgetContent(widget);
+    
+    const gsOptions = {
+        id: widget.id,
+        x: widget.x,
+        y: widget.y,
+        w: widget.w,
+        h: widget.h,
+        content: content,
+        autoPosition: widget.x === undefined || widget.y === undefined
+    };
+    
+    const el = gsGrid.addWidget(gsOptions);
+    
+    // Store metadata on the element
+    el.dataset.metricId = widget.metricId;
+    el.dataset.displayType = widget.displayType;
+    el.dataset.gsId = widget.id;
+    
+    // Render chart after a brief delay (DOM needs to settle)
+    if (!batchMode) {
+        setTimeout(() => {
+            renderWidgetChart(widget);
+            attachRemoveHandler(el, widget.id);
+        }, 150);
     }
     
-    // Remove button handler
-    el.querySelector('.widget-remove').addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeWidget(widget.id);
-    });
-    
-    // Drag events
-    el.addEventListener('dragstart', (e) => {
-        draggedWidget = widget.id;
-        el.classList.add('opacity-50');
-        e.dataTransfer.effectAllowed = 'move';
-    });
-    el.addEventListener('dragend', () => {
-        el.classList.remove('opacity-50');
-        draggedWidget = null;
-        document.querySelectorAll('.widget-item').forEach(w => w.classList.remove('border-blue-500', 'border-2'));
-    });
-    el.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        el.classList.add('border-blue-500', 'border-2');
-    });
-    el.addEventListener('dragleave', () => {
-        el.classList.remove('border-blue-500', 'border-2');
-    });
-    el.addEventListener('drop', (e) => {
-        e.preventDefault();
-        el.classList.remove('border-blue-500', 'border-2');
-        if (draggedWidget && draggedWidget !== widget.id) {
-            reorderWidgets(draggedWidget, widget.id);
-        }
-    });
+    return el;
 }
 
-function reorderWidgets(fromId, toId) {
-    const fromIdx = dashboardWidgets.findIndex(w => w.id === fromId);
-    const toIdx = dashboardWidgets.findIndex(w => w.id === toId);
-    if (fromIdx === -1 || toIdx === -1) return;
-    
-    const [moved] = dashboardWidgets.splice(fromIdx, 1);
-    dashboardWidgets.splice(toIdx, 0, moved);
-    saveWidgetLayout();
-    renderAllWidgets();
+// Attach remove button handler
+function attachRemoveHandler(el, widgetId) {
+    const removeBtn = el.querySelector('.widget-remove-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            gsGrid.removeWidget(el);
+            saveLayout();
+            updatePlaceholder();
+        });
+    }
 }
 
-function removeWidget(widgetId) {
-    dashboardWidgets = dashboardWidgets.filter(w => w.id !== widgetId);
-    saveWidgetLayout();
-    renderAllWidgets();
-}
-
-function renderAllWidgets() {
-    const grid = document.getElementById('widgetGrid');
+// Show/hide the empty placeholder
+function updatePlaceholder() {
     const placeholder = document.getElementById('widgetPlaceholder');
+    if (!placeholder) return;
+    const hasWidgets = gsGrid && gsGrid.getGridItems().length > 0;
+    placeholder.classList.toggle('hidden', hasWidgets);
+}
+
+// Load layout and render all widgets
+function loadAndRenderWidgets(widgets) {
+    // Batch add: disable float/animation temporarily
+    gsGrid.batchUpdate();
     
-    // Clear existing widgets (keep placeholder)
-    grid.querySelectorAll('.widget-item').forEach(w => w.remove());
+    const elements = [];
+    widgets.forEach(w => {
+        const el = addWidgetToGridStack(w, true);
+        elements.push({ el, widget: w });
+    });
     
-    if (dashboardWidgets.length === 0) {
-        placeholder.classList.remove('hidden');
-        return;
-    }
+    gsGrid.batchUpdate(false);
     
-    placeholder.classList.add('hidden');
+    // Render charts and attach handlers after batch is complete
+    setTimeout(() => {
+        elements.forEach(({ el, widget }) => {
+            renderWidgetChart(widget);
+            attachRemoveHandler(el, widget.id);
+        });
+    }, 200);
     
-    dashboardWidgets.forEach(widget => {
-        renderWidget(widget, grid);
+    updatePlaceholder();
+}
+
+// Resize Plotly charts when GridStack items are resized
+function handleWidgetResize(items) {
+    if (!items) return;
+    items.forEach(item => {
+        const el = item.el;
+        if (!el) return;
+        const displayType = el.dataset.displayType;
+        if (displayType && displayType !== 'card') {
+            const widgetId = el.dataset.gsId;
+            const chartId = `chart-${widgetId}`;
+            const chartDiv = document.getElementById(chartId);
+            if (chartDiv && chartDiv.data) {
+                setTimeout(() => {
+                    Plotly.Plots.resize(chartDiv);
+                }, 100);
+            }
+        }
     });
 }
 
@@ -2704,63 +2612,115 @@ function selectWidgetType(type) {
     }
 }
 
-function addWidgetToGrid() {
+// Size mapping for Add Widget modal
+const SIZE_MAP = {
+    small:  { w: 3,  h: 2 },
+    medium: { w: 6,  h: 4 },
+    large:  { w: 12, h: 5 }
+};
+
+function addWidgetFromModal() {
     if (!selectedMetricId) {
         alert('Please select a metric first.');
         return;
     }
     
+    const size = SIZE_MAP[selectedWidgetSize] || SIZE_MAP.small;
+    // For cards, use smaller height
+    const h = selectedWidgetType === 'card' ? Math.min(size.h, 2) : size.h;
+    
     const widget = {
         id: 'w_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         metricId: selectedMetricId,
         displayType: selectedWidgetType,
-        size: selectedWidgetSize
+        w: size.w,
+        h: h,
+        // autoPosition will find next open spot
+        x: undefined,
+        y: undefined
     };
     
-    dashboardWidgets.push(widget);
-    saveWidgetLayout();
-    renderAllWidgets();
+    addWidgetToGridStack(widget, false);
+    saveLayout();
+    updatePlaceholder();
     
     document.getElementById('addWidgetModal').classList.add('hidden');
 }
 
-// Initialize Analytics Dashboard
-async function initAnalyticsDashboard() {
-    console.log('🎯 Initializing Analytics Dashboard...');
+// ============================================================
+// Initialize GridStack Dashboard
+// ============================================================
+async function initGridStackDashboard() {
+    console.log('🎯 Initializing GridStack Metrics Dashboard...');
     
+    // Load analytics data from API
     const loaded = await loadAnalyticsData();
     if (!loaded) {
         console.warn('Could not load analytics data');
         return;
     }
     
-    // Load saved layout or show placeholder
-    loadWidgetLayout();
-    renderAllWidgets();
+    // Initialize GridStack
+    gsGrid = GridStack.init({
+        column: 12,
+        cellHeight: 60,
+        margin: 8,
+        animate: true,
+        float: false,
+        removable: false,
+        disableOneColumnMode: true,
+        resizable: { handles: 'se, sw' },
+        draggable: { handle: '.gs-widget-header' }
+    }, '#metricsGrid');
     
-    // Event listeners
+    // Listen for layout changes to persist
+    gsGrid.on('change', function(event, items) {
+        saveLayout();
+    });
+    
+    // Listen for resize to update Plotly charts
+    gsGrid.on('resizestop', function(event, el) {
+        handleWidgetResize([{ el }]);
+    });
+    
+    // Load saved layout or use defaults
+    const savedLayout = loadSavedLayout();
+    const widgetsToLoad = savedLayout || [...DEFAULT_WIDGETS];
+    
+    console.log(`📦 Loading ${widgetsToLoad.length} widgets (${savedLayout ? 'saved' : 'default'} layout)`);
+    loadAndRenderWidgets(widgetsToLoad);
+    
+    // ---- Button event listeners ----
+    
+    // Add Widget button
     document.getElementById('addWidgetBtn').addEventListener('click', openAddWidgetModal);
+    
+    // Modal close/cancel
     document.getElementById('closeWidgetModalBtn').addEventListener('click', () => {
         document.getElementById('addWidgetModal').classList.add('hidden');
     });
     document.getElementById('cancelWidgetBtn').addEventListener('click', () => {
         document.getElementById('addWidgetModal').classList.add('hidden');
     });
-    document.getElementById('confirmAddWidgetBtn').addEventListener('click', addWidgetToGrid);
+    
+    // Confirm add widget
+    document.getElementById('confirmAddWidgetBtn').addEventListener('click', addWidgetFromModal);
+    
+    // Reset layout
     document.getElementById('resetLayoutBtn').addEventListener('click', () => {
-        if (confirm('Reset the analytics dashboard? This will remove all widgets.')) {
-            dashboardWidgets = [];
-            saveWidgetLayout();
-            renderAllWidgets();
+        if (confirm('Reset dashboard to default layout? This will remove all custom widget arrangements.')) {
+            gsGrid.removeAll();
+            localStorage.removeItem(WIDGET_STORAGE_KEY);
+            loadAndRenderWidgets([...DEFAULT_WIDGETS]);
         }
     });
     
-    // Widget type selection
+    // Widget type selection buttons
     document.querySelectorAll('.widget-type-btn').forEach(btn => {
         btn.addEventListener('click', () => selectWidgetType(btn.dataset.type));
     });
     
-    // Widget size selection
+    // Widget size selection buttons
     document.querySelectorAll('.widget-size-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             selectedWidgetSize = btn.dataset.size;
@@ -2773,12 +2733,7 @@ async function initAnalyticsDashboard() {
         });
     });
     
-    console.log('✅ Analytics Dashboard initialized');
+    console.log('✅ GridStack Metrics Dashboard initialized');
 }
-
-// Trigger analytics init after DOM load (it's already inside DOMContentLoaded context)
-initAnalyticsDashboard();
 </script>
 {% endblock %}
-
-
