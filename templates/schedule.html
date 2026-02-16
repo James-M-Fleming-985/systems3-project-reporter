@@ -1830,7 +1830,21 @@ async function updateTableName(tableId, name) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing status colors...');
     initStatusColors();
-    restoreActiveTab();
+    
+    // Check for ?table= query param (e.g. from calendar deep link)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableParam = urlParams.get('table');
+    if (tableParam) {
+        const tabExists = document.querySelector(`.schedule-tab[data-table-id="${tableParam}"]`);
+        if (tabExists) {
+            switchTab(tableParam);
+        } else {
+            restoreActiveTab();
+        }
+    } else {
+        restoreActiveTab();
+    }
+    
     initCellTooltips();
 });
 

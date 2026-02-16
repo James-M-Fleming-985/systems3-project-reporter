@@ -414,6 +414,7 @@ async def get_calendar_events(request: Request):
                                         'status_category': sched_status_category,
                                         'program': sched_program,
                                         'tableName': table_name,
+                                        'tableId': table.get('id', ''),
                                         'status': status,
                                         'dateField': col_header,
                                         'allData': {

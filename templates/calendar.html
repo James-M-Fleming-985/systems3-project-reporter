@@ -498,9 +498,13 @@ function showEventModal(event) {
         'metric_target': 'metrics'
     };
     const tabNav = typeToTabNav[type] || 'milestones';
-    goBtn.href = ep.programCode
+    let goBtnUrl = ep.programCode
         ? `/dashboard/${tabNav}?project=${encodeURIComponent(ep.programCode)}`
         : `/dashboard/${tabNav}`;
+    if (type === 'schedule' && ep.tableId) {
+        goBtnUrl += (goBtnUrl.includes('?') ? '&' : '?') + `table=${encodeURIComponent(ep.tableId)}`;
+    }
+    goBtn.href = goBtnUrl;
     goBtn.textContent = `Open ${ep.source_label || 'Item'} Tab ↗`;
     
     // --- Build navigation URL based on event type ---
@@ -511,9 +515,13 @@ function showEventModal(event) {
         'metric_target': 'metrics'
     };
     const tab = typeToTab[type] || 'milestones';
-    const navUrl = ep.programCode
+    let navUrl = ep.programCode
         ? `/dashboard/${tab}?project=${encodeURIComponent(ep.programCode)}`
         : `/dashboard/${tab}`;
+    // For schedule events, append table ID so the page opens the right table tab
+    if (type === 'schedule' && ep.tableId) {
+        navUrl += (navUrl.includes('?') ? '&' : '?') + `table=${encodeURIComponent(ep.tableId)}`;
+    }
 
     // --- UNIFORM TOP SECTION (same for ALL event types) ---
     const statusCat = ep.status_category || 'not-started';
