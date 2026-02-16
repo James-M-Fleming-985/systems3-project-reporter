@@ -284,9 +284,14 @@
         <!-- Modal Footer -->
         <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
             <span class="text-xs text-gray-400" id="eventModalProgram">Program Name</span>
-            <button id="closeEventModalBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
-                Close
-            </button>
+            <div class="flex items-center gap-2">
+                <a id="goToProgramBtn" href="#" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-medium inline-flex items-center gap-1">
+                    Open in Dashboard ↗
+                </a>
+                <button id="closeEventModalBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -484,13 +489,43 @@ function showEventModal(event) {
     document.getElementById('eventModalTitle').textContent = event.title;
     document.getElementById('eventModalProgram').textContent = ep.program || '';
     
+    // Set "Go to Program" button URL
+    const goBtn = document.getElementById('goToProgramBtn');
+    const typeToTabNav = {
+        'milestone': 'milestones',
+        'change': 'changes',
+        'schedule': 'schedule',
+        'metric_target': 'metrics'
+    };
+    const tabNav = typeToTabNav[type] || 'milestones';
+    goBtn.href = ep.programCode
+        ? `/dashboard/${tabNav}?project=${encodeURIComponent(ep.programCode)}`
+        : `/dashboard/${tabNav}`;
+    goBtn.textContent = `Open ${ep.source_label || 'Item'} Tab ↗`;
+    
+    // --- Build navigation URL based on event type ---
+    const typeToTab = {
+        'milestone': 'milestones',
+        'change': 'changes',
+        'schedule': 'schedule',
+        'metric_target': 'metrics'
+    };
+    const tab = typeToTab[type] || 'milestones';
+    const navUrl = ep.programCode
+        ? `/dashboard/${tab}?project=${encodeURIComponent(ep.programCode)}`
+        : `/dashboard/${tab}`;
+
     // --- UNIFORM TOP SECTION (same for ALL event types) ---
     const statusCat = ep.status_category || 'not-started';
     let bodyHtml = `
         <div class="uniform-info-grid">
             <div class="info-item">
                 <span class="info-label">Type</span>
-                <span class="info-value"><span class="source-type-badge source-type-${type}">${ep.source_label || type}</span></span>
+                <span class="info-value">
+                    <a href="${navUrl}" class="source-type-badge source-type-${type} hover:brightness-110 hover:ring-2 hover:ring-offset-1 hover:ring-blue-300 transition cursor-pointer no-underline" title="Go to ${tab} tab for this program">
+                        ${ep.source_label || type} ↗
+                    </a>
+                </span>
             </div>
             <div class="info-item">
                 <span class="info-label">Status</span>
@@ -506,7 +541,11 @@ function showEventModal(event) {
             </div>
             <div class="info-item">
                 <span class="info-label">Program</span>
-                <span class="info-value">${ep.program || 'N/A'}</span>
+                <span class="info-value">
+                    <a href="/dashboard/?project=${encodeURIComponent(ep.programCode || '')}" class="text-blue-600 hover:text-blue-800 hover:underline transition" title="Go to program dashboard">
+                        ${ep.program || 'N/A'} ↗
+                    </a>
+                </span>
             </div>
         </div>
     `;
