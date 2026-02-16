@@ -282,5 +282,12 @@
             }
         });
     </script>
+    <script src="/static/js/analytics.js"></script>
+    <script>
+    // Track successful registration (form submitted without validation error)
+    document.querySelector('form')?.addEventListener('submit', function() {
+        if (window.S3Analytics) S3Analytics.signUp('email');
+    });
+    </script>
 </body>
 </html>

@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Console — Systems³{% endblock %}
+{% block meta_description %}Admin dashboard for Systems³ Project Reporter{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block extra_head %}
+<style>
+    .tab-btn { @apply px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors; }
+    .tab-btn.active { @apply text-blue-700 border-blue-700 bg-blue-50; }
+    .tab-btn:not(.active) { @apply text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300; }
+    .stat-card { @apply bg-white rounded-xl shadow p-6 text-center; }
+    .stat-num { @apply text-3xl font-bold text-gray-900; }
+    .stat-label { @apply text-sm text-gray-500 mt-1; }
+    .admin-table { @apply w-full text-sm text-left; }
+    .admin-table th { @apply px-4 py-3 bg-gray-50 font-semibold text-gray-700 border-b; }
+    .admin-table td { @apply px-4 py-3 border-b border-gray-100; }
+    .badge { @apply px-2 py-0.5 rounded-full text-xs font-semibold; }
+    .badge-green { @apply bg-green-100 text-green-800; }
+    .badge-yellow { @apply bg-yellow-100 text-yellow-800; }
+    .badge-red { @apply bg-red-100 text-red-800; }
+    .badge-blue { @apply bg-blue-100 text-blue-800; }
+    .badge-gray { @apply bg-gray-100 text-gray-600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Admin Console</h1>
+            <p class="text-gray-500 text-sm mt-1">System overview, user management, feedback review & marketing</p>
+        </div>
+        <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold">🛡️ Admin Only</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex space-x-1" id="adminTabs">
+            <button onclick="switchTab('overview')" class="tab-btn active" data-tab="overview">📊 Overview</button>
+            <button onclick="switchTab('users')" class="tab-btn" data-tab="users">👥 Users</button>
+            <button onclick="switchTab('feedback')" class="tab-btn" data-tab="feedback">💬 Feedback</button>
+            <button onclick="switchTab('marketing')" class="tab-btn" data-tab="marketing">📣 Marketing</button>
+            <button onclick="switchTab('settings')" class="tab-btn" data-tab="settings">⚙️ Settings</button>
+        </nav>
+    </div>
+
+    <!-- ═══════════════ OVERVIEW TAB ═══════════════ -->
+    <div id="tab-overview" class="tab-panel">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card">
+                <div class="stat-num" id="stat-users">—</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="stat-projects">—</div>
+                <div class="stat-label">Projects Loaded</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="stat-feedback">—</div>
+                <div class="stat-label">Feedback Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="stat-notifications">—</div>
+                <div class="stat-label">Active Notifications</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6">
+            <h3 class="font-bold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="adminAction('reload-projects')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    🔄 Reload Projects
+                </button>
+                <button onclick="adminAction('cleanup-duplicates')" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition">
+                    🧹 Clean Duplicates
+                </button>
+                <button onclick="adminAction('verify-storage')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                    💾 Verify Storage
+                </button>
+            </div>
+            <div id="actionResult" class="mt-4 hidden p-3 rounded-lg text-sm"></div>
+        </div>
+
+        <!-- System Info -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-bold text-gray-800 mb-4">System Info</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm" id="sysInfo">
+                <div><span class="text-gray-500">Build:</span> <span class="font-mono">{{ build_version }}</span></div>
+                <div><span class="text-gray-500">Environment:</span> <span class="font-mono" id="sys-env">—</span></div>
+                <div><span class="text-gray-500">Data Path:</span> <span class="font-mono" id="sys-data-path">—</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ USERS TAB ═══════════════ -->
+    <div id="tab-users" class="tab-panel hidden">
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="px-6 py-4 border-b flex items-center justify-between">
+                <h3 class="font-bold text-gray-800">Registered Users</h3>
+                <span class="text-sm text-gray-500" id="userCount"></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="admin-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Tier</th>
+                            <th>Admin</th>
+                            <th>Projects</th>
+                            <th>Registered</th>
+                            <th>Last Login</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <tr><td colspan="7" class="text-center py-8 text-gray-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ FEEDBACK TAB ═══════════════ -->
+    <div id="tab-feedback" class="tab-panel hidden">
+        <div class="flex items-center gap-3 mb-4">
+            <select id="fbStatusFilter" onchange="loadFeedback()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">All Status</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+            </select>
+            <span class="text-sm text-gray-500" id="fbCount"></span>
+        </div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>User</th>
+                        <th>Page</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="fbBody">
+                    <tr><td colspan="8" class="text-center py-8 text-gray-400">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════ MARKETING TAB ═══════════════ -->
+    <div id="tab-marketing" class="tab-panel hidden">
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Email Campaign -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-gray-800 mb-4">📧 Email Campaign</h3>
+                <p class="text-sm text-gray-500 mb-4">Send a campaign email to all registered users via SendGrid.</p>
+                <div class="space-y-3">
+                    <input type="text" id="emailSubject" placeholder="Email subject line" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <textarea id="emailBody" rows="6" placeholder="Email body (HTML supported)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"></textarea>
+                    <div class="flex items-center gap-3">
+                        <button onclick="sendCampaign()" id="sendCampaignBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                            Send Campaign
+                        </button>
+                        <button onclick="previewCampaign()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                            Preview
+                        </button>
+                    </div>
+                    <div id="campaignResult" class="hidden p-3 rounded-lg text-sm"></div>
+                </div>
+            </div>
+
+            <!-- Social Post Drafts -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-gray-800 mb-4">📱 Social Post Drafts</h3>
+                <p class="text-sm text-gray-500 mb-4">Generate launch-ready social posts with one click.</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Topic / Announcement</label>
+                        <input type="text" id="socialTopic" placeholder="e.g. Beta launch, new feature, etc." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <button onclick="generateSocialPosts()" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                        Generate Posts
+                    </button>
+
+                    <!-- LinkedIn Draft -->
+                    <div id="linkedinDraft" class="hidden">
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+                            <span>LinkedIn</span>
+                            <button onclick="copyToClipboard('linkedinText')" class="text-blue-600 hover:underline text-xs">📋 Copy</button>
+                        </label>
+                        <textarea id="linkedinText" rows="5" class="w-full border rounded-lg px-3 py-2 text-sm bg-blue-50"></textarea>
+                    </div>
+
+                    <!-- Twitter/X Draft -->
+                    <div id="twitterDraft" class="hidden">
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+                            <span>Twitter / X</span>
+                            <button onclick="copyToClipboard('twitterText')" class="text-blue-600 hover:underline text-xs">📋 Copy</button>
+                        </label>
+                        <textarea id="twitterText" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm bg-sky-50"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SETTINGS TAB ═══════════════ -->
+    <div id="tab-settings" class="tab-panel hidden">
+        <div class="bg-white rounded-xl shadow p-6 max-w-2xl">
+            <h3 class="font-bold text-gray-800 mb-4">Environment Configuration</h3>
+            <p class="text-sm text-gray-500 mb-6">These are set via Railway environment variables.</p>
+            <div class="space-y-4 text-sm">
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <span class="font-medium text-gray-700">GA4 Measurement ID</span>
+                    <span class="col-span-2 font-mono text-gray-600" id="cfg-ga4">{{ config.GA4_MEASUREMENT_ID or '(not set)' }}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <span class="font-medium text-gray-700">Mixpanel Token</span>
+                    <span class="col-span-2 font-mono text-gray-600">{{ '••••' + config.MIXPANEL_TOKEN[-4:] if config.MIXPANEL_TOKEN else '(not set)' }}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <span class="font-medium text-gray-700">SendGrid API Key</span>
+                    <span class="col-span-2 font-mono text-gray-600" id="cfg-sendgrid">—</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <span class="font-medium text-gray-700">Stripe Key</span>
+                    <span class="col-span-2 font-mono text-gray-600" id="cfg-stripe">—</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <span class="font-medium text-gray-700">Beta Mode</span>
+                    <span class="col-span-2">
+                        <span class="badge badge-green">Active — All features free</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Tab switching ────────────────────────────────────────────
+function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab)?.classList.remove('hidden');
+    document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+
+    // Load data for tab
+    if (tab === 'overview') loadOverview();
+    if (tab === 'users') loadUsers();
+    if (tab === 'feedback') loadFeedback();
+}
+
+// ── Overview ─────────────────────────────────────────────────
+async function loadOverview() {
+    try {
+        const resp = await fetch('/admin/api/stats');
+        const data = await resp.json();
+        document.getElementById('stat-users').textContent = data.total_users ?? '—';
+        document.getElementById('stat-projects').textContent = data.total_projects ?? '—';
+        document.getElementById('stat-feedback').textContent = data.total_feedback ?? '—';
+        document.getElementById('stat-notifications').textContent = data.active_notifications ?? '—';
+        document.getElementById('sys-env').textContent = data.environment || 'local';
+        document.getElementById('sys-data-path').textContent = data.data_path || '—';
+        document.getElementById('cfg-sendgrid').textContent = data.sendgrid_configured ? '••••configured' : '(not set)';
+        document.getElementById('cfg-stripe').textContent = data.stripe_configured ? '••••configured' : '(not set — dormant)';
+    } catch (e) {
+        console.error('Failed to load overview', e);
+    }
+}
+
+// ── Users ────────────────────────────────────────────────────
+async function loadUsers() {
+    try {
+        const resp = await fetch('/admin/api/users');
+        const data = await resp.json();
+        document.getElementById('userCount').textContent = `${data.users.length} user(s)`;
+        const tbody = document.getElementById('usersBody');
+        if (data.users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No users registered</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.users.map(u => `<tr>
+            <td class="font-medium">${esc(u.full_name)}</td>
+            <td>${esc(u.email)}</td>
+            <td><span class="badge badge-blue">${u.subscription_tier}</span></td>
+            <td>${u.is_admin ? '<span class="badge badge-yellow">Admin</span>' : '—'}</td>
+            <td>${u.total_projects_uploaded ?? 0}</td>
+            <td>${fmtDate(u.created_at)}</td>
+            <td>${u.last_login ? fmtDate(u.last_login) : '—'}</td>
+        </tr>`).join('');
+    } catch (e) {
+        document.getElementById('usersBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>';
+    }
+}
+
+// ── Feedback ─────────────────────────────────────────────────
+async function loadFeedback() {
+    try {
+        const status = document.getElementById('fbStatusFilter').value;
+        const url = status ? `/api/feedback?status=${status}` : '/api/feedback';
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const items = data.feedback || [];
+        document.getElementById('fbCount').textContent = `${items.length} item(s)`;
+        const tbody = document.getElementById('fbBody');
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">No feedback</td></tr>';
+            return;
+        }
+        const priorityBadge = { critical:'badge-red', high:'badge-red', medium:'badge-yellow', low:'badge-gray' };
+        const statusBadge = { open:'badge-blue', in_progress:'badge-yellow', resolved:'badge-green', closed:'badge-gray' };
+        tbody.innerHTML = items.map(fb => `<tr>
+            <td class="font-medium max-w-xs truncate">${esc(fb.title)}</td>
+            <td><span class="badge badge-blue">${fb.type || 'general'}</span></td>
+            <td><span class="badge ${priorityBadge[fb.priority] || 'badge-gray'}">${fb.priority || 'medium'}</span></td>
+            <td><span class="badge ${statusBadge[fb.status] || 'badge-gray'}">${fb.status || 'open'}</span></td>
+            <td>${esc(fb.user_name || 'Anonymous')}</td>
+            <td class="font-mono text-xs">${fb.page || '—'}</td>
+            <td>${fmtDate(fb.created_at)}</td>
+            <td class="flex gap-1">
+                <select onchange="updateFeedback('${fb.id}', this.value)" class="border rounded px-1 py-0.5 text-xs">
+                    <option value="">Change…</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                </select>
+                <button onclick="deleteFeedback('${fb.id}')" class="text-red-500 hover:text-red-700 text-xs px-1" title="Delete">🗑</button>
+            </td>
+        </tr>`).join('');
+    } catch (e) {
+        document.getElementById('fbBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load</td></tr>';
+    }
+}
+
+async function updateFeedback(id, status) {
+    if (!status) return;
+    await fetch(`/api/feedback/${id}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status })
+    });
+    loadFeedback();
+}
+
+async function deleteFeedback(id) {
+    if (!confirm('Delete this feedback item?')) return;
+    await fetch(`/api/feedback/${id}`, { method: 'DELETE' });
+    loadFeedback();
+}
+
+// ── Admin actions ────────────────────────────────────────────
+async function adminAction(action) {
+    const resultEl = document.getElementById('actionResult');
+    resultEl.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+    resultEl.textContent = 'Processing…';
+    resultEl.className = 'mt-4 p-3 rounded-lg text-sm bg-gray-100 text-gray-700';
+    try {
+        let resp;
+        if (action === 'verify-storage') {
+            resp = await fetch('/admin/api/verify-storage');
+        } else {
+            resp = await fetch(`/admin/${action}`, { method: 'POST' });
+        }
+        const data = await resp.json();
+        resultEl.textContent = data.message || JSON.stringify(data);
+        resultEl.className = 'mt-4 p-3 rounded-lg text-sm ' + (data.success !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+    } catch (e) {
+        resultEl.textContent = 'Error: ' + e.message;
+        resultEl.className = 'mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-800';
+    }
+}
+
+// ── Marketing ────────────────────────────────────────────────
+async function sendCampaign() {
+    const subject = document.getElementById('emailSubject').value.trim();
+    const body = document.getElementById('emailBody').value.trim();
+    if (!subject || !body) { alert('Subject and body are required'); return; }
+    const btn = document.getElementById('sendCampaignBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    const resultEl = document.getElementById('campaignResult');
+    try {
+        const resp = await fetch('/admin/api/send-campaign', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ subject, body })
+        });
+        const data = await resp.json();
+        resultEl.textContent = data.message || 'Campaign sent';
+        resultEl.className = 'p-3 rounded-lg text-sm ' + (data.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+    } catch (e) {
+        resultEl.textContent = 'Error: ' + e.message;
+        resultEl.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-800';
+    }
+    btn.disabled = false; btn.textContent = 'Send Campaign';
+}
+
+function previewCampaign() {
+    const body = document.getElementById('emailBody').value;
+    const w = window.open('', '_blank', 'width=600,height=500');
+    w.document.write('<html><head><title>Campaign Preview</title></head><body style="font-family:sans-serif;padding:20px">' + body + '</body></html>');
+}
+
+function generateSocialPosts() {
+    const topic = document.getElementById('socialTopic').value.trim() || 'Systems³ Project Reporter is now available';
+    const url = 'https://systems3-project-reporter-production.up.railway.app';
+
+    document.getElementById('linkedinText').value =
+`🚀 ${topic}
+
+Transform your MS Project data into stunning interactive dashboards — Gantt charts, milestone trackers, risk matrices & automated PowerPoint reports.
+
+✅ Free during Beta
+✅ No credit card required
+✅ Upload XML → Get insights in seconds
+
+Try it now 👉 ${url}
+
+#ProjectManagement #Automation #MSProject #Systems3`;
+
+    document.getElementById('twitterText').value =
+`🚀 ${topic}
+
+Upload MS Project XML → Get interactive Gantt charts, milestone tracking & auto PowerPoint reports.
+
+Free during Beta — no credit card needed.
+
+${url}
+
+#ProjectManagement #Automation`;
+
+    document.getElementById('linkedinDraft').classList.remove('hidden');
+    document.getElementById('twitterDraft').classList.remove('hidden');
+}
+
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    el.select();
+    navigator.clipboard.writeText(el.value);
+    // Flash feedback
+    el.classList.add('ring-2', 'ring-green-400');
+    setTimeout(() => el.classList.remove('ring-2', 'ring-green-400'), 1000);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function fmtDate(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}); } catch(e) { return d; } }
+
+// Load overview on page load
+document.addEventListener('DOMContentLoaded', loadOverview);
+</script>
+{% endblock %}

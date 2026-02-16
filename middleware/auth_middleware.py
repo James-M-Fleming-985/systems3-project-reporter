@@ -23,6 +23,8 @@ PUBLIC_ROUTES = {
     "/api/auth/register",
     "/health",
     "/favicon.ico",
+    "/robots.txt",
+    "/sitemap.xml",
     "/static",
     "/public",
 }

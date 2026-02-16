@@ -119,6 +119,10 @@ def get_template_context(request: Request, **kwargs):
         "request": request,
         "build_version": BUILD_VERSION,
         "csrf_token": csrf_token,
+        "config": {
+            "GA4_MEASUREMENT_ID": os.getenv("GA4_MEASUREMENT_ID", ""),
+            "MIXPANEL_TOKEN": os.getenv("MIXPANEL_TOKEN", ""),
+        },
     }
     context.update(kwargs)
     return context
@@ -170,18 +174,69 @@ async def root(request: Request):
     return templates.TemplateResponse("landing.html", {
         "request": request,
         "user": user,
-        "build_version": BUILD_VERSION
+        "build_version": BUILD_VERSION,
+        "config": {
+            "GA4_MEASUREMENT_ID": os.getenv("GA4_MEASUREMENT_ID", ""),
+            "MIXPANEL_TOKEN": os.getenv("MIXPANEL_TOKEN", ""),
+        },
     })
 
 
 @app.get("/robots.txt")
 async def robots_txt():
-    """Block all search engine crawlers - keep app private"""
+    """Allow crawlers on public pages, block app internals"""
     from fastapi.responses import PlainTextResponse
     return PlainTextResponse(
-        "User-agent: *\nDisallow: /\n",
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /dashboard/\n"
+        "Disallow: /api/\n"
+        "Disallow: /admin/\n"
+        "Disallow: /upload\n"
+        "Disallow: /subscription\n"
+        "Disallow: /notifications\n"
+        "Disallow: /powerpoint-export\n"
+        "Disallow: /static/\n"
+        "\n"
+        "Sitemap: https://systems3-project-reporter-production.up.railway.app/sitemap.xml\n",
         media_type="text/plain"
     )
+
+
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    """Generate sitemap for public pages"""
+    from fastapi.responses import Response
+    from datetime import date
+    today = date.today().isoformat()
+    sitemap = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://systems3-project-reporter-production.up.railway.app/</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://systems3-project-reporter-production.up.railway.app/login</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://systems3-project-reporter-production.up.railway.app/register</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://systems3-project-reporter-production.up.railway.app/feedback</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.4</priority>
+  </url>
+</urlset>"""
+    return Response(content=sitemap, media_type="application/xml")
 
 
 @app.get("/favicon.ico")

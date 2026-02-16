@@ -5,14 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Systems³ Project Reporter{% endblock %}</title>
     
-    <!-- PRIVACY: Prevent search engine indexing -->
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-    <meta name="googlebot" content="noindex, nofollow">
+    <!-- SEO Meta -->
+    <meta name="description" content="{% block meta_description %}Systems³ Project Reporter — Transform MS Project data into stunning visualisations, automated Gantt charts, milestone tracking and PowerPoint exports. Free during Beta.{% endblock %}">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}https://systems3-project-reporter-production.up.railway.app{{ request.url.path }}{% endblock %}">
     
-    <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Systems³ Project Reporter">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Systems³ Project Reporter — Automation at Exponential Scale{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Transform MS Project data into interactive dashboards, Gantt charts & automated PowerPoint reports. Free during Beta.{% endblock %}">
+    <meta property="og:url" content="https://systems3-project-reporter-production.up.railway.app{{ request.url.path }}">
+    <meta property="og:image" content="https://systems3-project-reporter-production.up.railway.app/static/og-image.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Systems³ Project Reporter">
+    <meta name="twitter:description" content="Transform MS Project data into interactive dashboards & automated reports. Free during Beta.">
+    <meta name="twitter:image" content="https://systems3-project-reporter-production.up.railway.app/static/og-image.png">
+    
+    <!-- Build Info -->
     <meta name="build-version" content="{{ build_version|default('unknown') }}">
     
     <!-- Favicons -->
@@ -57,6 +69,42 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     
     {% block extra_head %}{% endblock %}
+
+    <!-- JSON-LD Structured Data -->
+    {% block jsonld %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Systems³ Project Reporter",
+        "url": "https://systems3-project-reporter-production.up.railway.app",
+        "description": "Automated project reporting with interactive Gantt charts, milestone tracking, and PowerPoint exports.",
+        "publisher": {
+            "@type": "Organization",
+            "name": "Systems³"
+        }
+    }
+    </script>
+    {% endblock %}
+
+    <!-- Analytics: GA4 -->
+    {% if config.GA4_MEASUREMENT_ID %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GA4_MEASUREMENT_ID }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config.GA4_MEASUREMENT_ID }}', { send_page_view: true });
+    </script>
+    {% endif %}
+
+    <!-- Analytics: Mixpanel -->
+    {% if config.MIXPANEL_TOKEN %}
+    <script>
+    (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+    mixpanel.init('{{ config.MIXPANEL_TOKEN }}', {track_pageview: "url-with-path"});
+    </script>
+    {% endif %}
 </head>
 <body class="bg-gray-50">
     <!-- Navigation - Two-tier professional header -->
@@ -255,6 +303,7 @@
             const data = await resp.json();
             if (data.success) {
                 btn.textContent = '\u2705 Sent!';
+                if (window.S3Analytics) S3Analytics.feedbackSubmitted(document.getElementById('widgetType').value, document.getElementById('widgetPriority').value);
                 document.getElementById('widgetTitle').value = '';
                 document.getElementById('widgetDesc').value = '';
                 setTimeout(() => { btn.textContent = 'Submit'; btn.disabled = false; toggleFeedbackWidget(); }, 1500);
@@ -276,7 +325,7 @@
     <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-16">
         <div class="container mx-auto px-4 py-6 text-center">
-            <p>&copy; 2025 Systems³ | Project Reporter v{{ build_version }} | Automation at exponential scale</p>
+            <p>&copy; 2026 Systems³ | Project Reporter v{{ build_version }} | Automation at exponential scale</p>
         </div>
     </footer>
 
@@ -383,6 +432,9 @@
             }
         });
     </script>
+
+    <!-- Analytics Helper -->
+    <script src="/static/js/analytics.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>

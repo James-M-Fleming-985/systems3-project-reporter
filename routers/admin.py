@@ -1,11 +1,12 @@
 """
-Admin Router - Administrative functions like data cleanup
+Admin Router — Administrative dashboard, user management, feedback review, marketing, system actions.
 """
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, HTMLResponse
 import yaml
 import os
 from pathlib import Path
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,223 @@ router = APIRouter(tags=["admin"])
 # Use persistent storage path
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+USER_DATA_DIR = Path(os.getenv("USER_DATA_PATH", str(BASE_DIR / "user_data")))
+
+
+# ── Admin Dashboard Page ──────────────────────────────────────────────
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    """Admin super-console page"""
+    from main import templates, BUILD_VERSION
+    return templates.TemplateResponse("admin_console.html", {
+        "request": request,
+        "user": getattr(request.state, "user", None),
+        "build_version": BUILD_VERSION,
+        "config": {
+            "GA4_MEASUREMENT_ID": os.getenv("GA4_MEASUREMENT_ID", ""),
+            "MIXPANEL_TOKEN": os.getenv("MIXPANEL_TOKEN", ""),
+        },
+    })
+
+
+# ── Stats API ─────────────────────────────────────────────────────────
+
+@router.get("/admin/api/stats")
+async def admin_stats(request: Request):
+    """Return overview statistics for the admin dashboard."""
+    # Count users
+    total_users = 0
+    try:
+        users_file = USER_DATA_DIR / "users.yaml"
+        if users_file.exists():
+            with open(users_file, 'r') as f:
+                users_data = yaml.safe_load(f) or {}
+            total_users = len(users_data.get("users", []))
+    except Exception as e:
+        logger.warning(f"Could not count users: {e}")
+
+    # Count projects
+    total_projects = 0
+    try:
+        project_dirs = [d for d in DATA_DIR.iterdir() if d.is_dir() and d.name.startswith("PROJECT")]
+        total_projects = len(project_dirs)
+    except Exception:
+        pass
+
+    # Count feedback
+    total_feedback = 0
+    try:
+        from repositories.feedback_repository import FeedbackRepository
+        fb_repo = FeedbackRepository(DATA_DIR / "feedback")
+        stats = fb_repo.get_stats()
+        total_feedback = stats.get("total", 0)
+    except Exception:
+        pass
+
+    # Count notifications
+    active_notifications = 0
+    try:
+        from services.notification_service import NotificationService
+        ns = NotificationService(DATA_DIR)
+        notifs = ns.get_all_notifications()
+        active_notifications = len(notifs)
+    except Exception:
+        pass
+
+    return JSONResponse({
+        "total_users": total_users,
+        "total_projects": total_projects,
+        "total_feedback": total_feedback,
+        "active_notifications": active_notifications,
+        "environment": os.getenv("RAILWAY_ENVIRONMENT", "local"),
+        "data_path": str(DATA_DIR),
+        "sendgrid_configured": bool(os.getenv("SENDGRID_API_KEY")),
+        "stripe_configured": bool(os.getenv("STRIPE_SECRET_KEY")),
+    })
+
+
+# ── Users API ─────────────────────────────────────────────────────────
+
+@router.get("/admin/api/users")
+async def admin_list_users(request: Request):
+    """List all registered users (admin only)."""
+    users = []
+    try:
+        users_file = USER_DATA_DIR / "users.yaml"
+        if users_file.exists():
+            with open(users_file, 'r') as f:
+                users_data = yaml.safe_load(f) or {}
+            raw_users = users_data.get("users", [])
+            for u in raw_users:
+                users.append({
+                    "user_id": u.get("user_id", ""),
+                    "email": u.get("email", ""),
+                    "full_name": u.get("full_name", ""),
+                    "subscription_tier": u.get("subscription_tier", "free"),
+                    "is_admin": u.get("is_admin", False),
+                    "total_projects_uploaded": u.get("total_projects_uploaded", 0),
+                    "created_at": str(u.get("created_at", "")),
+                    "last_login": str(u.get("last_login", "")) if u.get("last_login") else None,
+                })
+    except Exception as e:
+        logger.error(f"Failed to list users: {e}")
+
+    return JSONResponse({"users": users})
+
+
+# ── Storage Verification ──────────────────────────────────────────────
+
+@router.get("/admin/api/verify-storage")
+async def verify_storage(request: Request):
+    """Verify feedback and data storage integrity."""
+    results = {}
+
+    # Check data directory
+    results["data_dir_exists"] = DATA_DIR.exists()
+    results["data_dir_path"] = str(DATA_DIR)
+
+    # Check feedback storage
+    feedback_dir = DATA_DIR / "feedback"
+    feedback_file = feedback_dir / "feedback.yaml"
+    results["feedback_dir_exists"] = feedback_dir.exists()
+    results["feedback_file_exists"] = feedback_file.exists()
+    if feedback_file.exists():
+        try:
+            with open(feedback_file, 'r') as f:
+                fb_data = yaml.safe_load(f) or {}
+            results["feedback_count"] = len(fb_data.get("feedback", []))
+            results["feedback_file_size_kb"] = round(feedback_file.stat().st_size / 1024, 1)
+        except Exception as e:
+            results["feedback_read_error"] = str(e)
+
+    # Check user data
+    users_file = USER_DATA_DIR / "users.yaml"
+    results["users_file_exists"] = users_file.exists()
+    if users_file.exists():
+        results["users_file_size_kb"] = round(users_file.stat().st_size / 1024, 1)
+
+    # Check project directories
+    project_dirs = list(DATA_DIR.glob("PROJECT*"))
+    results["project_directories"] = len(project_dirs)
+
+    results["success"] = True
+    results["message"] = f"Storage verified: {len(project_dirs)} projects, feedback {'OK' if feedback_file.exists() else 'not initialized'}"
+
+    return JSONResponse(results)
+
+
+# ── Email Campaign API ────────────────────────────────────────────────
+
+@router.post("/admin/api/send-campaign")
+async def send_campaign(request: Request):
+    """Send a campaign email to all registered users (requires SendGrid)."""
+    body = await request.json()
+    subject = body.get("subject", "").strip()
+    html_body = body.get("body", "").strip()
+
+    if not subject or not html_body:
+        return JSONResponse({"success": False, "message": "Subject and body are required"}, status_code=400)
+
+    sendgrid_key = os.getenv("SENDGRID_API_KEY", "")
+    from_email = os.getenv("SENDGRID_FROM_EMAIL", "noreply@systems3.app")
+
+    if not sendgrid_key:
+        return JSONResponse({
+            "success": False,
+            "message": "SendGrid API key not configured. Set SENDGRID_API_KEY environment variable."
+        }, status_code=400)
+
+    # Load user emails
+    emails = []
+    try:
+        users_file = USER_DATA_DIR / "users.yaml"
+        if users_file.exists():
+            with open(users_file, 'r') as f:
+                users_data = yaml.safe_load(f) or {}
+            for u in users_data.get("users", []):
+                email = u.get("email", "")
+                if email and u.get("is_active", True):
+                    emails.append(email)
+    except Exception as e:
+        return JSONResponse({"success": False, "message": f"Failed to load users: {e}"}, status_code=500)
+
+    if not emails:
+        return JSONResponse({"success": False, "message": "No active users to send to"}, status_code=400)
+
+    # Send via SendGrid
+    sent = 0
+    errors = 0
+    try:
+        import sendgrid
+        from sendgrid.helpers.mail import Mail
+
+        sg = sendgrid.SendGridAPIClient(api_key=sendgrid_key)
+        for email in emails:
+            try:
+                message = Mail(
+                    from_email=from_email,
+                    to_emails=email,
+                    subject=subject,
+                    html_content=html_body,
+                )
+                sg.send(message)
+                sent += 1
+            except Exception as e:
+                logger.warning(f"Failed to send to {email}: {e}")
+                errors += 1
+    except ImportError:
+        return JSONResponse({
+            "success": False,
+            "message": "sendgrid package not installed. Add 'sendgrid' to requirements.txt."
+        }, status_code=500)
+
+    return JSONResponse({
+        "success": True,
+        "message": f"Campaign sent to {sent} user(s)" + (f", {errors} failed" if errors else ""),
+        "sent": sent,
+        "errors": errors,
+    })
 
 
 @router.post("/admin/reload-projects")

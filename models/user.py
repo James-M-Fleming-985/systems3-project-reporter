@@ -26,18 +26,23 @@ class SubscriptionLimits(BaseModel):
 
 
 # Define subscription tiers
+# BETA MODE: Free tier has generous limits — all features available for free
 SUBSCRIPTION_TIERS = {
     SubscriptionTier.FREE: SubscriptionLimits(
         tier=SubscriptionTier.FREE,
-        max_projects_per_month=1,
-        max_total_projects=3,
-        max_file_size_mb=20,  # Temporarily increased to 20MB for development
+        max_projects_per_month=9999,   # Unlimited during beta
+        max_total_projects=9999,       # Unlimited during beta
+        max_file_size_mb=100,          # 100MB during beta
         price_monthly_usd=0.00,
         features=[
-            "Basic Gantt charts",
+            "Interactive Gantt charts",
             "Milestone tracking",
-            "XML upload (1 project/month)",
-            "Basic export"
+            "Risk & change management",
+            "Custom metrics dashboard",
+            "Calendar view",
+            "PowerPoint export",
+            "Unlimited uploads (Beta)",
+            "All features included (Beta)",
         ]
     ),
     SubscriptionTier.STARTER: SubscriptionLimits(

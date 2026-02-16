@@ -59,7 +59,11 @@ async def list_feedback(request: Request, status: Optional[str] = None, limit: i
 
 @router.patch("/api/feedback/{feedback_id}")
 async def update_feedback(request: Request, feedback_id: str):
-    """Update feedback status (admin)."""
+    """Update feedback status (admin only)."""
+    user = getattr(request.state, "user", None)
+    if not user or not user.get("is_admin"):
+        return JSONResponse({"error": "Admin access required"}, status_code=403)
+
     body = await request.json()
     new_status = body.get("status")
     if not new_status:
@@ -74,7 +78,11 @@ async def update_feedback(request: Request, feedback_id: str):
 
 @router.delete("/api/feedback/{feedback_id}")
 async def delete_feedback(request: Request, feedback_id: str):
-    """Delete feedback entry (admin)."""
+    """Delete feedback entry (admin only)."""
+    user = getattr(request.state, "user", None)
+    if not user or not user.get("is_admin"):
+        return JSONResponse({"error": "Admin access required"}, status_code=403)
+
     repo = _get_repo()
     if not repo.delete(feedback_id):
         return JSONResponse({"error": "Not found"}, status_code=404)
