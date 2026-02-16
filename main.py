@@ -99,6 +99,14 @@ def regex_replace(value, pattern, replacement=''):
 
 templates.env.filters['regex_replace'] = regex_replace
 
+# Make analytics config available as a Jinja2 global so every template can access
+# {{ config.GA4_MEASUREMENT_ID }} and {{ config.MIXPANEL_TOKEN }} without each
+# router needing to pass it explicitly in the context.
+templates.env.globals["config"] = {
+    "GA4_MEASUREMENT_ID": os.getenv("GA4_MEASUREMENT_ID", ""),
+    "MIXPANEL_TOKEN": os.getenv("MIXPANEL_TOKEN", ""),
+}
+
 # Middleware to prevent HTML caching
 class NoCacheMiddleware(BaseHTTPMiddleware):
     """Prevent browser caching of HTML responses"""
