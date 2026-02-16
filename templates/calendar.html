@@ -39,9 +39,10 @@
     }
     .fc .fc-event {
         border-radius: 4px !important;
-        padding: 2px 4px !important;
-        font-size: 0.78rem !important;
+        padding: 1px 3px !important;
+        font-size: 0.75rem !important;
         cursor: pointer;
+        overflow: hidden;
     }
     .fc .fc-event:hover {
         filter: brightness(0.9);
@@ -52,6 +53,46 @@
         color: #3B82F6 !important;
         font-weight: 600;
     }
+    /* Uniform event pill inner layout */
+    .cal-event-inner {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.3;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .cal-event-inner .source-badge {
+        display: inline-block;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0px 4px;
+        border-radius: 3px;
+        background: rgba(255,255,255,0.3);
+        color: #fff;
+        flex-shrink: 0;
+        line-height: 1.4;
+    }
+    .cal-event-inner .event-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+    .cal-event-inner .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        border: 1px solid rgba(255,255,255,0.5);
+    }
+    .status-dot-completed { background: #22C55E; }
+    .status-dot-in-progress { background: #FBBF24; }
+    .status-dot-not-started { background: #D1D5DB; }
+    .status-dot-overdue { background: #EF4444; }
+    .status-dot-pending { background: #F59E0B; }
     /* Legend styling */
     .legend-item {
         display: flex;
@@ -86,6 +127,49 @@
     .status-in-progress { background: #FEF3C7; color: #92400E; }
     .status-not-started { background: #F3F4F6; color: #374151; }
     .status-overdue { background: #FEE2E2; color: #991B1B; }
+    .status-pending { background: #FFF7ED; color: #9A3412; }
+    /* Source type badge in modal */
+    .source-type-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #fff;
+    }
+    .source-type-milestone { background: #3B82F6; }
+    .source-type-change { background: #F59E0B; }
+    .source-type-schedule { background: #6366F1; }
+    .source-type-metric_target { background: #8B5CF6; }
+    /* Uniform info grid in modal */
+    .uniform-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        background: #F9FAFB;
+        border-radius: 8px;
+        border: 1px solid #E5E7EB;
+    }
+    .uniform-info-grid .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    .uniform-info-grid .info-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #6B7280;
+        letter-spacing: 0.05em;
+        margin-bottom: 2px;
+    }
+    .uniform-info-grid .info-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #111827;
+    }
 </style>
 {% endblock %}
 
@@ -126,15 +210,19 @@
             </select>
         </div>
         
-        <!-- Legend -->
+        <!-- Legend: Source Types -->
         <div class="flex flex-wrap items-center gap-4">
-            <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div> In Progress</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#22C55E"></div> Completed</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#9CA3AF"></div> Not Started</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div> Overdue</div>
+            <span class="text-xs font-semibold text-gray-500 uppercase">Source:</span>
+            <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div> Milestone</div>
             <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div> Change</div>
             <div class="legend-item"><div class="legend-dot" style="background:#6366F1"></div> Schedule</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div> Metric Target</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div> Metric</div>
+            <span class="text-gray-300 mx-1">|</span>
+            <span class="text-xs font-semibold text-gray-500 uppercase">Status:</span>
+            <div class="legend-item"><div class="legend-dot status-dot-completed" style="width:10px;height:10px"></div> Done</div>
+            <div class="legend-item"><div class="legend-dot status-dot-in-progress" style="width:10px;height:10px"></div> In Progress</div>
+            <div class="legend-item"><div class="legend-dot status-dot-not-started" style="width:10px;height:10px"></div> Not Started</div>
+            <div class="legend-item"><div class="legend-dot status-dot-overdue" style="width:10px;height:10px"></div> Overdue</div>
         </div>
     </div>
 </div>
@@ -252,9 +340,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
             },
+            eventContent: function(arg) {
+                const ep = arg.event.extendedProps || {};
+                const sourceLabel = ep.source_label || '';
+                const statusCat = ep.status_category || 'not-started';
+                const badgeAbbr = { 'Milestone': 'MIL', 'Change': 'CHG', 'Schedule': 'SCH', 'Metric': 'MET' };
+                const abbr = badgeAbbr[sourceLabel] || sourceLabel.substring(0, 3).toUpperCase();
+                return {
+                    html: `<div class="cal-event-inner">`
+                        + `<span class="source-badge">${abbr}</span>`
+                        + `<span class="event-title">${arg.event.title}</span>`
+                        + `<span class="status-dot status-dot-${statusCat}"></span>`
+                        + `</div>`
+                };
+            },
             eventDidMount: function(info) {
-                // Add tooltip
-                info.el.title = `${info.event.title}\n${info.event.extendedProps.program || ''}`;
+                const ep = info.event.extendedProps || {};
+                const parts = [
+                    ep.source_label || '',
+                    ep.description || info.event.title,
+                    ep.due_date ? 'Due: ' + ep.due_date : '',
+                    ep.status_label || '',
+                    ep.program || ''
+                ].filter(Boolean);
+                info.el.title = parts.join(' | ');
             },
             height: 'auto',
             dayMaxEvents: 4,
@@ -348,15 +457,7 @@ function updateStats() {
     const milestones = filteredEvents.filter(e => e.extendedProps?.type === 'milestone').length;
     const changes = filteredEvents.filter(e => e.extendedProps?.type === 'change').length;
     const schedule = filteredEvents.filter(e => e.extendedProps?.type === 'schedule').length;
-    const overdue = filteredEvents.filter(e => {
-        const ep = e.extendedProps;
-        if (ep?.type === 'milestone' && ep?.status !== 'COMPLETED') {
-            try {
-                return new Date(ep.targetDate) < new Date();
-            } catch (err) { return false; }
-        }
-        return false;
-    }).length;
+    const overdue = filteredEvents.filter(e => e.extendedProps?.status_category === 'overdue').length;
     
     document.getElementById('statMilestones').textContent = milestones;
     document.getElementById('statChanges').textContent = changes;
@@ -369,80 +470,65 @@ function showEventModal(event) {
     const ep = event.extendedProps || {};
     const type = ep.type || 'unknown';
     
-    // Set header color based on type
+    // Source-based header colors
     const headerColors = {
-        'milestone': event.backgroundColor || '#3B82F6',
+        'milestone': '#3B82F6',
         'change': '#F59E0B',
         'schedule': '#6366F1',
         'metric_target': '#8B5CF6'
     };
     document.getElementById('eventModalHeader').style.backgroundColor = headerColors[type] || '#3B82F6';
     
-    // Set type label
-    const typeLabels = {
-        'milestone': '📌 Milestone',
-        'change': '📋 Schedule Change',
-        'schedule': '📅 Schedule Item',
-        'metric_target': '🎯 Metric Target'
-    };
-    document.getElementById('eventModalType').textContent = typeLabels[type] || type;
-    
-    // Set title
-    document.getElementById('eventModalTitle').textContent = event.title.replace(/^[📋📅🎯]\s*/, '');
-    
-    // Set program
+    // Type label from uniform field
+    document.getElementById('eventModalType').textContent = ep.source_label || type;
+    document.getElementById('eventModalTitle').textContent = event.title;
     document.getElementById('eventModalProgram').textContent = ep.program || '';
     
-    // Build body content based on type
-    let bodyHtml = '';
+    // --- UNIFORM TOP SECTION (same for ALL event types) ---
+    const statusCat = ep.status_category || 'not-started';
+    let bodyHtml = `
+        <div class="uniform-info-grid">
+            <div class="info-item">
+                <span class="info-label">Type</span>
+                <span class="info-value"><span class="source-type-badge source-type-${type}">${ep.source_label || type}</span></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value"><span class="status-badge status-${statusCat}">${ep.status_label || 'Unknown'}</span></span>
+            </div>
+            <div class="info-item" style="grid-column: 1 / -1">
+                <span class="info-label">Description</span>
+                <span class="info-value">${ep.description || event.title}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Due Date</span>
+                <span class="info-value">${ep.due_date ? formatDate(ep.due_date) : 'N/A'}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Program</span>
+                <span class="info-value">${ep.program || 'N/A'}</span>
+            </div>
+        </div>
+    `;
+    
+    // --- TYPE-SPECIFIC DETAILS (below the uniform section) ---
+    let detailsHtml = '';
     
     if (type === 'milestone') {
-        const status = ep.status || 'NOT_STARTED';
-        const statusClass = status === 'COMPLETED' ? 'status-completed' : 
-                           status === 'IN_PROGRESS' ? 'status-in-progress' : 'status-not-started';
-        
-        // Check if overdue
-        let isOverdue = false;
-        try {
-            if (status !== 'COMPLETED' && new Date(ep.targetDate) < new Date()) isOverdue = true;
-        } catch(e) {}
-        
-        bodyHtml = `
-            <div class="flex items-center gap-2 mb-3">
-                <span class="status-badge ${isOverdue ? 'status-overdue' : statusClass}">${isOverdue ? 'OVERDUE' : status.replace('_', ' ')}</span>
-                ${ep.completionPct ? `<span class="text-sm text-gray-500">${ep.completionPct}% complete</span>` : ''}
-            </div>
-            
+        detailsHtml = `
             <div class="grid grid-cols-2 gap-3">
                 ${ep.startDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Start Date</p><p class="text-sm font-medium">${formatDate(ep.startDate)}</p></div>` : ''}
-                <div><p class="text-xs text-gray-500 uppercase font-semibold">Target Date</p><p class="text-sm font-medium">${formatDate(ep.targetDate)}</p></div>
+                ${ep.targetDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Target Date</p><p class="text-sm font-medium">${formatDate(ep.targetDate)}</p></div>` : ''}
                 ${ep.completionDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Completed</p><p class="text-sm font-medium text-green-600">${formatDate(ep.completionDate)}</p></div>` : ''}
+                ${ep.completionPct ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Progress</p><p class="text-sm font-medium">${ep.completionPct}%</p></div>` : ''}
             </div>
-            
-            ${ep.parentProject ? `
-                <div class="mt-3 p-3 bg-blue-50 rounded-lg">
-                    <p class="text-xs text-blue-600 uppercase font-semibold">Project Group</p>
-                    <p class="text-sm font-medium text-blue-800">${ep.parentProject}</p>
-                </div>
-            ` : ''}
-            
-            ${ep.resources ? `
-                <div class="mt-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Resources</p>
-                    <p class="text-sm">${ep.resources}</p>
-                </div>
-            ` : ''}
-            
-            ${ep.notes ? `
-                <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-                    <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Notes</p>
-                    <p class="text-sm text-gray-700">${ep.notes}</p>
-                </div>
-            ` : ''}
+            ${ep.parentProject ? `<div class="p-3 bg-blue-50 rounded-lg"><p class="text-xs text-blue-600 uppercase font-semibold">Project Group</p><p class="text-sm font-medium text-blue-800">${ep.parentProject}</p></div>` : ''}
+            ${ep.resources ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Resources</p><p class="text-sm">${ep.resources}</p></div>` : ''}
+            ${ep.notes ? `<div class="p-3 bg-gray-50 rounded-lg"><p class="text-xs text-gray-500 uppercase font-semibold mb-1">Notes</p><p class="text-sm text-gray-700">${ep.notes}</p></div>` : ''}
         `;
     } else if (type === 'change') {
-        bodyHtml = `
-            <div class="p-3 bg-yellow-50 rounded-lg mb-3">
+        detailsHtml = `
+            <div class="p-3 bg-yellow-50 rounded-lg">
                 <p class="text-xs text-yellow-700 uppercase font-semibold mb-2">Date Change</p>
                 <div class="flex items-center gap-3">
                     <div class="text-center">
@@ -456,79 +542,36 @@ function showEventModal(event) {
                     </div>
                 </div>
             </div>
-            
-            ${ep.reason ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Reason</p>
-                    <p class="text-sm text-gray-700">${ep.reason}</p>
-                </div>
-            ` : ''}
-            
-            ${ep.impact ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Impact / Contingency</p>
-                    <p class="text-sm text-gray-700">${ep.impact}</p>
-                </div>
-            ` : ''}
+            ${ep.reason ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Reason</p><p class="text-sm text-gray-700">${ep.reason}</p></div>` : ''}
+            ${ep.impact ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Impact / Contingency</p><p class="text-sm text-gray-700">${ep.impact}</p></div>` : ''}
         `;
     } else if (type === 'schedule') {
-        bodyHtml = `
-            ${ep.tableName ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Schedule Table</p>
-                    <p class="text-sm font-medium">${ep.tableName}</p>
-                </div>
-            ` : ''}
-            
-            ${ep.status ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Status</p>
-                    <span class="status-badge ${ep.status.toLowerCase().includes('complete') ? 'status-completed' : 
-                        ep.status.toLowerCase().includes('progress') ? 'status-in-progress' : 'status-not-started'}">${ep.status}</span>
-                </div>
-            ` : ''}
-            
-            ${ep.dateField ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 uppercase font-semibold">${ep.dateField}</p>
-                    <p class="text-sm font-medium">${formatDate(event.startStr)}</p>
-                </div>
-            ` : ''}
-            
+        detailsHtml = `
+            ${ep.tableName ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Schedule Table</p><p class="text-sm font-medium">${ep.tableName}</p></div>` : ''}
+            ${ep.dateField ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">${ep.dateField}</p><p class="text-sm font-medium">${formatDate(event.startStr)}</p></div>` : ''}
             ${ep.allData ? `
-                <div class="mt-3 p-3 bg-indigo-50 rounded-lg">
+                <div class="p-3 bg-indigo-50 rounded-lg">
                     <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
                     <div class="space-y-1">
-                        ${Object.entries(ep.allData).map(([k,v]) => `
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-500">${k}</span>
-                                <span class="font-medium text-gray-800">${v}</span>
-                            </div>
-                        `).join('')}
+                        ${Object.entries(ep.allData).map(([k,v]) => `<div class="flex justify-between text-sm"><span class="text-gray-500">${k}</span><span class="font-medium text-gray-800">${v}</span></div>`).join('')}
                     </div>
                 </div>
             ` : ''}
         `;
     } else if (type === 'metric_target') {
-        bodyHtml = `
-            <div class="text-center py-4">
-                <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Target Date</p>
-                <p class="text-lg font-bold">${formatDate(event.startStr)}</p>
-            </div>
-            
+        detailsHtml = `
             <div class="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg">
                 <div class="text-center">
                     <p class="text-xs text-purple-600 uppercase font-semibold">Current</p>
-                    <p class="text-2xl font-bold text-gray-900">${ep.currentValue}${ep.unit ? ' ' + ep.unit : ''}</p>
+                    <p class="text-2xl font-bold text-gray-900">${ep.currentValue ?? 'N/A'}${ep.unit ? ' ' + ep.unit : ''}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-xs text-purple-600 uppercase font-semibold">Target</p>
-                    <p class="text-2xl font-bold text-purple-700">${ep.targetValue}${ep.unit ? ' ' + ep.unit : ''}</p>
+                    <p class="text-2xl font-bold text-purple-700">${ep.targetValue ?? 'N/A'}${ep.unit ? ' ' + ep.unit : ''}</p>
                 </div>
             </div>
-            
-            ${ep.currentValue && ep.targetValue ? `
-                <div class="mt-3">
+            ${(ep.currentValue != null && ep.targetValue) ? `
+                <div>
                     <div class="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Progress</span>
                         <span>${Math.min(100, Math.round((ep.currentValue / ep.targetValue) * 100))}%</span>
@@ -538,6 +581,16 @@ function showEventModal(event) {
                     </div>
                 </div>
             ` : ''}
+        `;
+    }
+    
+    // Combine uniform section + type-specific details
+    if (detailsHtml.trim()) {
+        bodyHtml += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-xs uppercase font-bold text-gray-400 mb-3">Details</p>
+                <div class="space-y-3">${detailsHtml}</div>
+            </div>
         `;
     }
     

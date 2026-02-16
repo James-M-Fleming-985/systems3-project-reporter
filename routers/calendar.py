@@ -140,29 +140,38 @@ async def get_calendar_events(request: Request):
                 if not target_date and not start_date:
                     continue
                 
-                # Determine event color based on status
-                if status == 'COMPLETED':
-                    event_color = '#22C55E'
-                    border_color = '#16A34A'
-                elif status == 'IN_PROGRESS':
-                    event_color = color
-                    border_color = color
-                else:
-                    event_color = '#9CA3AF'
-                    border_color = '#6B7280'
+                # Source-based color: milestones are always blue family
+                event_color = '#3B82F6'
+                border_color = '#2563EB'
                 
-                # Check if overdue
+                # Determine normalized status category
+                if status == 'COMPLETED':
+                    status_category = 'completed'
+                    status_label = 'Completed'
+                elif status == 'IN_PROGRESS':
+                    status_category = 'in-progress'
+                    status_label = 'In Progress'
+                else:
+                    status_category = 'not-started'
+                    status_label = 'Not Started'
+                
+                # Check overdue
                 try:
                     if target_date:
                         td = datetime.fromisoformat(target_date.replace('Z', '+00:00')).date()
                         if td < datetime.now().date() and status != 'COMPLETED':
-                            event_color = '#EF4444'
-                            border_color = '#DC2626'
+                            status_category = 'overdue'
+                            status_label = 'Overdue'
                 except:
                     pass
                 
                 base_props = {
                     'type': 'milestone',
+                    'source_label': 'Milestone',
+                    'description': milestone.name,
+                    'due_date': target_date or start_date or '',
+                    'status_label': status_label,
+                    'status_category': status_category,
                     'program': program_name,
                     'programCode': program_code,
                     'status': status,
@@ -182,7 +191,7 @@ async def get_calendar_events(request: Request):
                 if start_date:
                     events.append({
                         'id': f'milestone-start-{program_code}-{milestone.name[:30]}',
-                        'title': f'{milestone.name}' + (' (Start Date)' if has_both else ''),
+                        'title': milestone.name + (' (Start)' if has_both else ''),
                         'start': start_date,
                         'allDay': True,
                         'backgroundColor': event_color,
@@ -195,7 +204,7 @@ async def get_calendar_events(request: Request):
                 if target_date and target_date != start_date:
                     events.append({
                         'id': f'milestone-end-{program_code}-{milestone.name[:30]}',
-                        'title': f'{milestone.name}' + (' (Finish Date)' if has_both else ''),
+                        'title': milestone.name + (' (Finish)' if has_both else ''),
                         'start': target_date,
                         'allDay': True,
                         'backgroundColor': event_color,
@@ -210,22 +219,33 @@ async def get_calendar_events(request: Request):
                 if not new_date:
                     continue
                 
+                # Determine change status
+                change_status_label = 'Pending'
+                change_status_category = 'pending'
+                reason_text = getattr(change, 'reason', '') or ''
+                impact_text = getattr(change, 'impact', '') or ''
+
                 event = {
                     'id': f'change-{program_code}-{change.change_id[:30]}',
-                    'title': f'📋 Change: {change.change_id}',
+                    'title': change.change_id,
                     'start': new_date,
                     'backgroundColor': '#F59E0B',
                     'borderColor': '#D97706',
                     'textColor': '#FFFFFF',
                     'extendedProps': {
                         'type': 'change',
+                        'source_label': 'Change',
+                        'description': reason_text or f'Schedule change for {change.change_id}',
+                        'due_date': new_date,
+                        'status_label': change_status_label,
+                        'status_category': change_status_category,
                         'program': program_name,
                         'programCode': program_code,
                         'changeId': change.change_id,
                         'oldDate': getattr(change, 'old_date', ''),
                         'newDate': new_date,
-                        'reason': getattr(change, 'reason', '') or '',
-                        'impact': getattr(change, 'impact', '') or ''
+                        'reason': reason_text,
+                        'impact': impact_text
                     }
                 }
                 events.append(event)
@@ -350,33 +370,48 @@ async def get_calendar_events(request: Request):
                                 except (ValueError, AttributeError):
                                     continue
                                 
-                                # Determine color based on status
-                                sched_color = '#6366F1'  # Default indigo
+                                # Normalize status for uniform display
+                                sched_status_label = status or 'Not Started'
+                                sched_status_category = 'not-started'
                                 if status:
                                     sl = status.lower()
                                     if sl in ('complete', 'completed', 'done', 'approved', 'delivered', 'closed'):
-                                        sched_color = '#22C55E'  # Green
+                                        sched_status_category = 'completed'
+                                        sched_status_label = 'Completed'
                                     elif sl in ('in progress', 'in-progress', 'active', 'shipped', 'submitted'):
-                                        sched_color = '#3B82F6'  # Blue
+                                        sched_status_category = 'in-progress'
+                                        sched_status_label = 'In Progress'
                                     elif sl in ('on hold', 'blocked', 'rejected', 'cancelled'):
-                                        sched_color = '#EF4444'  # Red
+                                        sched_status_category = 'overdue'
+                                        sched_status_label = status
                                     elif sl in ('not started', 'pending', 'pending quote', 'scheduled'):
-                                        sched_color = '#9CA3AF'  # Gray
+                                        sched_status_category = 'not-started'
+                                        sched_status_label = status
                                     elif 'awaiting' in sl or 'waiting' in sl:
-                                        sched_color = '#F59E0B'  # Amber/Yellow
+                                        sched_status_category = 'pending'
+                                        sched_status_label = status
                                     elif 'delayed' in sl or 'overdue' in sl or 'late' in sl:
-                                        sched_color = '#EF4444'  # Red
-                                
+                                        sched_status_category = 'overdue'
+                                        sched_status_label = status
+
+                                # Source-based color: schedule items are always indigo
+                                sched_color = '#6366F1'
+
                                 # Use unique ID per row+column combination
                                 event = {
                                     'id': f'schedule-{sched_program}-{table.get("id","")}-{row.get("id","")}-{col_id}',
-                                    'title': f'📅 {title}' + (f' ({col_header})' if len(date_entries) > 1 else ''),
+                                    'title': title + (f' ({col_header})' if len(date_entries) > 1 else ''),
                                     'start': date_val,
                                     'backgroundColor': sched_color,
                                     'borderColor': sched_color,
                                     'textColor': '#FFFFFF',
                                     'extendedProps': {
                                         'type': 'schedule',
+                                        'source_label': 'Schedule',
+                                        'description': title,
+                                        'due_date': date_val,
+                                        'status_label': sched_status_label,
+                                        'status_category': sched_status_category,
                                         'program': sched_program,
                                         'tableName': table_name,
                                         'status': status,
@@ -419,20 +454,42 @@ async def get_calendar_events(request: Request):
                         for metric in metrics_data.get('metrics', []):
                             target_date = metric.get('targetDate')
                             if target_date:
+                                # Determine metric status
+                                current_val = metric.get('value', 0)
+                                target_val = metric.get('target', 0)
+                                pct = (current_val / target_val * 100) if target_val else 0
+                                if pct >= 100:
+                                    met_status_label = 'On Track'
+                                    met_status_category = 'completed'
+                                elif pct >= 70:
+                                    met_status_label = 'At Risk'
+                                    met_status_category = 'pending'
+                                else:
+                                    met_status_label = 'Behind'
+                                    met_status_category = 'overdue'
+                                
+                                metric_name = metric.get('name', 'Metric')
+                                metric_unit = metric.get('unit', '')
+                                
                                 event = {
-                                    'id': f'metric-{program_name}-{metric.get("name", "")}',
-                                    'title': f'🎯 Target: {metric.get("name", "Metric")}',
+                                    'id': f'metric-{program_name}-{metric_name}',
+                                    'title': f'Target: {metric_name}',
                                     'start': target_date,
                                     'backgroundColor': '#8B5CF6',
                                     'borderColor': '#7C3AED',
                                     'textColor': '#FFFFFF',
                                     'extendedProps': {
                                         'type': 'metric_target',
+                                        'source_label': 'Metric Target',
+                                        'description': f'{metric_name}: {current_val}{" " + metric_unit if metric_unit else ""} / {target_val}{" " + metric_unit if metric_unit else ""}',
+                                        'due_date': target_date,
+                                        'status_label': met_status_label,
+                                        'status_category': met_status_category,
                                         'program': program_name,
-                                        'metricName': metric.get('name', ''),
-                                        'currentValue': metric.get('value', 0),
-                                        'targetValue': metric.get('target', 0),
-                                        'unit': metric.get('unit', '')
+                                        'metricName': metric_name,
+                                        'currentValue': current_val,
+                                        'targetValue': target_val,
+                                        'unit': metric_unit
                                     }
                                 }
                                 events.append(event)
