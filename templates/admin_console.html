@@ -221,11 +221,11 @@
             <div class="space-y-4 text-sm">
                 <div class="grid grid-cols-3 gap-2 items-center">
                     <span class="font-medium text-gray-700">GA4 Measurement ID</span>
-                    <span class="col-span-2 font-mono text-gray-600" id="cfg-ga4">{{ config.GA4_MEASUREMENT_ID or '(not set)' }}</span>
+                    <span class="col-span-2 font-mono text-gray-600" id="cfg-ga4">{{ config.GA4_MEASUREMENT_ID if config is defined and config.GA4_MEASUREMENT_ID else '(not set)' }}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 items-center">
                     <span class="font-medium text-gray-700">Mixpanel Token</span>
-                    <span class="col-span-2 font-mono text-gray-600">{{ '••••' + config.MIXPANEL_TOKEN[-4:] if config.MIXPANEL_TOKEN else '(not set)' }}</span>
+                    <span class="col-span-2 font-mono text-gray-600">{{ '••••' + config.MIXPANEL_TOKEN[-4:] if config is defined and config.MIXPANEL_TOKEN else '(not set)' }}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 items-center">
                     <span class="font-medium text-gray-700">SendGrid API Key</span>
