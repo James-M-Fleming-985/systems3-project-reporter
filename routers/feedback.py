@@ -30,8 +30,8 @@ async def submit_feedback(request: Request):
 
     user = getattr(request.state, "user", None)
     if user:
-        body.setdefault("user_name", user.full_name)
-        body.setdefault("user_email", user.email)
+        body.setdefault("user_name", user.get("full_name", "Anonymous"))
+        body.setdefault("user_email", user.get("email", ""))
 
     if not body.get("title", "").strip():
         return JSONResponse({"error": "Title is required"}, status_code=400)
