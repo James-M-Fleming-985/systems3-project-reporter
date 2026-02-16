@@ -235,6 +235,12 @@
                         ⚙️ Account
                     </a>
                     {% endif %}
+                    {% if user and user.is_admin %}
+                    <a href="/admin" 
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-500 transition {% if '/admin' in request.url.path %}ring-2 ring-white{% endif %}">
+                        🛡️ Admin
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

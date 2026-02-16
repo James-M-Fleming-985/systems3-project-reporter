@@ -24,6 +24,10 @@ USER_DATA_DIR = Path(os.getenv("USER_DATA_PATH", str(BASE_DIR / "user_data")))
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
     """Admin super-console page"""
+    user = getattr(request.state, "user", None)
+    if not user or not user.get("is_admin"):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/dashboard/", status_code=302)
     from main import templates, BUILD_VERSION
     return templates.TemplateResponse("admin_console.html", {
         "request": request,
