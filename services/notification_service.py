@@ -68,8 +68,8 @@ class NotificationService:
 
         projects = self._load_projects()
         for project in projects:
-            name = project.get("program_name", "Unknown Program")
-            code = project.get("program_code", "")
+            name = project.get("project_name") or project.get("program_name", "Unknown Program")
+            code = project.get("project_code") or project.get("program_code", "")
 
             # Milestones
             for ms in project.get("milestones", []):
@@ -168,11 +168,14 @@ class NotificationService:
         }
 
     def _scan_schedule_items(self, today: date) -> List[Dict]:
-        """Scan schedule YAML files for upcoming/overdue items."""
+        """Scan schedule YAML files for upcoming/overdue items (skip archived)."""
         notifs: List[Dict] = []
         sched_dir = self.data_dir / "schedules"
         if not sched_dir.exists():
             return notifs
+
+        # Build set of archived project codes to skip
+        archived_codes = self._get_archived_project_codes()
 
         for yaml_file in sched_dir.glob("*.yaml"):
             try:
@@ -181,8 +184,12 @@ class NotificationService:
             except Exception:
                 continue
 
-            program = data.get("program_name", yaml_file.stem)
-            code = data.get("program_code", "")
+            program = data.get("project_name") or data.get("program_name", yaml_file.stem)
+            code = data.get("project_code") or data.get("program_code", "")
+
+            # Skip schedules belonging to archived projects
+            if code and code in archived_codes:
+                continue
             for table in data.get("tables", []):
                 table_name = table.get("name", "")
                 for row in table.get("rows", []):
@@ -215,11 +222,14 @@ class NotificationService:
         return notifs
 
     def _scan_metric_targets(self, today: date) -> List[Dict]:
-        """Scan custom metrics for targets with upcoming dates."""
+        """Scan custom metrics for targets with upcoming dates (skip archived)."""
         notifs: List[Dict] = []
         metrics_dir = self.data_dir / "custom_metrics"
         if not metrics_dir.exists():
             return notifs
+
+        # Build set of archived project codes to skip
+        archived_codes = self._get_archived_project_codes()
 
         for yaml_file in metrics_dir.glob("*.yaml"):
             try:
@@ -229,6 +239,11 @@ class NotificationService:
                 continue
 
             program = data.get("project_name", yaml_file.stem)
+            code = data.get("project_code", "")
+
+            # Skip metrics belonging to archived projects
+            if code and code in archived_codes:
+                continue
             for metric in data.get("metrics", []):
                 for target in metric.get("targets", []):
                     target_date = _parse_date(target.get("date"))
@@ -254,6 +269,28 @@ class NotificationService:
 
     # ── Helpers ──────────────────────────────────────────────────────────
 
+    def _get_archived_project_codes(self) -> set:
+        """Return a set of project_codes for archived projects."""
+        codes = set()
+        if not self.data_dir.exists():
+            return codes
+        for item in self.data_dir.iterdir():
+            if item.is_dir() and item.name.startswith("PROJECT-"):
+                yaml_path = item / "project_status.yaml"
+                if yaml_path.exists():
+                    try:
+                        with open(yaml_path, "r") as f:
+                            data = yaml.safe_load(f)
+                        if data:
+                            archived = data.get("archived")
+                            if archived is True or str(archived).lower() == "true":
+                                pc = data.get("project_code") or data.get("program_code", "")
+                                if pc:
+                                    codes.add(pc)
+                    except Exception:
+                        pass
+        return codes
+
     def _classify_date(self, target: date, today: date) -> Optional[str]:
         delta = (target - today).days
         if delta < 0:
@@ -267,7 +304,7 @@ class NotificationService:
         return None  # too far away
 
     def _load_projects(self) -> List[Dict]:
-        """Load all project YAML files from the data directory."""
+        """Load all non-archived project YAML files from the data directory."""
         projects: List[Dict] = []
         if not self.data_dir.exists():
             return projects
@@ -280,6 +317,11 @@ class NotificationService:
                         with open(yaml_path, "r") as f:
                             data = yaml.safe_load(f)
                         if data:
+                            # Skip archived projects
+                            archived = data.get("archived")
+                            if archived is True or str(archived).lower() == "true":
+                                logger.debug(f"Skipping archived project: {data.get('project_name', item.name)}")
+                                continue
                             projects.append(data)
                     except Exception as e:
                         logger.warning(f"Failed to load {yaml_path}: {e}")
