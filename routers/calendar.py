@@ -513,8 +513,13 @@ async def get_calendar_events(request: Request):
                 prog = ep.get('program', '')
                 ep['programCode'] = name_to_code.get(prog) or name_to_code.get(_clean_project_name(prog)) or ''
         
+        # Remove completed items — they don't need to appear on the calendar
+        before_count = len(events)
+        events = [ev for ev in events if ev.get('extendedProps', {}).get('status_category') != 'completed']
+        completed_count = before_count - len(events)
+        
         logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs"
-                    f" (filtered {len(archived_identifiers)} archived identifiers)")
+                    f" (filtered {len(archived_identifiers)} archived identifiers, {completed_count} completed)")
         response = JSONResponse(content={"events": events, "total": len(events)})
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
