@@ -498,6 +498,20 @@ async def get_calendar_events(request: Request):
         except Exception as e:
             logger.warning(f"Error loading metric targets for calendar: {e}")
         
+        # Build name→code lookup so we can resolve programCode for schedule/metric events
+        name_to_code = {}
+        for p in projects:
+            name_to_code[p.project_name] = p.project_code
+            name_to_code[_clean_project_name(p.project_name)] = p.project_code
+            name_to_code[p.project_code] = p.project_code
+        
+        # Backfill missing programCode on events (schedule & metric events)
+        for ev in events:
+            ep = ev.get('extendedProps', {})
+            if not ep.get('programCode'):
+                prog = ep.get('program', '')
+                ep['programCode'] = name_to_code.get(prog) or name_to_code.get(_clean_project_name(prog)) or ''
+        
         logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs"
                     f" (filtered {len(archived_identifiers)} archived identifiers)")
         response = JSONResponse(content={"events": events, "total": len(events)})
