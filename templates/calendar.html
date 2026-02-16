@@ -459,7 +459,14 @@ function refreshCalendar() {
 }
 
 function updateStats() {
-    const milestones = filteredEvents.filter(e => e.extendedProps?.type === 'milestone').length;
+    // Deduplicate milestones — a milestone with both Start and Finish dates
+    // creates two calendar events, but should count as one milestone.
+    const milestoneKeys = new Set();
+    filteredEvents.filter(e => e.extendedProps?.type === 'milestone').forEach(e => {
+        const key = (e.extendedProps?.programCode || '') + '|' + (e.extendedProps?.description || e.title);
+        milestoneKeys.add(key);
+    });
+    const milestones = milestoneKeys.size;
     const changes = filteredEvents.filter(e => e.extendedProps?.type === 'change').length;
     const schedule = filteredEvents.filter(e => e.extendedProps?.type === 'schedule').length;
     const overdue = filteredEvents.filter(e => e.extendedProps?.status_category === 'overdue').length;

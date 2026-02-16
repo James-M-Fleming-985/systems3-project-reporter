@@ -124,6 +124,14 @@ class NotificationService:
         if not target:
             return None
 
+        # Only generate notifications for TRUE milestones (zero-duration),
+        # not for multi-day tasks imported from MS Project.
+        # A true milestone has no start_date, or start_date == target_date.
+        start = _parse_date(ms.get("start_date"))
+        if start and start != target:
+            # This is a task/activity (multi-day duration), not a milestone
+            return None
+
         category = self._classify_date(target, today)
         if not category:
             return None
@@ -192,30 +200,77 @@ class NotificationService:
                 continue
             for table in data.get("tables", []):
                 table_name = table.get("name", "")
+                columns = table.get("columns", [])
+
+                # Build column lookups
+                col_lookup = {c.get("id"): c for c in columns}
+                date_col_ids = {c.get("id") for c in columns if c.get("type") == "date"}
+
+                # Find status column
+                status_col = None
+                for c in columns:
+                    if c.get("type") in ("dropdown", "status"):
+                        status_col = c.get("id")
+                        break
+                if not status_col:
+                    for c in columns:
+                        if "status" in (c.get("header", "") or "").lower():
+                            status_col = c.get("id")
+                            break
+
+                # Find title column
+                title_col = None
+                task_keywords = ("task", "activity", "item", "name", "description", "action")
+                for c in columns:
+                    if c.get("type") == "text":
+                        header_lower = (c.get("header", "") or "").lower()
+                        if any(kw in header_lower for kw in task_keywords):
+                            title_col = c.get("id")
+                            break
+                if not title_col:
+                    for c in columns:
+                        if c.get("type") == "text":
+                            title_col = c.get("id")
+                            break
+
                 for row in table.get("rows", []):
-                    status = str(row.get("Status", row.get("status", ""))).lower()
-                    if "complete" in status:
+                    row_data = row.get("data", {})
+
+                    # Check status — skip completed
+                    status = str(row_data.get(status_col, "")).lower() if status_col else ""
+                    if "complete" in status or "done" in status or "closed" in status:
                         continue
 
-                    # Check all date-like fields
-                    for key, val in row.items():
+                    row_name = row_data.get(title_col, "Schedule Item") if title_col else "Schedule Item"
+
+                    # Only check date-typed columns (not every field)
+                    # This avoids generating notifications from every date-like value
+                    best_date = None
+                    best_col_header = "Due Date"
+                    for dc_id in date_col_ids:
+                        val = row_data.get(dc_id, "")
                         d = _parse_date(val)
-                        if not d:
-                            continue
-                        cat = self._classify_date(d, today)
+                        if d:
+                            col_header = col_lookup.get(dc_id, {}).get("header", dc_id)
+                            # Prefer the latest/due date (not start dates)
+                            if best_date is None or d > best_date:
+                                best_date = d
+                                best_col_header = col_header
+
+                    if best_date:
+                        cat = self._classify_date(best_date, today)
                         if cat:
-                            row_name = row.get("Activity", row.get("Task", row.get("Name", key)))
                             notifs.append({
                                 "id": f"sch-{code}-{table_name}-{row_name}"[:80],
                                 "source": "schedule",
                                 "category": cat,
                                 "title": str(row_name),
-                                "description": f"{table_name} — {key}: {d.isoformat()}",
-                                "due_date": d.isoformat(),
-                                "days_delta": (d - today).days,
+                                "description": f"{table_name} — {best_col_header}: {best_date.isoformat()}",
+                                "due_date": best_date.isoformat(),
+                                "days_delta": (best_date - today).days,
                                 "program": program,
                                 "program_code": code,
-                                "status": str(row.get("Status", row.get("status", "Pending"))),
+                                "status": status.title() if status else "Pending",
                                 "icon": "calendar",
                                 "color": "#6366F1",
                             })
