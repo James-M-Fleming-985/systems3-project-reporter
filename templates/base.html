@@ -83,6 +83,23 @@
                                 {% if user.is_admin %}
                                     <span class="px-2 py-0.5 bg-amber-500 text-white text-xs rounded font-semibold">Admin</span>
                                 {% endif %}
+                                <!-- Notification Bell -->
+                                <div class="relative" id="notifBellContainer">
+                                    <button onclick="toggleNotifDropdown()" class="relative p-1.5 rounded-full hover:bg-white/10 transition" title="Notifications">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
+                                    </button>
+                                    <!-- Dropdown -->
+                                    <div id="notifDropdown" class="hidden absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden" style="max-height:480px">
+                                        <div class="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
+                                            <h4 class="font-bold text-gray-800 text-sm">Notifications</h4>
+                                            <a href="/notifications" class="text-xs text-blue-600 hover:underline font-medium">View All →</a>
+                                        </div>
+                                        <div id="notifDropdownBody" class="overflow-y-auto" style="max-height:380px">
+                                            <div class="p-6 text-center text-gray-400 text-sm">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="flex items-center space-x-2">
                                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
                                         {{ user.full_name[0] | upper }}
@@ -148,6 +165,10 @@
                        class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/documents' in request.url.path %}bg-white/15{% endif %}">
                         Documents
                     </a>
+                    <a href="/feedback" 
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/feedback' in request.url.path %}bg-white/15{% endif %}">
+                        💬 Feedback
+                    </a>
                 </div>
                 
                 <!-- Actions group -->
@@ -176,6 +197,82 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Floating Feedback Widget -->
+    {% if user %}
+    <div id="feedbackWidget" class="fixed bottom-6 right-6 z-40">
+        <!-- Toggle Button -->
+        <button onclick="toggleFeedbackWidget()" id="fbWidgetBtn" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110" title="Quick Feedback">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        </button>
+        <!-- Quick Form Popup -->
+        <div id="fbWidgetForm" class="hidden absolute bottom-16 right-0 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style="animation:slideIn 0.2s ease-out">
+            <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+                <h4 class="font-bold text-sm">Quick Feedback</h4>
+                <button onclick="toggleFeedbackWidget()" class="text-white/70 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <input type="text" id="widgetTitle" placeholder="What's on your mind?" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <div class="flex gap-2 mb-3">
+                    <select id="widgetType" class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs">
+                        <option value="general">General</option>
+                        <option value="bug">Bug</option>
+                        <option value="feature">Feature</option>
+                        <option value="improvement">Improvement</option>
+                    </select>
+                    <select id="widgetPriority" class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-xs">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <textarea id="widgetDesc" rows="2" placeholder="Details (optional)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:ring-2 focus:ring-blue-500"></textarea>
+                <button onclick="submitWidgetFeedback()" id="widgetSubmitBtn" class="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function toggleFeedbackWidget() {
+        document.getElementById('fbWidgetForm').classList.toggle('hidden');
+    }
+    async function submitWidgetFeedback() {
+        const title = document.getElementById('widgetTitle').value.trim();
+        if (!title) { document.getElementById('widgetTitle').focus(); return; }
+        const btn = document.getElementById('widgetSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Sending...';
+        try {
+            const resp = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title, type: document.getElementById('widgetType').value,
+                    priority: document.getElementById('widgetPriority').value,
+                    description: document.getElementById('widgetDesc').value.trim(),
+                    page: window.location.pathname,
+                }),
+            });
+            const data = await resp.json();
+            if (data.success) {
+                btn.textContent = '\u2705 Sent!';
+                document.getElementById('widgetTitle').value = '';
+                document.getElementById('widgetDesc').value = '';
+                setTimeout(() => { btn.textContent = 'Submit'; btn.disabled = false; toggleFeedbackWidget(); }, 1500);
+            } else {
+                btn.textContent = '\u26a0\ufe0f ' + (data.error || 'Error'); setTimeout(() => { btn.textContent = 'Submit'; btn.disabled = false; }, 2000);
+            }
+        } catch (e) {
+            btn.textContent = '\u274c Error'; setTimeout(() => { btn.textContent = 'Submit'; btn.disabled = false; }, 2000);
+        }
+    }
+    // Close widget on outside click
+    document.addEventListener('click', function(e) {
+        const w = document.getElementById('feedbackWidget');
+        if (w && !w.contains(e.target)) document.getElementById('fbWidgetForm')?.classList.add('hidden');
+    });
+    </script>
+    {% endif %}
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-16">
         <div class="container mx-auto px-4 py-6 text-center">
@@ -184,6 +281,82 @@
     </footer>
 
     <script>
+        // ── Notification Bell Logic ──────────────────────────────
+        let notifDropdownOpen = false;
+
+        function toggleNotifDropdown() {
+            const dd = document.getElementById('notifDropdown');
+            notifDropdownOpen = !notifDropdownOpen;
+            dd.classList.toggle('hidden', !notifDropdownOpen);
+            if (notifDropdownOpen) loadNotifDropdown();
+        }
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('notifBellContainer');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('notifDropdown')?.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+
+        async function loadNotifDropdown() {
+            try {
+                const resp = await fetch('/api/notifications');
+                const data = await resp.json();
+                const items = (data.notifications || []).slice(0, 8);
+                const body = document.getElementById('notifDropdownBody');
+
+                if (items.length === 0) {
+                    body.innerHTML = '<div class="p-6 text-center"><div class="text-3xl mb-2">🎉</div><p class="text-sm text-gray-500">All clear — no reminders</p></div>';
+                    return;
+                }
+
+                const catColors = { overdue:'#EF4444', due_today:'#F59E0B', due_soon:'#F97316', approaching:'#3B82F6', info:'#9CA3AF' };
+                const catLabels = { overdue:'Overdue', due_today:'Today', due_soon:'Soon', approaching:'Upcoming', info:'Info' };
+
+                body.innerHTML = items.map(n => {
+                    const delta = n.days_delta;
+                    const daysText = delta < 0 ? Math.abs(delta) + 'd overdue' : delta === 0 ? 'Today' : delta + 'd';
+                    return `<a href="/notifications" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition">
+                        <div class="flex items-start gap-3">
+                            <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0" style="background:${catColors[n.category] || '#9CA3AF'}"></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">${n.title}</p>
+                                <p class="text-xs text-gray-500 truncate">${n.program}</p>
+                            </div>
+                            <span class="text-xs font-semibold flex-shrink-0 ${delta < 0 ? 'text-red-600' : delta === 0 ? 'text-yellow-600' : 'text-gray-500'}">${daysText}</span>
+                        </div>
+                    </a>`;
+                }).join('') + `<a href="/notifications" class="block px-4 py-3 text-center text-sm font-medium text-blue-600 hover:bg-blue-50 transition">See all ${data.count} notifications</a>`;
+            } catch (e) {
+                document.getElementById('notifDropdownBody').innerHTML = '<div class="p-4 text-sm text-red-500">Failed to load</div>';
+            }
+        }
+
+        // Poll for notification count every 60s
+        async function pollNotifCount() {
+            try {
+                const resp = await fetch('/api/notifications/count');
+                const data = await resp.json();
+                const badge = document.getElementById('notifBadge');
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (e) { /* silent */ }
+        }
+
+        // Start polling after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            pollNotifCount();
+            setInterval(pollNotifCount, 60000);
+        });
+
         function handleTitleKeydown(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();

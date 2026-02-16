@@ -449,6 +449,22 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️  Calendar feature disabled: {e}")
 
+# Notifications router has: /notifications, /api/notifications/*
+try:
+    from routers import notifications
+    app.include_router(notifications.router, tags=["notifications"])
+    logger.info("✅ Notifications & Reminders feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Notifications feature disabled: {e}")
+
+# Feedback router has: /feedback, /api/feedback/*
+try:
+    from routers import feedback
+    app.include_router(feedback.router, tags=["feedback"])
+    logger.info("✅ Feedback feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Feedback feature disabled: {e}")
+
 # PowerPoint Reports router (enhanced with screenshots and templates)
 try:
     from routers import powerpoint_reports

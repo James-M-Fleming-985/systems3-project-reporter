@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    .feedback-card {
+        transition: all 0.15s ease;
+        border-left: 4px solid transparent;
+    }
+    .feedback-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .feedback-card.type-bug { border-left-color: #EF4444; }
+    .feedback-card.type-feature { border-left-color: #8B5CF6; }
+    .feedback-card.type-improvement { border-left-color: #3B82F6; }
+    .feedback-card.type-general { border-left-color: #9CA3AF; }
+
+    .type-pill {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .type-pill-bug { background: #FEE2E2; color: #991B1B; }
+    .type-pill-feature { background: #EDE9FE; color: #5B21B6; }
+    .type-pill-improvement { background: #DBEAFE; color: #1E40AF; }
+    .type-pill-general { background: #F3F4F6; color: #374151; }
+
+    .priority-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .priority-critical { background: #EF4444; }
+    .priority-high { background: #F97316; }
+    .priority-medium { background: #F59E0B; }
+    .priority-low { background: #22C55E; }
+
+    .status-pill {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-new { background: #DBEAFE; color: #1E40AF; }
+    .status-reviewed { background: #FEF3C7; color: #92400E; }
+    .status-in-progress { background: #FFF7ED; color: #9A3412; }
+    .status-resolved { background: #D1FAE5; color: #065F46; }
+    .status-closed { background: #F3F4F6; color: #6B7280; }
+
+    /* Quick-add form slide-in */
+    .quick-form {
+        animation: slideDown 0.2s ease-out;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; max-height: 0; }
+        to { opacity: 1; max-height: 600px; }
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .tab-btn.active {
+        border-bottom-color: #3B82F6;
+        color: #1D4ED8;
+    }
+    .tab-btn:not(.active) {
+        color: #6B7280;
+    }
+    .tab-btn:hover:not(.active) {
+        color: #374151;
+        border-bottom-color: #E5E7EB;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-1">💬 Feedback</h2>
+            <p class="text-gray-600">Report bugs, suggest features, or share improvements</p>
+        </div>
+        <button onclick="toggleNewForm()" id="btnNewFeedback" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2 shadow">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Feedback
+        </button>
+    </div>
+</div>
+
+<!-- New Feedback Form (initially hidden) -->
+<div id="newFeedbackForm" class="bg-white rounded-xl shadow-lg p-6 mb-6 hidden quick-form">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Submit Feedback</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-600 mb-1">Title *</label>
+            <input type="text" id="fbTitle" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Brief summary of your feedback">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Type</label>
+                <select id="fbType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="general">General</option>
+                    <option value="bug">Bug Report</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="improvement">Improvement</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Priority</label>
+                <select id="fbPriority" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-600 mb-1">Description</label>
+        <textarea id="fbDescription" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Provide more details..."></textarea>
+    </div>
+    <div class="flex items-center justify-end gap-3">
+        <button onclick="toggleNewForm()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Cancel</button>
+        <button onclick="submitFeedback()" id="btnSubmit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit</button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6" id="statsCards">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-gray-700" id="statTotal">-</p>
+        <p class="text-xs text-gray-500 font-semibold uppercase">Total</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-blue-600" id="statNew">-</p>
+        <p class="text-xs text-blue-500 font-semibold uppercase">New</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-yellow-600" id="statReviewed">-</p>
+        <p class="text-xs text-yellow-500 font-semibold uppercase">Reviewed</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-orange-600" id="statInProgress">-</p>
+        <p class="text-xs text-orange-500 font-semibold uppercase">In Progress</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-3xl font-bold text-green-600" id="statResolved">-</p>
+        <p class="text-xs text-green-500 font-semibold uppercase">Resolved</p>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="bg-white rounded-t-lg shadow-sm border-b flex items-center gap-1 px-4">
+    <button class="tab-btn active" data-status="all" onclick="filterByStatus('all', this)">All</button>
+    <button class="tab-btn" data-status="new" onclick="filterByStatus('new', this)">New</button>
+    <button class="tab-btn" data-status="reviewed" onclick="filterByStatus('reviewed', this)">Reviewed</button>
+    <button class="tab-btn" data-status="in-progress" onclick="filterByStatus('in-progress', this)">In Progress</button>
+    <button class="tab-btn" data-status="resolved" onclick="filterByStatus('resolved', this)">Resolved</button>
+    <button class="tab-btn" data-status="closed" onclick="filterByStatus('closed', this)">Closed</button>
+</div>
+
+<!-- Loading -->
+<div id="fbLoading" class="bg-white rounded-b-lg shadow p-12 text-center">
+    <div class="inline-block animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mr-3"></div>
+    <span class="text-gray-600">Loading feedback...</span>
+</div>
+
+<!-- Feedback List -->
+<div id="fbList" class="bg-white rounded-b-lg shadow divide-y" style="display:none;"></div>
+
+<!-- Empty State -->
+<div id="fbEmpty" class="bg-white rounded-b-lg shadow p-12 text-center" style="display:none;">
+    <div class="text-5xl mb-4">📝</div>
+    <h3 class="text-xl font-bold text-gray-700 mb-2">No feedback yet</h3>
+    <p class="text-gray-500 mb-4">Be the first to submit feedback or a feature request!</p>
+    <button onclick="toggleNewForm()" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit Feedback</button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allFeedback = [];
+let activeStatus = 'all';
+
+document.addEventListener('DOMContentLoaded', loadFeedback);
+
+function toggleNewForm() {
+    const form = document.getElementById('newFeedbackForm');
+    form.classList.toggle('hidden');
+}
+
+async function submitFeedback() {
+    const title = document.getElementById('fbTitle').value.trim();
+    if (!title) {
+        document.getElementById('fbTitle').focus();
+        document.getElementById('fbTitle').classList.add('border-red-500');
+        return;
+    }
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+        const resp = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: title,
+                type: document.getElementById('fbType').value,
+                priority: document.getElementById('fbPriority').value,
+                description: document.getElementById('fbDescription').value.trim(),
+                page: window.location.pathname,
+            }),
+        });
+
+        const data = await resp.json();
+        if (data.success) {
+            document.getElementById('fbTitle').value = '';
+            document.getElementById('fbDescription').value = '';
+            document.getElementById('newFeedbackForm').classList.add('hidden');
+            loadFeedback();
+        } else {
+            alert(data.error || 'Failed to submit');
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+    }
+}
+
+async function loadFeedback() {
+    document.getElementById('fbLoading').style.display = 'block';
+    document.getElementById('fbList').style.display = 'none';
+    document.getElementById('fbEmpty').style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/feedback');
+        const data = await resp.json();
+        allFeedback = data.feedback || [];
+        updateStats(data.stats || {});
+        renderList();
+    } catch (err) {
+        document.getElementById('fbLoading').innerHTML = `<div class="text-red-500 p-6">${err.message}</div>`;
+    }
+}
+
+function updateStats(stats) {
+    document.getElementById('statTotal').textContent = stats.total || 0;
+    const byStatus = stats.by_status || {};
+    document.getElementById('statNew').textContent = byStatus['new'] || 0;
+    document.getElementById('statReviewed').textContent = byStatus['reviewed'] || 0;
+    document.getElementById('statInProgress').textContent = byStatus['in-progress'] || 0;
+    document.getElementById('statResolved').textContent = byStatus['resolved'] || 0;
+}
+
+function filterByStatus(status, btn) {
+    activeStatus = status;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+}
+
+function renderList() {
+    const filtered = allFeedback.filter(f => {
+        return activeStatus === 'all' || f.status === activeStatus;
+    });
+
+    document.getElementById('fbLoading').style.display = 'none';
+
+    if (filtered.length === 0) {
+        document.getElementById('fbList').style.display = 'none';
+        document.getElementById('fbEmpty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('fbEmpty').style.display = 'none';
+    const container = document.getElementById('fbList');
+    container.style.display = 'block';
+
+    container.innerHTML = filtered.map(f => {
+        const date = new Date(f.created_at);
+        const dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        return `
+        <div class="feedback-card type-${f.type} p-4 flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+                <span class="priority-dot priority-${f.priority}" title="${f.priority} priority"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="type-pill type-pill-${f.type}">${f.type}</span>
+                    <span class="status-pill status-${f.status}">${f.status.replace('-', ' ')}</span>
+                    ${f.github_issue_url ? `<a href="${f.github_issue_url}" target="_blank" class="text-xs text-blue-600 hover:underline">GitHub Issue ↗</a>` : ''}
+                </div>
+                <h4 class="font-semibold text-gray-800">${f.title}</h4>
+                ${f.description ? `<p class="text-sm text-gray-500 mt-1 line-clamp-2">${f.description}</p>` : ''}
+            </div>
+            <div class="flex-shrink-0 text-right">
+                <p class="text-xs text-gray-400">${dateStr}</p>
+                <p class="text-xs text-gray-400">${timeStr}</p>
+                <p class="text-xs text-gray-500 mt-1">${f.user_name}</p>
+            </div>
+        </div>`;
+    }).join('');
+}
+</script>
+{% endblock %}
