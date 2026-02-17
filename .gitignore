@@ -49,4 +49,4 @@ test_output.pptx/
 output/
 
 # Mock data backups (keep main mock_data)
-mock_data_backup/
+mock_data_backup/manual_verification.py
