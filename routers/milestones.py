@@ -145,7 +145,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'name': incoming_name,
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
-                        'resources': updated_milestone.get('resources') or None,
+                        'resources': updated_milestone.get('resources') or None,  # Convert empty string/None to None
                         'completion_percentage': new_completion,
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
