@@ -50,3 +50,6 @@ output/
 
 # Mock data backups (keep main mock_data)
 mock_data_backup/
+
+# Manual verification scripts (local testing only)
+manual_verification.py

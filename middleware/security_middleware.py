@@ -184,23 +184,39 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # For form submissions, validate CSRF token
-        try:
-            form = await request.form()
-            csrf_token = form.get("csrf_token", "")
-            if not csrf_token:
-                # Also check header (for AJAX form submissions)
-                csrf_token = request.headers.get("x-csrf-token", "")
-
-            if not csrf_token or not validate_csrf_token(csrf_token, session_id):
-                logger.warning(f"CSRF validation failed for {method} {path}")
+        # IMPORTANT: Check header FIRST to avoid consuming request body for file uploads
+        csrf_token = request.headers.get("x-csrf-token", "")
+        
+        # If no header, try reading from form body (for traditional form submissions)
+        if not csrf_token:
+            try:
+                form = await request.form()
+                csrf_token = form.get("csrf_token", "")
+            except Exception as e:
+                # If we can't read the form body, this is likely a configuration error
+                # or the body was consumed elsewhere. For security, reject the request.
+                logger.warning(f"CSRF validation failed for {method} {path}: cannot read form body ({e})")
                 from fastapi.responses import JSONResponse
                 return JSONResponse(
                     status_code=403,
-                    content={"detail": "CSRF validation failed"}
+                    content={"detail": "CSRF token validation error"}
                 )
-        except Exception as e:
-            # If we can't read the form (e.g., file upload), allow through
-            # File uploads are protected by auth cookie + SameSite=Lax
-            logger.debug(f"CSRF check skipped for {path}: {e}")
+        
+        # Validate the token
+        if not csrf_token:
+            logger.warning(f"CSRF token missing for {method} {path}")
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "CSRF token missing"}
+            )
+        
+        if not validate_csrf_token(csrf_token, session_id):
+            logger.warning(f"CSRF validation failed for {method} {path}")
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "CSRF validation failed"}
+            )
 
         return await call_next(request)
