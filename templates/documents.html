@@ -566,6 +566,9 @@
 {% endblock %}
 
 {% block content %}
+<!-- Hidden CSRF token for JavaScript file upload functions -->
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
 <div class="doc-library">
     <!-- Header -->
     <div class="mb-6">
@@ -1130,8 +1133,14 @@ async function submitUpload(event) {
     btn.textContent = '⏳ Uploading...';
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch(`/dashboard/api/documents/${encodeURIComponent(projectName)}/upload`, {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         

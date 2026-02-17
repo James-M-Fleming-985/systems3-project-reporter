@@ -124,6 +124,7 @@ async def documents_page(request: Request, project: str = None):
         "total_documents": len(doc_data.get('documents', [])),
         "build_version": get_build_version(),
         "user": getattr(request.state, 'user', None),
+        "csrf_token": getattr(request.state, 'csrf_token', ''),
         # JSON data for JavaScript
         "categories_json": json.dumps(categories_with_docs, default=str),
         "all_documents_json": json.dumps(all_documents_flat, default=str),
