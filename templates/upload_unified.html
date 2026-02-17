@@ -924,7 +924,7 @@ async function uploadProjectFile() {
         document.getElementById('projectError').classList.remove('hidden');
         
         // Display the actual error message
-        const errorMessage = error.message || String(error) || 'Unknown error occurred';
+        const errorMessage = error.message || String(error);
         document.getElementById('projectErrorMessage').textContent = errorMessage;
         
         document.getElementById('projectUploadBtn').disabled = false;
