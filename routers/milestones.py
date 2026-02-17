@@ -97,7 +97,7 @@ async def update_milestone(data: MilestoneUpdate):
             incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
             incoming_date = updated_milestone.get('target_date', '')
-            incoming_parent = updated_milestone.get('parent_project', '')
+            incoming_parent = (updated_milestone.get('parent_project') or '').strip()
             
             for i, milestone in enumerate(project_data['milestones']):
                 # Normalize both names for comparison (trim whitespace)
@@ -125,7 +125,7 @@ async def update_milestone(data: MilestoneUpdate):
                     match_type = 'substring'
                 # Match by target_date + parent_project (allows name changes while keeping same milestone)
                 elif (milestone.get('target_date') == incoming_date and 
-                      milestone.get('parent_project', '').strip() == incoming_parent.strip() and
+                      (milestone.get('parent_project') or '').strip() == incoming_parent and
                       incoming_date and incoming_parent):  # Make sure these fields exist
                     logger.warning(f"✅ DATE+PARENT MATCH FOUND at index {i}: date={incoming_date}, parent={incoming_parent}")
                     logger.warning(f"   Name change: '{yaml_name}' → '{incoming_name}'")
@@ -145,7 +145,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'name': incoming_name,
                         'target_date': updated_milestone['target_date'],
                         'status': updated_milestone['status'],
-                        'resources': updated_milestone.get('resources'),
+                        'resources': updated_milestone.get('resources') or None,
                         'completion_percentage': new_completion,
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
