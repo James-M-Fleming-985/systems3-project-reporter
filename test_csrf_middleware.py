@@ -30,7 +30,7 @@ def upload_endpoint(file: UploadFile = File(...)):
 
 
 @app.post("/test/form")
-def form_endpoint(request: Request):
+def form_endpoint():
     """Test traditional form submission - this will be tested by client"""
     # This endpoint just needs to exist for testing
     return JSONResponse(

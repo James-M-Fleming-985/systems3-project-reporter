@@ -193,10 +193,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 form = await request.form()
                 csrf_token = form.get("csrf_token", "")
             except Exception as e:
-                # If we can't read the form (e.g., already consumed), allow through
-                # File uploads are protected by auth cookie + SameSite=Lax
-                logger.debug(f"CSRF check skipped for {path} (form read error): {e}")
-                return await call_next(request)
+                # If we can't read the form body, this is likely a configuration error
+                # or the body was consumed elsewhere. For security, reject the request.
+                logger.warning(f"CSRF validation failed for {method} {path}: cannot read form body ({e})")
+                from fastapi.responses import JSONResponse
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "CSRF token validation error"}
+                )
         
         # Validate the token
         if not csrf_token:
