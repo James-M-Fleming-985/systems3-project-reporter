@@ -691,12 +691,13 @@ function closeEventModal() {
 
 async function editEventFromCalendar() {
     if (!currentEventData || !currentEventData.milestone) {
-        alert('Cannot edit this event');
+        alert('This event cannot be edited. Only milestone events can be edited from the calendar.');
         return;
     }
     
     const milestone = currentEventData.milestone;
     
+    // TODO: Replace prompt() with a proper modal dialog for better UX
     // Create a simple inline edit form
     const newStatus = prompt(
         `Edit Milestone Status for: ${milestone.name}\n\nCurrent Status: ${milestone.status}\n\nEnter new status (NOT_STARTED, IN_PROGRESS, or COMPLETED):`,
@@ -744,7 +745,7 @@ async function editEventFromCalendar() {
 
 async function deleteEventFromCalendar() {
     if (!currentEventData || !currentEventData.milestone) {
-        alert('Cannot delete this event');
+        alert('This event cannot be deleted. Only milestone events can be deleted from the calendar.');
         return;
     }
     
