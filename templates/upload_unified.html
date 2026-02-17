@@ -3,6 +3,9 @@
 {% block title %}Upload Data - Systems³ Project Reporter{% endblock %}
 
 {% block content %}
+<!-- Hidden CSRF token for JavaScript file upload functions -->
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2">📤 Upload Data</h2>
     <p class="text-gray-600">Upload project XML files and risk data to update your dashboard</p>
@@ -838,8 +841,14 @@ async function uploadProjectFile() {
     document.getElementById('projectUploadBtn').disabled = true;
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch('/upload/xml', {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         
@@ -1036,8 +1045,14 @@ async function uploadRiskFile() {
     document.getElementById('riskUploadBtn').disabled = true;
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch('/risks/upload', {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         
@@ -2241,8 +2256,14 @@ uploadTemplateBtn?.addEventListener('click', async () => {
     uploadTemplateBtn.textContent = 'Uploading...';
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch('/upload/powerpoint-template', {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         
@@ -2580,8 +2601,14 @@ async function previewScheduleFile(file) {
     formData.append('file', file);
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch('/dashboard/api/schedule/preview', {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         
@@ -2698,8 +2725,14 @@ async function uploadScheduleFile() {
     }
     
     try {
+        // Get CSRF token
+        const csrfToken = document.getElementById('csrfToken').value;
+        
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(program)}/import`, {
             method: 'POST',
+            headers: {
+                'x-csrf-token': csrfToken
+            },
             body: formData
         });
         
