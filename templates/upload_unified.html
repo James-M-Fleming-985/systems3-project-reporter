@@ -821,12 +821,14 @@ async function uploadProjectFile() {
     const formData = new FormData();
     formData.append('file', projectFile);
     
+    // ALWAYS append is_baseline (backend expects it with default value)
     const isBaseline = document.getElementById('projectBaselineCheckbox').checked;
-    if (isBaseline) {
-        formData.append('is_baseline', 'true');
-    }
+    formData.append('is_baseline', isBaseline ? 'true' : 'false');
     
-    // Get selected program from the page context (set by server)
+    // ALWAYS append clear_previous_changes (backend expects it)
+    formData.append('clear_previous_changes', 'false');
+    
+    // Append target_project_code if available
     const selectedProjectCode = '{{ project.project_code if project else "" }}';
     if (selectedProjectCode) {
         formData.append('target_project_code', selectedProjectCode);
@@ -856,7 +858,7 @@ async function uploadProjectFile() {
         
         document.getElementById('projectProgress').classList.add('hidden');
         
-        if (response.ok) {
+        if (response.ok && data.success) {
             document.getElementById('projectSuccess').classList.remove('hidden');
             document.getElementById('projectSuccessMessage').textContent = 
                 `${data.project_name} uploaded successfully! ${data.milestone_count || 0} milestones loaded. Redirecting to dashboard...`;
@@ -870,7 +872,14 @@ async function uploadProjectFile() {
                 window.location.href = `/dashboard/gantt?project=${encodeURIComponent(data.project_code)}`;
             }, 2000);
         } else {
-            throw new Error(data.error || data.detail || 'Upload failed');
+            // Better error logging
+            console.error('Upload failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                result: data
+            });
+            
+            throw new Error(data.error || data.detail || 'Upload failed. Please try again.');
         }
     } catch (error) {
         document.getElementById('projectProgress').classList.add('hidden');
