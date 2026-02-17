@@ -283,12 +283,23 @@
         
         <!-- Modal Footer -->
         <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
-            <span class="text-xs text-gray-400" id="eventModalProgram">Program Name</span>
+            <div id="eventActions" class="flex gap-2">
+                <!-- Edit button (for milestones only) -->
+                <button id="editEventBtn" onclick="editEventFromCalendar()" class="hidden px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                    ✏️ Edit Milestone
+                </button>
+                
+                <!-- Delete button (for milestones only) -->
+                <button id="deleteEventBtn" onclick="deleteEventFromCalendar()" class="hidden px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                    🗑️ Delete
+                </button>
+            </div>
+            
             <div class="flex items-center gap-2">
                 <a id="goToProgramBtn" href="#" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-medium inline-flex items-center gap-1">
                     Open in Dashboard ↗
                 </a>
-                <button id="closeEventModalBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
+                <button onclick="closeEventModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm">
                     Close
                 </button>
             </div>
@@ -306,6 +317,7 @@
 let calendarInstance = null;
 let allEvents = [];
 let filteredEvents = [];
+let currentEventData = null; // Store current event for actions
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📅 Calendar: Initializing...');
@@ -482,6 +494,14 @@ function showEventModal(event) {
     const ep = event.extendedProps || {};
     const type = ep.type || 'unknown';
     
+    // Store event data for actions
+    currentEventData = {
+        type: ep.type,
+        projectCode: ep.programCode,
+        milestone: ep.milestone,
+        eventId: event.id
+    };
+    
     // Source-based header colors
     const headerColors = {
         'milestone': '#3B82F6',
@@ -513,6 +533,18 @@ function showEventModal(event) {
     }
     goBtn.href = goBtnUrl;
     goBtn.textContent = `Open ${ep.source_label || 'Item'} Tab ↗`;
+    
+    // Show/hide action buttons based on event type
+    const editBtn = document.getElementById('editEventBtn');
+    const deleteBtn = document.getElementById('deleteEventBtn');
+    
+    if (ep.type === 'milestone' && ep.milestone) {
+        editBtn.classList.remove('hidden');
+        deleteBtn.classList.remove('hidden');
+    } else {
+        editBtn.classList.add('hidden');
+        deleteBtn.classList.add('hidden');
+    }
     
     // --- Build navigation URL based on event type ---
     const typeToTab = {
@@ -654,6 +686,76 @@ function showEventModal(event) {
 
 function closeEventModal() {
     document.getElementById('eventModal').classList.add('hidden');
+    currentEventData = null;
+}
+
+async function editEventFromCalendar() {
+    if (!currentEventData || !currentEventData.milestone) {
+        alert('Cannot edit this event');
+        return;
+    }
+    
+    const milestone = currentEventData.milestone;
+    
+    // Create a simple inline edit form
+    const newStatus = prompt(
+        `Edit Milestone Status for: ${milestone.name}\n\nCurrent Status: ${milestone.status}\n\nEnter new status (NOT_STARTED, IN_PROGRESS, or COMPLETED):`,
+        milestone.status
+    );
+    
+    if (!newStatus) return;
+    
+    const validStatuses = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'];
+    const upperStatus = newStatus.toUpperCase().replace(/ /g, '_');
+    
+    if (!validStatuses.includes(upperStatus)) {
+        alert('Invalid status. Use: NOT_STARTED, IN_PROGRESS, or COMPLETED');
+        return;
+    }
+    
+    // Update the milestone
+    try {
+        const response = await fetch('/milestones/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: currentEventData.projectCode,
+                milestone: {
+                    ...milestone,
+                    status: upperStatus
+                }
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            alert('Milestone updated successfully!');
+            closeEventModal();
+            // Reload calendar data
+            window.location.reload();
+        } else {
+            alert('Failed to update milestone: ' + (data.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error updating milestone: ' + error.message);
+    }
+}
+
+async function deleteEventFromCalendar() {
+    if (!currentEventData || !currentEventData.milestone) {
+        alert('Cannot delete this event');
+        return;
+    }
+    
+    const milestone = currentEventData.milestone;
+    
+    if (!confirm(`Are you sure you want to delete milestone:\n\n"${milestone.name}"\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    alert('Delete functionality coming soon - for now, please use the Milestones tab to delete milestones.');
+    // TODO: Implement milestone deletion API endpoint
 }
 
 function formatDate(dateStr) {

@@ -405,13 +405,39 @@ def parse_excel_file(file_content: bytes) -> tuple:
         if not rows:
             return [], []
         
-        # First row is headers
-        headers = [str(h) if h else f"Column {i+1}" for i, h in enumerate(rows[0])]
-        data_rows = [[str(cell) if cell is not None else "" for cell in row] for row in rows[1:]]
+        # First row is headers - safely convert to strings
+        headers = []
+        for i, h in enumerate(rows[0]):
+            if h is None or str(h).strip() == '':
+                headers.append(f"Column {i+1}")
+            else:
+                try:
+                    headers.append(str(h).strip())
+                except Exception:
+                    headers.append(f"Column {i+1}")
+        
+        # Data rows - safely convert each cell to string
+        data_rows = []
+        for row in rows[1:]:
+            row_data = []
+            for cell in row:
+                try:
+                    if cell is None:
+                        row_data.append("")
+                    else:
+                        # Handle different cell types safely
+                        row_data.append(str(cell).strip())
+                except Exception as e:
+                    logger.warning(f"Error converting cell value: {e}")
+                    row_data.append("")
+            data_rows.append(row_data)
         
         return headers, data_rows
     except ImportError:
         raise HTTPException(status_code=500, detail="openpyxl not installed - cannot parse Excel files")
+    except Exception as e:
+        logger.error(f"Error parsing Excel file: {e}")
+        raise HTTPException(status_code=400, detail=f"Error parsing Excel file: {str(e)}")
 
 
 def parse_csv_file(file_content: bytes) -> tuple:
