@@ -144,11 +144,20 @@ async def get_calendar_events(request: Request):
                     continue
                 
                 # Only show true milestones (Milestone flag=1 or Duration=0 in MS Project)
-                # Level 4 tasks appear in the "Related Tasks" modal section only
+                # Level 4 tasks appear in the "Related Tasks" modal section only.
+                # is_true_milestone is set by the XML parser; older YAMLs may have None.
+                # Fallback for older data: a zero-duration item (start == target) is a
+                # true milestone; multi-day items (start != target) are tasks.
                 is_true_milestone = getattr(milestone, 'is_true_milestone', None)
-                if is_true_milestone is not None and not is_true_milestone:
+                if is_true_milestone is False:
                     continue
-                
+                if is_true_milestone is None:
+                    # Fallback heuristic: multi-day duration → task, not milestone
+                    _start = getattr(milestone, 'start_date', None)
+                    _target = getattr(milestone, 'target_date', None)
+                    if _start and _target and _start != _target:
+                        continue
+
                 status = getattr(milestone, 'status', 'NOT_STARTED')
                 target_date = getattr(milestone, 'target_date', None)
                 start_date = getattr(milestone, 'start_date', None)
