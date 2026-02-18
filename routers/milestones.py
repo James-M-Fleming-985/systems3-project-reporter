@@ -737,20 +737,23 @@ async def get_milestone_siblings(code: str, id: str):
                 'count': 0
             })
         
-        # Find all siblings under same Level 3 parent at the same outline level
-        # (excluding the queried item itself)
+        # Find all siblings under same Level 3 parent (excluding the queried item itself)
         siblings = []
         target_id = target_milestone.get('id', id)
         target_name = target_milestone.get('name', '')
-        target_level = target_milestone.get('outline_level') or 4  # default to 4 if not set
+        target_level = target_milestone.get('outline_level')  # May be None for legacy data
 
         for m in milestones:
             m_parent_levels = m.get('parent_levels', {})
             m_level_3_parent = m_parent_levels.get('3') or m_parent_levels.get(3)
-            m_outline_level = m.get('outline_level', 0)
+            m_outline_level = m.get('outline_level')  # May be None
 
-            # Must share the same Level 3 parent AND be at the same depth as target
-            if m_level_3_parent != level_3_parent or m_outline_level != target_level:
+            # Must share the same Level 3 parent
+            if m_level_3_parent != level_3_parent:
+                continue
+
+            # If both have a valid outline_level, they must match
+            if target_level and m_outline_level and target_level != m_outline_level:
                 continue
 
             # Exclude the item being viewed (the milestone itself)
