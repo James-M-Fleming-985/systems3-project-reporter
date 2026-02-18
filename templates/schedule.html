@@ -1786,15 +1786,25 @@ async function deleteTable(tableId) {
         async () => {
     
     try {
+        console.log('Deleting table:', tableId);
+        
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
             method: 'DELETE'
         });
         
-        if (response.ok) {
-            window.location.reload();
+        console.log('Delete response:', response.status);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Delete failed');
         }
+        
+        // Success - reload page
+        window.location.reload();
+        
     } catch (error) {
         console.error('Error deleting table:', error);
+        alert('Failed to delete table: ' + error.message);
     }
         }
     );

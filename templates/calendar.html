@@ -357,6 +357,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             },
             events: filteredEvents,
             eventClick: function(info) {
+                console.log('Event clicked:', info.event);
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
             },
@@ -493,17 +494,19 @@ function updateStats() {
 }
 
 function showEventModal(event) {
-    const modal = document.getElementById('eventModal');
-    const ep = event.extendedProps || {};
-    const type = ep.type || 'unknown';
-    
-    // Store event data for actions
-    currentEventData = {
-        type: ep.type,
-        projectCode: ep.programCode,
-        milestone: ep.milestone,
-        eventId: event.id
-    };
+    try {
+        console.log('showEventModal called with:', event);
+        const modal = document.getElementById('eventModal');
+        const ep = event.extendedProps || {};
+        const type = ep.type || 'unknown';
+        
+        // Store event data for actions
+        currentEventData = {
+            type: ep.type,
+            projectCode: ep.programCode,
+            milestone: ep.milestone,
+            eventId: event.id
+        };
     
     // Source-based header colors
     const headerColors = {
@@ -701,6 +704,10 @@ function showEventModal(event) {
     // Load sibling tasks if this is a milestone
     if (type === 'milestone' && ep.milestone && ep.programCode) {
         loadSiblingTasks(ep.programCode, ep.milestone.id || ep.milestone.name);
+    }
+    } catch (error) {
+        console.error('Error in showEventModal:', error);
+        alert('Error opening event details: ' + error.message);
     }
 }
 

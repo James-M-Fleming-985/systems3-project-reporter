@@ -348,29 +348,20 @@ class MSProjectXMLParser:
             
             is_milestone = has_milestone_flag or has_zero_duration or has_zero_work
             
-            # Include: milestones (any level) + summary tasks at level 2+ (for roadmap)
-            # ALSO include regular tasks at levels 2-4 for the roadmap view
-            # (e.g. "Project Place Holder" items that are project-level work items)
-            is_roadmap_level_task = (outline_level >= 2 and outline_level <= 4)
-            
-            if not is_milestone and not is_summary and not is_roadmap_level_task:
-                # Regular non-milestone, non-summary task at level 5+ — skip
+            # CRITICAL FIX: Only add to milestones array if it's a TRUE milestone
+            # Do NOT add regular tasks, summaries, or roadmap items
+            if not is_milestone:
+                # Skip this task - it's not a milestone
                 name_elem = self._find_element(task, 'Name')
                 task_name = name_elem.text if name_elem is not None else 'Unknown'
-                print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - "
-                      f"not milestone, not summary, not roadmap level")
+                if outline_level == 4:
+                    print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - not a milestone")
                 continue
             
-            # At this point: milestone, summary, or roadmap-level task
+            # At this point: confirmed milestone only
             name_elem = self._find_element(task, 'Name')
             task_name = name_elem.text if name_elem is not None else 'Unknown'
-            if is_milestone:
-                task_type = 'milestone'
-            elif is_summary:
-                task_type = 'summary'
-            else:
-                task_type = 'task'
-            print(f"DEBUG: DETECTED {task_type} at Level {outline_level}: '{task_name}'")
+            print(f"DEBUG: ADDING MILESTONE at Level {outline_level}: '{task_name}'")
             
             milestone_data = {}
             
