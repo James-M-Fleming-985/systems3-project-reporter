@@ -433,7 +433,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Modal close handlers
     document.getElementById('closeEventModal').addEventListener('click', closeEventModal);
-    document.getElementById('closeEventModalBtn').addEventListener('click', closeEventModal);
     document.getElementById('eventModal').addEventListener('click', function(e) {
         if (e.target === this) closeEventModal();
     });
@@ -520,7 +519,6 @@ function showEventModal(event) {
     // Type label from uniform field
     document.getElementById('eventModalType').textContent = ep.source_label || type;
     document.getElementById('eventModalTitle').textContent = event.title;
-    document.getElementById('eventModalProgram').textContent = ep.program || '';
     
     // Set "Go to Program" button URL
     const goBtn = document.getElementById('goToProgramBtn');

@@ -398,6 +398,9 @@
 {% endblock %}
 
 {% block content %}
+<!-- CSRF Token for API requests -->
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
 <div class="mb-6">
     <div class="flex items-center justify-between">
         <div>
@@ -1789,7 +1792,10 @@ async function deleteTable(tableId) {
         console.log('Deleting table:', tableId);
         
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': document.getElementById('csrfToken')?.value || ''
+            }
         });
         
         console.log('Delete response:', response.status);
