@@ -408,7 +408,7 @@ def parse_excel_file(file_content: bytes) -> tuple:
         # First row is headers - safely convert to strings
         headers = []
         for i, h in enumerate(rows[0]):
-            if h is None or (isinstance(h, str) and h.strip() == ''):
+            if h is None or str(h).strip() == '':
                 headers.append(f"Column {i+1}")
             else:
                 try:

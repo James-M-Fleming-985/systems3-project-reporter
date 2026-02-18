@@ -760,7 +760,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
 async function updateTaskStatus(checkbox) {
     const taskId = checkbox.dataset.taskId;
     const projectCode = checkbox.dataset.projectCode;
-    const isCompleted = checkbox.checked;
+    const shouldComplete = checkbox.checked;
     
     // Get CSRF token
     const csrfToken = document.getElementById('csrfToken')?.value || '';
@@ -775,7 +775,7 @@ async function updateTaskStatus(checkbox) {
             body: JSON.stringify({
                 project_code: projectCode,
                 task_id: taskId,
-                status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
+                status: shouldComplete ? 'COMPLETED' : 'IN_PROGRESS'
             })
         });
         
@@ -791,7 +791,7 @@ async function updateTaskStatus(checkbox) {
         // Update checkbox label color
         const label = checkbox.nextElementSibling;
         if (label) {
-            if (isCompleted) {
+            if (shouldComplete) {
                 label.classList.remove('text-gray-700');
                 label.classList.add('text-green-600');
             } else {
@@ -807,7 +807,7 @@ async function updateTaskStatus(checkbox) {
         console.error('Error updating task status:', error);
         alert('Failed to update task status. Please try again.');
         // Revert checkbox state
-        checkbox.checked = !isCompleted;
+        checkbox.checked = !shouldComplete;
     }
 }
 
