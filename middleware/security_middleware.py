@@ -122,8 +122,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "https://cdn.tailwindcss.com "
                 "https://cdn.jsdelivr.net "
                 "https://fonts.googleapis.com",
-                # Fonts
-                "font-src 'self' https://fonts.gstatic.com",
+                # Fonts: allow data: URIs for bundled icon fonts (e.g. FullCalendar)
+                "font-src 'self' https://fonts.gstatic.com data:",
                 # Images: self + data URIs (for Plotly exports)
                 "img-src 'self' data: blob:",
                 # Connect: self + Stripe

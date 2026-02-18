@@ -144,15 +144,23 @@ async def get_calendar_events(request: Request):
                     continue
                 
                 # Only show true milestones (Milestone flag=1 or Duration=0 in MS Project).
-                # Level 4 tasks are stored in the YAML milestones array (older imports) but
-                # is_true_milestone=False marks them explicitly as tasks.
-                # is_true_milestone=None means it was imported before the flag existed;
-                # we cannot safely distinguish tasks from milestones, so skip them —
-                # they will still appear in the Related Tasks panel via the siblings API.
+                # is_true_milestone is set by the XML parser on re-import.
+                # is_true_milestone=False → confirmed task, always skip.
+                # is_true_milestone=None → old import that predates the flag;
+                #   fall back to zero-duration heuristic: start==target means a
+                #   point-in-time milestone in MS Project convention.
                 is_true_milestone = getattr(milestone, 'is_true_milestone', None)
-                if is_true_milestone is not True:
-                    # False → confirmed task; None → ambiguous old data → both excluded
+                if is_true_milestone is False:
                     continue
+                if is_true_milestone is None:
+                    # Old YAML: use zero-duration heuristic as best available signal.
+                    # Re-importing the original MS Project XML will fix these permanently.
+                    _start = getattr(milestone, 'start_date', None)
+                    _target = getattr(milestone, 'target_date', None)
+                    if _start and _target and _start != _target:
+                        # Multi-day → clearly a task, not a milestone
+                        continue
+                    # start==target (or dates missing) → treat as milestone
 
                 status = getattr(milestone, 'status', 'NOT_STARTED')
                 target_date = getattr(milestone, 'target_date', None)
@@ -348,21 +356,24 @@ async def get_calendar_events(request: Request):
                         # Build a column lookup for headers
                         col_lookup = {c.get('id'): c for c in columns}
                         
-                        # Find a title/name column - prefer columns named task/activity/item/description
+                        # Find a title/name column - prefer columns named task/activity/item/description/subject
                         title_col = None
-                        task_keywords = ('task', 'activity', 'item', 'description', 'name', 'requirement', 'topic', 'test', 'action')
+                        task_keywords = ('task', 'activity', 'item', 'description', 'name', 'requirement',
+                                         'topic', 'test', 'action', 'subject', 'title', 'summary', 'what')
                         for c in columns:
-                            if c.get('type') == 'text':
-                                header_lower = (c.get('header', '') or '').lower()
-                                if any(kw in header_lower for kw in task_keywords):
-                                    title_col = c.get('id')
-                                    break
+                            header_lower = (c.get('header', '') or '').lower()
+                            if any(kw in header_lower for kw in task_keywords):
+                                title_col = c.get('id')
+                                break
                         # Fallback: use first text column
                         if not title_col:
                             for c in columns:
                                 if c.get('type') == 'text':
                                     title_col = c.get('id')
                                     break
+                        # Last resort: use first column regardless of type
+                        if not title_col and columns:
+                            title_col = columns[0].get('id')
                         
                         # Find status column - check 'dropdown', 'status', or header containing 'status'
                         status_col = None
@@ -378,8 +389,21 @@ async def get_calendar_events(request: Request):
                         
                         for row in table.get('rows', []):
                             row_data = row.get('data', {})
-                            title = row_data.get(title_col, 'Schedule Item') if title_col else 'Schedule Item'
-                            status = row_data.get(status_col, '') if status_col else ''
+                            title = ''
+                            if title_col:
+                                title = str(row_data.get(title_col, '') or '').strip()
+                            # If title is still empty, try the first non-empty text value in the row
+                            if not title:
+                                for c in columns:
+                                    cid = c.get('id')
+                                    if cid and c.get('type') != 'date':
+                                        val = str(row_data.get(cid, '') or '').strip()
+                                        if val and len(val) > 2:
+                                            title = val
+                                            break
+                            if not title:
+                                title = 'Schedule Item'
+                            status = str(row_data.get(status_col, '') or '').strip() if status_col else ''
                             
                             # Collect all date values from this row
                             # 1. From explicit date-typed columns
@@ -411,17 +435,20 @@ async def get_calendar_events(request: Request):
                                 sched_status_label = status or 'Not Started'
                                 sched_status_category = 'not-started'
                                 if status:
-                                    sl = status.lower()
+                                    sl = status.lower().strip()
                                     if sl in ('complete', 'completed', 'done', 'approved', 'delivered', 'closed'):
                                         sched_status_category = 'completed'
                                         sched_status_label = 'Completed'
-                                    elif sl in ('in progress', 'in-progress', 'active', 'shipped', 'submitted'):
+                                    elif sl in ('in progress', 'in-progress', 'active', 'shipped', 'submitted',
+                                                'ongoing', 'underway', 'started', 'wip'):
                                         sched_status_category = 'in-progress'
                                         sched_status_label = 'In Progress'
-                                    elif sl in ('on hold', 'blocked', 'rejected', 'cancelled'):
+                                    elif sl in ('on hold', 'blocked', 'rejected', 'cancelled', 'canceled'):
                                         sched_status_category = 'overdue'
                                         sched_status_label = status
-                                    elif sl in ('not started', 'pending', 'pending quote', 'scheduled'):
+                                    elif sl in ('not started', 'pending', 'pending quote', 'scheduled',
+                                                'planned', 'upcoming', 'to do', 'todo', 'open', 'new',
+                                                'backlog', 'queued', 'draft'):
                                         sched_status_category = 'not-started'
                                         sched_status_label = status
                                     elif 'awaiting' in sl or 'waiting' in sl:
@@ -429,6 +456,10 @@ async def get_calendar_events(request: Request):
                                         sched_status_label = status
                                     elif 'delayed' in sl or 'overdue' in sl or 'late' in sl:
                                         sched_status_category = 'overdue'
+                                        sched_status_label = status
+                                    else:
+                                        # Unrecognized status — show it as-is with pending styling
+                                        sched_status_category = 'pending'
                                         sched_status_label = status
 
                                 # Source-based color: schedule items are always indigo
