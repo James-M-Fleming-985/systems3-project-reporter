@@ -58,10 +58,12 @@ async def calendar_page(request: Request):
     Shows milestones, schedule actions, and deadlines from ALL programs.
     """
     user = get_user_from_request(request)
+    csrf_token = getattr(request.state, 'csrf_token', '')
     context = {
         "request": request,
         "build_version": get_build_version(),
-        "user": user
+        "user": user,
+        "csrf_token": csrf_token
     }
     response = templates.TemplateResponse("calendar.html", context)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 import yaml
 import os
 import logging
@@ -769,12 +770,14 @@ async def update_task_status(data: TaskStatusUpdate):
             for i, milestone in enumerate(project_data['milestones']):
                 if milestone.get('id') == task_id or milestone.get('name') == task_id:
                     # Update completion
+                    old_status = milestone.get('status', 'NOT_STARTED')
                     project_data['milestones'][i]['completion_percentage'] = 100 if completed else 0
-                    project_data['milestones'][i]['status'] = 'COMPLETED' if completed else 'NOT_STARTED'
                     if completed:
-                        from datetime import datetime
+                        project_data['milestones'][i]['status'] = 'COMPLETED'
                         project_data['milestones'][i]['completion_date'] = datetime.now().strftime('%Y-%m-%d')
                     else:
+                        # When unchecking, preserve IN_PROGRESS if it was in progress, otherwise NOT_STARTED
+                        project_data['milestones'][i]['status'] = 'IN_PROGRESS' if old_status == 'IN_PROGRESS' else 'NOT_STARTED'
                         project_data['milestones'][i]['completion_date'] = None
                     updated = True
                     logger.info(f"Updated task {task_id} completion to {completed}")
