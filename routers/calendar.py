@@ -143,8 +143,11 @@ async def get_calendar_events(request: Request):
                 if outline_level is not None and outline_level != 4:
                     continue
                 
-                # XML parser already filters to true milestones
-                # No additional filtering needed
+                # Only show true milestones (Milestone flag=1 or Duration=0 in MS Project)
+                # Level 4 tasks appear in the "Related Tasks" modal section only
+                is_true_milestone = getattr(milestone, 'is_true_milestone', None)
+                if is_true_milestone is not None and not is_true_milestone:
+                    continue
                 
                 status = getattr(milestone, 'status', 'NOT_STARTED')
                 target_date = getattr(milestone, 'target_date', None)

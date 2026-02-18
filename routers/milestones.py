@@ -689,6 +689,17 @@ async def get_milestone_siblings(code: str, id: str):
         yaml_path = project_dir / "project_status.yaml"
         
         if not yaml_path.exists():
+            # Fallback: search user-scoped directories
+            users_dir = DATA_DIR / "users"
+            if users_dir.exists():
+                for user_dir in users_dir.iterdir():
+                    if user_dir.is_dir():
+                        candidate = user_dir / f"PROJECT-{transformed_code}" / "project_status.yaml"
+                        if candidate.exists():
+                            yaml_path = candidate
+                            break
+        
+        if not yaml_path.exists():
             raise HTTPException(status_code=404, detail=f"Project {code} not found")
         
         # Load project data
@@ -768,6 +779,17 @@ async def update_task_status(data: TaskStatusUpdate):
         transformed_code = project_code.replace('-', '_')
         project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
         yaml_path = project_dir / "project_status.yaml"
+        
+        if not yaml_path.exists():
+            # Fallback: search user-scoped directories
+            users_dir = DATA_DIR / "users"
+            if users_dir.exists():
+                for user_dir in users_dir.iterdir():
+                    if user_dir.is_dir():
+                        candidate = user_dir / f"PROJECT-{transformed_code}" / "project_status.yaml"
+                        if candidate.exists():
+                            yaml_path = candidate
+                            break
         
         if not yaml_path.exists():
             raise HTTPException(status_code=404, detail=f"Project {project_code} not found")
