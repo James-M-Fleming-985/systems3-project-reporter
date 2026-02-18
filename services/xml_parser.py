@@ -351,11 +351,14 @@ class MSProjectXMLParser:
             # CRITICAL FIX: Only add to milestones array if it's a TRUE milestone
             # Do NOT add regular tasks, summaries, or roadmap items
             if not is_milestone:
-                # Skip this task - it's not a milestone
-                name_elem = self._find_element(task, 'Name')
-                task_name = name_elem.text if name_elem is not None else 'Unknown'
-                print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - not a milestone")
-                continue
+                # Skip summaries and shallow levels entirely
+                # But keep Level 4+ non-summary tasks so sibling task lists work
+                if is_summary or outline_level < 4:
+                    name_elem = self._find_element(task, 'Name')
+                    task_name = name_elem.text if name_elem is not None else 'Unknown'
+                    print(f"DEBUG: SKIPPED Level {outline_level} {'summary ' if is_summary else ''}task '{task_name}' - not a milestone")
+                    continue
+                # Fall through: Level 4+ non-summary task — will be saved with is_true_milestone=False
             
             # At this point: confirmed milestone only
             name_elem = self._find_element(task, 'Name')
