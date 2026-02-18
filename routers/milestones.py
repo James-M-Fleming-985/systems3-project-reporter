@@ -59,6 +59,18 @@ async def update_milestone(data: MilestoneUpdate):
         logger.warning(f"YAML exists: {yaml_path.exists()}")
         
         if not yaml_path.exists():
+            # Fallback: search user-scoped directories
+            users_dir = DATA_DIR / "users"
+            if users_dir.exists():
+                for user_dir in users_dir.iterdir():
+                    if user_dir.is_dir():
+                        candidate = user_dir / f"PROJECT-{transformed_code}" / "project_status.yaml"
+                        if candidate.exists():
+                            yaml_path = candidate
+                            logger.warning(f"Found project in user directory: {yaml_path}")
+                            break
+        
+        if not yaml_path.exists():
             # List what directories DO exist to help debug
             existing_dirs = [d.name for d in DATA_DIR.iterdir() if d.is_dir() and d.name.startswith('PROJECT')]
             raise HTTPException(
@@ -205,21 +217,13 @@ async def update_milestone(data: MilestoneUpdate):
             )
         
         # Verify the write by reading back
-        if updated_indices:
-            try:
-                logger.warning("🔍 Verifying saved data...")
-                with open(yaml_path, 'r', encoding='utf-8') as f:
-                    verify_data = yaml.safe_load(f)
-                    for idx in updated_indices[:3]:  # Check first 3
-                        if (verify_data and 'milestones' in verify_data and
-                                idx < len(verify_data['milestones'])):
-                            saved_milestone = verify_data['milestones'][idx]
-                            logger.warning(
-                                f"   Index {idx} verified: "
-                                f"{saved_milestone.get('completion_percentage')}%"
-                            )
-            except Exception as e:
-                logger.warning(f"⚠️ Verification failed (non-fatal): {e}")
+        try:
+            logger.warning("🔍 Verifying saved data...")
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                verify_data = yaml.safe_load(f)
+            logger.warning(f"   Milestone count verified: {len(verify_data.get('milestones', []))}")
+        except Exception as e:
+            logger.warning(f"⚠️ Verification failed (non-fatal): {e}")
         
         logger.info(
             f"Updated milestone '{updated_milestone['name']}' "
