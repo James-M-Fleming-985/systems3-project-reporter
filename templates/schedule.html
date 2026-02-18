@@ -1445,7 +1445,10 @@ async function deleteRow(tableId, rowId) {
         async () => {
             try {
                 const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}/rows/${rowId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: {
+                        'x-csrf-token': document.getElementById('csrfToken')?.value || ''
+                    }
                 });
         
         if (response.ok) {
