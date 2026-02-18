@@ -134,6 +134,11 @@ async def get_calendar_events(request: Request):
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
             for milestone in project.milestones:
+                # Skip items with outline_level <= 2 (project-level summaries)
+                outline_level = getattr(milestone, 'outline_level', None)
+                if outline_level is not None and outline_level <= 2:
+                    continue
+                
                 # XML parser already filters to true milestones
                 # No additional filtering needed
                 
@@ -186,7 +191,20 @@ async def get_calendar_events(request: Request):
                     'completionPct': getattr(milestone, 'completion_percentage', 0),
                     'notes': getattr(milestone, 'notes', '') or '',
                     'parentProject': getattr(milestone, 'parent_project', '') or '',
-                    'resources': getattr(milestone, 'resources', '') or ''
+                    'resources': getattr(milestone, 'resources', '') or '',
+                    'milestone': {
+                        'id': getattr(milestone, 'id', '') or milestone.name[:30],
+                        'name': milestone.name,
+                        'status': status,
+                        'target_date': target_date,
+                        'start_date': start_date,
+                        'completion_date': completion_date,
+                        'completion_percentage': getattr(milestone, 'completion_percentage', 0),
+                        'resources': getattr(milestone, 'resources', '') or '',
+                        'parent_project': getattr(milestone, 'parent_project', '') or '',
+                        'outline_level': getattr(milestone, 'outline_level', None),
+                        'parent_levels': getattr(milestone, 'parent_levels', None),
+                    }
                 }
                 
                 # Determine which date markers to show

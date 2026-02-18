@@ -191,14 +191,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             content_type = request.headers.get("content-type", "")
             
             # For bodiless requests (e.g., DELETE/PUT without content-type),
-            # don't try to read form data - just reject if no header token
+            # don't try to read form data - validate header token only.
+            # If the x-csrf-token header was sent (even if empty), let it fall
+            # through to normal validation below which gives a clearer error message.
             if not content_type:
-                logger.warning(f"Request without CSRF header or content-type at {path}")
-                from fastapi.responses import JSONResponse
-                return JSONResponse(
-                    status_code=403,
-                    content={"detail": "CSRF token required in header for requests without body"}
-                )
+                if "x-csrf-token" not in request.headers:
+                    logger.warning(f"Bodiless request without x-csrf-token header at {path}")
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "CSRF token required in header for requests without body"}
+                    )
+                # Header was present but empty — fall through to validation below
+                # which will return "CSRF validation failed"
+                pass
             
             if "multipart/form-data" in content_type:
                 # File uploads on /upload/ routes are exempt from CSRF
