@@ -737,23 +737,41 @@ async def get_milestone_siblings(code: str, id: str):
                 'count': 0
             })
         
-        # Find all Level 4 siblings under same Level 3 parent
+        # Find all Level 4 siblings under same Level 3 parent (excluding the queried item itself)
         siblings = []
+        target_id = target_milestone.get('id', id)
+        target_name = target_milestone.get('name', '')
+
         for m in milestones:
             m_parent_levels = m.get('parent_levels', {})
             m_level_3_parent = m_parent_levels.get('3') or m_parent_levels.get(3)
             m_outline_level = m.get('outline_level', 0)
-            
-            # Include if: Level 4 AND same Level 3 parent
-            if m_outline_level == 4 and m_level_3_parent == level_3_parent:
-                siblings.append({
-                    'id': m.get('id', m.get('name', 'Unknown')),
-                    'name': m.get('name', 'Unknown'),
-                    'status': m.get('status', 'NOT_STARTED'),
-                    'completion_percentage': m.get('completion_percentage', 0),
-                    'target_date': m.get('target_date', ''),
-                    'is_milestone': m.get('milestone') == 1 or m.get('duration') == 0
-                })
+
+            # Must be Level 4 AND share the same Level 3 parent
+            if m_outline_level != 4 or m_level_3_parent != level_3_parent:
+                continue
+
+            # Exclude the item being viewed (the milestone itself)
+            m_id = m.get('id', m.get('name', ''))
+            if m_id == target_id or m_id == id or m.get('name', '') == target_name:
+                continue
+
+            # is_milestone: prefer is_true_milestone field (set by XML parser);
+            # fall back to milestone==1 or duration==0 for older data
+            itm = m.get('is_true_milestone')
+            if itm is not None:
+                is_ms = bool(itm)
+            else:
+                is_ms = m.get('milestone') == 1 or m.get('duration') == 0
+
+            siblings.append({
+                'id': m_id,
+                'name': m.get('name', 'Unknown'),
+                'status': m.get('status', 'NOT_STARTED'),
+                'completion_percentage': m.get('completion_percentage', 0),
+                'target_date': m.get('target_date', ''),
+                'is_milestone': is_ms
+            })
         
         return JSONResponse(content={
             'siblings': siblings,
