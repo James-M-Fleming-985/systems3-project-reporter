@@ -975,7 +975,7 @@ async function markScheduleDone() {
 
     try {
         const resp = await fetch(
-            `/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
             { method: 'PATCH', headers: { 'x-csrf-token': document.getElementById('csrfToken')?.value || '' } }
         );
         if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
@@ -984,7 +984,7 @@ async function markScheduleDone() {
 
         // Remove from the in-memory event list and re-render
         allEvents = allEvents.filter(e => e.id !== eventId);
-        applyFilters();
+        refreshCalendar();
         closeEventModal();
         showToast('✓ Schedule item marked complete', 'success');
     } catch (err) {
@@ -1011,7 +1011,7 @@ function acknowledgeCalendarEvent() {
 
     // Remove from in-memory list and re-render
     allEvents = allEvents.filter(e => e.id !== eventId);
-    applyFilters();
+    refreshCalendar();
     closeEventModal();
     showToast('Acknowledged — removed from calendar', 'success');
 }
