@@ -648,8 +648,8 @@ async def import_schedule_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error importing file: {e}")
-        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+        logger.error(f"Error importing file: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Import failed due to a server error. Please try again or contact support.")
 
 
 @router.post("/api/schedule/{project_name}/tables/copy")

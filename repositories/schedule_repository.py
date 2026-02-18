@@ -205,6 +205,11 @@ class ScheduleRepository:
             'rows': []
         }
         
+        # Ensure every column has an id
+        for col in new_table['columns']:
+            if 'id' not in col:
+                col['id'] = str(uuid.uuid4())[:8]
+        
         data['tables'].append(new_table)
         self.save_schedules(project_name, data)
         
