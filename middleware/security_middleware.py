@@ -190,11 +190,22 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if not csrf_token:
             content_type = request.headers.get("content-type", "")
             
+            # For bodiless requests (e.g., DELETE/PUT without content-type),
+            # don't try to read form data - just reject if no header token
+            if not content_type:
+                logger.warning(f"Request without CSRF header or content-type at {path}")
+                from fastapi.responses import JSONResponse
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "CSRF token required in header for requests without body"}
+                )
+            
             if "multipart/form-data" in content_type:
                 # File uploads on /upload/ routes are exempt from CSRF
                 # as they use auth middleware for protection
-                # Schedule import endpoint: /api/schedule/{project_name}/import
-                if path.startswith("/upload/") or (path.startswith("/api/schedule/") and path.endswith("/import")):
+                # Schedule import endpoint: matches any path containing /api/schedule/ and ending with /import
+                # e.g., /dashboard/api/schedule/{project_name}/import (schedule router is mounted at /dashboard)
+                if path.startswith("/upload/") or ("/api/schedule/" in path and path.endswith("/import")):
                     # Let auth middleware handle authentication
                     return await call_next(request)
                 
