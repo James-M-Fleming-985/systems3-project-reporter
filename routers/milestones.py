@@ -741,7 +741,7 @@ async def get_milestone_siblings(code: str, id: str):
         # OR children (their L4/higher parent == target milestone name).
         # This covers both data shapes from different XML imports.
         siblings = []
-        target_id = target_milestone.get('id', id)
+        target_id = target_milestone.get('id') or None  # treat null/empty as None
         target_name = target_milestone.get('name', '')
         target_level = target_milestone.get('outline_level')  # May be None for legacy data
 
@@ -770,8 +770,11 @@ async def get_milestone_siblings(code: str, id: str):
                     continue
 
             # Exclude the item being viewed (the milestone itself)
-            m_id = m.get('id', m.get('name', ''))
-            if m_id == target_id or m_id == id or m.get('name', '') == target_name:
+            m_id = m.get('id') or None  # treat null/empty as None
+            m_name = m.get('name', '')
+            if m_name == target_name:
+                continue
+            if target_id and m_id and m_id == target_id:
                 continue
 
             # is_milestone: prefer is_true_milestone field (set by XML parser);
@@ -783,8 +786,8 @@ async def get_milestone_siblings(code: str, id: str):
                 is_ms = m.get('milestone') == 1 or m.get('duration') == 0
 
             siblings.append({
-                'id': m_id,
-                'name': m.get('name', 'Unknown'),
+                'id': m_id or m_name,
+                'name': m_name,
                 'status': m.get('status', 'NOT_STARTED'),
                 'completion_percentage': m.get('completion_percentage', 0),
                 'target_date': m.get('target_date', ''),
