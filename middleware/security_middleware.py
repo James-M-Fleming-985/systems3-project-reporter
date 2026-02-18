@@ -193,7 +193,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             if "multipart/form-data" in content_type:
                 # File uploads on /upload/ routes are exempt from CSRF
                 # as they use auth middleware for protection
-                if path.startswith("/upload/"):
+                if path.startswith("/upload/") or ("/api/schedule/" in path and "/import" in path):
                     # Let auth middleware handle authentication
                     return await call_next(request)
                 

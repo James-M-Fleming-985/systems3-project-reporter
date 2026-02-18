@@ -346,7 +346,7 @@ class MSProjectXMLParser:
                     work_elem.text == '0'
                 )
             
-            is_milestone = has_milestone_flag or has_zero_duration or has_zero_work
+            is_milestone = has_milestone_flag or has_zero_duration
             
             # CRITICAL FIX: Only add to milestones array if it's a TRUE milestone
             # Do NOT add regular tasks, summaries, or roadmap items
