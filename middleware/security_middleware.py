@@ -191,10 +191,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             content_type = request.headers.get("content-type", "")
             
             if "multipart/form-data" in content_type:
-                # File uploads should pass through if they have valid auth
-                # Check if this is an authenticated upload route
+                # File uploads on /upload/ routes are exempt from CSRF
+                # as they use auth middleware for protection
                 if path.startswith("/upload/"):
-                    # Let auth middleware handle it, don't block on CSRF
+                    # Let auth middleware handle authentication
                     return await call_next(request)
                 
                 logger.warning(f"File upload without CSRF header at {path}")
@@ -210,8 +210,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 csrf_token = form.get("csrf_token", "")
             except Exception as e:
                 logger.debug(f"Could not read form: {e}")
-                return await call_next(request)
+                # If we can't read the form and there's no CSRF token, fail closed
+                from fastapi.responses import JSONResponse
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "CSRF token required"}
+                )
         
+        # Validate CSRF token if provided
         if csrf_token and not validate_csrf_token(csrf_token, session_id):
             logger.warning(f"CSRF validation failed for {method} {path}")
             from fastapi.responses import JSONResponse

@@ -439,7 +439,6 @@ def parse_excel_file(file_content: bytes) -> tuple:
         
         logger.info(f"Parsed Excel: {len(headers)} columns, {len(data_rows)} rows")
         return headers, data_rows
-        
     except ImportError:
         raise HTTPException(status_code=500, detail="openpyxl not installed - cannot parse Excel files")
     except Exception as e:

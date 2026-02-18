@@ -784,9 +784,12 @@ async def update_task_status(data: TaskStatusUpdate):
                         project_data['milestones'][i]['completion_percentage'] = 100
                         project_data['milestones'][i]['completion_date'] = datetime.now().strftime('%Y-%m-%d')
                     elif new_status == 'IN_PROGRESS':
-                        # Keep existing percentage or set to 50
-                        if milestone.get('completion_percentage', 0) == 0:
+                        # Keep existing percentage if it's already set and non-zero
+                        current_pct = milestone.get('completion_percentage', 0)
+                        if current_pct == 0 or current_pct == 100:
+                            # Only set to 50 if task was at 0 or 100
                             project_data['milestones'][i]['completion_percentage'] = 50
+                        # Otherwise preserve existing percentage
                         project_data['milestones'][i]['completion_date'] = None
                     updated = True
                     logger.info(f"Updated task {task_id} status to {new_status}")
