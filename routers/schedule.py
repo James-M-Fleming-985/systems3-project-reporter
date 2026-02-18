@@ -408,31 +408,38 @@ def parse_excel_file(file_content: bytes) -> tuple:
         # First row is headers - safely convert to strings
         headers = []
         for i, h in enumerate(rows[0]):
-            if h is None or str(h).strip() == '':
+            if h is None or (isinstance(h, str) and h.strip() == ''):
                 headers.append(f"Column {i+1}")
             else:
                 try:
-                    headers.append(str(h).strip())
-                except Exception:
+                    # Convert any type to string safely
+                    header_str = str(h).strip()
+                    # Python keywords are valid column names
+                    headers.append(header_str if header_str else f"Column {i+1}")
+                except Exception as e:
+                    logger.warning(f"Error converting header at column {i}: {e}")
                     headers.append(f"Column {i+1}")
         
         # Data rows - safely convert each cell to string
         data_rows = []
-        for row in rows[1:]:
+        for row_idx, row in enumerate(rows[1:], start=2):
             row_data = []
-            for cell in row:
+            for col_idx, cell in enumerate(row):
                 try:
                     if cell is None:
                         row_data.append("")
                     else:
-                        # Handle different cell types safely
-                        row_data.append(str(cell).strip())
+                        # Handle all cell types (str, int, float, datetime, bool, etc.)
+                        cell_str = str(cell).strip()
+                        row_data.append(cell_str)
                 except Exception as e:
-                    logger.warning(f"Error converting cell value: {e}")
+                    logger.warning(f"Error converting cell at row {row_idx}, col {col_idx}: {e}")
                     row_data.append("")
             data_rows.append(row_data)
         
+        logger.info(f"Parsed Excel: {len(headers)} columns, {len(data_rows)} rows")
         return headers, data_rows
+        
     except ImportError:
         raise HTTPException(status_code=500, detail="openpyxl not installed - cannot parse Excel files")
     except Exception as e:
