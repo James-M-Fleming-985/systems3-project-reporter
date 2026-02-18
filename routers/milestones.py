@@ -89,10 +89,9 @@ async def update_milestone(data: MilestoneUpdate):
                     f"status={m.get('status')}, date={m.get('target_date')}"
                 )
         
-        # Find and update the milestone (UPDATE ALL DUPLICATES)
+        # Find and update the milestone (UPDATE FIRST MATCH ONLY)
         updated = False
         match_type = None
-        updated_indices = []  # Track ALL updated milestones
         if 'milestones' in project_data:
             incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
@@ -133,7 +132,6 @@ async def update_milestone(data: MilestoneUpdate):
                     match_type = 'date_parent'
                 
                 if updated:
-                    updated_indices.append(i)  # Track this update
                     # Update milestone - always save incoming name (user edits)
                     new_completion = updated_milestone.get(
                         'completion_percentage', 0
@@ -150,7 +148,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'parent_project': milestone.get('parent_project'),
                         'project': milestone.get('project')
                     }
-                    logger.warning(f"✅ Saved milestone at index {i}")
+                    logger.warning(f"✅ Updated milestone at index {i}")
                     logger.warning(f"   ID: {milestone.get('id')}")
                     logger.warning(
                         f"   Name: '{project_data['milestones'][i]['name']}'"
@@ -160,10 +158,9 @@ async def update_milestone(data: MilestoneUpdate):
                     )
                     logger.warning(f"   Status: {updated_milestone['status']}")
                     logger.warning(f"   Match type: {match_type}")
-                    # Don't break - continue to update ALL duplicates
-                    updated = False  # Reset to continue searching
+                    break  # ✅ STOP after first match - don't update duplicates
         
-        if not updated_indices:
+        if not updated:
             # Search for similar names to help debug
             milestone_count = len(project_data.get('milestones', []))
             logger.warning(
@@ -184,10 +181,7 @@ async def update_milestone(data: MilestoneUpdate):
                 )
             )
         
-        logger.warning(
-            f"📝 Updated {len(updated_indices)} milestone(s) at "
-            f"indices: {updated_indices}"
-        )
+        logger.warning(f"📝 Updated 1 milestone successfully")
         
         # Save updated project data
         logger.warning("💾 Writing updated data to YAML file...")
