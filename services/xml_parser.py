@@ -478,6 +478,9 @@ class MSProjectXMLParser:
             milestone_data['outline_level'] = outline_level
             milestone_data['parent_levels'] = parent_levels
             
+            # Set is_true_milestone flag: True only for Milestone=1 or Duration=0
+            milestone_data['is_true_milestone'] = is_milestone
+            
             # Resources - check resource_map first, then fallback to XML field
             if uid_str and uid_str in resource_map:
                 milestone_data['resources'] = resource_map[uid_str]

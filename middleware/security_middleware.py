@@ -184,34 +184,35 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # For form submissions, validate CSRF token
-        # IMPORTANT: Check header FIRST to avoid consuming request body for file uploads
+        # Check header FIRST before reading form body
         csrf_token = request.headers.get("x-csrf-token", "")
         
-        # If no header, try reading from form body (for traditional form submissions)
         if not csrf_token:
+            # Check if this is a file upload - they should use header only
+            content_type = request.headers.get("content-type", "")
+            
+            if "multipart/form-data" in content_type:
+                # File uploads must use header token
+                logger.warning(f"File upload without CSRF header at {path}")
+                from fastapi.responses import JSONResponse
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "CSRF token required in header for file uploads"}
+                )
+            
+            # For non-file uploads, try reading from form
             try:
                 form = await request.form()
                 csrf_token = form.get("csrf_token", "")
             except Exception as e:
-                # If we can't read the form body, this is likely a configuration error
-                # or the body was consumed elsewhere. For security, reject the request.
-                logger.warning(f"CSRF validation failed for {method} {path}: cannot read form body ({e})")
+                logger.debug(f"Could not read form: {e}")
                 from fastapi.responses import JSONResponse
                 return JSONResponse(
                     status_code=403,
                     content={"detail": "CSRF token validation error"}
                 )
         
-        # Validate the token
-        if not csrf_token:
-            logger.warning(f"CSRF token missing for {method} {path}")
-            from fastapi.responses import JSONResponse
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "CSRF token missing"}
-            )
-        
-        if not validate_csrf_token(csrf_token, session_id):
+        if not csrf_token or not validate_csrf_token(csrf_token, session_id):
             logger.warning(f"CSRF validation failed for {method} {path}")
             from fastapi.responses import JSONResponse
             return JSONResponse(

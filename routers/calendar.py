@@ -132,6 +132,11 @@ async def get_calendar_events(request: Request):
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
             for milestone in project.milestones:
+                # Skip tasks that are not true milestones (only show Milestone=1 or Duration=0)
+                is_true_milestone = getattr(milestone, 'is_true_milestone', True)  # Default to True for backwards compat
+                if not is_true_milestone:
+                    continue
+                
                 status = getattr(milestone, 'status', 'NOT_STARTED')
                 target_date = getattr(milestone, 'target_date', None)
                 start_date = getattr(milestone, 'start_date', None)
