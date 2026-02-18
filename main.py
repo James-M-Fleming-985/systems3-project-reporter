@@ -158,6 +158,18 @@ async def startup_event():
         init_data_from_xml()
     except Exception as e:
         logger.warning(f"Data initialization warning: {e}")
+
+    # Backfill is_true_milestone for any YAML data imported before the flag existed.
+    # Safe to run on every startup — skips entries already flagged.
+    try:
+        from services.migration import backfill_is_true_milestone
+        migration_summary = backfill_is_true_milestone()
+        if migration_summary:
+            logger.info(f"Milestone flag migration complete: {migration_summary}")
+        else:
+            logger.info("Milestone flag migration: nothing to backfill.")
+    except Exception as e:
+        logger.warning(f"Milestone flag migration warning (non-fatal): {e}")
     
     try:
         project_repo = ProjectRepository(data_dir=DATA_DIR)

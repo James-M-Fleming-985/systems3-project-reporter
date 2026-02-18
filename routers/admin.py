@@ -406,6 +406,28 @@ async def cleanup_duplicate_milestones():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/admin/backfill-milestone-flags")
+async def backfill_milestone_flags():
+    """
+    Re-parse each project's most-recent uploaded XML and write
+    is_true_milestone=True/False back into the YAML for any entry
+    that still has is_true_milestone=None (old import).
+
+    Safe to run multiple times — already-flagged entries are not changed.
+    """
+    try:
+        from services.migration import backfill_is_true_milestone
+        summary = backfill_is_true_milestone()
+        return JSONResponse({
+            'success': True,
+            'message': 'Milestone flag backfill complete',
+            'summary': summary
+        })
+    except Exception as e:
+        logger.error(f"Backfill error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/admin/rename-project/{project_code}")
 async def rename_project(project_code: str, new_name: str):
     """
