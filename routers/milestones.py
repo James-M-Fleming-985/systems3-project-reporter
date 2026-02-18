@@ -844,14 +844,67 @@ async def update_task_status(data: TaskStatusUpdate):
         
         if not updated:
             raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-        
+
+        # ── Check if all sibling tasks are now complete → auto-complete the milestone ──
+        all_tasks_complete = False
+        milestone_name = ''
+        milestone_id = ''
+
+        if new_status == 'COMPLETED' and 'milestones' in project_data:
+            # Find the updated task's Level 3 parent
+            updated_task = next(
+                (m for m in project_data['milestones']
+                 if m.get('id') == task_id or m.get('name') == task_id),
+                None
+            )
+            if updated_task:
+                pl = updated_task.get('parent_levels', {})
+                l3 = pl.get('3') or pl.get(3)
+                if l3:
+                    # All non-milestone Level 4 items under this Level 3 parent
+                    sibling_tasks = [
+                        m for m in project_data['milestones']
+                        if m.get('outline_level') == 4
+                        and (m.get('parent_levels', {}).get('3') or m.get('parent_levels', {}).get(3)) == l3
+                        and m.get('is_true_milestone') is not True
+                    ]
+                    if sibling_tasks and all(
+                        m.get('status') == 'COMPLETED'
+                        for m in sibling_tasks
+                    ):
+                        all_tasks_complete = True
+                        # Find and complete the Level 4 milestone under this parent
+                        for j, m in enumerate(project_data['milestones']):
+                            m_pl = m.get('parent_levels', {})
+                            m_l3 = m_pl.get('3') or m_pl.get(3)
+                            if (
+                                m.get('outline_level') == 4
+                                and m_l3 == l3
+                                and m.get('is_true_milestone') is True
+                            ):
+                                project_data['milestones'][j]['status'] = 'COMPLETED'
+                                project_data['milestones'][j]['completion_percentage'] = 100
+                                project_data['milestones'][j]['completion_date'] = (
+                                    datetime.now().strftime('%Y-%m-%d')
+                                )
+                                milestone_name = m.get('name', '')
+                                milestone_id = m.get('id', m.get('name', ''))
+                                logger.info(
+                                    f"Auto-completed milestone '{milestone_name}' — "
+                                    f"all sibling tasks under '{l3}' are done."
+                                )
+                                break
+
         # Save updated project data
         with open(yaml_path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
-        
+
         return JSONResponse({
             'success': True,
-            'message': 'Task status updated successfully'
+            'message': 'Task status updated successfully',
+            'all_tasks_complete': all_tasks_complete,
+            'milestone_name': milestone_name,
+            'milestone_id': milestone_id,
         })
         
     except HTTPException:

@@ -347,17 +347,12 @@
         </div>
         
         <!-- Modal Footer -->
-        <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
+        <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center flex-wrap gap-2">
             <div id="eventActions" class="flex gap-2">
-                <!-- Edit button (for milestones only) -->
-                <button id="editEventBtn" onclick="editEventFromCalendar()" class="hidden px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-                    ✏️ Edit Milestone
-                </button>
-                
-                <!-- Delete button (for milestones only) -->
-                <button id="deleteEventBtn" onclick="deleteEventFromCalendar()" class="hidden px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
-                    🗑️ Delete
-                </button>
+                <!-- Milestones-tab link (replaces clunky inline edit modal) -->
+                <a id="editEventBtn" href="#" class="hidden px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm font-medium">
+                    📋 Open in Milestones Tab
+                </a>
             </div>
             
             <div class="flex items-center gap-2">
@@ -374,36 +369,6 @@
 
 <!-- Toast container -->
 <div id="toastContainer"></div>
-
-<!-- Inline Milestone Edit Modal -->
-<div id="milestoneEditModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4">
-        <div class="px-6 py-4 bg-blue-600 rounded-t-xl flex justify-between items-center">
-            <h3 class="text-white font-bold text-lg">✏️ Edit Milestone Status</h3>
-            <button onclick="closeEditModal()" class="text-white/80 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="px-6 py-5 space-y-4">
-            <div>
-                <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Milestone</p>
-                <p class="text-sm font-medium text-gray-800" id="editMilestoneName"></p>
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 uppercase font-semibold block mb-2">New Status</label>
-                <select id="editMilestoneStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="NOT_STARTED">Not Started</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                </select>
-            </div>
-        </div>
-        <div class="px-6 py-3 bg-gray-50 border-t rounded-b-xl flex justify-end gap-2">
-            <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">Cancel</button>
-            <button id="editModalSaveBtn" onclick="saveEditedMilestone()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">Save Changes</button>
-        </div>
-    </div>
-</div>
 
 {% endblock %}
 
@@ -635,14 +600,12 @@ function showEventModal(event) {
     
     // Show/hide action buttons based on event type
     const editBtn = document.getElementById('editEventBtn');
-    const deleteBtn = document.getElementById('deleteEventBtn');
-    
-    if (ep.type === 'milestone' && ep.milestone) {
+    if (ep.type === 'milestone' && ep.milestone && ep.programCode) {
+        const milestoneTabUrl = `/dashboard/milestones?project=${encodeURIComponent(ep.programCode)}`;
+        editBtn.href = milestoneTabUrl;
         editBtn.classList.remove('hidden');
-        deleteBtn.classList.remove('hidden');
     } else {
         editBtn.classList.add('hidden');
-        deleteBtn.classList.add('hidden');
     }
     
     // --- Build navigation URL based on event type ---
@@ -912,16 +875,16 @@ async function updateTaskStatus(checkbox) {
             }
         }
 
-        showToast(shouldComplete ? 'Task marked complete ✓' : 'Task reopened', 'success');
-
-        // Refresh calendar events so the gantt bar / calendar reflect the change
-        if (calendarInstance) {
-            calendarInstance.refetchEvents();
+        if (result.all_tasks_complete && result.milestone_name) {
+            // All sibling tasks done — milestone auto-completed
+            showMilestoneAchieved(result.milestone_name);
+        } else {
+            showToast(shouldComplete ? 'Task marked complete ✓' : 'Task reopened', 'success');
+            if (calendarInstance) calendarInstance.refetchEvents();
         }
 
     } catch (error) {
         console.error('Error updating task status:', error);
-        // Revert checkbox state
         checkbox.checked = !shouldComplete;
         if (row) row.style.opacity = '1';
         showToast('Could not update task — please try again', 'error');
@@ -930,73 +893,38 @@ async function updateTaskStatus(checkbox) {
     }
 }
 
+function showMilestoneAchieved(milestoneName) {
+    // Replace the modal body content with a celebration banner
+    const body = document.getElementById('eventModalBody');
+    if (body) {
+        body.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-8 gap-4 text-center">
+                <div style="font-size:3rem;line-height:1">🎉</div>
+                <h3 class="text-xl font-bold text-green-700">Milestone Achieved!</h3>
+                <p class="text-gray-600 text-sm max-w-xs">
+                    <span class="font-semibold text-gray-800">${milestoneName}</span>
+                    has been marked complete — all tasks done.
+                </p>
+                <div class="w-full bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700 font-medium">
+                    ✓ Removing from calendar…
+                </div>
+            </div>`;
+    }
+    // After a short celebration, close and refresh
+    setTimeout(() => {
+        closeEventModal();
+        if (calendarInstance) calendarInstance.refetchEvents();
+        showToast(`🎉 "${milestoneName}" complete!`, 'success', 5000);
+    }, 2800);
+}
+
 function closeEventModal() {
     document.getElementById('eventModal').classList.add('hidden');
     currentEventData = null;
 }
 
 function editEventFromCalendar() {
-    if (!currentEventData || !currentEventData.milestone) {
-        showToast('Only milestone events can be edited from the calendar', 'info');
-        return;
-    }
-    
-    const milestone = currentEventData.milestone;
-    
-    // Show inline edit modal instead of browser prompt
-    const editModal = document.getElementById('milestoneEditModal');
-    const nameEl = document.getElementById('editMilestoneName');
-    const statusSelect = document.getElementById('editMilestoneStatus');
-    
-    nameEl.textContent = milestone.name;
-    statusSelect.value = milestone.status || 'NOT_STARTED';
-    editModal.classList.remove('hidden');
-}
-
-function closeEditModal() {
-    document.getElementById('milestoneEditModal').classList.add('hidden');
-}
-
-async function saveEditedMilestone() {
-    const milestone = currentEventData.milestone;
-    const statusSelect = document.getElementById('editMilestoneStatus');
-    const upperStatus = statusSelect.value;
-    const csrfToken = document.getElementById('csrfToken')?.value || '';
-    
-    const saveBtn = document.getElementById('editModalSaveBtn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-    
-    try {
-        const response = await fetch('/milestones/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-csrf-token': csrfToken
-            },
-            body: JSON.stringify({
-                project_code: currentEventData.projectCode,
-                milestone: { ...milestone, status: upperStatus }
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            closeEditModal();
-            closeEventModal();
-            showToast('Milestone updated successfully ✓', 'success');
-            if (calendarInstance) calendarInstance.refetchEvents();
-        } else {
-            showToast('Could not save: ' + (data.detail || 'Unknown error'), 'error');
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Changes';
-        }
-    } catch (error) {
-        showToast('Error saving milestone: ' + error.message, 'error');
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Changes';
-    }
+    // No-op — handled by the 'Open in Milestones Tab' link in the modal footer.
 }
 
 async function deleteEventFromCalendar() {
@@ -1004,15 +932,10 @@ async function deleteEventFromCalendar() {
         showToast('Only milestone events can be deleted from the calendar', 'info');
         return;
     }
-    
     const milestone = currentEventData.milestone;
-    
-    // Show in-app confirm panel (no browser confirm())
     const confirmed = await showConfirm(`Delete "${milestone.name}"? This cannot be undone.`);
     if (!confirmed) return;
-    
     showToast('Delete coming soon — use the Milestones tab for now', 'info');
-    // TODO: Implement milestone deletion endpoint
 }
 
 function formatDate(dateStr) {
