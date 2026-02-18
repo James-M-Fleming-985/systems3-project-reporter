@@ -679,7 +679,7 @@ function showEventModal(event) {
             </div>
             <div class="info-item" style="grid-column: 1 / -1">
                 <span class="info-label">Description</span>
-                <span class="info-value">${ep.description || event.title}</span>
+                <span class="info-value">${(ep.description && ep.description.trim()) || event.title || 'N/A'}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Due Date</span>
