@@ -794,7 +794,31 @@ async def get_milestone_siblings(code: str, id: str):
         return JSONResponse(content={
             'siblings': siblings,
             'parent': level_3_parent,
-            'count': len(siblings)
+            'count': len(siblings),
+            '_debug': {
+                'total_milestones': len(milestones),
+                'target_level': target_level,
+                'target_id': target_id,
+                'target_name': target_name,
+                'all_l3_parents': list({
+                    (m.get('parent_levels') or {}).get('3') or (m.get('parent_levels') or {}).get(3)
+                    for m in milestones
+                    if isinstance(m.get('parent_levels'), dict)
+                }),
+                'sample_entries_near_target': [
+                    {
+                        'name': m.get('name'),
+                        'outline_level': m.get('outline_level'),
+                        'is_true_milestone': m.get('is_true_milestone'),
+                        'parent_levels': m.get('parent_levels'),
+                    }
+                    for m in milestones
+                    if isinstance(m.get('parent_levels'), dict) and (
+                        (m.get('parent_levels') or {}).get('3') == level_3_parent or
+                        (m.get('parent_levels') or {}).get(3) == level_3_parent
+                    )
+                ]
+            }
         })
         
     except HTTPException:
