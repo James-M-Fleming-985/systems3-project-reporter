@@ -785,7 +785,7 @@ async function updateTaskStatus(checkbox) {
         
         const result = await response.json();
         if (!result.success) {
-            throw new Error(result.message || 'Update failed');
+            throw new Error(result.message || 'Failed to update task status');
         }
         
         // Update checkbox label color

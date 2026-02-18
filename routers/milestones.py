@@ -789,7 +789,7 @@ async def update_task_status(data: TaskStatusUpdate):
                     elif new_status == 'IN_PROGRESS':
                         # Keep existing percentage if it's already set and non-zero
                         current_pct = milestone.get('completion_percentage')
-                        if current_pct is None or current_pct == 0 or current_pct == 100:
+                        if current_pct is None or current_pct in (0, 100):
                             # Set to default when moving from NOT_STARTED or COMPLETED
                             project_data['milestones'][i]['completion_percentage'] = DEFAULT_IN_PROGRESS_PERCENTAGE
                         # Otherwise preserve existing percentage
