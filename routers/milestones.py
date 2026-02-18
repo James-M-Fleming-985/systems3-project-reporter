@@ -19,6 +19,9 @@ router = APIRouter(tags=["milestones"])
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 
+# Default completion percentage when moving a task from NOT_STARTED or COMPLETED to IN_PROGRESS
+DEFAULT_IN_PROGRESS_PERCENTAGE = 50
+
 
 class MilestoneUpdate(BaseModel):
     project_code: str
@@ -787,8 +790,8 @@ async def update_task_status(data: TaskStatusUpdate):
                         # Keep existing percentage if it's already set and non-zero
                         current_pct = milestone.get('completion_percentage', 0)
                         if current_pct == 0 or current_pct == 100:
-                            # Only set to 50 if task was at 0 or 100
-                            project_data['milestones'][i]['completion_percentage'] = 50
+                            # Set to default when moving from NOT_STARTED or COMPLETED
+                            project_data['milestones'][i]['completion_percentage'] = DEFAULT_IN_PROGRESS_PERCENTAGE
                         # Otherwise preserve existing percentage
                         project_data['milestones'][i]['completion_date'] = None
                     updated = True

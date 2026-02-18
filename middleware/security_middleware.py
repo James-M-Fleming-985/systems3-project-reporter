@@ -217,8 +217,8 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                     content={"detail": "CSRF token required"}
                 )
         
-        # Validate CSRF token if provided
-        if csrf_token and not validate_csrf_token(csrf_token, session_id):
+        # Validate CSRF token - must be present and valid
+        if not csrf_token or not validate_csrf_token(csrf_token, session_id):
             logger.warning(f"CSRF validation failed for {method} {path}")
             from fastapi.responses import JSONResponse
             return JSONResponse(
