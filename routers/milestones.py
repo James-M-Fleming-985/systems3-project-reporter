@@ -662,3 +662,138 @@ color: #666; }}</style>
 </html>'''
     
     return HTMLResponse(content=html, status_code=200)
+
+
+class TaskStatusUpdate(BaseModel):
+    project_code: str
+    task_id: str
+    completed: bool
+
+
+@router.get("/api/milestones/{code}/siblings/{id}")
+async def get_milestone_siblings(code: str, id: str):
+    """
+    Get sibling milestones (milestones at the same hierarchical level with same parent).
+    Returns other milestones from the same project that share the same parent_project.
+    """
+    try:
+        from repositories.project_repository import ProjectRepository
+        
+        # Find the project
+        transformed_code = code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+        
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project {code} not found")
+        
+        # Load project data
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f)
+        
+        milestones = project_data.get('milestones', [])
+        
+        # Find the target milestone
+        target_milestone = None
+        for m in milestones:
+            if m.get('id') == id or m.get('name') == id:
+                target_milestone = m
+                break
+        
+        if not target_milestone:
+            return JSONResponse(content={
+                'siblings': [],
+                'message': 'Milestone not found'
+            })
+        
+        # Get siblings - milestones with same parent_project and similar outline_level
+        target_parent = target_milestone.get('parent_project', '')
+        target_level = target_milestone.get('outline_level', 0)
+        
+        siblings = []
+        for m in milestones:
+            # Skip the target milestone itself
+            if m.get('id') == target_milestone.get('id') and m.get('name') == target_milestone.get('name'):
+                continue
+            
+            # Include if same parent
+            if m.get('parent_project') == target_parent:
+                siblings.append({
+                    'id': m.get('id', m.get('name', 'Unknown')),
+                    'name': m.get('name', 'Unknown'),
+                    'target_date': m.get('target_date', ''),
+                    'status': m.get('status', 'NOT_STARTED'),
+                    'completion_percentage': m.get('completion_percentage', 0),
+                    'outline_level': m.get('outline_level', 0)
+                })
+        
+        return JSONResponse(content={
+            'siblings': siblings,
+            'parent': target_parent,
+            'count': len(siblings)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting siblings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/milestones/update-task-status")
+async def update_task_status(data: TaskStatusUpdate):
+    """
+    Update the completion status of a task/milestone.
+    Sets completion_percentage to 100 if completed=True, 0 if completed=False.
+    """
+    try:
+        project_code = data.project_code
+        task_id = data.task_id
+        completed = data.completed
+        
+        # Find the project directory
+        transformed_code = project_code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+        
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project {project_code} not found")
+        
+        # Load existing project data
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f)
+        
+        # Find and update the task
+        updated = False
+        if 'milestones' in project_data:
+            for i, milestone in enumerate(project_data['milestones']):
+                if milestone.get('id') == task_id or milestone.get('name') == task_id:
+                    # Update completion
+                    project_data['milestones'][i]['completion_percentage'] = 100 if completed else 0
+                    project_data['milestones'][i]['status'] = 'COMPLETED' if completed else 'NOT_STARTED'
+                    if completed:
+                        from datetime import datetime
+                        project_data['milestones'][i]['completion_date'] = datetime.now().strftime('%Y-%m-%d')
+                    else:
+                        project_data['milestones'][i]['completion_date'] = None
+                    updated = True
+                    logger.info(f"Updated task {task_id} completion to {completed}")
+                    break
+        
+        if not updated:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        
+        # Save updated project data
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+        
+        return JSONResponse({
+            'success': True,
+            'message': 'Task status updated successfully'
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating task status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -680,8 +680,121 @@ function showEventModal(event) {
         `;
     }
     
+    // Add sibling tasks section for milestones
+    if (type === 'milestone' && ep.milestone && ep.programCode) {
+        bodyHtml += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-xs uppercase font-bold text-gray-400 mb-3">Related Milestones</p>
+                <div id="siblingTasksContainer" class="space-y-2">
+                    <p class="text-sm text-gray-500">Loading...</p>
+                </div>
+            </div>
+        `;
+    }
+    
     document.getElementById('eventModalBody').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
+    
+    // Load sibling tasks if this is a milestone
+    if (type === 'milestone' && ep.milestone && ep.programCode) {
+        loadSiblingTasks(ep.programCode, ep.milestone.id || ep.milestone.name);
+    }
+}
+
+async function loadSiblingTasks(projectCode, milestoneId) {
+    try {
+        const response = await fetch(`/api/milestones/${projectCode}/siblings/${encodeURIComponent(milestoneId)}`);
+        if (!response.ok) {
+            throw new Error('Failed to load sibling tasks');
+        }
+        
+        const data = await response.json();
+        const container = document.getElementById('siblingTasksContainer');
+        
+        if (!container) return;
+        
+        if (!data.siblings || data.siblings.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500 italic">No related milestones found</p>';
+            return;
+        }
+        
+        // Render sibling tasks with checkboxes
+        let html = '';
+        for (const sibling of data.siblings) {
+            const isCompleted = sibling.status === 'COMPLETED' || sibling.completion_percentage === 100;
+            const checkboxId = `sibling-${sibling.id}`;
+            const statusClass = isCompleted ? 'text-green-600' : 'text-gray-700';
+            
+            html += `
+                <div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
+                    <input type="checkbox" 
+                           id="${checkboxId}" 
+                           class="sibling-checkbox w-4 h-4 text-blue-600 rounded"
+                           data-task-id="${sibling.id}"
+                           data-project-code="${projectCode}"
+                           ${isCompleted ? 'checked' : ''}
+                           onchange="updateTaskStatus(this)">
+                    <label for="${checkboxId}" class="flex-1 text-sm ${statusClass} cursor-pointer">
+                        ${sibling.name}
+                        ${sibling.target_date ? `<span class="text-xs text-gray-500 ml-2">(${sibling.target_date})</span>` : ''}
+                    </label>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading sibling tasks:', error);
+        const container = document.getElementById('siblingTasksContainer');
+        if (container) {
+            container.innerHTML = '<p class="text-sm text-red-500">Failed to load related milestones</p>';
+        }
+    }
+}
+
+async function updateTaskStatus(checkbox) {
+    const taskId = checkbox.dataset.taskId;
+    const projectCode = checkbox.dataset.projectCode;
+    const completed = checkbox.checked;
+    
+    try {
+        const response = await fetch('/api/milestones/update-task-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                project_code: projectCode,
+                task_id: taskId,
+                completed: completed
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update task status');
+        }
+        
+        // Update checkbox label color
+        const label = checkbox.nextElementSibling;
+        if (label) {
+            if (completed) {
+                label.classList.remove('text-gray-700');
+                label.classList.add('text-green-600');
+            } else {
+                label.classList.remove('text-green-600');
+                label.classList.add('text-gray-700');
+            }
+        }
+        
+        // Optionally reload calendar events to reflect the change
+        // calendar.refetchEvents();
+        
+    } catch (error) {
+        console.error('Error updating task status:', error);
+        alert('Failed to update task status. Please try again.');
+        // Revert checkbox state
+        checkbox.checked = !completed;
+    }
 }
 
 function closeEventModal() {
