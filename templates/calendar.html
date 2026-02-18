@@ -687,7 +687,7 @@ function showEventModal(event) {
     if (type === 'milestone' && ep.milestone && ep.programCode) {
         bodyHtml += `
             <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="text-xs uppercase font-bold text-gray-400 mb-3">Related Milestones</p>
+                <p class="text-xs uppercase font-bold text-gray-400 mb-3">Related Tasks</p>
                 <div id="siblingTasksContainer" class="space-y-2">
                     <p class="text-sm text-gray-500">Loading...</p>
                 </div>
@@ -717,7 +717,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
         if (!container) return;
         
         if (!data.siblings || data.siblings.length === 0) {
-            container.innerHTML = '<p class="text-sm text-gray-500 italic">No related milestones found</p>';
+            container.innerHTML = '<p class="text-sm text-gray-500 italic">No related tasks found</p>';
             return;
         }
         
@@ -727,6 +727,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
             const isCompleted = sibling.status === 'COMPLETED' || Number(sibling.completion_percentage) === 100;
             const checkboxId = `sibling-${sibling.id}`;
             const statusClass = isCompleted ? 'text-green-600' : 'text-gray-700';
+            const icon = sibling.is_milestone ? '🎯' : '📋';
             
             html += `
                 <div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
@@ -738,8 +739,9 @@ async function loadSiblingTasks(projectCode, milestoneId) {
                            ${isCompleted ? 'checked' : ''}
                            onchange="updateTaskStatus(this)">
                     <label for="${checkboxId}" class="flex-1 text-sm ${statusClass} cursor-pointer">
-                        ${sibling.name}
+                        ${icon} ${sibling.name}
                         ${sibling.target_date ? `<span class="text-xs text-gray-500 ml-2">(${sibling.target_date})</span>` : ''}
+                        <span class="text-xs text-gray-500 ml-2">${sibling.completion_percentage}%</span>
                     </label>
                 </div>
             `;
@@ -750,7 +752,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
         console.error('Error loading sibling tasks:', error);
         const container = document.getElementById('siblingTasksContainer');
         if (container) {
-            container.innerHTML = '<p class="text-sm text-red-500">Failed to load related milestones</p>';
+            container.innerHTML = '<p class="text-sm text-red-500">Failed to load related tasks</p>';
         }
     }
 }
@@ -758,7 +760,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
 async function updateTaskStatus(checkbox) {
     const taskId = checkbox.dataset.taskId;
     const projectCode = checkbox.dataset.projectCode;
-    const completed = checkbox.checked;
+    const shouldComplete = checkbox.checked;
     
     // Get CSRF token
     const csrfToken = document.getElementById('csrfToken')?.value || '';
@@ -773,7 +775,7 @@ async function updateTaskStatus(checkbox) {
             body: JSON.stringify({
                 project_code: projectCode,
                 task_id: taskId,
-                completed: completed
+                status: shouldComplete ? 'COMPLETED' : 'IN_PROGRESS'
             })
         });
         
@@ -781,10 +783,15 @@ async function updateTaskStatus(checkbox) {
             throw new Error('Failed to update task status');
         }
         
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to update task status');
+        }
+        
         // Update checkbox label color
         const label = checkbox.nextElementSibling;
         if (label) {
-            if (completed) {
+            if (shouldComplete) {
                 label.classList.remove('text-gray-700');
                 label.classList.add('text-green-600');
             } else {
@@ -800,7 +807,7 @@ async function updateTaskStatus(checkbox) {
         console.error('Error updating task status:', error);
         alert('Failed to update task status. Please try again.');
         // Revert checkbox state
-        checkbox.checked = !completed;
+        checkbox.checked = !shouldComplete;
     }
 }
 

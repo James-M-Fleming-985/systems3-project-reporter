@@ -19,6 +19,9 @@ router = APIRouter(tags=["milestones"])
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 
+# Default completion percentage when moving a task from NOT_STARTED or COMPLETED to IN_PROGRESS
+DEFAULT_IN_PROGRESS_PERCENTAGE = 50
+
 
 class MilestoneUpdate(BaseModel):
     project_code: str
@@ -668,14 +671,14 @@ color: #666; }}</style>
 class TaskStatusUpdate(BaseModel):
     project_code: str
     task_id: str
-    completed: bool
+    status: str  # COMPLETED or IN_PROGRESS
 
 
 @router.get("/api/milestones/{code}/siblings/{id}")
 async def get_milestone_siblings(code: str, id: str):
     """
-    Get sibling milestones (milestones at the same hierarchical level with same parent).
-    Returns other milestones from the same project that share the same parent_project.
+    Get sibling milestones/tasks - ALL Level 4 items under the same Level 3 parent.
+    Returns all Level 4 tasks/milestones that share the same Level 3 parent.
     """
     try:
         from repositories.project_repository import ProjectRepository
@@ -707,30 +710,39 @@ async def get_milestone_siblings(code: str, id: str):
                 'message': 'Milestone not found'
             })
         
-        # Get siblings - milestones with same parent_project and similar outline_level
-        target_parent = target_milestone.get('parent_project', '')
-        target_level = target_milestone.get('outline_level', 0)
+        # Get parent_levels to find Level 3 parent
+        parent_levels = target_milestone.get('parent_levels', {})
+        level_3_parent = parent_levels.get('3') or parent_levels.get(3)
         
+        if not level_3_parent:
+            # No Level 3 parent, return empty list
+            return JSONResponse(content={
+                'siblings': [],
+                'parent': '',
+                'count': 0
+            })
+        
+        # Find all Level 4 siblings under same Level 3 parent
         siblings = []
         for m in milestones:
-            # Skip the target milestone itself
-            if m.get('id') == target_milestone.get('id') and m.get('name') == target_milestone.get('name'):
-                continue
+            m_parent_levels = m.get('parent_levels', {})
+            m_level_3_parent = m_parent_levels.get('3') or m_parent_levels.get(3)
+            m_outline_level = m.get('outline_level', 0)
             
-            # Include if same parent
-            if m.get('parent_project') == target_parent:
+            # Include if: Level 4 AND same Level 3 parent
+            if m_outline_level == 4 and m_level_3_parent == level_3_parent:
                 siblings.append({
                     'id': m.get('id', m.get('name', 'Unknown')),
                     'name': m.get('name', 'Unknown'),
-                    'target_date': m.get('target_date', ''),
                     'status': m.get('status', 'NOT_STARTED'),
                     'completion_percentage': m.get('completion_percentage', 0),
-                    'outline_level': m.get('outline_level', 0)
+                    'target_date': m.get('target_date', ''),
+                    'is_milestone': m.get('milestone') == 1 or m.get('duration') == 0
                 })
         
         return JSONResponse(content={
             'siblings': siblings,
-            'parent': target_parent,
+            'parent': level_3_parent,
             'count': len(siblings)
         })
         
@@ -745,12 +757,12 @@ async def get_milestone_siblings(code: str, id: str):
 async def update_task_status(data: TaskStatusUpdate):
     """
     Update the completion status of a task/milestone.
-    Sets completion_percentage to 100 if completed=True, 0 if completed=False.
+    Sets status to COMPLETED or IN_PROGRESS and updates completion_percentage accordingly.
     """
     try:
         project_code = data.project_code
         task_id = data.task_id
-        completed = data.completed
+        new_status = data.status
         
         # Find the project directory
         transformed_code = project_code.replace('-', '_')
@@ -769,18 +781,21 @@ async def update_task_status(data: TaskStatusUpdate):
         if 'milestones' in project_data:
             for i, milestone in enumerate(project_data['milestones']):
                 if milestone.get('id') == task_id or milestone.get('name') == task_id:
-                    # Update completion
-                    old_status = milestone.get('status', 'NOT_STARTED')
-                    project_data['milestones'][i]['completion_percentage'] = 100 if completed else 0
-                    if completed:
-                        project_data['milestones'][i]['status'] = 'COMPLETED'
+                    # Update status
+                    project_data['milestones'][i]['status'] = new_status
+                    if new_status == 'COMPLETED':
+                        project_data['milestones'][i]['completion_percentage'] = 100
                         project_data['milestones'][i]['completion_date'] = datetime.now().strftime('%Y-%m-%d')
-                    else:
-                        # When unchecking, preserve IN_PROGRESS if it was in progress, otherwise NOT_STARTED
-                        project_data['milestones'][i]['status'] = 'IN_PROGRESS' if old_status == 'IN_PROGRESS' else 'NOT_STARTED'
+                    elif new_status == 'IN_PROGRESS':
+                        # Keep existing percentage if it's already set and non-zero
+                        current_pct = milestone.get('completion_percentage')
+                        if current_pct is None or current_pct in (0, 100):
+                            # Set to default when moving from NOT_STARTED or COMPLETED
+                            project_data['milestones'][i]['completion_percentage'] = DEFAULT_IN_PROGRESS_PERCENTAGE
+                        # Otherwise preserve existing percentage
                         project_data['milestones'][i]['completion_date'] = None
                     updated = True
-                    logger.info(f"Updated task {task_id} completion to {completed}")
+                    logger.info(f"Updated task {task_id} status to {new_status}")
                     break
         
         if not updated:
