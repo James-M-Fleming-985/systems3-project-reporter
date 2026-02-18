@@ -193,7 +193,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             # For bodiless requests (e.g., DELETE/PUT without content-type),
             # don't try to read form data - validate header token only.
             # If the x-csrf-token header was sent (even if empty), let it fall
-            # through to normal validation which gives a clearer error message.
+            # through to normal validation below which gives a clearer error message.
             if not content_type:
                 if "x-csrf-token" not in request.headers:
                     logger.warning(f"Bodiless request without x-csrf-token header at {path}")
@@ -202,7 +202,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                         status_code=403,
                         content={"detail": "CSRF token required in header for requests without body"}
                     )
-                # Header was present but empty — fall through to validation on line 233
+                # Header was present but empty — fall through to validation below
                 # which will return "CSRF validation failed"
                 pass
             

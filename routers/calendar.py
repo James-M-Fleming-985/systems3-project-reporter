@@ -134,7 +134,7 @@ async def get_calendar_events(request: Request):
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
             for milestone in project.milestones:
-                # Skip Level 2 items — they are project-level summaries, not milestones
+                # Skip items with outline_level <= 2 (project-level summaries)
                 outline_level = getattr(milestone, 'outline_level', None)
                 if outline_level is not None and outline_level <= 2:
                     continue
