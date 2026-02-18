@@ -737,24 +737,37 @@ async def get_milestone_siblings(code: str, id: str):
                 'count': 0
             })
         
-        # Find all siblings under same Level 3 parent (excluding the queried item itself)
+        # Find all related tasks — siblings (same L3 parent, same level)
+        # OR children (their L4/higher parent == target milestone name).
+        # This covers both data shapes from different XML imports.
         siblings = []
         target_id = target_milestone.get('id', id)
         target_name = target_milestone.get('name', '')
         target_level = target_milestone.get('outline_level')  # May be None for legacy data
 
         for m in milestones:
-            m_parent_levels = m.get('parent_levels', {})
+            raw_pl = m.get('parent_levels')
+            m_parent_levels = raw_pl if isinstance(raw_pl, dict) else {}
             m_level_3_parent = m_parent_levels.get('3') or m_parent_levels.get(3)
-            m_outline_level = m.get('outline_level')  # May be None
+            # Also check every parent level value to catch target as a direct parent
+            m_is_child_of_target = target_name and any(
+                str(v) == target_name for v in m_parent_levels.values()
+            )
+            m_outline_level = m.get('outline_level')
 
-            # Must share the same Level 3 parent
-            if m_level_3_parent != level_3_parent:
+            # Accept as related if:
+            # (a) Same L3 parent — siblings or cousins at any depth, OR
+            # (b) This item's parent_levels contains the target name (direct child)
+            is_sibling = (m_level_3_parent == level_3_parent)
+            is_child = m_is_child_of_target
+
+            if not is_sibling and not is_child:
                 continue
 
-            # If both have a valid outline_level, they must match
-            if target_level and m_outline_level and target_level != m_outline_level:
-                continue
+            # For siblings: if both have valid outline_level they must match
+            if is_sibling and not is_child:
+                if target_level and m_outline_level and target_level != m_outline_level:
+                    continue
 
             # Exclude the item being viewed (the milestone itself)
             m_id = m.get('id', m.get('name', ''))

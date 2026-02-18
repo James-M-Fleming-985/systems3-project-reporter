@@ -807,7 +807,7 @@ function showEventModal(event) {
 
 async function loadSiblingTasks(projectCode, milestoneId) {
     try {
-        console.log(`🔍 loadSiblingTasks: code=${projectCode} id=${milestoneId}`);
+        console.log(`🔍 loadSiblingTasks: code=${projectCode} id=${JSON.stringify(milestoneId)}`);
         const response = await fetch(`/api/milestones/${projectCode}/siblings/${encodeURIComponent(milestoneId)}`);
         if (!response.ok) {
             throw new Error('Failed to load sibling tasks');
