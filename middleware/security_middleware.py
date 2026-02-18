@@ -204,7 +204,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 # File uploads on /upload/ routes are exempt from CSRF
                 # as they use auth middleware for protection
                 # Schedule import endpoint: /dashboard/api/schedule/{project_name}/import
-                if path.startswith("/upload/") or ("/api/schedule/" in path and "/import" in path):
+                if path.startswith("/upload/") or ("/api/schedule/" in path and path.endswith("/import")):
                     # Let auth middleware handle authentication
                     return await call_next(request)
                 

@@ -48,7 +48,7 @@ def test_schedule_import_with_dashboard_prefix():
     """
     Test that schedule import endpoint works with /dashboard prefix
     Bug 1: Path should be /dashboard/api/schedule/{project}/import
-    The middleware should now use "in" check instead of startswith
+    The middleware should use "in" check combined with endswith for security
     """
     client = TestClient(app)
     
@@ -66,6 +66,29 @@ def test_schedule_import_with_dashboard_prefix():
     assert response.status_code == 200
     data = response.json()
     assert "imported" in data["message"].lower()
+
+
+def test_schedule_non_import_path_requires_csrf():
+    """
+    Test that non-import schedule paths still require CSRF
+    This ensures our fix doesn't over-exempt paths
+    """
+    client = TestClient(app)
+    
+    # Create a test file for a non-import path
+    test_content = "test,data"
+    file_data = io.BytesIO(test_content.encode("utf-8"))
+    
+    # Try uploading to a path with "import" in it but not ending with /import
+    # This should require CSRF token
+    # Note: This endpoint doesn't exist, but we're testing middleware behavior
+    response = client.post(
+        "/dashboard/api/schedule/my-import-project/data",
+        files={"file": ("data.csv", file_data, "text/csv")}
+    )
+    
+    # Should fail with 403 because path doesn't end with /import
+    assert response.status_code == 403
 
 
 def test_delete_row_with_csrf_header():
