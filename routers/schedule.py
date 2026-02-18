@@ -447,7 +447,7 @@ def parse_excel_file(file_content: bytes) -> tuple:
                     row_data.append("")
             
             # Only add non-empty rows
-            if any(cell for cell in row_data):
+            if any(str(cell).strip() for cell in row_data):
                 data_rows.append(row_data)
         
         logger.info(f"Parsed Excel: {len(headers)} columns, {len(data_rows)} rows")

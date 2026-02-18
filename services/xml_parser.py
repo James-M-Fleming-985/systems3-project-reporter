@@ -354,8 +354,7 @@ class MSProjectXMLParser:
                 # Skip this task - it's not a milestone
                 name_elem = self._find_element(task, 'Name')
                 task_name = name_elem.text if name_elem is not None else 'Unknown'
-                if outline_level == 4:
-                    print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - not a milestone")
+                print(f"DEBUG: SKIPPED Level {outline_level} task '{task_name}' - not a milestone")
                 continue
             
             # At this point: confirmed milestone only
