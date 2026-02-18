@@ -214,7 +214,7 @@ async def get_calendar_events(request: Request):
                     'resources': getattr(milestone, 'resources', '') or '',
                     'level3Parent': (getattr(milestone, 'parent_levels', None) or {}).get('3') or (getattr(milestone, 'parent_levels', None) or {}).get(3) or '',
                     'milestone': {
-                        'id': getattr(milestone, 'id', '') or milestone.name[:30],
+                        'id': getattr(milestone, 'id', '') or milestone.name,
                         'name': milestone.name,
                         'status': status,
                         'target_date': target_date,
@@ -234,7 +234,7 @@ async def get_calendar_events(request: Request):
                 # Start Date event
                 if start_date:
                     events.append({
-                        'id': f'milestone-start-{program_code}-{milestone.name[:30]}',
+                        'id': f'milestone-start-{program_code}-{milestone.name}',
                         'title': milestone.name + (' (Start)' if has_both else ''),
                         'start': start_date,
                         'allDay': True,
@@ -247,7 +247,7 @@ async def get_calendar_events(request: Request):
                 # Finish Date event (only if different from start)
                 if target_date and target_date != start_date:
                     events.append({
-                        'id': f'milestone-end-{program_code}-{milestone.name[:30]}',
+                        'id': f'milestone-end-{program_code}-{milestone.name}',
                         'title': milestone.name + (' (Finish)' if has_both else ''),
                         'start': target_date,
                         'allDay': True,
