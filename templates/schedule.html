@@ -790,6 +790,30 @@ function showConfirmModal(title, message, confirmText, onConfirm) {
     });
 }
 
+function showErrorModal(title, message) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0">
+                    <svg class="h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                    <p class="mt-2 text-sm text-gray-600">${message}</p>
+                </div>
+            </div>
+            <button onclick="this.closest('.fixed').remove();" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                OK
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 function showSuccessModal(title, message) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -995,11 +1019,11 @@ async function handleDrop(event, tableId, targetColId) {
             // Reload to reflect new order
             window.location.reload();
         } else {
-            alert('Failed to save column order');
+            showErrorModal('Save Failed', 'Could not save the column order. Please try again.');
         }
     } catch (error) {
         console.error('Error saving column order:', error);
-        alert('Error saving column order');
+        showErrorModal('Error', 'An unexpected error occurred while saving column order.');
     }
 }
 
@@ -1179,7 +1203,7 @@ async function createOrCopyTable(event) {
 async function createNewTable() {
     const name = document.getElementById('tableName').value.trim();
     if (!name) {
-        alert('Please enter a table name');
+        showErrorModal('Missing Name', 'Please enter a table name before creating.');
         return;
     }
     
@@ -1193,11 +1217,11 @@ async function createNewTable() {
         if (response.ok) {
             window.location.reload();
         } else {
-            alert('Failed to create table');
+            showErrorModal('Creation Failed', 'Could not create the table. Please try again.');
         }
     } catch (error) {
         console.error('Error creating table:', error);
-        alert('Error creating table');
+        showErrorModal('Error', 'An unexpected error occurred while creating the table.');
     }
 }
 
@@ -1208,7 +1232,7 @@ async function copyTableFromProgram() {
     const includeData = document.getElementById('includeData').checked;
     
     if (!sourceProject || !sourceTableId) {
-        alert('Please select a source program and table');
+        showErrorModal('Missing Selection', 'Please select a source program and table to copy from.');
         return;
     }
     
@@ -1233,13 +1257,13 @@ async function copyTableFromProgram() {
             window.location.reload();
         } else {
             const error = await response.json();
-            alert('Failed to copy table: ' + (error.detail || 'Unknown error'));
+            showErrorModal('Copy Failed', 'Could not copy the table: ' + (error.detail || 'Unknown error'));
             submitBtn.disabled = false;
             submitBtn.textContent = 'Copy Table';
         }
     } catch (error) {
         console.error('Error copying table:', error);
-        alert('Error copying table');
+        showErrorModal('Error', 'An unexpected error occurred while copying the table.');
         document.getElementById('createTableBtn').disabled = false;
         document.getElementById('createTableBtn').textContent = 'Copy Table';
     }
@@ -1735,11 +1759,11 @@ async function saveColumn(event) {
         if (response.ok) {
             window.location.reload();
         } else {
-            alert('Failed to save column');
+            showErrorModal('Save Failed', 'Could not save the column. Please try again.');
         }
     } catch (error) {
         console.error('Error saving column:', error);
-        alert('Error saving column');
+        showErrorModal('Error', 'An unexpected error occurred while saving the column.');
     }
 }
 
@@ -1813,7 +1837,7 @@ async function deleteTable(tableId) {
         
     } catch (error) {
         console.error('Error deleting table:', error);
-        alert('Failed to delete table: ' + error.message);
+        showErrorModal('Delete Failed', 'Could not delete the table: ' + error.message);
     }
         }
     );

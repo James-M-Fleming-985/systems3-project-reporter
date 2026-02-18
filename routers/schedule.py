@@ -98,6 +98,9 @@ async def schedule_page(request: Request, project: str = None):
     # Get schedule data
     schedule_data = schedule_repo.get_schedules(clean_name)
     
+    # CSRF token from middleware for DELETE/POST/PUT requests
+    csrf_token = getattr(request.state, 'csrf_token', '')
+    
     context = {
         "request": request,
         "project_name": project,
@@ -105,7 +108,8 @@ async def schedule_page(request: Request, project: str = None):
         "schedule_data": schedule_data,
         "tables": schedule_data.get('tables', []),
         "build_version": get_build_version(),
-        "user": get_user_from_request(request)
+        "user": get_user_from_request(request),
+        "csrf_token": csrf_token
     }
     
     response = templates.TemplateResponse("schedule.html", context)
