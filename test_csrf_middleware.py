@@ -92,7 +92,7 @@ def test_file_upload_without_csrf_fails():
     
     # Should fail with 403
     assert response.status_code == 403
-    assert "CSRF token missing" in response.json()["detail"]
+    assert "CSRF token required in header for file uploads" == response.json()["detail"]
 
 
 def test_traditional_form_with_token_in_body():
@@ -135,7 +135,7 @@ def test_traditional_form_without_csrf_fails():
     
     # Should fail with 403
     assert response.status_code == 403
-    assert "CSRF token missing" in response.json()["detail"]
+    assert "CSRF validation failed" == response.json()["detail"]
 
 
 def test_get_requests_dont_need_csrf():
