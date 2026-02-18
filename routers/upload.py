@@ -460,6 +460,7 @@ async def upload_xml(
                         'parent_project': new_milestone.parent_project,  # XML
                         'parent_levels': getattr(new_milestone, 'parent_levels', None),  # XML hierarchy
                         'outline_level': getattr(new_milestone, 'outline_level', None),  # XML hierarchy level
+                        'is_true_milestone': getattr(new_milestone, 'is_true_milestone', None),  # XML flag
                         'resources': existing.resources,  # PRESERVE user edits
                         'project': new_project.project_code
                     }
@@ -478,6 +479,7 @@ async def upload_xml(
                         'parent_project': new_milestone.parent_project,
                         'parent_levels': getattr(new_milestone, 'parent_levels', None),
                         'outline_level': getattr(new_milestone, 'outline_level', None),
+                        'is_true_milestone': getattr(new_milestone, 'is_true_milestone', None),
                         'resources': new_milestone.resources,
                         'project': new_project.project_code
                     })
@@ -506,6 +508,7 @@ async def upload_xml(
                     'parent_project': m.parent_project,
                     'parent_levels': getattr(m, 'parent_levels', None),
                     'outline_level': getattr(m, 'outline_level', None),
+                    'is_true_milestone': getattr(m, 'is_true_milestone', None),
                     'resources': m.resources,
                     'project': new_project.project_code
                 })
@@ -707,6 +710,7 @@ async def confirm_upload(
                     'parent_project': m.parent_project,
                     'parent_levels': getattr(m, 'parent_levels', None),
                     'outline_level': getattr(m, 'outline_level', None),
+                    'is_true_milestone': getattr(m, 'is_true_milestone', None),
                     'resources': m.resources,
                     'project': new_project.project_code  # Add project code for frontend
                 }
@@ -819,6 +823,7 @@ async def update_change_reason(
                     'parent_project': getattr(m, 'parent_project', None),
                     'parent_levels': getattr(m, 'parent_levels', None),
                     'outline_level': getattr(m, 'outline_level', None),
+                    'is_true_milestone': getattr(m, 'is_true_milestone', None),
                     'resources': getattr(m, 'resources', None),
                     'project': project.project_code  # Add project code for frontend
                 }
