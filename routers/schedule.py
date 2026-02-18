@@ -202,10 +202,20 @@ async def update_schedule_table(project_name: str, table_id: str, request: Updat
 @router.delete("/api/schedule/{project_name}/tables/{table_id}")
 async def delete_schedule_table(project_name: str, table_id: str):
     """Delete a schedule table"""
-    success = schedule_repo.delete_table(project_name, table_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Table not found")
-    return JSONResponse(content={"success": True})
+    try:
+        logger.info(f"Deleting table {table_id} from project {project_name}")
+        success = schedule_repo.delete_table(project_name, table_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Table not found")
+        
+        return JSONResponse(content={"success": True})
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting table: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -435,7 +445,10 @@ def parse_excel_file(file_content: bytes) -> tuple:
                 except Exception as e:
                     logger.warning(f"Error converting cell at row {row_idx}, col {col_idx}: {e}")
                     row_data.append("")
-            data_rows.append(row_data)
+            
+            # Only add non-empty rows
+            if any(str(cell).strip() for cell in row_data):
+                data_rows.append(row_data)
         
         logger.info(f"Parsed Excel: {len(headers)} columns, {len(data_rows)} rows")
         return headers, data_rows
@@ -546,7 +559,8 @@ async def import_schedule_file(
                 columns.append({
                     'header': header,
                     'type': 'text',
-                    'width': 150
+                    'width': 150,
+                    'visible_in_export': True  # ← ENSURE THIS IS TRUE
                 })
             
             # Create the table
