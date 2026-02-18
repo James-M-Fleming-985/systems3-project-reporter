@@ -134,9 +134,13 @@ async def get_calendar_events(request: Request):
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
             for milestone in project.milestones:
-                # Skip items with outline_level <= 2 (project-level summaries)
+                # Only show Level 4 milestones as calendar events.
+                # Level <= 2 are project summaries, Level 3 are milestone groupings
+                # (referenced as parent labels in the modal, not shown as events).
+                # Level 4 milestones are the actual actionable items.
+                # Level 4 tasks (non-milestones) are already filtered out by the XML parser.
                 outline_level = getattr(milestone, 'outline_level', None)
-                if outline_level is not None and outline_level <= 2:
+                if outline_level is not None and outline_level != 4:
                     continue
                 
                 # XML parser already filters to true milestones
