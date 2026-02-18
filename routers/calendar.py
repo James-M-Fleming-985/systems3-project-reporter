@@ -484,6 +484,8 @@ async def get_calendar_events(request: Request):
                                         'program': sched_program,
                                         'tableName': table_name,
                                         'tableId': table.get('id', ''),
+                                        'rowId': row.get('id', ''),
+                                        'statusColId': status_col or '',
                                         'status': status,
                                         'dateField': col_header,
                                         'allData': {

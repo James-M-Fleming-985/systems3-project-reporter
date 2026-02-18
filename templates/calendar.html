@@ -348,8 +348,9 @@
         
         <!-- Modal Footer -->
         <div class="px-5 py-3 bg-gray-50 border-t flex justify-between items-center gap-3">
-            <!-- Left: destructive action (milestone only) -->
-            <div>
+            <!-- Left: context-sensitive action buttons -->
+            <div class="flex items-center gap-2">
+                <!-- Milestone only: delete (trash icon) -->
                 <button id="deleteEventBtn"
                     onclick="deleteEventFromCalendar()"
                     class="hidden p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition"
@@ -357,6 +358,19 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
+                </button>
+                <!-- Schedule only: Done button -->
+                <button id="schedDoneBtn"
+                    onclick="markScheduleDone()"
+                    class="hidden px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 active:scale-95 transition inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Done
+                </button>
+                <!-- Change + Metric: Acknowledge button -->
+                <button id="acknowledgeBtn"
+                    onclick="acknowledgeCalendarEvent()"
+                    class="hidden px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 active:scale-95 transition">
+                    Acknowledge
                 </button>
             </div>
             <!-- Right: navigation + close -->
@@ -398,6 +412,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         const resp = await fetch('/api/calendar/events');
         const data = await resp.json();
         allEvents = data.events || [];
+        
+        // Filter out previously acknowledged change/metric events (stored in localStorage)
+        try {
+            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
+            if (acked.length) {
+                const ackedSet = new Set(acked);
+                allEvents = allEvents.filter(e => !ackedSet.has(e.id));
+            }
+        } catch (e) { /* ignore */ }
         
         console.log(`📅 Calendar: Loaded ${allEvents.length} events`);
         
@@ -572,7 +595,12 @@ function showEventModal(event) {
             type: ep.type,
             projectCode: ep.programCode,
             milestone: ep.milestone,
-            eventId: event.id
+            eventId: event.id,
+            // Schedule-specific
+            scheduleProgram: ep.program,
+            tableId: ep.tableId,
+            rowId: ep.rowId,
+            // For acknowledge (change/metric) – just need the event id
         };
     
     // Source-based header colors
@@ -608,13 +636,14 @@ function showEventModal(event) {
     const tabLabels = { 'milestone': 'Milestones', 'change': 'Changes', 'schedule': 'Schedule', 'metric_target': 'Metrics' };
     document.getElementById('goToProgramLabel').textContent = tabLabels[type] || 'View';
 
-    // Show delete button only for milestones
+    // Show/hide footer action buttons based on event type
     const deleteBtn = document.getElementById('deleteEventBtn');
-    if (ep.type === 'milestone' && ep.milestone) {
-        deleteBtn.classList.remove('hidden');
-    } else {
-        deleteBtn.classList.add('hidden');
-    }
+    const schedDoneBtn = document.getElementById('schedDoneBtn');
+    const acknowledgeBtn = document.getElementById('acknowledgeBtn');
+
+    deleteBtn.classList.toggle('hidden', !(ep.type === 'milestone' && ep.milestone));
+    schedDoneBtn.classList.toggle('hidden', ep.type !== 'schedule' || !ep.rowId);
+    acknowledgeBtn.classList.toggle('hidden', ep.type !== 'change' && ep.type !== 'metric_target');
     
     // --- Build navigation URL based on event type ---
     const typeToTab = {
@@ -933,6 +962,58 @@ function closeEventModal() {
 
 function editEventFromCalendar() {
     // No-op — handled by the 'Open in Milestones Tab' link in the modal footer.
+}
+
+async function markScheduleDone() {
+    if (!currentEventData || !currentEventData.scheduleProgram || !currentEventData.tableId || !currentEventData.rowId) {
+        showToast('Cannot determine schedule item to complete', 'error');
+        return;
+    }
+    const { scheduleProgram, tableId, rowId, eventId } = currentEventData;
+    const btn = document.getElementById('schedDoneBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+    try {
+        const resp = await fetch(
+            `/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
+            { method: 'PATCH', headers: { 'x-csrf-token': document.getElementById('csrfToken')?.value || '' } }
+        );
+        if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+        const result = await resp.json();
+        if (!result.success) throw new Error('Update failed');
+
+        // Remove from the in-memory event list and re-render
+        allEvents = allEvents.filter(e => e.id !== eventId);
+        applyFilters();
+        closeEventModal();
+        showToast('✓ Schedule item marked complete', 'success');
+    } catch (err) {
+        console.error('markScheduleDone error:', err);
+        showToast('Could not mark as done — please try again', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Done'; }
+    }
+}
+
+function acknowledgeCalendarEvent() {
+    if (!currentEventData || !currentEventData.eventId) return;
+    const eventId = currentEventData.eventId;
+
+    // Persist to localStorage so refresh doesn't bring it back during this session
+    try {
+        const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
+        if (!acked.includes(eventId)) {
+            acked.push(eventId);
+            // Cap list at 500 to avoid unbounded growth
+            if (acked.length > 500) acked.splice(0, acked.length - 500);
+            localStorage.setItem('calendarAcknowledged', JSON.stringify(acked));
+        }
+    } catch (e) { /* ignore localStorage errors */ }
+
+    // Remove from in-memory list and re-render
+    allEvents = allEvents.filter(e => e.id !== eventId);
+    applyFilters();
+    closeEventModal();
+    showToast('Acknowledged — removed from calendar', 'success');
 }
 
 async function deleteEventFromCalendar() {

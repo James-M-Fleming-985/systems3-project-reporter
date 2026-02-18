@@ -245,6 +245,37 @@ async def update_table_row(project_name: str, table_id: str, row_id: str, reques
     return JSONResponse(content={"success": True})
 
 
+@router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/complete")
+async def complete_schedule_row(project_name: str, table_id: str, row_id: str):
+    """Mark a schedule row as complete (used from calendar 'Done' button)"""
+    table = schedule_repo.get_table(project_name, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    row = next((r for r in table.get('rows', []) if r.get('id') == row_id), None)
+    if not row:
+        raise HTTPException(status_code=404, detail="Row not found")
+
+    row_data = dict(row.get('data', {}))
+
+    # Find the status column (type == status/dropdown, or header contains 'status')
+    columns = table.get('columns', [])
+    status_col_id = None
+    for col in columns:
+        col_type = col.get('type', '')
+        col_header = (col.get('header', '') or '').lower()
+        if col_type in ('dropdown', 'status') or 'status' in col_header:
+            status_col_id = col.get('id')
+            break
+
+    if not status_col_id:
+        raise HTTPException(status_code=400, detail="No status column found in table")
+
+    row_data[status_col_id] = 'Complete'
+    success = schedule_repo.update_row(project_name, table_id, row_id, row_data)
+    return JSONResponse(content={"success": success})
+
+
 @router.delete("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}")
 async def delete_table_row(project_name: str, table_id: str, row_id: str):
     """Delete a row from a schedule table"""
