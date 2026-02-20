@@ -486,6 +486,7 @@ async def get_calendar_events(request: Request):
                                         'tableId': table.get('id', ''),
                                         'rowId': row.get('id', ''),
                                         'statusColId': status_col or '',
+                                        'dateColId': col_id,
                                         'status': status,
                                         'dateField': col_header,
                                         'allData': {

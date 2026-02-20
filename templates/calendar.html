@@ -452,6 +452,44 @@ document.addEventListener('DOMContentLoaded', async function() {
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
             },
+            // Drag-to-reschedule: schedule items only
+            editable: true,
+            eventAllow: function(dropInfo, draggedEvent) {
+                return draggedEvent.extendedProps?.type === 'schedule';
+            },
+            eventDragStart: function(info) {
+                if (info.event.extendedProps?.type !== 'schedule') {
+                    showToast('Only schedule items can be rescheduled from the calendar', 'info');
+                }
+            },
+            eventDrop: async function(info) {
+                const ep = info.event.extendedProps || {};
+                if (ep.type !== 'schedule') { info.revert(); return; }
+                const newDate = info.event.startStr.split('T')[0];
+                const { program: prog, tableId, rowId, dateColId } = ep;
+                if (!prog || !tableId || !rowId || !dateColId) { info.revert(); return; }
+                try {
+                    const resp = await fetch(
+                        `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                            body: JSON.stringify({ date_col_id: dateColId, new_date: newDate })
+                        }
+                    );
+                    if (!resp.ok) throw new Error(`Server ${resp.status}`);
+                    const result = await resp.json();
+                    if (!result.success) throw new Error('Update failed');
+                    // Keep in-memory event in sync
+                    const idx = allEvents.findIndex(e => e.id === info.event.id);
+                    if (idx !== -1) allEvents[idx].start = newDate;
+                    showToast('✓ Rescheduled', 'success');
+                } catch (err) {
+                    console.error('eventDrop error:', err);
+                    info.revert();
+                    showToast('Could not reschedule — please try again', 'error');
+                }
+            },
             eventContent: function(arg) {
                 const ep = arg.event.extendedProps || {};
                 const sourceLabel = ep.source_label || '';
@@ -600,6 +638,7 @@ function showEventModal(event) {
             scheduleProgram: ep.program,
             tableId: ep.tableId,
             rowId: ep.rowId,
+            dateColId: ep.dateColId,
             // For acknowledge (change/metric) – just need the event id
         };
     
@@ -642,7 +681,13 @@ function showEventModal(event) {
     const acknowledgeBtn = document.getElementById('acknowledgeBtn');
 
     deleteBtn.classList.toggle('hidden', !(ep.type === 'milestone' && ep.milestone));
-    schedDoneBtn.classList.toggle('hidden', ep.type !== 'schedule' || !ep.rowId);
+    const showDone = ep.type === 'schedule' && !!ep.rowId;
+    schedDoneBtn.classList.toggle('hidden', !showDone);
+    if (showDone) {
+        // Always reset button state so a previous "Saving…" doesn't persist
+        schedDoneBtn.disabled = false;
+        schedDoneBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Done`;
+    }
     acknowledgeBtn.classList.toggle('hidden', ep.type !== 'change' && ep.type !== 'metric_target');
     
     // --- Build navigation URL based on event type ---

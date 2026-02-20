@@ -245,6 +245,31 @@ async def update_table_row(project_name: str, table_id: str, row_id: str, reques
     return JSONResponse(content={"success": True})
 
 
+@router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/reschedule")
+async def reschedule_row(project_name: str, table_id: str, row_id: str, request: Request):
+    """Update the date of a single schedule row (called from calendar drag-and-drop)"""
+    body = await request.json()
+    date_col_id = body.get('date_col_id')
+    new_date = body.get('new_date')
+
+    if not date_col_id or not new_date:
+        raise HTTPException(status_code=400, detail="date_col_id and new_date required")
+
+    table = schedule_repo.get_table(project_name, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    row = next((r for r in table.get('rows', []) if r.get('id') == row_id), None)
+    if not row:
+        raise HTTPException(status_code=404, detail="Row not found")
+
+    row_data = dict(row.get('data', {}))
+    row_data[date_col_id] = new_date
+
+    success = schedule_repo.update_row(project_name, table_id, row_id, row_data)
+    return JSONResponse(content={"success": success})
+
+
 @router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/complete")
 async def complete_schedule_row(project_name: str, table_id: str, row_id: str):
     """Mark a schedule row as complete (used from calendar 'Done' button)"""
