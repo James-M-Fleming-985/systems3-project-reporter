@@ -562,13 +562,17 @@ color: #666; }}</style>
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
-            padding: 20px 30px;
+            padding: 40px 60px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }}
         .slide-title {{
             color: #7F7F7F;
             font-size: 32px;
             margin-bottom: 24px;
             font-weight: normal;
+            display: none;
         }}
         .columns {{
             display: grid;
@@ -596,17 +600,18 @@ color: #666; }}</style>
             opacity: 0.9;
         }}
         .column-body {{ padding: 12px; }}
-        table {{ width: 100%; border-collapse: collapse; font-size: 16px; }}
+        .columns {{ flex: 1; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 18px; }}
         th {{ 
             background: #f3f4f6; 
-            padding: 10px 8px; 
+            padding: 12px 10px; 
             text-align: left;
-            font-size: 15px;
+            font-size: 17px;
             font-weight: bold;
             border-bottom: 1px solid #e5e7eb;
         }}
         td {{ 
-            padding: 10px 8px; 
+            padding: 12px 10px; 
             border-bottom: 1px solid #f3f4f6;
             vertical-align: top;
             line-height: 1.4;
@@ -663,9 +668,7 @@ color: #666; }}</style>
             <div class="column-body">{render_table(next_ms)}</div>
         </div>
     </div>
-    <div class="info-box">
-        ℹ️ <strong>Resources</strong> column (yellow) is editable in PowerPoint.
-    </div>
+
 </body>
 </html>'''
     

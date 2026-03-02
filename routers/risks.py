@@ -1032,32 +1032,36 @@ async def risks_table_preview(
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
-            padding: 20px 30px;
+            padding: 40px 60px;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }}
         .slide-title {{
             color: #7F7F7F;
             font-size: 32px;
             margin-bottom: 24px;
             font-weight: normal;
+            display: none;
         }}
         table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 16px;
+            font-size: 20px;
             table-layout: fixed;
+            flex: 1;
         }}
         th {{
             background: #1E40AF;
             color: white;
-            padding: 12px 10px;
+            padding: 16px 14px;
             text-align: left;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 19px;
             white-space: nowrap;
         }}
         td {{
-            padding: 12px 10px;
+            padding: 16px 14px;
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
             vertical-align: top;
@@ -1131,9 +1135,7 @@ async def risks_table_preview(
     
     html += '''        </tbody>
     </table>
-    <div class="info-box">
-        ℹ️ <strong>Owner</strong> column (yellow) is editable in PowerPoint.
-    </div>
+
 </body>
 </html>'''
     
