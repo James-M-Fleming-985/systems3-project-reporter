@@ -559,11 +559,12 @@ color: #666; }}</style>
     <meta charset="UTF-8">
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        html {{ height: 100%; }}
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
             padding: 40px 60px;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }}
@@ -583,6 +584,8 @@ color: #666; }}</style>
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }}
         .column-header {{
             padding: 14px 16px;
@@ -599,7 +602,8 @@ color: #666; }}</style>
             font-size: 14px;
             opacity: 0.9;
         }}
-        .column-body {{ padding: 12px; }}
+        .column-body {{ padding: 12px; flex: 1; display: flex; flex-direction: column; }}
+        .column-body table {{ flex: 1; }}
         .columns {{ flex: 1; }}
         table {{ width: 100%; border-collapse: collapse; font-size: 18px; }}
         th {{ 

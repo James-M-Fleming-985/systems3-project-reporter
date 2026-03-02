@@ -349,11 +349,12 @@ async def schedule_table_view(
     <meta charset="UTF-8">
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        {'html { height: 100%; }' if ppt_export else ''}
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
             padding: {'40px 60px' if ppt_export else '20px 30px'};
-            min-height: 100vh;
+            {'height: 100vh;' if ppt_export else 'min-height: 100vh;'}
             {'display: flex; flex-direction: column;' if ppt_export else ''}
         }}
         .slide-title {{

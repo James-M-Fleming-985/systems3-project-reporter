@@ -808,11 +808,12 @@ async def changes_table_preview(
     <meta charset="UTF-8">
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        html {{ height: 100%; }}
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
             padding: 40px 60px;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }}
