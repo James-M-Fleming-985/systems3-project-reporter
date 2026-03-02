@@ -695,10 +695,11 @@ async def capture_single_screenshot(url: str, request: Request):
             logger.info(f"📌 Passing auth cookie for authenticated screenshot")
         
         # Capture screenshot using the existing service with project header
+        # Hide navigation to match export output (nav bar, footer hidden)
         screenshot_bytes = await screenshot_service.capture_screenshot_async(
             url=url,
             resolution=(1920, 1080),
-            hide_navigation=False,
+            hide_navigation=True,
             extra_headers=extra_headers if extra_headers else None,
             cookies=auth_cookies if auth_cookies else None
         )

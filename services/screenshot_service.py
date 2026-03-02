@@ -351,7 +351,7 @@ class ScreenshotService:
         hide_script = """
         // Hide common navigation elements
         const selectors = [
-            'nav', 'header', '.navigation', '.navbar',
+            'nav', 'header', 'footer', '.navigation', '.navbar',
             '#navigation', '#header', '.header', '.nav',
             '[role="navigation"]', '.menu', '#menu'
         ];

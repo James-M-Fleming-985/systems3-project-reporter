@@ -108,7 +108,7 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation - Two-tier professional header -->
-    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg">
+    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg" {% if ppt_export %}style="display: none;"{% endif %}>
         <!-- Top bar: Branding + User Account -->
         <div class="border-b border-blue-500/30">
             <div class="container mx-auto px-4 py-2">
@@ -252,7 +252,7 @@
     </main>
 
     <!-- Floating Feedback Widget -->
-    {% if user %}
+    {% if user and not ppt_export %}
     <div id="feedbackWidget" class="fixed bottom-6 right-6 z-40">
         <!-- Toggle Button -->
         <button onclick="toggleFeedbackWidget()" id="fbWidgetBtn" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110" title="Quick Feedback">
@@ -329,7 +329,7 @@
     {% endif %}
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-16">
+    <footer class="bg-gray-800 text-white mt-16" {% if ppt_export %}style="display: none;"{% endif %}>
         <div class="container mx-auto px-4 py-6 text-center">
             <p>&copy; 2026 Systems³ | Project Reporter v{{ build_version }} | Automation at exponential scale</p>
         </div>

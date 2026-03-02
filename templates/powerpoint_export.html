@@ -1024,6 +1024,10 @@ function openCanvasEditor(slideData) {
     if (projectCode && !viewUrl.includes('project=')) {
         viewUrl += (viewUrl.includes('?') ? '&' : '?') + 'project=' + projectCode;
     }
+    // Add ppt_export=true to match actual export behavior (hides controls/nav)
+    if (!viewUrl.includes('ppt_export=')) {
+        viewUrl += (viewUrl.includes('?') ? '&' : '?') + 'ppt_export=true';
+    }
     console.log('🔗 Final canvas editor URL:', viewUrl);
     
     // Get current template selection for the modal
@@ -1665,24 +1669,79 @@ function initFabricCanvas(viewUrl) {
 }
 
 function captureScreenshot(viewUrl) {
-    // Show loading
-    if (fabricCanvas) {
-        const loadingText = new fabric.Text('Refreshing preview...', {
-            left: 960,
-            top: 540,
-            originX: 'center',
-            originY: 'center',
-            fill: '#9ca3af',
-            fontSize: 24
-        });
-        fabricCanvas.add(loadingText);
-        fabricCanvas.renderAll();
-        
-        setTimeout(() => {
+    // Actually recapture the screenshot from the backend
+    if (!fabricCanvas) return;
+    
+    const loadingText = new fabric.Text('Refreshing preview...', {
+        left: 960,
+        top: 540,
+        originX: 'center',
+        originY: 'center',
+        fill: '#9ca3af',
+        fontSize: 24
+    });
+    
+    // Remove existing image
+    if (canvasImage) {
+        fabricCanvas.remove(canvasImage);
+    }
+    fabricCanvas.add(loadingText);
+    fabricCanvas.renderAll();
+    
+    (async () => {
+        try {
+            const fullUrl = window.location.origin + viewUrl;
+            const screenshotApiUrl = `/api/reports/screenshot?url=${encodeURIComponent(fullUrl)}`;
+            const response = await fetch(screenshotApiUrl);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                fabricCanvas.remove(loadingText);
+                
+                fabric.Image.fromURL(imageUrl, function(img) {
+                    if (!img) return;
+                    canvasImage = img;
+                    
+                    const scale = Math.min(
+                        (fabricCanvas.width * 0.97) / img.width,
+                        (fabricCanvas.height * 0.97) / img.height
+                    );
+                    
+                    canvasImage.set({
+                        left: fabricCanvas.width / 2,
+                        top: fabricCanvas.height / 2,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: scale,
+                        scaleY: scale,
+                        borderColor: '#3b82f6',
+                        cornerColor: '#3b82f6',
+                        cornerSize: 12,
+                        transparentCorners: false,
+                        cornerStyle: 'circle'
+                    });
+                    
+                    fabricCanvas.add(canvasImage);
+                    if (templateBackgroundImage) {
+                        fabricCanvas.sendToBack(templateBackgroundImage);
+                    }
+                    fabricCanvas.setActiveObject(canvasImage);
+                    fabricCanvas.renderAll();
+                    console.log('✅ Screenshot refreshed');
+                }, null, { crossOrigin: 'anonymous' });
+            } else {
+                fabricCanvas.remove(loadingText);
+                fabricCanvas.renderAll();
+                console.error('Screenshot refresh failed:', response.status);
+            }
+        } catch (e) {
             fabricCanvas.remove(loadingText);
             fabricCanvas.renderAll();
-        }, 500);
-    }
+            console.error('Screenshot refresh error:', e);
+        }
+    })();
 }
 
 function resetCanvas() {
@@ -1699,10 +1758,10 @@ function resetCanvas() {
             clipPath: null
         });
         
-        // Reset transform with dynamic scaling - use 0.75 to ensure full image visible
+        // Reset transform with dynamic scaling - auto-fill with small border
         const scale = Math.min(
-            (fabricCanvas.width * 0.75) / canvasImage.width,
-            (fabricCanvas.height * 0.75) / canvasImage.height
+            (fabricCanvas.width * 0.97) / canvasImage.width,
+            (fabricCanvas.height * 0.97) / canvasImage.height
         );
         
         canvasImage.set({

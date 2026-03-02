@@ -190,8 +190,8 @@
 
 <!-- Roadmap with inline controls -->
 <div class="bg-white rounded-lg shadow p-6">
-    <!-- Controls Row -->
-    <div class="roadmap-controls mb-4">
+    <!-- Controls Row - hidden during PPT export -->
+    <div class="roadmap-controls mb-4" {% if ppt_export %}style="display: none;"{% endif %}>
         <!-- Level Selector -->
         <div>
             <label class="text-sm font-medium text-gray-700 mr-2">Project Level:</label>
@@ -224,8 +224,8 @@
         <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
     </div>
     
-    <!-- Selected pills -->
-    <div class="selection-pills" id="selectionPills"></div>
+    <!-- Selected pills - hidden during PPT export -->
+    <div class="selection-pills" id="selectionPills" {% if ppt_export %}style="display: none;"{% endif %}></div>
     
     <!-- Chart -->
     <div id="roadmapChart" style="width:100%; min-height:400px; margin-top: 1rem;">

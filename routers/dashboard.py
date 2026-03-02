@@ -156,12 +156,17 @@ async def gantt_chart(request: Request):
     )
     
     user = get_user_from_request(request)
+    
+    # Check if this is a PowerPoint export capture
+    ppt_export = request.query_params.get('ppt_export', 'false').lower() == 'true'
+    
     context = {
         "request": request,
         "project": project,  # Single project
         "gantt_data": gantt_data,
         "build_version": BUILD_VERSION,
-        "user": user
+        "user": user,
+        "ppt_export": ppt_export
     }
     
     return templates.TemplateResponse("gantt.html", context)
