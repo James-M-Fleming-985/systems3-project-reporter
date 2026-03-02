@@ -1552,10 +1552,10 @@ function initFabricCanvas(viewUrl) {
                     
                     canvasImage = img;
                     
-                    // Scale image to fit canvas properly - use smaller scale to ensure full image is visible
+                    // Scale image to auto-fill canvas with a small border
                     const scale = Math.min(
-                        (fabricCanvas.width * 0.75) / img.width,
-                        (fabricCanvas.height * 0.75) / img.height
+                        (fabricCanvas.width * 0.97) / img.width,
+                        (fabricCanvas.height * 0.97) / img.height
                     );
                     
                     canvasImage.set({

@@ -352,8 +352,9 @@ async def schedule_table_view(
         body {{ 
             font-family: Arial, sans-serif; 
             background: white; 
-            padding: 20px 30px;
+            padding: {'40px 60px' if ppt_export else '20px 30px'};
             min-height: 100vh;
+            {'display: flex; flex-direction: column;' if ppt_export else ''}
         }}
         .slide-title {{
             color: #7F7F7F;
@@ -365,20 +366,21 @@ async def schedule_table_view(
         table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 16px;
+            font-size: {'20px' if ppt_export else '16px'};
             table-layout: fixed;
+            {'flex: 1;' if ppt_export else ''}
         }}
         th {{
             background: #1E40AF;
             color: white;
-            padding: 12px 10px;
+            padding: {'16px 14px' if ppt_export else '12px 10px'};
             text-align: left;
             font-weight: bold;
-            font-size: 15px;
+            font-size: {'19px' if ppt_export else '15px'};
             white-space: nowrap;
         }}
         td {{
-            padding: 12px 10px;
+            padding: {'16px 14px' if ppt_export else '12px 10px'};
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
             vertical-align: top;
