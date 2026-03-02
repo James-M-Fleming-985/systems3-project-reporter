@@ -174,6 +174,11 @@ class ChartFormatterService:
         
         for project in projects:
             for milestone in project.milestones:
+                # Only show true milestones (zero duration / Milestone=1) in the milestone tab
+                # Regular tasks (is_true_milestone=False) are excluded from the milestone tracker
+                if getattr(milestone, 'is_true_milestone', None) is False:
+                    continue
+                
                 target_date = datetime.strptime(
                     milestone.target_date, '%Y-%m-%d'
                 ).date()
@@ -184,9 +189,14 @@ class ChartFormatterService:
                     'project': project.project_code,  # Use project_code for updates
                     'parent_project': milestone.parent_project,
                     'target_date': milestone.target_date,
+                    'start_date': getattr(milestone, 'start_date', None),
                     'status': milestone.status,
                     'completion_percentage': milestone.completion_percentage,
-                    'resources': milestone.resources
+                    'resources': milestone.resources,
+                    'notes': getattr(milestone, 'notes', None) or '',
+                    'is_true_milestone': getattr(milestone, 'is_true_milestone', None),
+                    'outline_level': getattr(milestone, 'outline_level', None),
+                    'parent_levels': getattr(milestone, 'parent_levels', None)
                 }
                 
                 if milestone.status == 'COMPLETED':

@@ -170,9 +170,15 @@ async def get_calendar_events(request: Request):
                 if not target_date and not start_date:
                     continue
                 
-                # Source-based color: milestones are always blue family
-                event_color = '#3B82F6'
-                border_color = '#2563EB'
+                # Use program-assigned color so milestones match their program
+                event_color = color
+                # Derive a darker border by reducing brightness
+                # Simple approach: darken hex color by ~20%
+                try:
+                    r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+                    border_color = f'#{max(0,int(r*0.75)):02x}{max(0,int(g*0.75)):02x}{max(0,int(b*0.75)):02x}'
+                except (ValueError, IndexError):
+                    border_color = color
                 
                 # Determine normalized status category
                 if status == 'COMPLETED':

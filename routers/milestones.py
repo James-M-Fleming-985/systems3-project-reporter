@@ -5,8 +5,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+from services.change_detection import ChangeDetectionService
 import yaml
 import os
 import logging
@@ -23,9 +24,13 @@ DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 DEFAULT_IN_PROGRESS_PERCENTAGE = 50
 
 
+change_detector = ChangeDetectionService()
+
+
 class MilestoneUpdate(BaseModel):
     project_code: str
     milestone: dict
+    confirmed_date_change: Optional[bool] = False  # User confirmed change record creation
 
 
 @router.post("/milestones/update")
@@ -153,15 +158,69 @@ async def update_milestone(data: MilestoneUpdate):
                         'completion_percentage', 0
                     )
                     old_completion = milestone.get('completion_percentage', 0)
+                    old_target_date = milestone.get('target_date', '')
+                    new_target_date = updated_milestone['target_date']
+                    old_status = milestone.get('status', 'NOT_STARTED')
+                    new_status = updated_milestone['status']
+                    
+                    # Track which fields the user edited
+                    existing_edited = milestone.get('user_edited_fields') or []
+                    if new_status != old_status and 'status' not in existing_edited:
+                        existing_edited.append('status')
+                    if new_completion != old_completion and 'completion_percentage' not in existing_edited:
+                        existing_edited.append('completion_percentage')
+                    
+                    # Create change record if target date changed and user confirmed
+                    if old_target_date and new_target_date and old_target_date != new_target_date and data.confirmed_date_change:
+                        try:
+                            old_dt = datetime.strptime(old_target_date, '%Y-%m-%d')
+                            new_dt = datetime.strptime(new_target_date, '%Y-%m-%d')
+                            days_diff = (new_dt - old_dt).days
+                            
+                            change_info = {
+                                'milestone_name': incoming_name,
+                                'old_date': old_target_date,
+                                'new_date': new_target_date,
+                                'days_diff': days_diff,
+                                'type': 'DELAY' if days_diff > 0 else 'ACCELERATION'
+                            }
+                            
+                            impact = change_detector.calculate_impact(days_diff, incoming_name)
+                            reason = f"Manual update via milestone tracker on {datetime.now().strftime('%Y-%m-%d')}"
+                            change_record = change_detector.create_change_record(
+                                change_info, reason, impact, project_code
+                            )
+                            
+                            # Add change record to project data
+                            if 'changes' not in project_data:
+                                project_data['changes'] = []
+                            project_data['changes'].append({
+                                'change_id': change_record.change_id,
+                                'date': change_record.date,
+                                'old_date': change_record.old_date,
+                                'new_date': change_record.new_date,
+                                'reason': change_record.reason,
+                                'impact': change_record.impact
+                            })
+                            logger.info(f"📝 Change record created: {change_record.change_id}")
+                        except Exception as ce:
+                            logger.warning(f"⚠️ Failed to create change record: {ce}")
                     
                     project_data['milestones'][i] = {
                         'id': milestone.get('id'),
                         'name': incoming_name,
-                        'target_date': updated_milestone['target_date'],
-                        'status': updated_milestone['status'],
-                        'resources': updated_milestone.get('resources') or None,  # Convert empty string/None to None
+                        'target_date': new_target_date,
+                        'start_date': milestone.get('start_date'),
+                        'status': new_status,
+                        'resources': updated_milestone.get('resources') or None,
                         'completion_percentage': new_completion,
+                        'completion_date': milestone.get('completion_date'),
+                        'notes': updated_milestone.get('notes') or milestone.get('notes'),
                         'parent_project': milestone.get('parent_project'),
+                        'parent_levels': milestone.get('parent_levels'),
+                        'outline_level': milestone.get('outline_level'),
+                        'is_true_milestone': milestone.get('is_true_milestone'),
+                        'user_edited_fields': existing_edited if existing_edited else None,
                         'project': milestone.get('project')
                     }
                     logger.warning(f"✅ Updated milestone at index {i}")

@@ -2,6 +2,163 @@
 
 {% block title %}Milestone Tracker - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Kanban board styles */
+    .kanban-column {
+        min-height: 400px;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+    .kanban-column.drag-over {
+        background-color: #EBF5FF !important;
+        border: 2px dashed #3B82F6 !important;
+    }
+    .kanban-column .drop-placeholder {
+        display: none;
+        border: 2px dashed #CBD5E1;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        text-align: center;
+        color: #94A3B8;
+        margin: 0.5rem 0;
+    }
+    .kanban-column.drag-over .drop-placeholder {
+        display: block;
+    }
+
+    /* Modern milestone card */
+    .milestone-card {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid #E2E8F0;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .milestone-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: #93C5FD;
+    }
+    .milestone-card.dragging {
+        opacity: 0.5;
+        transform: rotate(2deg);
+    }
+    .milestone-card .drag-handle {
+        cursor: grab;
+        color: #CBD5E1;
+        transition: color 0.15s;
+    }
+    .milestone-card:hover .drag-handle {
+        color: #94A3B8;
+    }
+    .milestone-card .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    /* Avatar initials */
+    .avatar-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    /* Progress ring */
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .progress-ring circle {
+        transition: stroke-dashoffset 0.35s;
+    }
+
+    /* Overdue pulse */
+    @keyframes overdue-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .overdue-dot {
+        animation: overdue-pulse 2s ease-in-out infinite;
+    }
+
+    /* Status badges */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        border: 2px solid transparent;
+    }
+    .status-pill:hover { filter: brightness(0.95); }
+    .status-pill.active { border-color: currentColor; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+
+    /* Tab styles */
+    .modal-tab {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6B7280;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .modal-tab:hover { color: #374151; }
+    .modal-tab.active {
+        color: #2563EB;
+        border-bottom-color: #2563EB;
+    }
+
+    /* Toast notification */
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        color: white;
+        font-weight: 500;
+        font-size: 0.875rem;
+        z-index: 9999;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    /* Sibling task item */
+    .sibling-task {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid #E2E8F0;
+        transition: background-color 0.15s;
+    }
+    .sibling-task:hover {
+        background-color: #F8FAFC;
+    }
+
+    /* Confirmation dialog */
+    .confirm-overlay {
+        backdrop-filter: blur(4px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Notification Modal -->
 <div id="notificationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -10,61 +167,195 @@
     </div>
 </div>
 
-<!-- Edit Milestone Modal -->
-<div id="editMilestoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/3 shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-2xl font-bold text-gray-800">Edit Milestone</h3>
-            <button onclick="closeMilestoneModal()" title="Close edit modal" aria-label="Close edit modal" class="text-gray-400 hover:text-gray-600">
+<!-- Date Change Confirmation Dialog -->
+<div id="dateChangeConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 confirm-overlay flex items-center justify-center z-[60]">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="bg-amber-50 border-b border-amber-200 px-6 py-4">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 text-amber-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 class="text-lg font-bold text-gray-900">Schedule Change Detected</h3>
+            </div>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-sm text-gray-700 mb-3" id="dateChangeMessage"></p>
+            <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                <p class="text-xs text-gray-500 mb-1">This will:</p>
+                <ul class="text-xs text-gray-600 space-y-1">
+                    <li class="flex items-center"><svg class="w-3.5 h-3.5 text-blue-500 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Create a change record on the <strong>Changes tab</strong></li>
+                    <li class="flex items-center"><svg class="w-3.5 h-3.5 text-blue-500 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Appear on the <strong>Changes slide</strong> in PowerPoint export</li>
+                </ul>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+            <button id="dateChangeCancelBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </button>
+            <button id="dateChangeAcceptBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                Accept & Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabbed Milestone Modal -->
+<div id="editMilestoneModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-3/4 lg:w-2/3 max-w-4xl max-h-[90vh] flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                <div id="modalStatusDot" class="w-3 h-3 rounded-full bg-gray-400 flex-shrink-0"></div>
+                <input type="text" id="milestoneName" class="text-xl font-bold text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent flex-1 min-w-0 p-0" placeholder="Milestone name">
+                <input type="hidden" id="milestoneIndex" />
+            </div>
+            <button onclick="closeMilestoneModal()" class="text-gray-400 hover:text-gray-600 ml-4 flex-shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
-        
-        <form id="editMilestoneForm" class="space-y-4">
-            <input type="hidden" id="milestoneIndex" />
-            
-            <div>
-                <label for="milestoneName" class="block text-sm font-medium text-gray-700 mb-1">Milestone Name</label>
-                <input type="text" id="milestoneName" required placeholder="Enter milestone name" aria-label="Milestone name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 px-6">
+            <button onclick="switchModalTab('details')" id="tabDetails" class="modal-tab active">Details</button>
+            <button onclick="switchModalTab('notes')" id="tabNotes" class="modal-tab">Notes</button>
+            <button onclick="switchModalTab('related')" id="tabRelated" class="modal-tab">
+                Related Tasks <span id="relatedCount" class="ml-1 text-xs bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5">-</span>
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+            <!-- Details Tab -->
+            <div id="panelDetails" class="space-y-5">
+                <!-- Status Pills -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="setModalStatus('NOT_STARTED')" class="status-pill bg-gray-100 text-gray-700" data-status="NOT_STARTED">
+                            <span class="w-2 h-2 rounded-full bg-gray-400 mr-2"></span>Not Started
+                        </button>
+                        <button type="button" onclick="setModalStatus('IN_PROGRESS')" class="status-pill bg-blue-100 text-blue-700" data-status="IN_PROGRESS">
+                            <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>In Progress
+                        </button>
+                        <button type="button" onclick="setModalStatus('COMPLETED')" class="status-pill bg-green-100 text-green-700" data-status="COMPLETED">
+                            <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Completed
+                        </button>
+                    </div>
+                    <input type="hidden" id="milestoneStatus" value="NOT_STARTED">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Target Date -->
+                    <div>
+                        <label for="milestoneTargetDate" class="block text-sm font-semibold text-gray-700 mb-1">Target Date</label>
+                        <input type="date" id="milestoneTargetDate" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <p id="dateRelativeLabel" class="text-xs mt-1 text-gray-500"></p>
+                    </div>
+
+                    <!-- Start Date (read-only) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date <span class="text-xs text-gray-400 font-normal">(from XML)</span></label>
+                        <input type="date" id="milestoneStartDate" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-500" disabled>
+                    </div>
+
+                    <!-- Completion % -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Completion</label>
+                        <div class="flex items-center space-x-3">
+                            <input type="range" id="milestoneCompletionRange" min="0" max="100" value="0" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="syncCompletion(this.value)">
+                            <div class="flex items-center space-x-1">
+                                <input type="number" id="milestoneCompletion" min="0" max="100" value="0" class="w-16 px-2 py-2 border border-gray-300 rounded-lg text-sm text-center" oninput="syncCompletionRange(this.value)">
+                                <span class="text-sm text-gray-500">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resources -->
+                    <div>
+                        <label for="milestoneResources" class="block text-sm font-semibold text-gray-700 mb-1">Resources</label>
+                        <input type="text" id="milestoneResources" placeholder="e.g., Alice; Bob" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+
+                <!-- Parent / Hierarchy info (read-only) -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Hierarchy</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-xs text-gray-500">Parent Project</span>
+                            <p id="modalParentProject" class="text-sm font-medium text-gray-800">-</p>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500">Level 3 Group</span>
+                            <p id="modalLevel3Parent" class="text-sm font-medium text-gray-800">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overdue warning -->
+                <div id="overdueWarning" class="hidden bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span id="overdueText" class="text-sm text-red-700 font-medium"></span>
+                    </div>
+                </div>
             </div>
-            
-            <div>
-                <label for="milestoneTargetDate" class="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
-                <input type="date" id="milestoneTargetDate" required aria-label="Target date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            <!-- Notes Tab -->
+            <div id="panelNotes" class="hidden">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                <textarea id="milestoneNotes" rows="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-y" placeholder="Add notes about this milestone..."></textarea>
+                <p class="text-xs text-gray-400 mt-1">Notes are preserved when you re-upload the XML file.</p>
             </div>
-            
-            <div>
-                <label for="milestoneStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select id="milestoneStatus" title="Milestone status" aria-label="Milestone status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="NOT_STARTED">Not Started</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                </select>
+
+            <!-- Related Tasks Tab -->
+            <div id="panelRelated" class="hidden">
+                <div id="relatedLoading" class="flex items-center justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-blue-500 mr-3" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span class="text-gray-500">Loading related tasks...</span>
+                </div>
+                <div id="relatedContent" class="hidden">
+                    <div id="relatedSummary" class="flex items-center justify-between bg-blue-50 rounded-lg p-3 mb-4">
+                        <div>
+                            <span class="text-sm font-semibold text-blue-900" id="relatedParentLabel">-</span>
+                            <p class="text-xs text-blue-600" id="relatedProgressText">-</p>
+                        </div>
+                        <div class="w-24 bg-blue-200 rounded-full h-2">
+                            <div id="relatedProgressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="relatedTasksList" class="space-y-2"></div>
+                </div>
+                <div id="relatedEmpty" class="hidden text-center py-12">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <p class="text-sm text-gray-500">No related tasks found</p>
+                </div>
             </div>
-            
-            <div>
-                <label for="milestoneResources" class="block text-sm font-medium text-gray-700 mb-1">Resources</label>
-                <input type="text" id="milestoneResources" placeholder="e.g., Alice; Bob" aria-label="Milestone resources" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Completion Percentage (0-100)</label>
-                <input type="number" id="milestoneCompletion" min="0" max="100" placeholder="Enter 0-100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div class="flex justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeMilestoneModal()" title="Cancel edit" aria-label="Cancel edit" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                    Cancel
-                </button>
-                <button type="submit" title="Save changes" aria-label="Save changes" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Save Changes
-                </button>
-            </div>
-        </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+            <button type="button" onclick="closeMilestoneModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                Cancel
+            </button>
+            <button type="button" onclick="saveMilestone()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                Save Changes
+            </button>
+        </div>
     </div>
 </div>
+
+<!-- Toast container -->
+<div id="toast" class="toast bg-green-600"></div>
 
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2" id="milestonePageTitle">📍 Milestone Tracker</h2>
@@ -73,12 +364,12 @@
 
 <!-- View Controls -->
 <div class="bg-white rounded-lg shadow p-6 mb-6">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between flex-wrap gap-4">
         <div class="flex items-center space-x-4">
             <label class="text-sm font-semibold text-gray-700">View:</label>
             <div class="flex space-x-2">
-                <button onclick="switchView('status')" id="statusViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                    Status View
+                <button onclick="switchView('board')" id="boardViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    Board
                 </button>
                 <button onclick="switchView('week')" id="weekViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
                     Week View
@@ -90,7 +381,7 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <!-- Cards per column dropdown (only visible in month view) -->
+            <!-- Cards per column dropdown -->
             <div id="cardsPerColumnControl" class="hidden items-center space-x-2">
                 <label for="cardsPerColumn" class="text-sm font-semibold text-gray-700">Cards per column:</label>
                 <select id="cardsPerColumn" onchange="updateCardsPerColumn()" class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -105,7 +396,7 @@
             </div>
             
             <div class="flex items-center space-x-2">
-                <label class="text-sm font-semibold text-gray-700">Sort by Date:</label>
+                <label class="text-sm font-semibold text-gray-700">Sort:</label>
                 <button onclick="sortMilestones('asc')" id="sortAscBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
                     ⬆️ Ascending
                 </button>
@@ -117,87 +408,64 @@
     </div>
 </div>
 
-<!-- Status View (Quadrant) - Default -->
-<div id="statusView" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Completed Past -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center mb-4">
-            <div class="bg-green-100 rounded-full p-2 mr-3">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
+<!-- Kanban Board View (Default) -->
+<div id="boardView" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Not Started Column -->
+    <div class="bg-gray-50 rounded-xl p-4 kanban-column" data-status="NOT_STARTED"
+         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Not Started</h3>
             </div>
-            <h3 class="text-xl font-bold text-gray-800">Completed (<span id="completedCount">0</span>)</h3>
+            <span id="kanbanNotStartedCount" class="bg-gray-200 text-gray-600 text-xs font-bold rounded-full px-2 py-0.5">0</span>
         </div>
-        <div id="completedPastContainer" class="space-y-3 overflow-y-auto max-h-96">
-            <!-- Populated by JavaScript -->
-        </div>
+        <div id="kanbanNotStarted" class="space-y-3 min-h-[200px]"></div>
+        <div class="drop-placeholder">Drop here to set as Not Started</div>
     </div>
-    
-    <!-- Open Milestones -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center mb-4">
-            <div class="bg-gray-100 rounded-full p-2 mr-3">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+
+    <!-- In Progress Column -->
+    <div class="bg-blue-50 rounded-xl p-4 kanban-column" data-status="IN_PROGRESS"
+         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                <h3 class="text-sm font-bold text-blue-700 uppercase tracking-wider">In Progress</h3>
             </div>
-            <h3 class="text-xl font-bold text-gray-800">Open (<span id="openCount">0</span>)</h3>
+            <span id="kanbanInProgressCount" class="bg-blue-200 text-blue-700 text-xs font-bold rounded-full px-2 py-0.5">0</span>
         </div>
-        <div id="openContainer" class="space-y-3 overflow-y-auto max-h-96">
-            <!-- Populated by JavaScript -->
-        </div>
+        <div id="kanbanInProgress" class="space-y-3 min-h-[200px]"></div>
+        <div class="drop-placeholder">Drop here to set as In Progress</div>
     </div>
-    
-    <!-- At Risk (Upcoming Future) -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center mb-4">
-            <div class="bg-yellow-100 rounded-full p-2 mr-3">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
+
+    <!-- Completed Column -->
+    <div class="bg-green-50 rounded-xl p-4 kanban-column" data-status="COMPLETED"
+         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                <h3 class="text-sm font-bold text-green-700 uppercase tracking-wider">Completed</h3>
             </div>
-            <h3 class="text-xl font-bold text-gray-800">At Risk (<span id="atRiskCount">0</span>)</h3>
+            <span id="kanbanCompletedCount" class="bg-green-200 text-green-700 text-xs font-bold rounded-full px-2 py-0.5">0</span>
         </div>
-        <div id="atRiskContainer" class="space-y-3 overflow-y-auto max-h-96">
-            <!-- Populated by JavaScript -->
-        </div>
-    </div>
-    
-    <!-- Past Due (Delayed) -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center mb-4">
-            <div class="bg-red-100 rounded-full p-2 mr-3">
-                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">Past Due (<span id="pastDueCount">0</span>)</h3>
-        </div>
-        <div id="pastDueContainer" class="space-y-3 overflow-y-auto max-h-96">
-            <!-- Populated by JavaScript -->
-        </div>
+        <div id="kanbanCompleted" class="space-y-3 min-h-[200px]"></div>
+        <div class="drop-placeholder">Drop here to mark Completed</div>
     </div>
 </div>
 
 <!-- Week View (Hidden by default) -->
 <div id="weekView" class="hidden">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Last Week -->
         <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastWeekRange"></p>
             <div id="lastWeekCompleted" class="space-y-3 scrollable-milestone-container"></div>
         </div>
-        
-        <!-- This Week -->
         <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisWeekRange"></p>
             <div id="thisWeekMilestones" class="space-y-3 scrollable-milestone-container"></div>
         </div>
-        
-        <!-- Next Week -->
         <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextWeekRange"></p>
@@ -209,21 +477,16 @@
 <!-- Month View (Hidden by default) -->
 <div id="monthView" class="hidden">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Last Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastMonthRange"></p>
             <div id="lastMonthCompleted" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
-        
-        <!-- This Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisMonthRange"></p>
             <div id="thisMonthMilestones" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
-        
-        <!-- Next Month -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextMonthRange"></p>
@@ -235,78 +498,78 @@
 
 {% block scripts %}
 <script>
-// Milestones data from server (pre-filtered to selected project)
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
 const allMilestones = {{ quadrants | tojson | safe }};
 const projectName = "{{ project.project_name }}";
 const projectCode = "{{ project.project_code }}";
 
-// Ensure all arrays exist (defensive programming)
 allMilestones.completed_past = allMilestones.completed_past || [];
 allMilestones.open = allMilestones.open || [];
 allMilestones.upcoming_future = allMilestones.upcoming_future || [];
 allMilestones.delayed = allMilestones.delayed || [];
 
-const totalMilestones = allMilestones.completed_past.length + 
-                       allMilestones.open.length + 
-                       allMilestones.upcoming_future.length + 
-                       allMilestones.delayed.length;
+let allMilestonesFlat = [];
+let currentSortOrder = 'asc';
+let currentModalMilestone = null;  // Track original milestone data for change detection
 
+const totalMilestones = allMilestones.completed_past.length + allMilestones.open.length +
+                        allMilestones.upcoming_future.length + allMilestones.delayed.length;
 console.log('📊 MILESTONES - Rendering', totalMilestones, 'milestones for', projectName);
 
-// Validate and log milestone data
-console.log('Loaded milestones:', allMilestones);
-if (allMilestones) {
-    const sampleMilestone = [...(allMilestones.completed_past || []), ...(allMilestones.open || [])][0];
-    if (sampleMilestone) {
-        console.log('Sample milestone project field:', sampleMilestone.project);
-    }
+// Avatar color palette
+const avatarColors = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#F97316'];
+
+function rebuildFlat() {
+    allMilestonesFlat = [
+        ...(allMilestones.completed_past || []),
+        ...(allMilestones.open || []),
+        ...(allMilestones.upcoming_future || []),
+        ...(allMilestones.delayed || [])
+    ];
 }
 
-// Current sort order
-let currentSortOrder = 'asc'; // Default ascending
-
-// Sort milestones by target date
-function sortMilestones(order) {
-    currentSortOrder = order;
-    
-    // Update button styles
-    const ascBtn = document.getElementById('sortAscBtn');
-    const descBtn = document.getElementById('sortDescBtn');
-    
-    if (order === 'asc') {
-        ascBtn.className = 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
-        descBtn.className = 'px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
-    } else {
-        ascBtn.className = 'px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
-        descBtn.className = 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
-    }
-    
-    // Sort all quadrants
-    const sortFn = (a, b) => {
-        const dateA = new Date(a.target_date);
-        const dateB = new Date(b.target_date);
-        return order === 'asc' ? dateA - dateB : dateB - dateA;
-    };
-    
-    allMilestones.completed_past.sort(sortFn);
-    allMilestones.open.sort(sortFn);
-    allMilestones.upcoming_future.sort(sortFn);
-    allMilestones.delayed.sort(sortFn);
-    
-    // Re-render current view
-    const currentView = document.querySelector('[id$="View"]:not(.hidden)');
-    if (currentView) {
-        const viewName = currentView.id.replace('View', '');
-        switchView(viewName);
-    }
+// ═══════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════
+function getRelativeDate(dateStr) {
+    if (!dateStr) return '';
+    const target = new Date(dateStr + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.round((target - today) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    if (diff === -1) return 'Yesterday';
+    if (diff > 0 && diff <= 7) return `${diff} days away`;
+    if (diff > 7 && diff <= 30) return `${Math.ceil(diff/7)} weeks away`;
+    if (diff > 30) return `${Math.ceil(diff/30)} months away`;
+    if (diff < 0 && diff >= -7) return `${Math.abs(diff)} days overdue`;
+    if (diff < -7 && diff >= -30) return `${Math.ceil(Math.abs(diff)/7)} weeks overdue`;
+    return `${Math.ceil(Math.abs(diff)/30)} months overdue`;
 }
 
-// Date helper functions
+function isOverdue(milestone) {
+    if (milestone.status === 'COMPLETED') return false;
+    const target = new Date(milestone.target_date + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    return target < today;
+}
+
+function getInitials(name) {
+    return name.split(/\s+/).map(w => w[0]).join('').substring(0,2).toUpperCase();
+}
+
+function parseResources(resourceStr) {
+    if (!resourceStr) return [];
+    return resourceStr.split(/[;,]/).map(r => r.trim()).filter(r => r);
+}
+
 function getWeekRange(date) {
     const start = new Date(date);
-    start.setDate(start.getDate() - start.getDay()); // Start of week (Sunday)
+    start.setDate(start.getDate() - start.getDay());
     const end = new Date(start);
-    end.setDate(end.getDate() + 6); // End of week (Saturday)
+    end.setDate(end.getDate() + 6);
     return { start, end };
 }
 
@@ -314,10 +577,6 @@ function getMonthRange(date) {
     const start = new Date(date.getFullYear(), date.getMonth(), 1);
     const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return { start, end };
-}
-
-function formatDate(date) {
-    return date.toISOString().split('T')[0];
 }
 
 function formatDateRange(start, end) {
@@ -330,407 +589,362 @@ function isDateInRange(dateStr, start, end) {
     return date >= start && date <= end;
 }
 
-// Milestone rendering function
-function renderMilestone(milestone, showStatus = true, cardHeight = 'min-h-[140px]', milestoneIndex = -1) {
-    const statusColors = {
-        'COMPLETED': 'green',
-        'IN_PROGRESS': 'yellow',
-        'NOT_STARTED': 'gray'
-    };
-    
-    const statusIcons = {
-        'COMPLETED': '✓',
-        'IN_PROGRESS': '⏳',
-        'NOT_STARTED': '○'
-    };
-    
-    const color = statusColors[milestone.status] || 'gray';
-    const icon = statusIcons[milestone.status] || '○';
-    
-    let html = `
-        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden ${cardHeight} cursor-pointer hover:shadow-md transition-shadow" onclick="editMilestone(${milestoneIndex})">
-            <p class="font-semibold text-gray-800 text-sm">${milestone.name}</p>
-    `;
-    
-    if (milestone.parent_project) {
-        html += `<p class="text-xs text-gray-500">📂 ${milestone.parent_project}</p>`;
-    }
-    
-    html += `<p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
-    
-    if (milestone.resources) {
-        html += `<p class="text-xs text-gray-600 mt-1">👤 ${milestone.resources}</p>`;
-    }
-    
-    if (showStatus) {
-        html += `<p class="text-xs text-${color}-600 mt-1">${icon} ${milestone.status.replace('_', ' ')}</p>`;
-    }
-    
-    if (milestone.completion_percentage) {
-        html += `
-            <div class="mt-2">
-                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                    <div class="bg-${color}-500 h-1.5 rounded-full" style="width: ${milestone.completion_percentage}%"></div>
-                </div>
-            </div>`;
-    }
-    
-    html += `</div>`;
-    return html;
+// ═══════════════════════════════════════════════════
+// PROGRESS RING SVG
+// ═══════════════════════════════════════════════════
+function progressRingSvg(pct, size=32, strokeWidth=3) {
+    const r = (size - strokeWidth) / 2;
+    const circ = 2 * Math.PI * r;
+    const offset = circ - (pct / 100) * circ;
+    const color = pct >= 100 ? '#10B981' : pct > 0 ? '#3B82F6' : '#D1D5DB';
+    return `<svg class="progress-ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#E5E7EB" stroke-width="${strokeWidth}" fill="none"/>
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${strokeWidth}" fill="none"
+                stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+        <text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="central"
+              font-size="${size*0.28}" font-weight="600" fill="#6B7280">${pct || 0}</text>
+    </svg>`;
 }
 
-// Populate week view
+// ═══════════════════════════════════════════════════
+// MODERN CARD RENDERER
+// ═══════════════════════════════════════════════════
+function renderModernCard(milestone, flatIndex, draggable = true) {
+    const overdue = isOverdue(milestone);
+    const relDate = getRelativeDate(milestone.target_date);
+    const resources = parseResources(milestone.resources);
+    const pct = milestone.completion_percentage || 0;
+
+    let dateClass = 'text-gray-500';
+    if (overdue) dateClass = 'text-red-600 font-semibold';
+    else if (relDate.includes('Today') || relDate.includes('Tomorrow')) dateClass = 'text-blue-600 font-semibold';
+
+    let avatarsHtml = '';
+    if (resources.length > 0) {
+        avatarsHtml = '<div class="flex -space-x-1.5 mt-2">';
+        resources.slice(0, 3).forEach((name, i) => {
+            const bg = avatarColors[i % avatarColors.length];
+            avatarsHtml += `<div class="avatar-circle" style="background:${bg}" title="${name}">${getInitials(name)}</div>`;
+        });
+        if (resources.length > 3) {
+            avatarsHtml += `<div class="avatar-circle" style="background:#94A3B8" title="${resources.slice(3).join(', ')}">+${resources.length-3}</div>`;
+        }
+        avatarsHtml += '</div>';
+    }
+
+    const dragAttr = draggable ? `draggable="true" ondragstart="handleDragStart(event, ${flatIndex})" ondragend="handleDragEnd(event)"` : '';
+
+    return `
+    <div class="milestone-card" ${dragAttr} onclick="editMilestone(${flatIndex})" data-index="${flatIndex}">
+        <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0 pr-2">
+                ${draggable ? '<div class="drag-handle inline-block mr-1 align-top"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg></div>' : ''}
+                <p class="font-semibold text-gray-800 text-sm leading-tight truncate inline" title="${milestone.name}">${milestone.name}</p>
+            </div>
+            <div class="flex-shrink-0">
+                ${progressRingSvg(pct)}
+            </div>
+        </div>
+        ${milestone.parent_project ? `<div class="mt-1.5"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">${milestone.parent_project}</span></div>` : ''}
+        <div class="flex items-center justify-between mt-2">
+            <div class="flex items-center">
+                ${overdue ? '<span class="w-2 h-2 rounded-full bg-red-500 overdue-dot mr-1.5"></span>' : ''}
+                <span class="text-xs ${dateClass}">${milestone.target_date} · ${relDate}</span>
+            </div>
+        </div>
+        ${avatarsHtml}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// KANBAN BOARD
+// ═══════════════════════════════════════════════════
+function populateBoardView() {
+    rebuildFlat();
+    
+    const notStarted = allMilestonesFlat.filter(m => m.status === 'NOT_STARTED');
+    const inProgress = allMilestonesFlat.filter(m => m.status === 'IN_PROGRESS');
+    const completed = allMilestonesFlat.filter(m => m.status === 'COMPLETED');
+
+    document.getElementById('kanbanNotStarted').innerHTML = notStarted.length > 0
+        ? notStarted.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
+        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
+
+    document.getElementById('kanbanInProgress').innerHTML = inProgress.length > 0
+        ? inProgress.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
+        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
+
+    document.getElementById('kanbanCompleted').innerHTML = completed.length > 0
+        ? completed.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
+        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
+
+    document.getElementById('kanbanNotStartedCount').textContent = notStarted.length;
+    document.getElementById('kanbanInProgressCount').textContent = inProgress.length;
+    document.getElementById('kanbanCompletedCount').textContent = completed.length;
+}
+
+// ═══════════════════════════════════════════════════
+// DRAG AND DROP
+// ═══════════════════════════════════════════════════
+let draggedIndex = null;
+
+function handleDragStart(e, index) {
+    draggedIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+    setTimeout(() => e.target.closest('.milestone-card').classList.add('dragging'), 0);
+}
+
+function handleDragEnd(e) {
+    e.target.closest('.milestone-card')?.classList.remove('dragging');
+    document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+    draggedIndex = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    const col = e.currentTarget;
+    if (!col.contains(e.relatedTarget)) {
+        col.classList.remove('drag-over');
+    }
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.remove('drag-over');
+    
+    const index = parseInt(e.dataTransfer.getData('text/plain'));
+    const newStatus = col.dataset.status;
+    
+    if (isNaN(index) || index < 0 || index >= allMilestonesFlat.length) return;
+    
+    const milestone = allMilestonesFlat[index];
+    if (milestone.status === newStatus) return; // No change
+
+    if (!milestone.project) {
+        showToast('Missing project information', 'bg-red-600');
+        return;
+    }
+
+    const oldStatus = milestone.status;
+    // Set appropriate completion %
+    let newCompletion = milestone.completion_percentage || 0;
+    if (newStatus === 'COMPLETED') newCompletion = 100;
+    else if (newStatus === 'IN_PROGRESS' && newCompletion === 0) newCompletion = 50;
+    else if (newStatus === 'NOT_STARTED') newCompletion = 0;
+
+    // Optimistic update
+    milestone.status = newStatus;
+    milestone.completion_percentage = newCompletion;
+    populateBoardView();
+
+    try {
+        const response = await fetch('/milestones/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: milestone.project,
+                milestone: { ...milestone, status: newStatus, completion_percentage: newCompletion },
+                confirmed_date_change: false
+            })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+            showToast(`Moved to ${newStatus.replace(/_/g, ' ')}`, 'bg-green-600');
+        } else {
+            // Revert
+            milestone.status = oldStatus;
+            milestone.completion_percentage = newCompletion === 100 ? 0 : milestone.completion_percentage;
+            populateBoardView();
+            showToast('Failed to update', 'bg-red-600');
+        }
+    } catch (err) {
+        milestone.status = oldStatus;
+        populateBoardView();
+        showToast('Network error', 'bg-red-600');
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// WEEK / MONTH VIEWS (using modern cards)
+// ═══════════════════════════════════════════════════
 function populateWeekView() {
-    console.log('📅 Populating week view...');
+    rebuildFlat();
     const today = new Date();
-    const lastWeek = new Date(today);
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    const nextWeek = new Date(today);
-    nextWeek.setDate(nextWeek.getDate() + 7);
+    const lastWeek = new Date(today); lastWeek.setDate(lastWeek.getDate() - 7);
+    const nextWeek = new Date(today); nextWeek.setDate(nextWeek.getDate() + 7);
     
-    const lastWeekRange = getWeekRange(lastWeek);
-    const thisWeekRange = getWeekRange(today);
-    const nextWeekRange = getWeekRange(nextWeek);
-    
-    document.getElementById('lastWeekRange').textContent = formatDateRange(lastWeekRange.start, lastWeekRange.end);
-    document.getElementById('thisWeekRange').textContent = formatDateRange(thisWeekRange.start, thisWeekRange.end);
-    document.getElementById('nextWeekRange').textContent = formatDateRange(nextWeekRange.start, nextWeekRange.end);
-    
-    // Build flat array for editing with indices (with null safety)
-    allMilestonesFlat = [
-        ...(allMilestones.completed_past || []),
-        ...(allMilestones.open || []),
-        ...(allMilestones.upcoming_future || []),
-        ...(allMilestones.delayed || [])
-    ];
-    console.log('📅 Week view: total milestones:', allMilestonesFlat.length);
-    
-    const lastWeekCompleted = allMilestonesFlat.filter(m => 
-        m.status === 'COMPLETED' && isDateInRange(m.target_date, lastWeekRange.start, lastWeekRange.end)
-    );
-    
-    const thisWeekMilestones = allMilestonesFlat.filter(m => 
-        isDateInRange(m.target_date, thisWeekRange.start, thisWeekRange.end)
-    );
-    
-    const nextWeekMilestones = allMilestonesFlat.filter(m => 
-        isDateInRange(m.target_date, nextWeekRange.start, nextWeekRange.end)
-    );
-    
-    document.getElementById('lastWeekCompleted').innerHTML = lastWeekCompleted.length > 0
-        ? lastWeekCompleted.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, 'min-h-[140px]', index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones completed</p>';
-    
-    document.getElementById('thisWeekMilestones').innerHTML = thisWeekMilestones.length > 0
-        ? thisWeekMilestones.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, 'min-h-[140px]', index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
-    
-    document.getElementById('nextWeekMilestones').innerHTML = nextWeekMilestones.length > 0
-        ? nextWeekMilestones.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, 'min-h-[140px]', index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
-    
-    // Force scroll properties after content is loaded
+    const ranges = {
+        last: getWeekRange(lastWeek),
+        this: getWeekRange(today),
+        next: getWeekRange(nextWeek)
+    };
+
+    document.getElementById('lastWeekRange').textContent = formatDateRange(ranges.last.start, ranges.last.end);
+    document.getElementById('thisWeekRange').textContent = formatDateRange(ranges.this.start, ranges.this.end);
+    document.getElementById('nextWeekRange').textContent = formatDateRange(ranges.next.start, ranges.next.end);
+
+    const lastW = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.last.start, ranges.last.end));
+    const thisW = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.this.start, ranges.this.end));
+    const nextW = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.next.start, ranges.next.end));
+
+    const renderList = (items, containerId, empty) => {
+        document.getElementById(containerId).innerHTML = items.length > 0
+            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), false)).join('')
+            : `<p class="text-sm text-gray-500">${empty}</p>`;
+    };
+
+    renderList(lastW, 'lastWeekCompleted', 'No milestones');
+    renderList(thisW, 'thisWeekMilestones', 'No milestones scheduled');
+    renderList(nextW, 'nextWeekMilestones', 'No milestones scheduled');
+
     setTimeout(() => {
         ['lastWeekCompleted', 'thisWeekMilestones', 'nextWeekMilestones'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                el.style.overflowY = 'auto';
-                el.style.height = '850px';
-                el.style.display = 'block';
-            }
+            if (el) { el.style.overflowY = 'auto'; el.style.height = '850px'; }
         });
     }, 100);
 }
 
-// Populate month view
 function populateMonthView() {
-    console.log('📆 Populating month view...');
+    rebuildFlat();
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    
-    const lastMonthRange = getMonthRange(lastMonth);
-    const thisMonthRange = getMonthRange(today);
-    const nextMonthRange = getMonthRange(nextMonth);
-    
-    document.getElementById('lastMonthRange').textContent = formatDateRange(lastMonthRange.start, lastMonthRange.end);
-    document.getElementById('thisMonthRange').textContent = formatDateRange(thisMonthRange.start, thisMonthRange.end);
-    document.getElementById('nextMonthRange').textContent = formatDateRange(nextMonthRange.start, nextMonthRange.end);
-    
-    // Build flat array for editing with indices (with null safety)
-    allMilestonesFlat = [
-        ...(allMilestones.completed_past || []),
-        ...(allMilestones.open || []),
-        ...(allMilestones.upcoming_future || []),
-        ...(allMilestones.delayed || [])
-    ];
-    console.log('📆 Month view: total milestones:', allMilestonesFlat.length);
-    
-    let lastMonthCompleted = allMilestonesFlat.filter(m => 
-        m.status === 'COMPLETED' && isDateInRange(m.target_date, lastMonthRange.start, lastMonthRange.end)
-    );
-    
-    let thisMonthMilestones = allMilestonesFlat.filter(m => 
-        isDateInRange(m.target_date, thisMonthRange.start, thisMonthRange.end)
-    );
-    
-    let nextMonthMilestones = allMilestonesFlat.filter(m => 
-        isDateInRange(m.target_date, nextMonthRange.start, nextMonthRange.end)
-    );
-    
-    // Apply card limit if set (skip if -1 which means "Normal" view)
+
+    const ranges = {
+        last: getMonthRange(lastMonth),
+        this: getMonthRange(today),
+        next: getMonthRange(nextMonth)
+    };
+
+    document.getElementById('lastMonthRange').textContent = formatDateRange(ranges.last.start, ranges.last.end);
+    document.getElementById('thisMonthRange').textContent = formatDateRange(ranges.this.start, ranges.this.end);
+    document.getElementById('nextMonthRange').textContent = formatDateRange(ranges.next.start, ranges.next.end);
+
+    let lastM = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.last.start, ranges.last.end));
+    let thisM = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.this.start, ranges.this.end));
+    let nextM = allMilestonesFlat.filter(m => isDateInRange(m.target_date, ranges.next.start, ranges.next.end));
+
     const cardLimit = parseInt(localStorage.getItem('milestonesCardsPerColumn') || '-1');
-    console.log('Applying card limit:', cardLimit, 'to', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length, 'milestones');
-    
-    // Calculate dynamic card height based on card limit to fit within fixed container
-    // Container height is 800px, need to account for spacing
-    let cardHeight = 'min-h-[140px]';
-    let spacing = 'space-y-3';
-    
     if (cardLimit > 0) {
-        // Slice arrays to the selected limit
-        lastMonthCompleted = lastMonthCompleted.slice(0, cardLimit);
-        thisMonthMilestones = thisMonthMilestones.slice(0, cardLimit);
-        nextMonthMilestones = nextMonthMilestones.slice(0, cardLimit);
-        console.log('After limit:', lastMonthCompleted.length, thisMonthMilestones.length, nextMonthMilestones.length);
-        
-        // Adjust card height and spacing based on number of cards to fit in ~800px container
-        if (cardLimit === 5) {
-            cardHeight = 'min-h-[140px] max-h-[140px]';
-            spacing = 'space-y-3';
-        } else if (cardLimit === 6) {
-            cardHeight = 'min-h-[115px] max-h-[115px]';
-            spacing = 'space-y-2';
-        } else if (cardLimit === 7) {
-            cardHeight = 'min-h-[98px] max-h-[98px]';
-            spacing = 'space-y-2';
-        } else if (cardLimit === 8) {
-            cardHeight = 'min-h-[85px] max-h-[85px]';
-            spacing = 'space-y-2';
-        } else if (cardLimit === 9) {
-            cardHeight = 'min-h-[75px] max-h-[75px]';
-            spacing = 'space-y-2';
-        } else if (cardLimit === 10) {
-            cardHeight = 'min-h-[68px] max-h-[68px]';
-            spacing = 'space-y-2';
-        }
+        lastM = lastM.slice(0, cardLimit);
+        thisM = thisM.slice(0, cardLimit);
+        nextM = nextM.slice(0, cardLimit);
     }
-    // else: cardLimit is -1 (Normal), use default full-size cards with scrolling
-    
-    // Update container spacing
-    document.getElementById('lastMonthCompleted').className = `${spacing} overflow-y-auto`;
-    document.getElementById('thisMonthMilestones').className = `${spacing} overflow-y-auto`;
-    document.getElementById('nextMonthMilestones').className = `${spacing} overflow-y-auto`;
-    
-    document.getElementById('lastMonthCompleted').innerHTML = lastMonthCompleted.length > 0
-        ? lastMonthCompleted.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, cardHeight, index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones completed</p>';
-    
-    document.getElementById('thisMonthMilestones').innerHTML = thisMonthMilestones.length > 0
-        ? thisMonthMilestones.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, cardHeight, index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
-    
-    document.getElementById('nextMonthMilestones').innerHTML = nextMonthMilestones.length > 0
-        ? nextMonthMilestones.map(m => {
-            const index = allMilestonesFlat.indexOf(m);
-            return renderMilestone(m, true, cardHeight, index);
-        }).join('')
-        : '<p class="text-sm text-gray-500">No milestones scheduled</p>';
+
+    const renderList = (items, containerId, empty) => {
+        document.getElementById(containerId).innerHTML = items.length > 0
+            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), false)).join('')
+            : `<p class="text-sm text-gray-500">${empty}</p>`;
+    };
+
+    renderList(lastM, 'lastMonthCompleted', 'No milestones');
+    renderList(thisM, 'thisMonthMilestones', 'No milestones scheduled');
+    renderList(nextM, 'nextMonthMilestones', 'No milestones scheduled');
 }
 
-// Update cards per column setting
+// ═══════════════════════════════════════════════════
+// SORT
+// ═══════════════════════════════════════════════════
+function sortMilestones(order) {
+    currentSortOrder = order;
+    const ascBtn = document.getElementById('sortAscBtn');
+    const descBtn = document.getElementById('sortDescBtn');
+    const active = 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+    const inactive = 'px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+    ascBtn.className = order === 'asc' ? active : inactive;
+    descBtn.className = order === 'desc' ? active : inactive;
+
+    const sortFn = (a, b) => {
+        const dA = new Date(a.target_date), dB = new Date(b.target_date);
+        return order === 'asc' ? dA - dB : dB - dA;
+    };
+    allMilestones.completed_past.sort(sortFn);
+    allMilestones.open.sort(sortFn);
+    allMilestones.upcoming_future.sort(sortFn);
+    allMilestones.delayed.sort(sortFn);
+
+    const currentView = document.querySelector('[id$="View"]:not(.hidden)');
+    if (currentView) switchView(currentView.id.replace('View', ''));
+}
+
+// ═══════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════
+function switchView(view) {
+    const views = { board: 'boardView', week: 'weekView', month: 'monthView' };
+    const btns = { board: 'boardViewBtn', week: 'weekViewBtn', month: 'monthViewBtn' };
+    const cardsCtrl = document.getElementById('cardsPerColumnControl');
+
+    localStorage.setItem('currentMilestoneView', view);
+
+    // Hide all
+    Object.values(views).forEach(id => document.getElementById(id).classList.add('hidden'));
+    cardsCtrl.classList.add('hidden');
+    cardsCtrl.classList.remove('flex');
+
+    const inactive = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
+    const active = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
+    Object.values(btns).forEach(id => document.getElementById(id).className = inactive);
+
+    // Show selected
+    if (views[view]) {
+        document.getElementById(views[view]).classList.remove('hidden');
+        document.getElementById(btns[view]).className = active;
+    }
+
+    if (view === 'month' || view === 'week') {
+        cardsCtrl.classList.remove('hidden');
+        cardsCtrl.classList.add('flex');
+    }
+
+    if (view === 'board') populateBoardView();
+    else if (view === 'week') populateWeekView();
+    else if (view === 'month') populateMonthView();
+}
+
 function updateCardsPerColumn() {
-    const select = document.getElementById('cardsPerColumn');
-    const value = select.value;
-    console.log('Cards per column changed to:', value);
-    localStorage.setItem('milestonesCardsPerColumn', value);
+    localStorage.setItem('milestonesCardsPerColumn', document.getElementById('cardsPerColumn').value);
     populateMonthView();
 }
 
-// Populate status view (quadrant view)
-function populateStatusView() {
-    // Build flat array for editing with indices
-    allMilestonesFlat = [
-        ...allMilestones.completed_past,
-        ...allMilestones.open,
-        ...allMilestones.upcoming_future,
-        ...allMilestones.delayed
-    ];
-    
-    let offset = 0;
-    
-    // Completed Past quadrant
-    document.getElementById('completedPastContainer').innerHTML = allMilestones.completed_past.length > 0
-        ? allMilestones.completed_past.map((m, idx) => renderMilestoneCard(m, 'green', offset + idx)).join('')
-        : '<p class="text-sm text-gray-500">No completed milestones</p>';
-    
-    offset += allMilestones.completed_past.length;
-    
-    // Open quadrant
-    document.getElementById('openContainer').innerHTML = allMilestones.open.length > 0
-        ? allMilestones.open.map((m, idx) => renderMilestoneCard(m, 'gray', offset + idx)).join('')
-        : '<p class="text-sm text-gray-500">No open milestones</p>';
-    
-    offset += allMilestones.open.length;
-    
-    // At Risk quadrant
-    document.getElementById('atRiskContainer').innerHTML = allMilestones.upcoming_future.length > 0
-        ? allMilestones.upcoming_future.map((m, idx) => renderMilestoneCard(m, 'yellow', offset + idx)).join('')
-        : '<p class="text-sm text-gray-500">No at-risk milestones</p>';
-    
-    offset += allMilestones.upcoming_future.length;
-    
-    // Past Due quadrant
-    document.getElementById('pastDueContainer').innerHTML = allMilestones.delayed.length > 0
-        ? allMilestones.delayed.map((m, idx) => renderMilestoneCard(m, 'red', offset + idx)).join('')
-        : '<p class="text-sm text-gray-500">No past due milestones</p>';
-    
-    // Update counts in headers
-    document.getElementById('completedCount').textContent = allMilestones.completed_past.length;
-    document.getElementById('openCount').textContent = allMilestones.open.length;
-    document.getElementById('atRiskCount').textContent = allMilestones.upcoming_future.length;
-    document.getElementById('pastDueCount').textContent = allMilestones.delayed.length;
-}
-
-// Render milestone card for status view
-function renderMilestoneCard(milestone, color, milestoneIndex = -1) {
-    let html = `
-        <div class="border-l-4 border-${color}-500 bg-${color}-50 p-3 rounded overflow-hidden min-h-[140px] cursor-pointer hover:shadow-md transition-shadow" onclick="editMilestone(${milestoneIndex})">
-            <p class="font-semibold text-gray-800 truncate" title="${milestone.name}">${milestone.name}</p>`;
-    
-    if (milestone.parent_project) {
-        html += `<p class="text-xs text-gray-500 truncate" title="${milestone.parent_project}">📂 ${milestone.parent_project}</p>`;
-    }
-    
-    html += `<p class="text-xs text-gray-500">Target: ${milestone.target_date}</p>`;
-    
-    if (milestone.resources) {
-        html += `<p class="text-xs text-gray-600 mt-1 truncate" title="${milestone.resources}">👤 ${milestone.resources}</p>`;
-    }
-    
-    if (milestone.completion_percentage) {
-        html += `
-            <div class="mt-2">
-                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                    <div class="bg-${color}-500 h-1.5 rounded-full" style="width: ${milestone.completion_percentage}%"></div>
-                </div>
-            </div>`;
-    }
-    
-    html += '</div>';
-    return html;
-}
-
-// Switch view function
-function switchView(view) {
-    const statusView = document.getElementById('statusView');
-    const weekView = document.getElementById('weekView');
-    const monthView = document.getElementById('monthView');
-    const cardsPerColumnControl = document.getElementById('cardsPerColumnControl');
-    
-    const statusBtn = document.getElementById('statusViewBtn');
-    const weekBtn = document.getElementById('weekViewBtn');
-    const monthBtn = document.getElementById('monthViewBtn');
-    
-    // Save current view to localStorage
-    localStorage.setItem('currentMilestoneView', view);
-    
-    // Hide all views and controls
-    statusView.classList.add('hidden');
-    weekView.classList.add('hidden');
-    monthView.classList.add('hidden');
-    cardsPerColumnControl.classList.add('hidden');
-    cardsPerColumnControl.classList.remove('flex');
-    
-    // Reset button styles
-    const inactiveClass = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition';
-    const activeClass = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition';
-    
-    statusBtn.className = inactiveClass;
-    weekBtn.className = inactiveClass;
-    monthBtn.className = inactiveClass;
-    
-    // Show cards per column control for all views
-    cardsPerColumnControl.classList.remove('hidden');
-    cardsPerColumnControl.classList.add('flex');
-    
-    // Show selected view
-    if (view === 'status') {
-        populateStatusView();
-        statusView.classList.remove('hidden');
-        statusBtn.className = activeClass;
-    } else if (view === 'week') {
-        populateWeekView();
-        weekView.classList.remove('hidden');
-        weekBtn.className = activeClass;
-    } else if (view === 'month') {
-        populateMonthView();
-        monthView.classList.remove('hidden');
-        monthBtn.className = activeClass;
-    }
-}
-
-// Notification functions
+// ═══════════════════════════════════════════════════
+// NOTIFICATIONS / TOAST
+// ═══════════════════════════════════════════════════
 function showNotification(type, title, message, details = null) {
     const modal = document.getElementById('notificationModal');
     const content = document.getElementById('notificationContent');
-    
     const isError = type === 'error';
-    const iconColor = isError ? 'red' : 'green';
-    const bgColor = isError ? 'red' : 'green';
-    const icon = isError 
+    const color = isError ? 'red' : 'green';
+    const icon = isError
         ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
         : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-    
     content.innerHTML = `
         <div class="p-6">
             <div class="flex items-start mb-4">
-                <div class="flex-shrink-0">
-                    <svg class="h-12 w-12 text-${iconColor}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        ${icon}
-                    </svg>
-                </div>
-                <div class="ml-4 flex-1">
+                <svg class="h-10 w-10 text-${color}-500 mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>
+                <div>
                     <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
-                    <p class="mt-2 text-sm text-gray-600">${message}</p>
-                    ${details ? `<p class="mt-2 text-xs text-gray-500">${details}</p>` : ''}
+                    <p class="mt-1 text-sm text-gray-600">${message}</p>
+                    ${details ? `<p class="mt-1 text-xs text-gray-500">${details}</p>` : ''}
                 </div>
             </div>
-            
-            <div class="bg-${bgColor}-50 border-l-4 border-${bgColor}-500 p-4 mb-4">
-                <div class="flex items-center">
-                    <svg class="h-5 w-5 text-${bgColor}-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span class="text-sm text-${bgColor}-800">
-                        ${isError ? 'Please try refreshing the page or re-uploading your XML file.' : 'Your changes have been saved successfully.'}
-                    </span>
-                </div>
-            </div>
-            
             <div class="flex justify-end">
-                <button onclick="closeNotification()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-                    OK
-                </button>
+                <button onclick="closeNotification()" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">OK</button>
             </div>
-        </div>
-    `;
-    
+        </div>`;
     modal.classList.remove('hidden');
 }
 
@@ -738,148 +952,283 @@ function closeNotification() {
     document.getElementById('notificationModal').classList.add('hidden');
 }
 
-// Milestone editing functions
-let allMilestonesFlat = [];
+function showToast(msg, bgClass = 'bg-green-600') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = `toast ${bgClass} show`;
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
 
+// ═══════════════════════════════════════════════════
+// MODAL: EDIT MILESTONE
+// ═══════════════════════════════════════════════════
 function editMilestone(index) {
     if (index < 0 || index >= allMilestonesFlat.length) return;
-    
-    const milestone = allMilestonesFlat[index];
-    
-    // Populate form
+    const m = allMilestonesFlat[index];
+    currentModalMilestone = { ...m };  // snapshot for change detection
+
     document.getElementById('milestoneIndex').value = index;
-    document.getElementById('milestoneName').value = milestone.name;
-    document.getElementById('milestoneTargetDate').value = milestone.target_date;
-    document.getElementById('milestoneStatus').value = milestone.status;
-    document.getElementById('milestoneResources').value = milestone.resources || '';
-    document.getElementById('milestoneCompletion').value = milestone.completion_percentage || 0;
-    
-    // Show modal
+    document.getElementById('milestoneName').value = m.name;
+    document.getElementById('milestoneTargetDate').value = m.target_date;
+    document.getElementById('milestoneStartDate').value = m.start_date || '';
+    document.getElementById('milestoneResources').value = m.resources || '';
+    document.getElementById('milestoneCompletion').value = m.completion_percentage || 0;
+    document.getElementById('milestoneCompletionRange').value = m.completion_percentage || 0;
+    document.getElementById('milestoneNotes').value = m.notes || '';
+    document.getElementById('milestoneStatus').value = m.status;
+    setModalStatus(m.status);
+
+    // Hierarchy
+    document.getElementById('modalParentProject').textContent = m.parent_project || '-';
+    const l3 = m.parent_levels ? (m.parent_levels['3'] || m.parent_levels[3] || '-') : '-';
+    document.getElementById('modalLevel3Parent').textContent = l3;
+
+    // Relative date label
+    updateDateRelativeLabel();
+
+    // Overdue warning
+    const warning = document.getElementById('overdueWarning');
+    if (isOverdue(m)) {
+        warning.classList.remove('hidden');
+        document.getElementById('overdueText').textContent = `This milestone is ${getRelativeDate(m.target_date)}`;
+    } else {
+        warning.classList.add('hidden');
+    }
+
+    // Status dot color in header
+    updateModalStatusDot(m.status);
+
+    // Reset to details tab
+    switchModalTab('details');
+
     document.getElementById('editMilestoneModal').classList.remove('hidden');
 }
 
 function closeMilestoneModal() {
     document.getElementById('editMilestoneModal').classList.add('hidden');
+    currentModalMilestone = null;
 }
 
-// Handle form submission
-document.getElementById('editMilestoneForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
+function setModalStatus(status) {
+    document.getElementById('milestoneStatus').value = status;
+    document.querySelectorAll('.status-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.status === status);
+    });
+    updateModalStatusDot(status);
+}
+
+function updateModalStatusDot(status) {
+    const dot = document.getElementById('modalStatusDot');
+    dot.className = 'w-3 h-3 rounded-full flex-shrink-0 ' +
+        (status === 'COMPLETED' ? 'bg-green-500' : status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-gray-400');
+}
+
+function syncCompletion(val) {
+    document.getElementById('milestoneCompletion').value = val;
+}
+function syncCompletionRange(val) {
+    document.getElementById('milestoneCompletionRange').value = val;
+}
+
+function updateDateRelativeLabel() {
+    const dateVal = document.getElementById('milestoneTargetDate').value;
+    document.getElementById('dateRelativeLabel').textContent = getRelativeDate(dateVal);
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('milestoneTargetDate');
+    if (dateInput) dateInput.addEventListener('change', updateDateRelativeLabel);
+});
+
+// ═══════════════════════════════════════════════════
+// MODAL TABS
+// ═══════════════════════════════════════════════════
+function switchModalTab(tab) {
+    ['details', 'notes', 'related'].forEach(t => {
+        document.getElementById(`panel${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.toggle('hidden', t !== tab);
+        document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.toggle('active', t === tab);
+    });
+    if (tab === 'related') loadRelatedTasks();
+}
+
+async function loadRelatedTasks() {
+    const index = parseInt(document.getElementById('milestoneIndex').value);
+    const m = allMilestonesFlat[index];
+    if (!m || !m.project) return;
+
+    document.getElementById('relatedLoading').classList.remove('hidden');
+    document.getElementById('relatedContent').classList.add('hidden');
+    document.getElementById('relatedEmpty').classList.add('hidden');
+
+    try {
+        const milestoneId = m.id || m.name;
+        const response = await fetch(`/api/milestones/${m.project}/siblings/${encodeURIComponent(milestoneId)}`);
+        const data = await response.json();
+
+        document.getElementById('relatedLoading').classList.add('hidden');
+
+        if (!data.siblings || data.siblings.length === 0) {
+            document.getElementById('relatedEmpty').classList.remove('hidden');
+            document.getElementById('relatedCount').textContent = '0';
+            return;
+        }
+
+        document.getElementById('relatedContent').classList.remove('hidden');
+        document.getElementById('relatedCount').textContent = data.siblings.length;
+        document.getElementById('relatedParentLabel').textContent = data.parent || 'Related Tasks';
+
+        const completed = data.siblings.filter(s => s.status === 'COMPLETED').length;
+        const total = data.siblings.length;
+        const pctDone = total > 0 ? Math.round((completed / total) * 100) : 0;
+        document.getElementById('relatedProgressText').textContent = `${completed} of ${total} completed (${pctDone}%)`;
+        document.getElementById('relatedProgressBar').style.width = `${pctDone}%`;
+
+        const listEl = document.getElementById('relatedTasksList');
+        listEl.innerHTML = data.siblings.map(s => {
+            const isChecked = s.status === 'COMPLETED';
+            const pct = s.completion_percentage || 0;
+            return `
+            <div class="sibling-task">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-3 cursor-pointer"
+                       onchange="toggleSiblingTask('${m.project}', '${(s.id || s.name).replace(/'/g,"\\'")}', this.checked)">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 ${isChecked ? 'line-through text-gray-400' : ''} truncate">${s.name}</p>
+                    <div class="flex items-center space-x-3 mt-0.5">
+                        <span class="text-xs text-gray-500">${s.target_date || '-'}</span>
+                        ${s.is_milestone ? '<span class="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Milestone</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Task</span>'}
+                    </div>
+                </div>
+                <div class="flex-shrink-0 ml-2">
+                    <div class="w-8 bg-gray-200 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full ${isChecked ? 'bg-green-500' : 'bg-blue-500'}" style="width:${pct}%"></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        document.getElementById('relatedLoading').classList.add('hidden');
+        document.getElementById('relatedEmpty').classList.remove('hidden');
+        console.error('Error loading siblings:', err);
+    }
+}
+
+async function toggleSiblingTask(projectCode, taskId, completed) {
+    try {
+        const response = await fetch('/api/milestones/update-task-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: projectCode,
+                task_id: taskId,
+                status: completed ? 'COMPLETED' : 'IN_PROGRESS'
+            })
+        });
+        if (response.ok) {
+            showToast(completed ? 'Task completed' : 'Task reopened');
+            loadRelatedTasks(); // Refresh
+        }
+    } catch (err) {
+        showToast('Failed to update task', 'bg-red-600');
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// SAVE MILESTONE (with date change confirmation)
+// ═══════════════════════════════════════════════════
+async function saveMilestone() {
     const index = parseInt(document.getElementById('milestoneIndex').value);
     const milestone = allMilestonesFlat[index];
-    
-    console.log('Original milestone from array:', milestone);
-    console.log('Original milestone name:', milestone.name);
-    
+    if (!milestone) return;
+
+    if (!milestone.project) {
+        closeMilestoneModal();
+        showNotification('error', 'Missing Project Information', 'This milestone is missing project information.');
+        return;
+    }
+
+    const newTargetDate = document.getElementById('milestoneTargetDate').value;
+    const oldTargetDate = currentModalMilestone?.target_date || milestone.target_date;
+    const dateChanged = oldTargetDate && newTargetDate && oldTargetDate !== newTargetDate;
+
+    if (dateChanged) {
+        // Show confirmation dialog
+        document.getElementById('dateChangeMessage').innerHTML =
+            `You are changing the target date of <strong>"${milestone.name}"</strong> from <strong>${oldTargetDate}</strong> to <strong>${newTargetDate}</strong>.`;
+        document.getElementById('dateChangeConfirmModal').classList.remove('hidden');
+
+        // Wait for user response
+        const accepted = await new Promise(resolve => {
+            const acceptBtn = document.getElementById('dateChangeAcceptBtn');
+            const cancelBtn = document.getElementById('dateChangeCancelBtn');
+            const onAccept = () => { cleanup(); resolve(true); };
+            const onCancel = () => { cleanup(); resolve(false); };
+            const cleanup = () => {
+                acceptBtn.removeEventListener('click', onAccept);
+                cancelBtn.removeEventListener('click', onCancel);
+                document.getElementById('dateChangeConfirmModal').classList.add('hidden');
+            };
+            acceptBtn.addEventListener('click', onAccept);
+            cancelBtn.addEventListener('click', onCancel);
+        });
+
+        if (!accepted) return; // User cancelled
+    }
+
     const updatedMilestone = {
         ...milestone,
         name: document.getElementById('milestoneName').value.trim(),
-        target_date: document.getElementById('milestoneTargetDate').value,
+        target_date: newTargetDate,
         status: document.getElementById('milestoneStatus').value,
         resources: document.getElementById('milestoneResources').value.trim(),
-        completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0
+        completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0,
+        notes: document.getElementById('milestoneNotes').value.trim()
     };
-    
-    console.log('Updated milestone to send:', updatedMilestone);
-    console.log('Project code being used:', milestone.project);
-    
-    // Check if milestone has project field
-    if (!milestone.project) {
-        closeMilestoneModal();
-        showNotification(
-            'error',
-            'Missing Project Information',
-            'This milestone is missing project information.',
-            'Please refresh the page or re-upload your XML file to fix this issue.'
-        );
-        return;
-    }
-    
-    // Check if project looks like a filename instead of a code (legacy data)
-    if (milestone.project.includes('.xml') || milestone.project.includes(' ')) {
-        closeMilestoneModal();
-        showNotification(
-            'error',
-            'Outdated Project Information',
-            `Project field contains "${milestone.project.substring(0, 50)}..." which appears to be a filename rather than a project code.`,
-            'Please refresh the page to reload the data. If the issue persists, re-upload your XML file.'
-        );
-        return;
-    }
-    
-    console.log('Updating milestone with project code:', milestone.project);
-    
+
     try {
-        const response = await fetch(`/milestones/update`, {
+        const response = await fetch('/milestones/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 project_code: milestone.project,
-                milestone: updatedMilestone
+                milestone: updatedMilestone,
+                confirmed_date_change: dateChanged
             })
         });
-        
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        
+
         const data = await response.json();
-        console.log('Response data:', data);
-        
         if (response.ok && data.success) {
-            console.log('✅ Update successful, closing modal and showing notification');
             closeMilestoneModal();
-            showNotification(
-                'success',
-                'Milestone Updated Successfully!',
-                `"${updatedMilestone.name}" has been updated with the latest changes.`
-            );
-            // Reload after a brief delay to show the success message
-            console.log('⏱️ Scheduling reload in 1.5 seconds...');
-            setTimeout(() => {
-                console.log('🔄 Reloading page now...');
-                window.location.reload();
-            }, 1500);
+            let msg = `"${updatedMilestone.name}" updated successfully.`;
+            if (dateChanged) msg += ' A change record has been created.';
+            showNotification('success', 'Milestone Updated', msg);
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            console.log('❌ Update failed:', data.detail);
             closeMilestoneModal();
-            showNotification(
-                'error',
-                'Error Updating Milestone',
-                data.detail || 'An unexpected error occurred while updating the milestone.',
-                'Please try again or contact support if the problem persists.'
-            );
+            showNotification('error', 'Error Updating Milestone', data.detail || 'Unexpected error.');
         }
     } catch (error) {
         closeMilestoneModal();
-        showNotification(
-            'error',
-            'Network Error',
-            'Unable to connect to the server.',
-            `Error: ${error.message}`
-        );
+        showNotification('error', 'Network Error', 'Unable to connect to the server.', error.message);
     }
-});
+}
 
-// Initialize view on page load
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved cards per column preference (default to Normal view)
     const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '-1';
     document.getElementById('cardsPerColumn').value = savedLimit;
-    
-    // Update page title with program name
+
     const selectedProgram = localStorage.getItem('selectedProgram');
     if (selectedProgram) {
-        // Remove file extension and clean up the name
         const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
         document.getElementById('milestonePageTitle').textContent = `📍 ${cleanName} - Milestone Tracker`;
-        document.getElementById('milestonePageSubtitle').textContent = `Milestones organized by status and timeline`;
     }
-    
-    // Check URL parameter first, then localStorage, then default to status view
+
+    // Map old 'status' view to 'board' for backwards compat
     const urlParams = new URLSearchParams(window.location.search);
-    const urlView = urlParams.get('view');
-    const savedView = urlView || localStorage.getItem('currentMilestoneView') || 'status';
+    let savedView = urlParams.get('view') || localStorage.getItem('currentMilestoneView') || 'board';
+    if (savedView === 'status') savedView = 'board';
     switchView(savedView);
 });
 </script>

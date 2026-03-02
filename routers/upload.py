@@ -448,20 +448,24 @@ async def upload_xml(
                     
                     # PRESERVE user edits for certain fields
                     # REFRESH from XML for MS Project data
+                    # Check user_edited_fields to preserve manually edited status/completion
+                    user_edited = getattr(existing, 'user_edited_fields', None) or []
+                    
                     merged_milestone = {
                         'id': new_id,
                         'name': final_name,  # Use XML name for renamed milestones
                         'target_date': new_milestone.target_date,  # XML
                         'start_date': getattr(new_milestone, 'start_date', None),  # XML
-                        'status': new_milestone.status,  # XML
+                        'status': existing.status if 'status' in user_edited else new_milestone.status,
                         'completion_date': new_milestone.completion_date,  # XML
-                        'completion_percentage': new_milestone.completion_percentage,  # XML
+                        'completion_percentage': existing.completion_percentage if 'completion_percentage' in user_edited else new_milestone.completion_percentage,
                         'notes': existing.notes,  # PRESERVE user edits
                         'parent_project': new_milestone.parent_project,  # XML
                         'parent_levels': getattr(new_milestone, 'parent_levels', None),  # XML hierarchy
                         'outline_level': getattr(new_milestone, 'outline_level', None),  # XML hierarchy level
                         'is_true_milestone': getattr(new_milestone, 'is_true_milestone', None),  # XML flag
                         'resources': existing.resources,  # PRESERVE user edits
+                        'user_edited_fields': user_edited if user_edited else None,  # PRESERVE tracking
                         'project': new_project.project_code
                     }
                     milestones_to_save.append(merged_milestone)

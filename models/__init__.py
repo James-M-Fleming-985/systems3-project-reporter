@@ -20,6 +20,7 @@ class Milestone(BaseModel):
     outline_level: Optional[int] = None  # The outline level of this milestone in hierarchy
     parent_levels: Optional[Dict[str, str]] = None  # Parents at each level: {"2": "Name", "3": "Name"}
     is_true_milestone: Optional[bool] = None  # True if task has Milestone=1 or Duration=0
+    user_edited_fields: Optional[List[str]] = None  # Fields manually edited by user (preserved on re-upload)
 
 
 class Risk(BaseModel):
