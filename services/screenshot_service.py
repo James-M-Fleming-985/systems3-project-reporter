@@ -21,15 +21,12 @@ class ScreenshotService:
     # This allows capturing just the chart/data area instead of the whole page
     CONTENT_SELECTORS = {
         '/gantt': '#roadmapChart',  # Actual chart container in gantt.html
-        '/milestones/table/': 'body',  # Table preview - capture whole body
         '/milestones/print/': 'body',  # Print-friendly milestone view
         '/milestones?view=month': '#monthView',
         '/milestones?view=week': '#weekView',
         '/milestones': '#statusView',  # Default status view
-        '/risks/table/': 'body',  # Table preview - capture whole body
         '/risks/print/': 'body',  # Print-friendly risk report - capture whole body
         '/risks': '#risksContent',
-        '/changes/table/': 'body',  # Table preview - capture whole body
         '/changes': '#changesContent',
         '/metrics/trend/': '.js-plotly-plot',
     }
@@ -45,7 +42,14 @@ class ScreenshotService:
         
         Matches more specific patterns first (e.g., milestones?view=month
         before milestones).
+        
+        Returns None for /table/ URLs so they get full viewport screenshots.
         """
+        # Table preview URLs are self-contained HTML pages designed to fill
+        # the viewport — capture them as full page screenshots, not elements
+        if '/table/' in url:
+            return None
+        
         # Sort by pattern length descending to match most specific first
         sorted_patterns = sorted(
             self.CONTENT_SELECTORS.keys(),

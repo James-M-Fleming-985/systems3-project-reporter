@@ -1249,6 +1249,20 @@ let fabricCanvas = null;
 let canvasImage = null;
 let currentEditingViewPath = null;  // Track which slide is being edited
 
+// Normalize a view path from table/preview URL back to the checkbox/storage key
+function normalizeViewPath(path) {
+    if (!path) return path;
+    let base = path.split('?')[0];
+    if (base.startsWith('/risks/table/')) {
+        return '/risks/print/' + base.replace('/risks/table/', '');
+    } else if (base.startsWith('/milestones/table/')) {
+        return '/dashboard/milestones';
+    } else if (base.startsWith('/dashboard/changes/table/')) {
+        return '/dashboard/changes';
+    }
+    return base;
+}
+
 // Store transforms per slide (keyed by view path)
 // Load saved transforms from localStorage on page load
 const SLIDE_TRANSFORMS_KEY = 'pptExportSlideTransforms';
@@ -1596,7 +1610,7 @@ function initFabricCanvas(viewUrl) {
                     console.log('✅ Canvas rendered - image should be visible now!');
                     
                     // Restore saved transform if one exists for this slide
-                    const basePath = currentEditingViewPath ? currentEditingViewPath.split('?')[0] : null;
+                    const basePath = normalizeViewPath(currentEditingViewPath);
                     if (basePath && slideTransforms[basePath]) {
                         const saved = slideTransforms[basePath];
                         console.log('📂 Restoring saved transform for:', basePath);
@@ -2326,20 +2340,8 @@ function applyCanvasTransform() {
     
     // Store transform for this specific slide (keyed by view path - use base path without project param)
     if (currentEditingViewPath) {
-        // Use base path so it works across project selections
-        let basePath = currentEditingViewPath.split('?')[0];
-        
-        // Normalize paths that were switched to /table views back to their checkbox values
-        if (basePath.startsWith('/risks/table/')) {
-            basePath = '/risks/print/' + basePath.replace('/risks/table/', '');
-            console.log('🔄 Normalized risks table path to print path:', basePath);
-        } else if (basePath.startsWith('/milestones/table/')) {
-            basePath = '/dashboard/milestones';
-            console.log('🔄 Normalized milestones table path:', basePath);
-        } else if (basePath.startsWith('/dashboard/changes/table/')) {
-            basePath = '/dashboard/changes';
-            console.log('🔄 Normalized changes table path:', basePath);
-        }
+        // Normalize to canonical path (matches save and restore)
+        const basePath = normalizeViewPath(currentEditingViewPath);
         
         slideTransforms[basePath] = transform;
         
@@ -2358,16 +2360,7 @@ function applyCanvasTransform() {
     
     // Mark the checkbox as checked for this view
     if (currentEditingViewPath) {
-        let basePath = currentEditingViewPath.split('?')[0];
-        
-        // Normalize paths back to checkbox values
-        if (basePath.startsWith('/risks/table/')) {
-            basePath = '/risks/print/' + basePath.replace('/risks/table/', '');
-        } else if (basePath.startsWith('/milestones/table/')) {
-            basePath = '/dashboard/milestones';
-        } else if (basePath.startsWith('/dashboard/changes/table/')) {
-            basePath = '/dashboard/changes';
-        }
+        const basePath = normalizeViewPath(currentEditingViewPath);
         
         console.log('🔍 Looking for checkbox with path:', basePath);
         let foundCheckbox = false;
