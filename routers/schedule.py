@@ -343,10 +343,14 @@ async def schedule_table_view(
         columns = [c for c in columns if c.get('visible_in_export', True)]
     
     # Build HTML table
+    # For print/PDF view (not slide), add print controls and auto-trigger print dialog
+    is_print_view = export and not ppt_export
+    
     html = f'''<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>{table.get('name', 'Schedule')} - PDF Export</title>
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         {'html { height: 100%; }' if ppt_export else ''}
@@ -364,6 +368,41 @@ async def schedule_table_view(
             font-weight: normal;
             {'display: none;' if ppt_export else ''}
         }}
+        .print-toolbar {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+        }}
+        .print-toolbar h2 {{
+            flex: 1;
+            font-size: 18px;
+            color: #374151;
+            margin: 0;
+        }}
+        .print-toolbar button {{
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }}
+        .btn-print {{
+            background: #1E40AF;
+            color: white;
+        }}
+        .btn-print:hover {{ background: #1E3A8A; }}
+        .btn-close {{
+            background: #E5E7EB;
+            color: #374151;
+        }}
+        .btn-close:hover {{ background: #D1D5DB; }}
         table {{
             width: 100%;
             border-collapse: collapse;
@@ -394,9 +433,18 @@ async def schedule_table_view(
         .status-in-progress {{ color: #F59E0B; font-weight: bold; }}
         .status-not-started {{ color: #6B7280; }}
         .status-on-hold {{ color: #DC2626; font-weight: bold; }}
+        
+        @media print {{
+            .print-toolbar {{ display: none !important; }}
+            body {{ padding: 10px; }}
+            @page {{ size: landscape; margin: 10mm; }}
+            th {{ background: #1E40AF !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+            tr:nth-child(even) {{ background: #F9FAFB !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+        }}
     </style>
 </head>
 <body>
+    {'<div class="print-toolbar"><h2>' + table.get("name", "Schedule") + '</h2><button class="btn-print" onclick="window.print()">🖨️ Save as PDF</button><button class="btn-close" onclick="window.close()">✕ Close</button></div>' if is_print_view else ''}
     <h1 class="slide-title">{table.get('name', 'Schedule')}</h1>
     <table>
         <thead>
@@ -437,7 +485,19 @@ async def schedule_table_view(
     
     html += '''        </tbody>
     </table>
-</body>
+'''
+    
+    # Auto-trigger print dialog for PDF export (not slide view)
+    if is_print_view:
+        html += '''    <script>
+        window.addEventListener('load', function() {
+            // Small delay to ensure rendering is complete
+            setTimeout(function() { window.print(); }, 400);
+        });
+    </script>
+'''
+    
+    html += '''</body>
 </html>'''
     
     return HTMLResponse(
