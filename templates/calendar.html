@@ -609,6 +609,25 @@ function refreshCalendar() {
     updateStats();
 }
 
+async function reloadCalendarEvents() {
+    try {
+        const resp = await fetch('/api/calendar/events');
+        const data = await resp.json();
+        allEvents = data.events || [];
+        // Re-apply localStorage acknowledged filter
+        try {
+            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
+            if (acked.length) {
+                const ackedSet = new Set(acked);
+                allEvents = allEvents.filter(e => !ackedSet.has(e.id));
+            }
+        } catch (e) { /* ignore */ }
+        refreshCalendar();
+    } catch (err) {
+        console.error('reloadCalendarEvents error:', err);
+    }
+}
+
 function updateStats() {
     // Deduplicate milestones — a milestone with both Start and Finish dates
     // creates two calendar events, but should count as one milestone.
@@ -994,7 +1013,7 @@ async function updateTaskStatus(checkbox) {
             showMilestoneAchieved(result.milestone_name);
         } else {
             showToast(shouldComplete ? 'Task marked complete ✓' : 'Task reopened', 'success');
-            if (calendarInstance) calendarInstance.refetchEvents();
+            reloadCalendarEvents();
         }
 
     } catch (error) {
@@ -1027,7 +1046,7 @@ function showMilestoneAchieved(milestoneName) {
     // After a short celebration, close and refresh
     setTimeout(() => {
         closeEventModal();
-        if (calendarInstance) calendarInstance.refetchEvents();
+        reloadCalendarEvents();
         showToast(`🎉 "${milestoneName}" complete!`, 'success', 5000);
     }, 2800);
 }
@@ -1100,6 +1119,7 @@ async function deleteEventFromCalendar() {
     }
     const milestone = currentEventData.milestone;
     const projectCode = currentEventData.projectCode;
+    const eventId = currentEventData.eventId;
     const confirmed = await showConfirm(`Delete "${milestone.name}"? This cannot be undone.`);
     if (!confirmed) return;
     
@@ -1118,13 +1138,9 @@ async function deleteEventFromCalendar() {
         }
         closeEventModal();
         showToast(`Deleted "${milestone.name}"`, 'success');
-        // Refresh calendar
-        if (typeof calendar !== 'undefined') {
-            calendar.refetchEvents();
-        } else {
-            allEvents = allEvents.filter(e => e.id !== currentEventData.eventId);
-            refreshCalendar();
-        }
+        // Remove from in-memory events and refresh calendar
+        allEvents = allEvents.filter(e => e.id !== eventId);
+        refreshCalendar();
     } catch (err) {
         console.error('deleteEventFromCalendar error:', err);
         showToast('Could not delete: ' + err.message, 'error');
@@ -1190,14 +1206,8 @@ async function saveEventFromCalendar() {
         closeEventModal();
         showToast('Milestone saved successfully', 'success');
         
-        // Refresh calendar to reflect changes
-        if (typeof calendar !== 'undefined') {
-            calendar.refetchEvents();
-        } else {
-            // Fallback: reload events
-            await loadAllEvents();
-            refreshCalendar();
-        }
+        // Reload events from server (completed milestones get filtered out server-side)
+        await reloadCalendarEvents();
     } catch (err) {
         console.error('saveEventFromCalendar error:', err);
         showToast('Could not save: ' + err.message, 'error');
