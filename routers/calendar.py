@@ -232,6 +232,8 @@ async def get_calendar_events(request: Request):
                         'parent_project': getattr(milestone, 'parent_project', '') or '',
                         'outline_level': getattr(milestone, 'outline_level', None),
                         'parent_levels': getattr(milestone, 'parent_levels', None),
+                        'notes': getattr(milestone, 'notes', '') or '',
+                        'project': program_code,
                     }
                 }
                 

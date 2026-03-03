@@ -222,6 +222,12 @@
         </div>
         
         <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
+        
+        <!-- Export XML button -->
+        <button onclick="exportXml()" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition inline-flex items-center gap-1.5 ml-auto" title="Export as MS Project XML">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export XML
+        </button>
     </div>
     
     <!-- Selected pills - hidden during PPT export -->
@@ -264,7 +270,10 @@
 // Data from backend
 const projectCode = "{{ project.project_code }}";
 const projectName = "{{ project.project_name }}";
-const ganttData = {{ gantt_data | tojson }};
+
+function exportXml() {
+    window.location.href = `/api/export/xml/${encodeURIComponent(projectCode)}`;
+}const ganttData = {{ gantt_data | tojson }};
 
 // State
 let availableLevels = [];

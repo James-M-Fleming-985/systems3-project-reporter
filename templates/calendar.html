@@ -359,6 +359,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
                 </button>
+                <!-- Milestone only: save button -->
+                <button id="saveEventBtn"
+                    onclick="saveEventFromCalendar()"
+                    class="hidden px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-95 transition inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Save
+                </button>
                 <!-- Schedule only: Done button -->
                 <button id="schedDoneBtn"
                     onclick="markScheduleDone()"
@@ -677,10 +684,13 @@ function showEventModal(event) {
 
     // Show/hide footer action buttons based on event type
     const deleteBtn = document.getElementById('deleteEventBtn');
+    const saveBtn = document.getElementById('saveEventBtn');
     const schedDoneBtn = document.getElementById('schedDoneBtn');
     const acknowledgeBtn = document.getElementById('acknowledgeBtn');
 
-    deleteBtn.classList.toggle('hidden', !(ep.type === 'milestone' && ep.milestone));
+    const isMilestone = ep.type === 'milestone' && ep.milestone;
+    deleteBtn.classList.toggle('hidden', !isMilestone);
+    saveBtn.classList.toggle('hidden', !isMilestone);
     const showDone = ep.type === 'schedule' && !!ep.rowId;
     schedDoneBtn.classList.toggle('hidden', !showDone);
     if (showDone) {
@@ -745,17 +755,37 @@ function showEventModal(event) {
     let detailsHtml = '';
     
     if (type === 'milestone') {
+        const ms = ep.milestone || {};
+        const _statusOpts = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'];
+        const _statusLabels = { NOT_STARTED: 'Not Started', IN_PROGRESS: 'In Progress', COMPLETED: 'Completed' };
         detailsHtml = `
             <div class="grid grid-cols-2 gap-3">
-                ${ep.startDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Start Date</p><p class="text-sm font-medium">${formatDate(ep.startDate)}</p></div>` : ''}
-                ${ep.targetDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Target Date</p><p class="text-sm font-medium">${formatDate(ep.targetDate)}</p></div>` : ''}
-                ${ep.completionDate ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Completed</p><p class="text-sm font-medium text-green-600">${formatDate(ep.completionDate)}</p></div>` : ''}
-                ${ep.completionPct ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Progress</p><p class="text-sm font-medium">${ep.completionPct}%</p></div>` : ''}
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Start Date</label>
+                    <input type="date" id="calEditStartDate" value="${ep.startDate || ''}" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Target Date</label>
+                    <input type="date" id="calEditTargetDate" value="${ep.targetDate || ''}" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Status</label>
+                    <select id="calEditStatus" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        ${_statusOpts.map(s => `<option value="${s}" ${(ep.status || 'NOT_STARTED') === s ? 'selected' : ''}>${_statusLabels[s]}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Progress (%)</label>
+                    <input type="number" id="calEditCompletion" min="0" max="100" value="${ep.completionPct || 0}" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
             </div>
             ${ep.level3Parent ? `<div class="level3-parent-banner"><span style="opacity:0.6;font-size:0.7rem;">▸ LEVEL 3</span>${ep.level3Parent}</div>` : ''}
             ${ep.parentProject ? `<div class="p-3 bg-blue-50 rounded-lg"><p class="text-xs text-blue-600 uppercase font-semibold">Project Group</p><p class="text-sm font-medium text-blue-800">${ep.parentProject}</p></div>` : ''}
             ${ep.resources ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Resources</p><p class="text-sm">${ep.resources}</p></div>` : ''}
-            ${ep.notes ? `<div class="p-3 bg-gray-50 rounded-lg"><p class="text-xs text-gray-500 uppercase font-semibold mb-1">Notes</p><p class="text-sm text-gray-700">${ep.notes}</p></div>` : ''}
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Notes</label>
+                <textarea id="calEditNotes" rows="2" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">${(ms.notes || ep.notes || '').replace(/</g, '&lt;')}</textarea>
+            </div>
         `;
     } else if (type === 'change') {
         detailsHtml = `
@@ -1069,9 +1099,155 @@ async function deleteEventFromCalendar() {
         return;
     }
     const milestone = currentEventData.milestone;
+    const projectCode = currentEventData.projectCode;
     const confirmed = await showConfirm(`Delete "${milestone.name}"? This cannot be undone.`);
     if (!confirmed) return;
-    showToast('Delete coming soon — use the Milestones tab for now', 'info');
+    
+    const btn = document.getElementById('deleteEventBtn');
+    if (btn) btn.disabled = true;
+    
+    try {
+        const milestoneId = milestone.id || milestone.name;
+        const resp = await fetch(
+            `/api/milestones/${encodeURIComponent(projectCode)}/${encodeURIComponent(milestoneId)}`,
+            { method: 'DELETE' }
+        );
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Server returned ${resp.status}`);
+        }
+        closeEventModal();
+        showToast(`Deleted "${milestone.name}"`, 'success');
+        // Refresh calendar
+        if (typeof calendar !== 'undefined') {
+            calendar.refetchEvents();
+        } else {
+            allEvents = allEvents.filter(e => e.id !== currentEventData.eventId);
+            refreshCalendar();
+        }
+    } catch (err) {
+        console.error('deleteEventFromCalendar error:', err);
+        showToast('Could not delete: ' + err.message, 'error');
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function saveEventFromCalendar() {
+    if (!currentEventData || !currentEventData.milestone) {
+        showToast('Only milestone events can be saved', 'info');
+        return;
+    }
+    const milestone = currentEventData.milestone;
+    const projectCode = currentEventData.projectCode || milestone.project;
+    
+    // Read values from form inputs
+    const newTargetDate = document.getElementById('calEditTargetDate')?.value || milestone.target_date;
+    const newStartDate = document.getElementById('calEditStartDate')?.value || milestone.start_date;
+    const newStatus = document.getElementById('calEditStatus')?.value || milestone.status;
+    const newCompletion = parseInt(document.getElementById('calEditCompletion')?.value || '0', 10);
+    const newNotes = document.getElementById('calEditNotes')?.value || '';
+    
+    // Check if target date changed — need confirmation for change record
+    const dateChanged = milestone.target_date && newTargetDate && milestone.target_date !== newTargetDate;
+    let confirmedDateChange = false;
+    
+    if (dateChanged) {
+        confirmedDateChange = await showDateChangeConfirm(milestone.target_date, newTargetDate, milestone.name);
+        if (confirmedDateChange === null) return;  // user cancelled entirely
+    }
+    
+    const btn = document.getElementById('saveEventBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Saving…`; }
+    
+    try {
+        const payload = {
+            project_code: projectCode,
+            milestone: {
+                id: milestone.id,
+                name: milestone.name,
+                target_date: newTargetDate,
+                start_date: newStartDate,
+                status: newStatus,
+                completion_percentage: newCompletion,
+                notes: newNotes,
+                resources: milestone.resources,
+                parent_project: milestone.parent_project
+            },
+            confirmed_date_change: confirmedDateChange
+        };
+        
+        const resp = await fetch('/milestones/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Server returned ${resp.status}`);
+        }
+        
+        closeEventModal();
+        showToast('Milestone saved successfully', 'success');
+        
+        // Refresh calendar to reflect changes
+        if (typeof calendar !== 'undefined') {
+            calendar.refetchEvents();
+        } else {
+            // Fallback: reload events
+            await loadAllEvents();
+            refreshCalendar();
+        }
+    } catch (err) {
+        console.error('saveEventFromCalendar error:', err);
+        showToast('Could not save: ' + err.message, 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Save`; }
+    }
+}
+
+// Date change confirmation dialog (mirrors milestones.html pattern)
+function showDateChangeConfirm(oldDate, newDate, milestoneName) {
+    return new Promise(resolve => {
+        const oldFmt = formatDate(oldDate);
+        const newFmt = formatDate(newDate);
+        const daysDiff = Math.round((new Date(newDate) - new Date(oldDate)) / 86400000);
+        const direction = daysDiff > 0 ? 'delayed' : 'accelerated';
+        const absDays = Math.abs(daysDiff);
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[70] flex items-center justify-center bg-black/50';
+        overlay.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Date Change Detected</h3>
+                </div>
+                <p class="text-sm text-gray-600 mb-3"><strong>${milestoneName}</strong> will be ${direction} by <strong>${absDays} day${absDays !== 1 ? 's' : ''}</strong>.</p>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+                    <div class="text-center flex-1">
+                        <p class="text-xs text-gray-500">From</p>
+                        <p class="text-sm font-bold text-red-600 line-through">${oldFmt}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <div class="text-center flex-1">
+                        <p class="text-xs text-gray-500">To</p>
+                        <p class="text-sm font-bold text-green-600">${newFmt}</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">A change record will be created to track this date change.</p>
+                <div class="flex justify-end gap-3">
+                    <button id="dcCancel" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Cancel</button>
+                    <button id="dcSaveOnly" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">Save Without Record</button>
+                    <button id="dcConfirm" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">Confirm & Record</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#dcConfirm').onclick = () => { overlay.remove(); resolve(true); };
+        overlay.querySelector('#dcSaveOnly').onclick = () => { overlay.remove(); resolve(false); };
+        overlay.querySelector('#dcCancel').onclick = () => { overlay.remove(); resolve(null); };
+    });
 }
 
 function formatDate(dateStr) {

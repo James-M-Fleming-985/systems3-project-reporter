@@ -540,6 +540,72 @@ async def upload_xml(
         
         milestones_to_save = final_milestones
         
+        # ── Detect removed milestones ──
+        # Milestones present in existing data but absent from new XML
+        removed_milestones = []
+        if existing_project and not is_baseline_upload and hasattr(existing_project, 'milestones'):
+            merged_ids = set()
+            merged_names = set()
+            for m in milestones_to_save:
+                mid = m.get('id')
+                if mid is not None:
+                    merged_ids.add(str(mid))
+                mname = (m.get('name') or '').strip()
+                if mname:
+                    merged_names.add(mname)
+            
+            for existing_m in existing_project.milestones:
+                eid = str(getattr(existing_m, 'id', None) or '')
+                ename = (existing_m.name or '').strip()
+                
+                # Check if this existing milestone survived the merge
+                id_match = eid and eid in merged_ids
+                name_match = ename and ename in merged_names
+                
+                if not id_match and not name_match:
+                    removed_milestones.append({
+                        'id': getattr(existing_m, 'id', None),
+                        'name': ename,
+                        'target_date': existing_m.target_date,
+                        'status': existing_m.status,
+                        'parent_project': getattr(existing_m, 'parent_project', '') or '',
+                        'reason': 'Not found in uploaded XML'
+                    })
+            
+            if removed_milestones:
+                logger.warning(
+                    f"⚠️ {len(removed_milestones)} milestone(s) not found in new XML: "
+                    f"{[m['name'] for m in removed_milestones[:5]]}"
+                )
+                # Keep removed milestones by default (flag for review, don't auto-delete)
+                for rm in removed_milestones:
+                    # Only re-add if not already in the save list
+                    rm_name = rm['name']
+                    if rm_name not in merged_names:
+                        # Find the full milestone data from existing project
+                        for existing_m in existing_project.milestones:
+                            if (existing_m.name or '').strip() == rm_name:
+                                milestones_to_save.append({
+                                    'id': getattr(existing_m, 'id', None),
+                                    'name': existing_m.name,
+                                    'target_date': existing_m.target_date,
+                                    'start_date': getattr(existing_m, 'start_date', None),
+                                    'status': existing_m.status,
+                                    'completion_date': existing_m.completion_date,
+                                    'completion_percentage': existing_m.completion_percentage,
+                                    'notes': existing_m.notes,
+                                    'parent_project': existing_m.parent_project,
+                                    'parent_levels': getattr(existing_m, 'parent_levels', None),
+                                    'outline_level': getattr(existing_m, 'outline_level', None),
+                                    'is_true_milestone': getattr(existing_m, 'is_true_milestone', None),
+                                    'resources': existing_m.resources,
+                                    'user_edited_fields': getattr(existing_m, 'user_edited_fields', None),
+                                    'project': getattr(existing_m, 'project', None) or new_project.project_code,
+                                    '_flagged_for_review': True,  # Mark for review
+                                })
+                                merged_names.add(rm_name)
+                                break
+        
         # Convert to dict for YAML serialization
         project_dict = {
             'project_name': new_project.project_name,
@@ -603,7 +669,8 @@ async def upload_xml(
             'is_new': existing_project is None,
             'detected_changes': detected_changes,
             'milestone_count': len(new_project.milestones),
-            'upload_path': str(upload_path)
+            'upload_path': str(upload_path),
+            'removed_milestones': removed_milestones if removed_milestones else []
         })
         
     except SubscriptionError as se:
@@ -626,7 +693,8 @@ async def upload_xml(
 async def confirm_upload(
     project_code: str = Form(...),
     upload_path: str = Form(...),
-    changes_json: str = Form(...)
+    changes_json: str = Form(...),
+    milestones_to_remove: str = Form(default='[]')
 ):
     """
     Confirm upload and save project with change reasons
@@ -744,6 +812,21 @@ async def confirm_upload(
                 for c in new_project.changes
             ]
         }
+        
+        # Remove milestones that the user unchecked in the "Not Found" review
+        try:
+            names_to_remove = json.loads(milestones_to_remove) if milestones_to_remove else []
+        except (json.JSONDecodeError, TypeError):
+            names_to_remove = []
+        
+        if names_to_remove:
+            before_count = len(project_dict['milestones'])
+            project_dict['milestones'] = [
+                m for m in project_dict['milestones']
+                if m.get('name', '').strip() not in names_to_remove
+            ]
+            removed_count = before_count - len(project_dict['milestones'])
+            logger.info(f"🗑️ Removed {removed_count} milestone(s) per user decision: {names_to_remove}")
         
         with open(yaml_path, 'w') as f:
             yaml.dump(project_dict, f, default_flow_style=False, sort_keys=False)

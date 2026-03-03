@@ -206,6 +206,17 @@ async def update_milestone(data: MilestoneUpdate):
                         except Exception as ce:
                             logger.warning(f"⚠️ Failed to create change record: {ce}")
                     
+                    # Handle completion_date based on status transitions
+                    if new_status == 'COMPLETED' and old_status != 'COMPLETED':
+                        # Just became completed — set completion_date to today
+                        completion_date = datetime.now().strftime('%Y-%m-%d')
+                    elif new_status != 'COMPLETED' and old_status == 'COMPLETED':
+                        # Reverted from completed — clear completion_date
+                        completion_date = None
+                    else:
+                        # No status transition affecting completion — preserve existing
+                        completion_date = milestone.get('completion_date')
+                    
                     project_data['milestones'][i] = {
                         'id': milestone.get('id'),
                         'name': incoming_name,
@@ -214,7 +225,7 @@ async def update_milestone(data: MilestoneUpdate):
                         'status': new_status,
                         'resources': updated_milestone.get('resources') or None,
                         'completion_percentage': new_completion,
-                        'completion_date': milestone.get('completion_date'),
+                        'completion_date': completion_date,
                         'notes': updated_milestone.get('notes') or milestone.get('notes'),
                         'parent_project': milestone.get('parent_project'),
                         'parent_levels': milestone.get('parent_levels'),
@@ -1022,4 +1033,60 @@ async def update_task_status(data: TaskStatusUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating task status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/api/milestones/{project_code}/{milestone_id}")
+async def delete_milestone(project_code: str, milestone_id: str):
+    """Delete a milestone from the project YAML file."""
+    try:
+        from urllib.parse import unquote
+        milestone_id = unquote(milestone_id)
+        
+        transformed_code = project_code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+        
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project '{project_code}' not found")
+        
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f)
+        
+        milestones = project_data.get('milestones', [])
+        original_count = len(milestones)
+        
+        # Find and remove by ID first, then by name
+        found = False
+        for i, m in enumerate(milestones):
+            m_id = str(m.get('id', ''))
+            m_name = m.get('name', '').strip()
+            if m_id == milestone_id or m_name == milestone_id:
+                removed_name = m_name
+                milestones.pop(i)
+                found = True
+                logger.info(f"🗑️ Deleted milestone '{removed_name}' from {project_code}")
+                break
+        
+        if not found:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Milestone '{milestone_id}' not found in {original_count} milestones"
+            )
+        
+        project_data['milestones'] = milestones
+        
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+        
+        return JSONResponse({
+            'success': True,
+            'message': f"Milestone '{removed_name}' deleted",
+            'remaining_count': len(milestones)
+        })
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting milestone: {e}")
         raise HTTPException(status_code=500, detail=str(e))
