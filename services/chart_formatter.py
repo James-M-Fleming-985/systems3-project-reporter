@@ -174,24 +174,27 @@ class ChartFormatterService:
         
         for project in projects:
             for milestone in project.milestones:
-                # ── Filter 1: Skip summary / grouping levels ──
-                # Level 1-2 = project summaries, Level 3 = milestone groupings.
-                # Level 4+ are actionable milestones (and possibly tasks,
-                # filtered below).  None = manually-created, always keep.
-                outline_level = getattr(milestone, 'outline_level', None)
-                if outline_level is not None and outline_level < 4:
-                    continue
-
-                # ── Filter 2: Only true milestones ──
-                # True milestones have Duration=0 / Milestone=1 in MS Project.
+                # ── Filter 1: Confirmed milestone/task flag ──
                 # is_true_milestone is set by the XML parser on import.
-                #   True  → confirmed milestone, keep
-                #   False → confirmed task, skip
-                #   None  → old import; fall back to zero-duration heuristic
+                #   True  → confirmed milestone, ALWAYS keep (any outline level)
+                #   False → confirmed task, always skip
+                #   None  → old import; apply outline_level + heuristic below
                 is_true_milestone = getattr(milestone, 'is_true_milestone', None)
                 if is_true_milestone is False:
                     continue
+
                 if is_true_milestone is None:
+                    # ── Filter 2: Skip summary / grouping levels (old imports only) ──
+                    # Level 1-2 = project summaries, Level 3 = milestone groupings.
+                    # Level 4+ are actionable milestones.
+                    # None = manually-created (no outline_level), always keep.
+                    outline_level = getattr(milestone, 'outline_level', None)
+                    if outline_level is not None and outline_level < 4:
+                        continue
+
+                    # ── Filter 3: Zero-duration heuristic (old imports only) ──
+                    # Old YAML without is_true_milestone flag: start==target
+                    # means a point-in-time milestone in MS Project convention.
                     _start = getattr(milestone, 'start_date', None)
                     _target = getattr(milestone, 'target_date', None)
                     if _start and _target and _start != _target:

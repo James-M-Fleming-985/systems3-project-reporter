@@ -134,28 +134,27 @@ async def get_calendar_events(request: Request):
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
             for milestone in project.milestones:
-                # Skip project summaries and grouping levels.
-                # Level 1-2 are project/program summaries, Level 3 are milestone
-                # groupings (used as parent labels).  Level 4+ are the actual
-                # actionable milestones and sub-milestones (5, 6, …).
-                # Non-milestone tasks at those levels are already filtered by
-                # the is_true_milestone check below.
-                outline_level = getattr(milestone, 'outline_level', None)
-                if outline_level is not None and outline_level < 4:
-                    continue
-                
-                # Only show true milestones (Milestone flag=1 or Duration=0 in MS Project).
-                # is_true_milestone is set by the XML parser on re-import.
-                # is_true_milestone=False → confirmed task, always skip.
-                # is_true_milestone=None → old import that predates the flag;
-                #   fall back to zero-duration heuristic: start==target means a
-                #   point-in-time milestone in MS Project convention.
+                # ── Filter 1: Confirmed milestone/task flag ──
+                # is_true_milestone is set by the XML parser on import.
+                #   True  → confirmed milestone, ALWAYS keep (any outline level)
+                #   False → confirmed task, always skip
+                #   None  → old import; apply outline_level + heuristic below
                 is_true_milestone = getattr(milestone, 'is_true_milestone', None)
                 if is_true_milestone is False:
                     continue
+
                 if is_true_milestone is None:
-                    # Old YAML: use zero-duration heuristic as best available signal.
-                    # Re-importing the original MS Project XML will fix these permanently.
+                    # ── Filter 2: Skip summary / grouping levels (old imports only) ──
+                    # Level 1-2 = project summaries, Level 3 = milestone groupings.
+                    # Level 4+ are actionable milestones.
+                    # None = manually-created (no outline_level), always keep.
+                    outline_level = getattr(milestone, 'outline_level', None)
+                    if outline_level is not None and outline_level < 4:
+                        continue
+
+                    # ── Filter 3: Zero-duration heuristic (old imports only) ──
+                    # Old YAML without is_true_milestone flag: start==target
+                    # means a point-in-time milestone in MS Project convention.
                     _start = getattr(milestone, 'start_date', None)
                     _target = getattr(milestone, 'target_date', None)
                     if _start and _target and _start != _target:

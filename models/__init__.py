@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class Milestone(BaseModel):
     """Milestone model"""
+    id: Optional[str] = None  # UID from MS Project XML (used for matching on re-import)
     name: str
     target_date: str  # YYYY-MM-DD format (Finish date from XML)
     start_date: Optional[str] = None  # YYYY-MM-DD format (Start date from XML)
@@ -17,6 +18,7 @@ class Milestone(BaseModel):
     notes: Optional[str] = None
     parent_project: Optional[str] = None  # Parent project for roadmap grouping (default level)
     resources: Optional[str] = None  # Resource names assigned to milestone
+    project: Optional[str] = None  # Project code this milestone belongs to
     outline_level: Optional[int] = None  # The outline level of this milestone in hierarchy
     parent_levels: Optional[Dict[str, str]] = None  # Parents at each level: {"2": "Name", "3": "Name"}
     is_true_milestone: Optional[bool] = None  # True if task has Milestone=1 or Duration=0
