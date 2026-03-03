@@ -174,10 +174,30 @@ class ChartFormatterService:
         
         for project in projects:
             for milestone in project.milestones:
-                # Only show true milestones (zero duration / Milestone=1) in the milestone tab
-                # Regular tasks (is_true_milestone=False) are excluded from the milestone tracker
-                if getattr(milestone, 'is_true_milestone', None) is False:
+                # ── Filter 1: Skip summary / grouping levels ──
+                # Level 1-2 = project summaries, Level 3 = milestone groupings.
+                # Level 4+ are actionable milestones (and possibly tasks,
+                # filtered below).  None = manually-created, always keep.
+                outline_level = getattr(milestone, 'outline_level', None)
+                if outline_level is not None and outline_level < 4:
                     continue
+
+                # ── Filter 2: Only true milestones ──
+                # True milestones have Duration=0 / Milestone=1 in MS Project.
+                # is_true_milestone is set by the XML parser on import.
+                #   True  → confirmed milestone, keep
+                #   False → confirmed task, skip
+                #   None  → old import; fall back to zero-duration heuristic
+                is_true_milestone = getattr(milestone, 'is_true_milestone', None)
+                if is_true_milestone is False:
+                    continue
+                if is_true_milestone is None:
+                    _start = getattr(milestone, 'start_date', None)
+                    _target = getattr(milestone, 'target_date', None)
+                    if _start and _target and _start != _target:
+                        # Multi-day span → task, not a milestone
+                        continue
+                    # start==target (zero duration) or dates missing → treat as milestone
                 
                 target_date = datetime.strptime(
                     milestone.target_date, '%Y-%m-%d'
