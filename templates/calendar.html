@@ -415,8 +415,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('📅 Calendar: Initializing...');
     
     try {
-        // Fetch events from API
-        const resp = await fetch('/api/calendar/events');
+        // Fetch events from API (no-store prevents browser from returning stale cached data)
+        const resp = await fetch('/api/calendar/events', { cache: 'no-store' });
         const data = await resp.json();
         allEvents = data.events || [];
         
@@ -611,7 +611,7 @@ function refreshCalendar() {
 
 async function reloadCalendarEvents() {
     try {
-        const resp = await fetch('/api/calendar/events');
+        const resp = await fetch('/api/calendar/events', { cache: 'no-store' });
         const data = await resp.json();
         allEvents = data.events || [];
         // Re-apply localStorage acknowledged filter

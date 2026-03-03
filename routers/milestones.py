@@ -1,7 +1,7 @@
 """
 Milestones Router - Handles milestone editing and updates
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
@@ -27,6 +27,20 @@ DEFAULT_IN_PROGRESS_PERCENTAGE = 50
 change_detector = ChangeDetectionService()
 
 
+def _normalize_date(val):
+    """Convert datetime.date objects (from yaml.safe_load) to 'YYYY-MM-DD' strings.
+    
+    yaml.safe_load converts bare YYYY-MM-DD values to datetime.date objects,
+    but JSON payloads send dates as strings. Normalizing prevents type-mismatch
+    bugs in comparisons, strptime calls, and yaml.safe_dump round-trips.
+    """
+    if val is None:
+        return ''
+    if hasattr(val, 'isoformat'):
+        return val.isoformat()
+    return str(val)
+
+
 class MilestoneUpdate(BaseModel):
     project_code: str
     milestone: dict
@@ -34,9 +48,11 @@ class MilestoneUpdate(BaseModel):
 
 
 @router.post("/milestones/update")
-def update_milestone(data: MilestoneUpdate):
+def update_milestone(data: MilestoneUpdate, request: Request):
     """
-    Update a milestone in the project YAML file
+    Update a milestone in the project YAML file.
+    Uses request context to resolve the correct user-scoped data directory,
+    matching the same priority order as the calendar read path.
     """
     try:
         project_code = data.project_code
@@ -54,17 +70,29 @@ def update_milestone(data: MilestoneUpdate):
                 detail="Milestone is missing project information. Please re-upload your XML file to fix this."
             )
         
-        # Find the project directory
+        # Find the project directory — search user-scoped dir first to match
+        # the same priority order as the calendar read path (_get_user_repo).
         transformed_code = project_code.replace('-', '_')
-        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
-        yaml_path = project_dir / "project_status.yaml"
+        yaml_path = None
         
-        logger.warning(f"Looking for directory: {project_dir}")
-        logger.warning(f"YAML path: {yaml_path}")
-        logger.warning(f"YAML exists: {yaml_path.exists()}")
+        # 1. Check user-scoped directory first (matches calendar read priority)
+        user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+        is_admin = getattr(request.state, 'is_admin', False) if hasattr(request, 'state') else False
+        if user_id and not is_admin:
+            user_candidate = DATA_DIR / "users" / user_id / f"PROJECT-{transformed_code}" / "project_status.yaml"
+            if user_candidate.exists():
+                yaml_path = user_candidate
+                logger.warning(f"Found project in user directory: {yaml_path}")
         
-        if not yaml_path.exists():
-            # Fallback: search user-scoped directories
+        # 2. Check global directory
+        if not yaml_path:
+            global_candidate = DATA_DIR / f"PROJECT-{transformed_code}" / "project_status.yaml"
+            if global_candidate.exists():
+                yaml_path = global_candidate
+                logger.warning(f"Found project in global directory: {yaml_path}")
+        
+        # 3. Fallback: search all user directories
+        if not yaml_path:
             users_dir = DATA_DIR / "users"
             if users_dir.exists():
                 for user_dir in users_dir.iterdir():
@@ -75,8 +103,7 @@ def update_milestone(data: MilestoneUpdate):
                             logger.warning(f"Found project in user directory: {yaml_path}")
                             break
         
-        if not yaml_path.exists():
-            # List what directories DO exist to help debug
+        if not yaml_path:
             existing_dirs = [d.name for d in DATA_DIR.iterdir() if d.is_dir() and d.name.startswith('PROJECT')]
             raise HTTPException(
                 status_code=404, 
@@ -86,6 +113,17 @@ def update_milestone(data: MilestoneUpdate):
         # Load existing project data
         with open(yaml_path, 'r', encoding='utf-8') as f:
             project_data = yaml.safe_load(f)
+        
+        # Normalize YAML date fields — yaml.safe_load converts bare YYYY-MM-DD
+        # to datetime.date objects, but JSON sends strings. Normalize to strings
+        # to prevent type-mismatch bugs in comparisons and strptime calls.
+        for m in project_data.get('milestones', []):
+            for date_field in ('target_date', 'start_date', 'completion_date'):
+                if date_field in m and m[date_field] is not None:
+                    m[date_field] = _normalize_date(m[date_field])
+            # Also normalize ID to string for reliable matching
+            if 'id' in m and m['id'] is not None:
+                m['id'] = str(m['id'])
         
         # Debug logging
         logger.warning(f"=== SEARCHING FOR MILESTONE ===")
@@ -128,8 +166,9 @@ def update_milestone(data: MilestoneUpdate):
                     logger.warning(f"Comparing #{i}: ID '{yaml_id}' == '{incoming_id}' ? {yaml_id == incoming_id if incoming_id else 'N/A'}")
                     logger.warning(f"           Name '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
                 
-                # Try ID match first (most reliable)
-                if incoming_id and yaml_id and yaml_id == incoming_id:
+                # Try ID match first (most reliable) — compare as strings
+                # to handle YAML int IDs vs JSON string IDs
+                if incoming_id and yaml_id and str(yaml_id) == str(incoming_id):
                     logger.warning(f"✅ ID MATCH FOUND at index {i}: ID={yaml_id}")
                     updated = True
                     match_type = 'id'
@@ -788,12 +827,20 @@ def get_milestone_siblings(code: str, id: str):
         with open(yaml_path, 'r', encoding='utf-8') as f:
             project_data = yaml.safe_load(f)
         
+        # Normalize dates and IDs from YAML (datetime.date → str, int ID → str)
+        for m in project_data.get('milestones', []):
+            for date_field in ('target_date', 'start_date', 'completion_date'):
+                if date_field in m and m[date_field] is not None:
+                    m[date_field] = _normalize_date(m[date_field])
+            if 'id' in m and m['id'] is not None:
+                m['id'] = str(m['id'])
+        
         milestones = project_data.get('milestones', [])
         
-        # Find the target milestone
+        # Find the target milestone (compare as strings for reliable matching)
         target_milestone = None
         for m in milestones:
-            if m.get('id') == id or m.get('name') == id:
+            if (m.get('id') and str(m.get('id')) == str(id)) or m.get('name') == id:
                 target_milestone = m
                 break
         
@@ -963,11 +1010,19 @@ def update_task_status(data: TaskStatusUpdate):
         with open(yaml_path, 'r', encoding='utf-8') as f:
             project_data = yaml.safe_load(f)
         
+        # Normalize dates and IDs from YAML (datetime.date → str, int ID → str)
+        for m in project_data.get('milestones', []):
+            for date_field in ('target_date', 'start_date', 'completion_date'):
+                if date_field in m and m[date_field] is not None:
+                    m[date_field] = _normalize_date(m[date_field])
+            if 'id' in m and m['id'] is not None:
+                m['id'] = str(m['id'])
+        
         # Find and update the task
         updated = False
         if 'milestones' in project_data:
             for i, milestone in enumerate(project_data['milestones']):
-                if milestone.get('id') == task_id or milestone.get('name') == task_id:
+                if (milestone.get('id') and str(milestone.get('id')) == str(task_id)) or milestone.get('name') == task_id:
                     # Update status
                     project_data['milestones'][i]['status'] = new_status
                     if new_status == 'COMPLETED':
