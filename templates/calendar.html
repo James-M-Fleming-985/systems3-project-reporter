@@ -1128,10 +1128,15 @@ async function deleteEventFromCalendar() {
     
     try {
         const milestoneId = milestone.id || milestone.name;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
         const resp = await fetch(
             `/api/milestones/${encodeURIComponent(projectCode)}/${encodeURIComponent(milestoneId)}`,
-            { method: 'DELETE' }
+            { method: 'DELETE', signal: controller.signal }
         );
+        clearTimeout(timeoutId);
+        
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.detail || `Server returned ${resp.status}`);
@@ -1143,7 +1148,9 @@ async function deleteEventFromCalendar() {
         refreshCalendar();
     } catch (err) {
         console.error('deleteEventFromCalendar error:', err);
-        showToast('Could not delete: ' + err.message, 'error');
+        const msg = err.name === 'AbortError' ? 'Request timed out — please try again' : err.message;
+        showToast('Could not delete: ' + msg, 'error');
+    } finally {
         if (btn) btn.disabled = false;
     }
 }
@@ -1175,6 +1182,7 @@ async function saveEventFromCalendar() {
     const btn = document.getElementById('saveEventBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Saving…`; }
     
+    const saveButtonOriginalHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Save`;
     try {
         const payload = {
             project_code: projectCode,
@@ -1192,11 +1200,17 @@ async function saveEventFromCalendar() {
             confirmed_date_change: confirmedDateChange
         };
         
+        // Use AbortController to enforce a 20s timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
         const resp = await fetch('/milestones/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
@@ -1210,8 +1224,11 @@ async function saveEventFromCalendar() {
         await reloadCalendarEvents();
     } catch (err) {
         console.error('saveEventFromCalendar error:', err);
-        showToast('Could not save: ' + err.message, 'error');
-        if (btn) { btn.disabled = false; btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Save`; }
+        const msg = err.name === 'AbortError' ? 'Request timed out — please try again' : err.message;
+        showToast('Could not save: ' + msg, 'error');
+    } finally {
+        // Always reset button state so it never stays stuck spinning
+        if (btn) { btn.disabled = false; btn.innerHTML = saveButtonOriginalHTML; }
     }
 }
 

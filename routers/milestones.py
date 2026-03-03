@@ -34,7 +34,7 @@ class MilestoneUpdate(BaseModel):
 
 
 @router.post("/milestones/update")
-async def update_milestone(data: MilestoneUpdate):
+def update_milestone(data: MilestoneUpdate):
     """
     Update a milestone in the project YAML file
     """
@@ -756,10 +756,11 @@ class TaskStatusUpdate(BaseModel):
 
 
 @router.get("/api/milestones/{code}/siblings/{id}")
-async def get_milestone_siblings(code: str, id: str):
+def get_milestone_siblings(code: str, id: str):
     """
-    Get sibling milestones/tasks - ALL Level 4 items under the same Level 3 parent.
-    Returns all Level 4 tasks/milestones that share the same Level 3 parent.
+    Get sibling milestones/tasks that share the same immediate parent.
+    Dynamically determines the parent level from the target milestone's outline_level,
+    rather than hardcoding Level 3.
     """
     try:
         from repositories.project_repository import ProjectRepository
@@ -802,49 +803,70 @@ async def get_milestone_siblings(code: str, id: str):
                 'message': 'Milestone not found'
             })
         
-        # Get parent_levels to find Level 3 parent
+        # Dynamically determine the parent level from the target's outline_level
         parent_levels = target_milestone.get('parent_levels', {})
-        level_3_parent = parent_levels.get('3') or parent_levels.get(3)
+        if not isinstance(parent_levels, dict):
+            parent_levels = {}
+        target_level = target_milestone.get('outline_level')  # e.g. 2, 3, 4
+        target_id = target_milestone.get('id') or None
+        target_name = target_milestone.get('name', '')
         
-        if not level_3_parent:
-            # No Level 3 parent, return empty list
+        # Find the immediate parent: the parent at (outline_level - 1)
+        # e.g. a level-4 milestone looks for parent_levels['3'],
+        #      a level-3 milestone looks for parent_levels['2'],
+        #      a level-2 milestone looks for parent_levels['1']
+        immediate_parent = None
+        parent_key = None
+        if target_level and int(target_level) > 1:
+            parent_key = str(int(target_level) - 1)
+            immediate_parent = parent_levels.get(parent_key) or parent_levels.get(int(parent_key))
+        
+        # Fallback: if no parent_levels at all, try parent_project field
+        if not immediate_parent:
+            immediate_parent = (target_milestone.get('parent_project') or '').strip() or None
+        
+        if not immediate_parent:
+            # No parent info at all — cannot determine siblings
             return JSONResponse(content={
                 'siblings': [],
                 'parent': '',
                 'count': 0
             })
         
-        # Find all related tasks — siblings (same L3 parent, same level)
-        # OR children (their L4/higher parent == target milestone name).
-        # This covers both data shapes from different XML imports.
+        # Find all related tasks — siblings sharing the same immediate parent
+        # OR children (their parent_levels contains the target name)
         siblings = []
-        target_id = target_milestone.get('id') or None  # treat null/empty as None
-        target_name = target_milestone.get('name', '')
-        target_level = target_milestone.get('outline_level')  # May be None for legacy data
 
         for m in milestones:
             raw_pl = m.get('parent_levels')
             m_parent_levels = raw_pl if isinstance(raw_pl, dict) else {}
-            m_level_3_parent = m_parent_levels.get('3') or m_parent_levels.get(3)
+            m_outline_level = m.get('outline_level')
+            
+            # Check if this item shares the same immediate parent at the same level
+            is_sibling = False
+            if parent_key:
+                m_parent_at_key = m_parent_levels.get(parent_key) or m_parent_levels.get(int(parent_key))
+                if m_parent_at_key and m_parent_at_key == immediate_parent:
+                    # Additionally verify they're at the same outline level (true siblings)
+                    if target_level and m_outline_level:
+                        is_sibling = (int(m_outline_level) == int(target_level))
+                    else:
+                        is_sibling = True  # legacy data without outline_level
+            
+            # Also check if parent_project matches (for data without parent_levels)
+            if not is_sibling and not parent_key:
+                m_parent_project = (m.get('parent_project') or '').strip()
+                if m_parent_project and m_parent_project == immediate_parent:
+                    is_sibling = True
+            
             # Also check every parent level value to catch target as a direct parent
             m_is_child_of_target = target_name and any(
                 str(v) == target_name for v in m_parent_levels.values()
             )
-            m_outline_level = m.get('outline_level')
-
-            # Accept as related if:
-            # (a) Same L3 parent — siblings or cousins at any depth, OR
-            # (b) This item's parent_levels contains the target name (direct child)
-            is_sibling = (m_level_3_parent == level_3_parent)
             is_child = m_is_child_of_target
 
             if not is_sibling and not is_child:
                 continue
-
-            # For siblings: if both have valid outline_level they must match
-            if is_sibling and not is_child:
-                if target_level and m_outline_level and target_level != m_outline_level:
-                    continue
 
             # Exclude the item being viewed (the milestone itself)
             m_id = m.get('id') or None  # treat null/empty as None
@@ -873,18 +895,16 @@ async def get_milestone_siblings(code: str, id: str):
         
         return JSONResponse(content={
             'siblings': siblings,
-            'parent': level_3_parent,
+            'parent': immediate_parent,
             'count': len(siblings),
             '_debug': {
                 'total_milestones': len(milestones),
                 'target_level': target_level,
+                'parent_key': parent_key,
+                'immediate_parent': immediate_parent,
                 'target_id': target_id,
                 'target_name': target_name,
-                'all_l3_parents': list({
-                    (m.get('parent_levels') or {}).get('3') or (m.get('parent_levels') or {}).get(3)
-                    for m in milestones
-                    if isinstance(m.get('parent_levels'), dict)
-                }),
+                'target_parent_levels': parent_levels,
                 'sample_entries_near_target': [
                     {
                         'name': m.get('name'),
@@ -893,9 +913,10 @@ async def get_milestone_siblings(code: str, id: str):
                         'parent_levels': m.get('parent_levels'),
                     }
                     for m in milestones
-                    if isinstance(m.get('parent_levels'), dict) and (
-                        (m.get('parent_levels') or {}).get('3') == level_3_parent or
-                        (m.get('parent_levels') or {}).get(3) == level_3_parent
+                    if isinstance(m.get('parent_levels'), dict) and
+                    parent_key and (
+                        (m.get('parent_levels') or {}).get(parent_key) == immediate_parent or
+                        (m.get('parent_levels') or {}).get(int(parent_key)) == immediate_parent
                     )
                 ]
             }
@@ -909,7 +930,7 @@ async def get_milestone_siblings(code: str, id: str):
 
 
 @router.post("/api/milestones/update-task-status")
-async def update_task_status(data: TaskStatusUpdate):
+def update_task_status(data: TaskStatusUpdate):
     """
     Update the completion status of a task/milestone.
     Sets status to COMPLETED or IN_PROGRESS and updates completion_percentage accordingly.
