@@ -1229,10 +1229,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedLimit = localStorage.getItem('milestonesCardsPerColumn') || '-1';
     document.getElementById('cardsPerColumn').value = savedLimit;
 
-    const selectedProgram = localStorage.getItem('selectedProgram');
-    if (selectedProgram) {
-        const cleanName = selectedProgram.replace(/\.(xml|XML)$/, '').trim();
+    // Use server-rendered project name (not stale localStorage)
+    if (typeof projectName !== 'undefined' && projectName) {
+        const cleanName = projectName.replace(/\.(xml|XML)$/, '').trim();
         document.getElementById('milestonePageTitle').textContent = `📍 ${cleanName} - Milestone Tracker`;
+        localStorage.setItem('selectedProgram', projectName);  // keep in sync
     }
 
     // Map old 'status' view to 'board' for backwards compat

@@ -470,43 +470,93 @@ document.addEventListener('DOMContentLoaded', async function() {
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
             },
-            // Drag-to-reschedule: schedule items only
+            // Drag-to-reschedule: schedule + milestone items
             editable: true,
             eventAllow: function(dropInfo, draggedEvent) {
-                return draggedEvent.extendedProps?.type === 'schedule';
+                return ['schedule', 'milestone'].includes(draggedEvent.extendedProps?.type);
             },
             eventDragStart: function(info) {
-                if (info.event.extendedProps?.type !== 'schedule') {
-                    showToast('Only schedule items can be rescheduled from the calendar', 'info');
+                const t = info.event.extendedProps?.type;
+                if (t !== 'schedule' && t !== 'milestone') {
+                    showToast('Only schedule and milestone items can be rescheduled from the calendar', 'info');
                 }
             },
             eventDrop: async function(info) {
                 const ep = info.event.extendedProps || {};
-                if (ep.type !== 'schedule') { info.revert(); return; }
                 const newDate = info.event.startStr.split('T')[0];
-                const { program: prog, tableId, rowId, dateColId } = ep;
-                if (!prog || !tableId || !rowId || !dateColId) { info.revert(); return; }
-                try {
-                    const resp = await fetch(
-                        `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
-                        {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                            body: JSON.stringify({ date_col_id: dateColId, new_date: newDate })
-                        }
-                    );
-                    if (!resp.ok) throw new Error(`Server ${resp.status}`);
-                    const result = await resp.json();
-                    if (!result.success) throw new Error('Update failed');
-                    // Keep in-memory event in sync
-                    const idx = allEvents.findIndex(e => e.id === info.event.id);
-                    if (idx !== -1) allEvents[idx].start = newDate;
-                    showToast('✓ Rescheduled', 'success');
-                } catch (err) {
-                    console.error('eventDrop error:', err);
-                    info.revert();
-                    showToast('Could not reschedule — please try again', 'error');
+
+                // ── Schedule item drag ──
+                if (ep.type === 'schedule') {
+                    const { program: prog, tableId, rowId, dateColId } = ep;
+                    if (!prog || !tableId || !rowId || !dateColId) { info.revert(); return; }
+                    try {
+                        const resp = await fetch(
+                            `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                            {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                                body: JSON.stringify({ date_col_id: dateColId, new_date: newDate })
+                            }
+                        );
+                        if (!resp.ok) throw new Error(`Server ${resp.status}`);
+                        const result = await resp.json();
+                        if (!result.success) throw new Error('Update failed');
+                        const idx = allEvents.findIndex(e => e.id === info.event.id);
+                        if (idx !== -1) allEvents[idx].start = newDate;
+                        showToast('✓ Rescheduled', 'success');
+                    } catch (err) {
+                        console.error('eventDrop error:', err);
+                        info.revert();
+                        showToast('Could not reschedule — please try again', 'error');
+                    }
+                    return;
                 }
+
+                // ── Milestone drag ──
+                if (ep.type === 'milestone') {
+                    const ms = ep.milestone || {};
+                    const projectCode = ep.programCode || ms.project;
+                    if (!projectCode || !ms.name) { info.revert(); return; }
+                    try {
+                        const payload = {
+                            project_code: projectCode,
+                            milestone: {
+                                id: ms.id || ms.name,
+                                name: ms.name,
+                                target_date: newDate,
+                                start_date: ep.startDate || ms.start_date || '',
+                                status: ep.status || ms.status || 'NOT_STARTED',
+                                completion_percentage: ep.completionPct || 0,
+                                notes: ep.notes || '',
+                                resources: ep.resources || ms.resources || '',
+                                parent_project: ep.parentProject || ms.parent_project || ''
+                            },
+                            confirmed_date_change: false
+                        };
+                        const resp = await fetch('/milestones/update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({}));
+                            throw new Error(err.detail || `Server ${resp.status}`);
+                        }
+                        // Update in-memory events and reload from server
+                        const idx = allEvents.findIndex(e => e.id === info.event.id);
+                        if (idx !== -1) allEvents[idx].start = newDate;
+                        showToast('✓ Milestone rescheduled', 'success');
+                        await reloadCalendarEvents();
+                    } catch (err) {
+                        console.error('eventDrop milestone error:', err);
+                        info.revert();
+                        showToast('Could not reschedule milestone — ' + err.message, 'error');
+                    }
+                    return;
+                }
+
+                // ── Other event types: revert ──
+                info.revert();
             },
             eventContent: function(arg) {
                 const ep = arg.event.extendedProps || {};
