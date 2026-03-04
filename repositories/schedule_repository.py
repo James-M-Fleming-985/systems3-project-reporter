@@ -295,6 +295,35 @@ class ScheduleRepository:
         
         return None
     
+    def add_rows_bulk(self, project_name: str, table_id: str, rows_data: list) -> int:
+        """
+        Add multiple rows in a single file read/write cycle.
+        Much faster than calling add_row() in a loop for large imports.
+
+        Args:
+            project_name: Project name
+            table_id: Table to add rows to
+            rows_data: List of row data dicts
+
+        Returns:
+            Number of rows added
+        """
+        if not rows_data:
+            return 0
+        data = self.get_schedules(project_name)
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for row_data in rows_data:
+                    new_row = {
+                        'id': str(uuid.uuid4()),
+                        'created_at': datetime.now().isoformat(),
+                        'data': row_data or {}
+                    }
+                    data['tables'][i]['rows'].append(new_row)
+                self.save_schedules(project_name, data)
+                return len(rows_data)
+        return 0
+
     def update_row(self, project_name: str, table_id: str, row_id: str, row_data: Dict[str, Any]) -> bool:
         """Update a row in a schedule table"""
         data = self.get_schedules(project_name)

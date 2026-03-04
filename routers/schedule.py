@@ -725,8 +725,8 @@ async def import_schedule_file(
             # Map headers to column IDs
             header_to_col = {col['header']: col['id'] for col in table['columns']}
             
-            # Add rows
-            rows_imported = 0
+            # Build all row dicts first, then bulk-insert in a single file write
+            bulk_rows = []
             for row_values in data_rows:
                 row_data = {}
                 for i, value in enumerate(row_values):
@@ -734,11 +734,11 @@ async def import_schedule_file(
                         col_id = header_to_col.get(headers[i])
                         if col_id:
                             row_data[col_id] = value
-                
                 if any(row_data.values()):  # Skip empty rows
-                    schedule_repo.add_row(project_name, table_id, row_data)
-                    rows_imported += 1
-            
+                    bulk_rows.append(row_data)
+
+            rows_imported = schedule_repo.add_rows_bulk(project_name, table_id, bulk_rows)
+
             return JSONResponse(content={
                 "success": True,
                 "table_name": table_name,
@@ -775,8 +775,8 @@ async def import_schedule_file(
             # Reverse mapping: file column -> table column id
             file_to_table = {v: k for k, v in mapping.items()}
             
-            # Add rows
-            rows_imported = 0
+            # Build all row dicts first, then bulk-insert in a single file write
+            bulk_rows = []
             for row_values in data_rows:
                 row_data = {}
                 for i, value in enumerate(row_values):
@@ -784,11 +784,11 @@ async def import_schedule_file(
                         col_id = file_to_table.get(headers[i])
                         if col_id:
                             row_data[col_id] = value
-                
                 if any(row_data.values()):  # Skip empty rows
-                    schedule_repo.add_row(project_name, table_id, row_data)
-                    rows_imported += 1
-            
+                    bulk_rows.append(row_data)
+
+            rows_imported = schedule_repo.add_rows_bulk(project_name, table_id, bulk_rows)
+
             return JSONResponse(content={
                 "success": True,
                 "table_name": table['name'],

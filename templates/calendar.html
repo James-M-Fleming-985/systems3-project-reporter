@@ -324,7 +324,7 @@
 </div>
 
 <!-- Event Detail Modal -->
-<div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+<div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[10000]">
     <div class="event-modal relative top-10 mx-auto p-0 border w-[550px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]">
         <!-- Modal Header -->
         <div id="eventModalHeader" class="px-6 py-4 text-white">
@@ -661,6 +661,8 @@ function updateStats() {
 function showEventModal(event) {
     try {
         console.log('showEventModal called with:', event);
+        // Close any open FullCalendar popovers so the modal sits on top
+        document.querySelectorAll('.fc-popover').forEach(el => el.remove());
         const modal = document.getElementById('eventModal');
         const ep = event.extendedProps || {};
         const type = ep.type || 'unknown';
