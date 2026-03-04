@@ -844,7 +844,15 @@ function showEventModal(event) {
                 <div class="p-3 bg-indigo-50 rounded-lg">
                     <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
                     <div class="space-y-1">
-                        ${Object.entries(ep.allData).map(([k,v]) => `<div class="flex justify-between text-sm"><span class="text-gray-500">${k}</span><span class="font-medium text-gray-800">${v}</span></div>`).join('')}
+                        ${Object.entries(ep.allData).map(([k,v]) => {
+                            let display = String(v || '');
+                            const dm = display.match(/^(\d{4}-\d{2}-\d{2})/);
+                            if (dm) display = formatDate(dm[1]);
+                            return `<div class="flex justify-between gap-4 text-sm py-0.5">
+                                <span class="text-gray-500 flex-shrink-0">${k}</span>
+                                <span class="font-medium text-gray-800 text-right">${display}</span>
+                            </div>`;
+                        }).join('')}
                     </div>
                 </div>
             ` : ''}

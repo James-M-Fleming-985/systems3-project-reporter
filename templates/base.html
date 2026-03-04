@@ -184,35 +184,31 @@
                     <!-- Divider -->
                     <span class="text-blue-400 mx-1">|</span>
                     
-                    <!-- Project views group -->
-                    <a href="/dashboard/gantt{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/gantt' in request.url.path %}bg-white/15{% endif %}">
-                        Gantt
-                    </a>
-                    <a href="/dashboard/milestones{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/milestones' in request.url.path %}bg-white/15{% endif %}">
-                        Milestones
-                    </a>
-                    <a href="/dashboard/metrics{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/metrics' in request.url.path %}bg-white/15{% endif %}">
-                        Metrics
-                    </a>
-                    <a href="/dashboard/risks{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/risks' in request.url.path %}bg-white/15{% endif %}">
-                        Risks
-                    </a>
-                    <a href="/dashboard/changes{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/changes' in request.url.path %}bg-white/15{% endif %}">
-                        Changes
-                    </a>
-                    <a href="/dashboard/schedule{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/schedule' in request.url.path %}bg-white/15{% endif %}">
-                        Schedule
-                    </a>
-                    <a href="/dashboard/documents{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/documents' in request.url.path %}bg-white/15{% endif %}">
-                        Documents
-                    </a>
+                    <!-- Project views group: each tab has a hover dropdown to pick a program -->
+                    {% set _proj = request.query_params.get('project') %}
+                    {% for tab_name, tab_path in [
+                        ('Gantt',      'gantt'),
+                        ('Milestones', 'milestones'),
+                        ('Metrics',    'metrics'),
+                        ('Risks',      'risks'),
+                        ('Changes',    'changes'),
+                        ('Schedule',   'schedule'),
+                        ('Documents',  'documents')
+                    ] %}
+                    <div class="relative nav-tab-group" data-tab="{{ tab_path }}"
+                         onmouseenter="openNavDropdown(this)" onmouseleave="closeNavDropdown(this)">
+                        <a href="/dashboard/{{ tab_path }}{{ ('?project=' + _proj) if _proj else '' }}"
+                           class="flex items-center gap-0.5 px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition whitespace-nowrap {% if '/' + tab_path in request.url.path %}bg-white/15{% endif %}">
+                            {{ tab_name }}
+                            <svg class="w-3 h-3 text-blue-200 flex-shrink-0 mt-px" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </a>
+                        <div class="nav-tab-dropdown hidden absolute top-full left-0 mt-0.5 bg-white rounded-lg shadow-2xl border border-gray-200 z-[999] min-w-[220px] max-h-[420px] overflow-y-auto"
+                             onmouseenter="openNavDropdown(this.closest('.nav-tab-group'))" onmouseleave="closeNavDropdown(this.closest('.nav-tab-group'))">
+                            <div class="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b bg-gray-50 rounded-t-lg">{{ tab_name }}</div>
+                            <div class="nav-tab-dropdown-body py-1 px-2 text-sm text-gray-400 italic">Loading…</div>
+                        </div>
+                    </div>
+                    {% endfor %}
                     <a href="/feedback" 
                        class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/feedback' in request.url.path %}bg-white/15{% endif %}">
                         💬 Feedback
@@ -221,18 +217,6 @@
                 
                 <!-- Actions group -->
                 <div class="flex items-center space-x-2">
-
-                    {% if request.url.path not in ('/', '/dashboard', '/dashboard/') and not ppt_export %}
-                    <!-- Program switcher -->
-                    <div class="flex items-center space-x-1" title="Switch program">
-                        <span class="text-blue-200 text-xs font-medium hidden xl:inline">Program:</span>
-                        <select id="navProgramSelect"
-                            class="bg-white/10 hover:bg-white/20 text-white text-xs rounded-md px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 cursor-pointer max-w-[160px] truncate"
-                            onchange="navSwitchProgram(this.value)">
-                            <option value="" class="text-gray-800">— program —</option>
-                        </select>
-                    </div>
-                    {% endif %}
 
                     <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
                        class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1">
@@ -451,34 +435,49 @@
             }
         });
 
-        // ── Program switcher in nav ──────────────────────────────────────────
-        (async function initNavProgramSwitcher() {
-            const sel = document.getElementById('navProgramSelect');
-            if (!sel) return;  // portfolio or ppt page — switcher not rendered
+        // ── Tab hover-dropdown program picker ────────────────────────
+        let _navPrograms = null;
 
-            const currentCode = new URLSearchParams(window.location.search).get('project') || '';
-
+        async function getNavPrograms() {
+            if (_navPrograms) return _navPrograms;
             try {
-                const resp = await fetch('/api/projects');
-                if (!resp.ok) return;
-                const projects = await resp.json();
+                const r = await fetch('/dashboard/api/projects');
+                _navPrograms = r.ok ? await r.json() : [];
+            } catch(e) { _navPrograms = []; }
+            return _navPrograms;
+        }
 
-                projects.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.code;
-                    opt.textContent = p.name;
-                    opt.className = 'text-gray-800 bg-white';
-                    if (p.code === currentCode) opt.selected = true;
-                    sel.appendChild(opt);
-                });
-            } catch (e) { /* silent — nav switcher is optional */ }
-        })();
+        async function openNavDropdown(groupEl) {
+            const dropdown = groupEl.querySelector('.nav-tab-dropdown');
+            if (!dropdown) return;
+            if (!groupEl.dataset.populated) {
+                groupEl.dataset.populated = '1';
+                const tab = groupEl.dataset.tab;
+                const cur = new URLSearchParams(window.location.search).get('project') || '';
+                const programs = await getNavPrograms();
+                const body = groupEl.querySelector('.nav-tab-dropdown-body');
+                if (!body) return;
+                if (!programs.length) {
+                    body.innerHTML = '<span class="text-gray-400 not-italic">No programs found</span>';
+                } else {
+                    body.className = 'nav-tab-dropdown-body py-1';
+                    body.innerHTML = programs.map(p => {
+                        const active = p.code === cur;
+                        return `<a href="/dashboard/${tab}?project=${encodeURIComponent(p.code)}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm transition
+                                ${active ? 'text-blue-700 font-semibold bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'}">
+                            <span class="w-4 text-blue-500 flex-shrink-0">${active ? '✓' : ''}</span>
+                            <span class="truncate">${p.name}</span>
+                        </a>`;
+                    }).join('');
+                }
+            }
+            dropdown.classList.remove('hidden');
+        }
 
-        function navSwitchProgram(code) {
-            if (!code) return;
-            const url = new URL(window.location.href);
-            url.searchParams.set('project', code);
-            window.location.href = url.toString();
+        function closeNavDropdown(groupEl) {
+            const d = groupEl.querySelector('.nav-tab-dropdown');
+            if (d) d.classList.add('hidden');
         }
     </script>
 
