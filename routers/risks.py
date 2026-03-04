@@ -76,6 +76,8 @@ class RiskCreate(BaseModel):
     owner: str
     category: Optional[str] = None
     mitigations: Optional[str] = None
+    review_cadence: Optional[str] = None  # none, weekly, bi-weekly, monthly, quarterly, annually
+    next_review_date: Optional[str] = None  # ISO date string for next scheduled review
 
 
 class RiskUpdate(BaseModel):
@@ -88,6 +90,8 @@ class RiskUpdate(BaseModel):
     owner: Optional[str] = None
     category: Optional[str] = None
     mitigations: Optional[str] = None
+    review_cadence: Optional[str] = None  # none, weekly, bi-weekly, monthly, quarterly, annually
+    next_review_date: Optional[str] = None  # ISO date string for next scheduled review
 
 
 @router.post("/create")
@@ -142,6 +146,24 @@ async def create_risk(risk: RiskCreate):
         else:
             severity = 'low'
         
+        # Calculate next review date if cadence is set
+        review_cadence = risk.review_cadence if risk.review_cadence and risk.review_cadence != 'none' else None
+        next_review = risk.next_review_date
+        if review_cadence and not next_review:
+            # Auto-calculate from today based on cadence
+            from dateutil.relativedelta import relativedelta
+            today = datetime.now().date()
+            cadence_deltas = {
+                'weekly': relativedelta(weeks=1),
+                'bi-weekly': relativedelta(weeks=2),
+                'monthly': relativedelta(months=1),
+                'quarterly': relativedelta(months=3),
+                'annually': relativedelta(years=1),
+            }
+            delta = cadence_deltas.get(review_cadence)
+            if delta:
+                next_review = (today + delta).isoformat()
+        
         # Create new risk object
         new_risk = {
             'id': risk_id,  # Use auto-generated or validated ID
@@ -155,7 +177,9 @@ async def create_risk(risk: RiskCreate):
             'owner': risk.owner,
             'category': risk.category or '',
             'mitigations': risk.mitigations or '',
-            'date_identified': datetime.now().strftime('%Y-%m-%d')
+            'date_identified': datetime.now().strftime('%Y-%m-%d'),
+            'review_cadence': review_cadence,
+            'next_review_date': next_review,
         }
         
         # Add to existing risks
@@ -230,6 +254,29 @@ async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
                 risk['severity_normalized'] = 'medium'
             else:
                 risk['severity_normalized'] = 'low'
+        
+        # Handle review cadence updates
+        if 'review_cadence' in update_data:
+            cadence = update_data['review_cadence']
+            if not cadence or cadence == 'none':
+                risk['review_cadence'] = None
+                risk['next_review_date'] = None
+            else:
+                risk['review_cadence'] = cadence
+                # If next_review_date not explicitly provided, auto-calculate from today
+                if 'next_review_date' not in update_data or not update_data.get('next_review_date'):
+                    from dateutil.relativedelta import relativedelta
+                    today = datetime.now().date()
+                    cadence_deltas = {
+                        'weekly': relativedelta(weeks=1),
+                        'bi-weekly': relativedelta(weeks=2),
+                        'monthly': relativedelta(months=1),
+                        'quarterly': relativedelta(months=3),
+                        'annually': relativedelta(years=1),
+                    }
+                    delta = cadence_deltas.get(cadence)
+                    if delta:
+                        risk['next_review_date'] = (today + delta).isoformat()
         
         # Save back to repository
         risk_repo.save_risks(clean_prog_name, risks)

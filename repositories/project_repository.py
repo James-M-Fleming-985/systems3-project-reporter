@@ -161,6 +161,11 @@ class ProjectRepository:
         yaml_files = (list(self.data_dir.glob("**/*.yaml")) + 
                      list(self.data_dir.glob("**/*.yml")))
         
+        # Sort so global (root-level) files are processed before user-scoped
+        # copies in users/ subdirectories.  This guarantees the canonical
+        # (freshly-saved) global copy wins deduplication when both exist.
+        yaml_files.sort(key=lambda p: (1 if '/users/' in str(p) else 0, str(p)))
+        
         for yaml_file in yaml_files:
             # Skip non-project data files
             if not _is_project_file(yaml_file):

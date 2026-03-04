@@ -356,6 +356,20 @@ def update_milestone(data: MilestoneUpdate, request: Request):
             f"in project {project_code} | target_date={saved_target_date or new_target_date}"
         )
         
+        # Clean up stale user-scoped copies so the calendar always reads
+        # the freshly-saved global file (glob order is non-deterministic).
+        try:
+            users_dir = DATA_DIR / "users"
+            if users_dir.exists():
+                for user_dir in users_dir.iterdir():
+                    if user_dir.is_dir():
+                        stale = user_dir / f"PROJECT-{transformed_code}" / "project_status.yaml"
+                        if stale.exists() and stale != yaml_path:
+                            stale.unlink()
+                            logger.warning(f"🗑️ Removed stale user-scoped copy: {stale}")
+        except Exception as e:
+            logger.warning(f"⚠️ Stale copy cleanup failed (non-fatal): {e}")
+        
         return JSONResponse({
             'success': True,
             'message': 'Milestone updated successfully',

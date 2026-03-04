@@ -376,6 +376,30 @@
                 <textarea id="riskMitigations" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="How will this risk be mitigated?"></textarea>
             </div>
             
+            <!-- Review Cadence Section -->
+            <div class="border-t pt-4 mt-2">
+                <p class="text-sm font-semibold text-gray-700 mb-3">📅 Review Schedule</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Review Cadence</label>
+                        <select id="riskReviewCadence" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="updateNextReviewDate()">
+                            <option value="none">No Scheduled Review</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="bi-weekly">Bi-Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="annually">Annually</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Risk reviews appear on the calendar</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Next Review Date</label>
+                        <input type="date" id="riskNextReviewDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Auto-set from cadence, or pick manually</p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="flex justify-end gap-3 pt-4 border-t">
                 <button type="button" onclick="closeRiskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                     Cancel
@@ -587,6 +611,8 @@ function editRisk(event) {
             document.getElementById('riskOwner').value = risk.owner || '';
             document.getElementById('riskCategory').value = risk.category || '';
             document.getElementById('riskMitigations').value = risk.mitigations || '';
+            document.getElementById('riskReviewCadence').value = risk.review_cadence || 'none';
+            document.getElementById('riskNextReviewDate').value = risk.next_review_date || '';
             
             document.getElementById('riskModal').classList.remove('hidden');
         })
@@ -599,6 +625,41 @@ function editRisk(event) {
 function closeRiskModal() {
     document.getElementById('riskModal').classList.add('hidden');
     document.getElementById('riskForm').reset();
+}
+
+function updateNextReviewDate() {
+    const cadence = document.getElementById('riskReviewCadence').value;
+    const nextDateInput = document.getElementById('riskNextReviewDate');
+    
+    if (!cadence || cadence === 'none') {
+        nextDateInput.value = '';
+        return;
+    }
+    
+    // Calculate next review date from today
+    const today = new Date();
+    let nextDate = new Date(today);
+    
+    switch (cadence) {
+        case 'weekly':
+            nextDate.setDate(today.getDate() + 7);
+            break;
+        case 'bi-weekly':
+            nextDate.setDate(today.getDate() + 14);
+            break;
+        case 'monthly':
+            nextDate.setMonth(today.getMonth() + 1);
+            break;
+        case 'quarterly':
+            nextDate.setMonth(today.getMonth() + 3);
+            break;
+        case 'annually':
+            nextDate.setFullYear(today.getFullYear() + 1);
+            break;
+    }
+    
+    // Format as YYYY-MM-DD
+    nextDateInput.value = nextDate.toISOString().split('T')[0];
 }
 
 async function deleteRisk(event) {
@@ -718,6 +779,22 @@ function viewRiskDetails(event) {
                     <p class="font-medium">${risk.date_identified}</p>
                 </div>
                 ` : ''}
+                
+                ${risk.review_cadence && risk.review_cadence !== 'none' ? `
+                <div class="bg-blue-50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-500 mb-1">📅 Review Schedule</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <p class="text-xs text-gray-400">Cadence</p>
+                            <p class="font-medium capitalize">${risk.review_cadence}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">Next Review</p>
+                            <p class="font-medium">${risk.next_review_date || 'Not set'}</p>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
             `;
             
             document.getElementById('viewRiskModal').classList.remove('hidden');
@@ -749,7 +826,9 @@ document.getElementById('riskForm').addEventListener('submit', async (e) => {
         status: document.getElementById('riskStatus').value,
         owner: document.getElementById('riskOwner').value.trim(),
         category: document.getElementById('riskCategory').value.trim(),
-        mitigations: document.getElementById('riskMitigations').value.trim()
+        mitigations: document.getElementById('riskMitigations').value.trim(),
+        review_cadence: document.getElementById('riskReviewCadence').value,
+        next_review_date: document.getElementById('riskNextReviewDate').value || null
     };
     
     try {

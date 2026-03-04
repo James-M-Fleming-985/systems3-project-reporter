@@ -87,16 +87,19 @@ async def get_calendar_events(request: Request):
         project_repo = _get_user_repo(request)
         all_loaded_projects = project_repo.load_all_projects()
         
-        # Also load from global repo so we don't miss shared projects 
-        global_repo = ProjectRepository(data_dir=DATA_DIR)
-        global_projects = global_repo.load_all_projects()
-        
-        # Merge: user projects take precedence, add global projects not already present
-        seen_codes = {p.project_code for p in all_loaded_projects}
-        for gp in global_projects:
-            if gp.project_code not in seen_codes:
-                all_loaded_projects.append(gp)
-                seen_codes.add(gp.project_code)
+        # For non-admin users, also load from global repo so we don't miss shared projects.
+        # Admin users already scan the full DATA_DIR tree, so a second load is redundant.
+        is_admin = getattr(request.state, 'is_admin', False) if hasattr(request, 'state') else False
+        if not is_admin:
+            global_repo = ProjectRepository(data_dir=DATA_DIR)
+            global_projects = global_repo.load_all_projects()
+            
+            # Merge: user projects take precedence, add global projects not already present
+            seen_codes = {p.project_code for p in all_loaded_projects}
+            for gp in global_projects:
+                if gp.project_code not in seen_codes:
+                    all_loaded_projects.append(gp)
+                    seen_codes.add(gp.project_code)
         
         # Filter out archived programs from calendar
         archived_codes = set()
@@ -579,6 +582,138 @@ async def get_calendar_events(request: Request):
                         continue
         except Exception as e:
             logger.warning(f"Error loading metric targets for calendar: {e}")
+        
+        # 4. Load risk review events (recurring cadence-based reviews)
+        try:
+            from dateutil.relativedelta import relativedelta
+            from repositories.risk_repository import RiskRepository
+            
+            risk_repo = RiskRepository()
+            risks_dir = Path(risk_repo.storage_dir)
+            
+            if risks_dir.exists():
+                cadence_deltas = {
+                    'weekly': relativedelta(weeks=1),
+                    'bi-weekly': relativedelta(weeks=2),
+                    'monthly': relativedelta(months=1),
+                    'quarterly': relativedelta(months=3),
+                    'annually': relativedelta(years=1),
+                }
+                
+                # Generate review events for the next 12 months
+                today = datetime.now().date()
+                horizon = today + relativedelta(months=12)
+                
+                for risk_file in risks_dir.glob("*.json"):
+                    try:
+                        import json
+                        with open(risk_file, 'r') as f:
+                            risk_data = json.load(f)
+                        
+                        risk_program = risk_data.get('program_name', risk_file.stem.replace('_risks', ''))
+                        
+                        # Skip risks belonging to archived programs
+                        if (risk_program in archived_identifiers or
+                            _clean_project_name(risk_program) in archived_identifiers):
+                            continue
+                        
+                        for risk in risk_data.get('risks', []):
+                            # Skip risks without review cadence
+                            cadence = risk.get('review_cadence')
+                            if not cadence or cadence == 'none':
+                                continue
+                            
+                            # Skip mitigated risks — all other statuses show reviews
+                            status = (risk.get('status') or '').lower().strip()
+                            if status == 'mitigated':
+                                continue
+                            
+                            delta = cadence_deltas.get(cadence)
+                            if not delta:
+                                continue
+                            
+                            # Determine starting date for review generation
+                            next_review_str = risk.get('next_review_date')
+                            date_identified_str = risk.get('date_identified')
+                            
+                            start_date = None
+                            if next_review_str:
+                                try:
+                                    start_date = datetime.fromisoformat(next_review_str).date() if isinstance(next_review_str, str) else next_review_str
+                                except (ValueError, TypeError):
+                                    pass
+                            
+                            if not start_date and date_identified_str:
+                                try:
+                                    identified = datetime.fromisoformat(date_identified_str).date() if isinstance(date_identified_str, str) else date_identified_str
+                                    start_date = identified + delta
+                                except (ValueError, TypeError):
+                                    pass
+                            
+                            if not start_date:
+                                start_date = today + delta
+                            
+                            # If start_date is in the past, advance it to the next future occurrence
+                            while start_date < today:
+                                start_date += delta
+                            
+                            # Generate review dates from start_date up to horizon
+                            risk_id = risk.get('id', 'unknown')
+                            risk_title = risk.get('title', 'Untitled Risk')
+                            severity = risk.get('severity_normalized', 'medium')
+                            risk_owner = risk.get('owner', '')
+                            risk_status = risk.get('status', 'Active')
+                            
+                            # Severity-based status category for visual styling
+                            severity_to_status = {
+                                'critical': 'overdue',
+                                'high': 'overdue',
+                                'medium': 'pending',
+                                'low': 'not-started',
+                            }
+                            review_status_cat = severity_to_status.get(severity, 'pending')
+                            
+                            review_date = start_date
+                            occurrence = 0
+                            while review_date <= horizon:
+                                occurrence += 1
+                                cadence_label = cadence.replace('-', ' ').title()
+                                
+                                event = {
+                                    'id': f'risk-review-{risk_program}-{risk_id}-{review_date.isoformat()}',
+                                    'title': f'Risk Review: {risk_title}',
+                                    'start': review_date.isoformat(),
+                                    'allDay': True,
+                                    'backgroundColor': '#EF4444',
+                                    'borderColor': '#DC2626',
+                                    'textColor': '#FFFFFF',
+                                    'extendedProps': {
+                                        'type': 'risk_review',
+                                        'source_label': 'Risk Review',
+                                        'description': f'{risk_title} ({risk_id}) — {cadence_label} review',
+                                        'due_date': review_date.isoformat(),
+                                        'status_label': f'{risk_status}',
+                                        'status_category': review_status_cat,
+                                        'program': risk_program,
+                                        'riskId': risk_id,
+                                        'riskTitle': risk_title,
+                                        'severity': severity,
+                                        'riskOwner': risk_owner,
+                                        'riskStatus': risk_status,
+                                        'cadence': cadence,
+                                        'cadenceLabel': cadence_label,
+                                        'occurrence': occurrence,
+                                    }
+                                }
+                                events.append(event)
+                                review_date += delta
+                    except Exception as e:
+                        logger.warning(f"Error reading risk file {risk_file} for calendar: {e}")
+                        continue
+                        
+            logger.info(f"📅 Calendar: generated risk review events")
+        except Exception as e:
+            logger.warning(f"Error loading risk review events for calendar: {e}")
         
         # Build name→code lookup so we can resolve programCode for schedule/metric events
         name_to_code = {}
