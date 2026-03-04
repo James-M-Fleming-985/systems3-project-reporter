@@ -13,7 +13,9 @@ import os
 import io
 import json
 import csv
+import re
 import yaml
+from datetime import date as _date, datetime as _datetime
 
 from repositories.schedule_repository import ScheduleRepository
 
@@ -527,6 +529,39 @@ async def schedule_slide_view(project_name: str, table_id: str):
 # File Import Endpoints
 # =============================================================================
 
+def _detect_col_type(header: str, sample_values: list) -> str:
+    """Detect whether a column should be typed 'date' or 'text'.
+
+    Returns 'date' if the header name contains date-related keywords OR
+    if a majority of sample values look like ISO dates (YYYY-MM-DD).
+    Otherwise returns 'text'.
+    """
+    DATE_KEYWORDS = ('date', 'due', 'start', 'finish', 'end', 'deadline',
+                     'target', 'planned', 'by', 'when', 'schedule', 'delivery')
+    if any(kw in header.lower() for kw in DATE_KEYWORDS):
+        return 'date'
+    # Value-heuristic: check first 10 non-empty samples
+    iso_pat = re.compile(r'^\d{4}-\d{2}-\d{2}')
+    vals = [str(v).strip() for v in sample_values if v is not None and str(v).strip()]
+    vals = vals[:10]
+    if vals and sum(1 for v in vals if iso_pat.match(v)) > len(vals) // 2:
+        return 'date'
+    return 'text'
+
+
+def _normalize_cell_value(cell) -> str:
+    """Convert an openpyxl cell value to a clean string.
+
+    datetime/date objects are formatted as YYYY-MM-DD so they are
+    recognised as date values by _detect_col_type and the calendar.
+    """
+    if cell is None:
+        return ""
+    if isinstance(cell, (_datetime, _date)):
+        return cell.strftime('%Y-%m-%d')
+    return str(cell).strip()
+
+
 def parse_excel_file(file_content: bytes) -> tuple:
     """Parse Excel file and return headers and rows"""
     try:
@@ -553,18 +588,13 @@ def parse_excel_file(file_content: bytes) -> tuple:
                     logger.warning(f"Error converting header at column {i}: {e}")
                     headers.append(f"Column {i+1}")
         
-        # Data rows - safely convert each cell to string
+        # Data rows - normalize each cell (datetimes → YYYY-MM-DD, etc.)
         data_rows = []
         for row_idx, row in enumerate(rows[1:], start=2):
             row_data = []
             for col_idx, cell in enumerate(row):
                 try:
-                    if cell is None:
-                        row_data.append("")
-                    else:
-                        # Handle all cell types (str, int, float, datetime, bool, etc.)
-                        cell_str = str(cell).strip()
-                        row_data.append(cell_str)
+                    row_data.append(_normalize_cell_value(cell))
                 except Exception as e:
                     logger.warning(f"Error converting cell at row {row_idx}, col {col_idx}: {e}")
                     row_data.append("")
@@ -676,12 +706,14 @@ async def import_schedule_file(
             if not table_name:
                 table_name = file.filename.rsplit('.', 1)[0]
             
-            # Create columns from headers
+            # Create columns from headers - detect dates by name/value heuristics
             columns = []
             for i, header in enumerate(headers):
+                sample = [row[i] for row in data_rows[:10] if i < len(row)]
+                col_type = _detect_col_type(header, sample)
                 columns.append({
                     'header': header,
-                    'type': 'text',
+                    'type': col_type,
                     'width': 150,
                     'visible_in_export': True  # ← ENSURE THIS IS TRUE
                 })

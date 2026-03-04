@@ -7,33 +7,89 @@
     <div class="bg-white rounded-lg shadow-xl p-12 max-w-2xl mx-auto text-center">
         <!-- Icon -->
         <div class="mb-6">
-            <svg class="w-24 h-24 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-20 h-20 mx-auto text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
         </div>
         
         <!-- Title -->
-        <h2 class="text-3xl font-bold text-gray-800 mb-4">No Project Selected</h2>
+        <h2 class="text-3xl font-bold text-gray-800 mb-3">No Program Selected</h2>
         
         <!-- Message -->
-        <p class="text-gray-600 text-lg mb-8">
-            {{ message if message else "Please select a project from the dashboard to view this page." }}
+        <p class="text-gray-500 text-base mb-8">
+            {{ message if message else "Choose a program below to view this page." }}
         </p>
-        
-        <!-- Button -->
-        <a href="/dashboard" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <!-- Program Picker -->
+        <div class="mb-8">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Select a Program</label>
+            <div class="flex gap-3 max-w-md mx-auto">
+                <select id="programSelect"
+                    class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                    <option value="">Loading programs…</option>
+                </select>
+                <button id="goBtn" onclick="goToProgram()"
+                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                    Go →
+                </button>
+            </div>
+            <p id="loadError" class="hidden mt-2 text-red-600 text-xs">Could not load programs. <a href="/dashboard" class="underline">Return to Dashboard</a>.</p>
+        </div>
+
+        <!-- Secondary action -->
+        <a href="/dashboard" class="inline-flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
-            Return to Dashboard
+            Or browse all programs on the dashboard
         </a>
-        
-        <!-- Help Text -->
-        <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-            <p class="text-sm text-blue-800">
-                <strong>Tip:</strong> Click on a project card from the dashboard to view its data across all tabs.
-            </p>
-        </div>
     </div>
 </div>
+
+<script>
+(async function () {
+    const sel = document.getElementById('programSelect');
+    const btn = document.getElementById('goBtn');
+
+    // Read current ?project= from URL (in case we arrived with a partial project param)
+    const currentCode = new URLSearchParams(window.location.search).get('project') || '';
+
+    try {
+        const resp = await fetch('/api/projects');
+        if (!resp.ok) throw new Error('Request failed');
+        const projects = await resp.json();
+
+        sel.innerHTML = '<option value="">— Choose a program —</option>';
+        projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.code;
+            opt.textContent = p.name;
+            if (p.code === currentCode) opt.selected = true;
+            sel.appendChild(opt);
+        });
+
+        sel.disabled = false;
+        btn.disabled = false;
+
+        sel.addEventListener('change', () => {
+            btn.disabled = !sel.value;
+        });
+        btn.disabled = !sel.value;
+
+    } catch (e) {
+        sel.innerHTML = '<option value="">Failed to load</option>';
+        document.getElementById('loadError').classList.remove('hidden');
+    }
+})();
+
+function goToProgram() {
+    const code = document.getElementById('programSelect').value;
+    if (!code) return;
+    // Navigate to the same page/tab with the new project
+    const url = new URL(window.location.href);
+    url.searchParams.set('project', code);
+    window.location.href = url.toString();
+}
+</script>
 {% endblock %}

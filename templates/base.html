@@ -221,6 +221,19 @@
                 
                 <!-- Actions group -->
                 <div class="flex items-center space-x-2">
+
+                    {% if request.url.path not in ('/', '/dashboard', '/dashboard/') and not ppt_export %}
+                    <!-- Program switcher -->
+                    <div class="flex items-center space-x-1" title="Switch program">
+                        <span class="text-blue-200 text-xs font-medium hidden xl:inline">Program:</span>
+                        <select id="navProgramSelect"
+                            class="bg-white/10 hover:bg-white/20 text-white text-xs rounded-md px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 cursor-pointer max-w-[160px] truncate"
+                            onchange="navSwitchProgram(this.value)">
+                            <option value="" class="text-gray-800">— program —</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
                     <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
                        class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1">
                         <span>📊</span><span>Export</span>
@@ -437,6 +450,36 @@
                 }
             }
         });
+
+        // ── Program switcher in nav ──────────────────────────────────────────
+        (async function initNavProgramSwitcher() {
+            const sel = document.getElementById('navProgramSelect');
+            if (!sel) return;  // portfolio or ppt page — switcher not rendered
+
+            const currentCode = new URLSearchParams(window.location.search).get('project') || '';
+
+            try {
+                const resp = await fetch('/api/projects');
+                if (!resp.ok) return;
+                const projects = await resp.json();
+
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.code;
+                    opt.textContent = p.name;
+                    opt.className = 'text-gray-800 bg-white';
+                    if (p.code === currentCode) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { /* silent — nav switcher is optional */ }
+        })();
+
+        function navSwitchProgram(code) {
+            if (!code) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('project', code);
+            window.location.href = url.toString();
+        }
     </script>
 
     <!-- Analytics Helper -->

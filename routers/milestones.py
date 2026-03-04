@@ -957,29 +957,6 @@ def get_milestone_siblings(code: str, id: str):
             'siblings': siblings,
             'parent': immediate_parent,
             'count': len(siblings),
-            '_debug': {
-                'total_milestones': len(milestones),
-                'target_level': target_level,
-                'parent_key': parent_key,
-                'immediate_parent': immediate_parent,
-                'target_id': target_id,
-                'target_name': target_name,
-                'target_parent_levels': parent_levels,
-                'sample_entries_near_target': [
-                    {
-                        'name': m.get('name'),
-                        'outline_level': m.get('outline_level'),
-                        'is_true_milestone': m.get('is_true_milestone'),
-                        'parent_levels': m.get('parent_levels'),
-                    }
-                    for m in milestones
-                    if isinstance(m.get('parent_levels'), dict) and
-                    parent_key and (
-                        (m.get('parent_levels') or {}).get(parent_key) == immediate_parent or
-                        (m.get('parent_levels') or {}).get(int(parent_key)) == immediate_parent
-                    )
-                ]
-            }
         })
         
     except HTTPException:
