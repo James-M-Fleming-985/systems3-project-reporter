@@ -453,7 +453,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,listMonth'
             },
-            events: filteredEvents,
+            events: function(fetchInfo, successCallback, failureCallback) {
+                successCallback(filteredEvents);
+            },
             eventClick: function(info) {
                 console.log('Event clicked:', info.event);
                 info.jsEvent.preventDefault();
@@ -602,12 +604,7 @@ function refreshCalendar() {
     applyFilters();
     
     if (calendarInstance) {
-        // Remove ALL event sources (not just events) to prevent stale source accumulation.
-        // removeAllEvents() only clears the display — old sources survive and can
-        // re-provide stale data on month navigation or re-render.
-        calendarInstance.getEventSources().forEach(s => s.remove());
-        calendarInstance.addEventSource(filteredEvents);
-        calendarInstance.render();  // Force re-render to ensure visual update after source swap
+        calendarInstance.refetchEvents();
     }
     
     updateStats();
