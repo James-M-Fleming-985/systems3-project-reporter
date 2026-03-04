@@ -256,12 +256,11 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                         # No status transition affecting completion — preserve existing
                         completion_date = milestone.get('completion_date')
                     
-                    # For zero-duration milestones (start==target), move start_date with target_date
-                    old_start = milestone.get('start_date')
-                    if old_start and old_start == old_target_date:
-                        synced_start_date = new_target_date
-                    else:
-                        synced_start_date = updated_milestone.get('start_date') or old_start
+                    # Milestones visible on the calendar are always zero-duration
+                    # (start_date == target_date).  Unconditionally sync start_date
+                    # so that already-corrupted data (where a prior save diverged
+                    # start from target) is healed.
+                    synced_start_date = new_target_date
 
                     project_data['milestones'][i] = {
                         'id': milestone.get('id'),
