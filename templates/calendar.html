@@ -607,6 +607,7 @@ function refreshCalendar() {
         // re-provide stale data on month navigation or re-render.
         calendarInstance.getEventSources().forEach(s => s.remove());
         calendarInstance.addEventSource(filteredEvents);
+        calendarInstance.render();  // Force re-render to ensure visual update after source swap
     }
     
     updateStats();
@@ -1251,6 +1252,11 @@ async function saveEventFromCalendar() {
         
         // Reload events from server (completed milestones get filtered out server-side)
         await reloadCalendarEvents();
+        
+        // Navigate to the new date so the user sees the pill at its updated position
+        if (newTargetDate && calendarInstance) {
+            calendarInstance.gotoDate(newTargetDate);
+        }
     } catch (err) {
         console.error('saveEventFromCalendar error:', err);
         const msg = err.name === 'AbortError' ? 'Request timed out — please try again' : err.message;
