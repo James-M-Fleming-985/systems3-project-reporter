@@ -290,7 +290,30 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                     logger.warning(f"   Status: {updated_milestone['status']}")
                     logger.warning(f"   Match type: {match_type}")
                     break  # ✅ STOP after first match - don't update duplicates
-        
+
+        # ── Purge duplicate milestones with the same name ──
+        if updated:
+            incoming_name = updated_milestone['name'].strip()
+            seen_once = False
+            purge_indices = []
+            for idx_dup, ms in enumerate(project_data['milestones']):
+                ms_name = ms.get('name', '').strip()
+                if ms_name == incoming_name:
+                    if not seen_once:
+                        seen_once = True  # keep the first (just-updated) copy
+                    else:
+                        purge_indices.append(idx_dup)
+            if purge_indices:
+                logger.warning(
+                    f"🗑️  Purging {len(purge_indices)} duplicate milestone(s) "
+                    f"named '{incoming_name}' at indices {purge_indices}"
+                )
+                for rm_idx in reversed(purge_indices):
+                    project_data['milestones'].pop(rm_idx)
+                logger.warning(
+                    f"   Milestones remaining: {len(project_data['milestones'])}"
+                )
+
         if not updated:
             # Search for similar names to help debug
             milestone_count = len(project_data.get('milestones', []))

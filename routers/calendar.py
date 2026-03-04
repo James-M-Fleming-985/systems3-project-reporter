@@ -136,7 +136,12 @@ async def get_calendar_events(request: Request):
             # Add milestones as single-day calendar markers (not Gantt-style spans).
             # Show separate events for Start Date and Finish Date so the calendar
             # isn't flooded with multi-day bars.
+            seen_milestone_names = set()  # dedup: keep first occurrence only
             for milestone in project.milestones:
+                ms_name = getattr(milestone, 'name', '')
+                if ms_name in seen_milestone_names:
+                    continue
+                seen_milestone_names.add(ms_name)
                 # ── Filter 1: Confirmed milestone/task flag ──
                 # is_true_milestone is set by the XML parser on import.
                 #   True  → confirmed milestone, ALWAYS keep (any outline level)
