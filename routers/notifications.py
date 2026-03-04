@@ -26,7 +26,7 @@ def _get_notification_service():
 # ── API endpoints (consumed by the bell dropdown) ──────────────────────
 
 @router.get("/api/notifications")
-async def get_notifications(request: Request):
+def get_notifications(request: Request):
     """Return all current notifications as JSON."""
     svc = _get_notification_service()
     notifications = svc.generate_notifications()
@@ -41,7 +41,7 @@ async def get_notifications(request: Request):
 
 
 @router.get("/api/notifications/count")
-async def get_notification_count(request: Request):
+def get_notification_count(request: Request):
     """Lightweight endpoint — just the count (for periodic polling)."""
     svc = _get_notification_service()
     notifications = svc.generate_notifications()
