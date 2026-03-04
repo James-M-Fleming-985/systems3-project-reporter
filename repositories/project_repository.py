@@ -142,8 +142,14 @@ class ProjectRepository:
             self.data_dir = Path(data_dir)
     
     def load_all_projects(self) -> List[Project]:
-        """Load all projects from YAML files in data directory"""
+        """Load all projects from YAML files in data directory.
+        
+        Deduplicates by project_code — if multiple YAML files contain the same
+        project_code (e.g. global + user-scoped copies), only the first found
+        is kept. This prevents duplicate calendar events and stale-data bugs.
+        """
         projects = []
+        seen_codes = set()  # Deduplicate by project_code
         
         if not self.data_dir.exists():
             return projects
@@ -206,6 +212,19 @@ class ProjectRepository:
                                 change['change_id'] = change.pop('id')
                     
                     project = Project(**data)
+                    
+                    # Deduplicate: if multiple YAML files have the same project_code,
+                    # keep only the first one found. This prevents duplicate calendar
+                    # events when files exist in both global and user-scoped directories.
+                    if project.project_code in seen_codes:
+                        import logging
+                        logging.warning(
+                            f"⚠️ Skipping duplicate project_code '{project.project_code}' "
+                            f"from {yaml_file}"
+                        )
+                        continue
+                    seen_codes.add(project.project_code)
+                    
                     projects.append(project)
             except Exception as e:
                 import logging

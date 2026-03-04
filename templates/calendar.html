@@ -602,7 +602,10 @@ function refreshCalendar() {
     applyFilters();
     
     if (calendarInstance) {
-        calendarInstance.removeAllEvents();
+        // Remove ALL event sources (not just events) to prevent stale source accumulation.
+        // removeAllEvents() only clears the display — old sources survive and can
+        // re-provide stale data on month navigation or re-render.
+        calendarInstance.getEventSources().forEach(s => s.remove());
         calendarInstance.addEventSource(filteredEvents);
     }
     
@@ -614,6 +617,14 @@ async function reloadCalendarEvents() {
         const resp = await fetch('/api/calendar/events', { cache: 'no-store' });
         const data = await resp.json();
         allEvents = data.events || [];
+        
+        // Diagnostic: log milestone target dates to verify server returned fresh data
+        const milestoneEvents = allEvents.filter(e => e.extendedProps?.type === 'milestone');
+        console.log(`📅 Reload: ${allEvents.length} events (${milestoneEvents.length} milestones)`);
+        milestoneEvents.slice(0, 5).forEach(e => {
+            console.log(`  → ${e.title}: start=${e.start}, targetDate=${e.extendedProps?.targetDate}`);
+        });
+        
         // Re-apply localStorage acknowledged filter
         try {
             const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
@@ -1215,6 +1226,14 @@ async function saveEventFromCalendar() {
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.detail || `Server returned ${resp.status}`);
+        }
+        
+        const result = await resp.json();
+        console.log('📝 Save response:', result);
+        
+        // Verify server persisted the correct target_date
+        if (result.saved_target_date && result.saved_target_date !== newTargetDate) {
+            console.error('⚠️ DATE MISMATCH: sent', newTargetDate, 'server saved', result.saved_target_date);
         }
         
         closeEventModal();

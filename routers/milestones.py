@@ -317,7 +317,9 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                     default_flow_style=False,
                     allow_unicode=True
                 )
-            logger.warning("✅ YAML file written successfully")
+                f.flush()
+                os.fsync(f.fileno())
+            logger.warning("✅ YAML file written and fsynced successfully")
         except Exception as e:
             logger.error(f"❌ Error writing YAML: {e}")
             raise HTTPException(
@@ -325,23 +327,34 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                 detail=f"Failed to save changes: {str(e)}"
             )
         
-        # Verify the write by reading back
+        # Verify the write by reading back the specific milestone
+        saved_target_date = None
         try:
             logger.warning("🔍 Verifying saved data...")
             with open(yaml_path, 'r', encoding='utf-8') as f:
                 verify_data = yaml.safe_load(f)
+            for vm in verify_data.get('milestones', []):
+                vm_id = str(vm.get('id', '')) if vm.get('id') else None
+                if (vm_id and incoming_id and vm_id == str(incoming_id)) or vm.get('name', '').strip() == incoming_name:
+                    saved_target_date = _normalize_date(vm.get('target_date', ''))
+                    logger.warning(f"   ✅ Verified target_date: {saved_target_date} (expected: {new_target_date})")
+                    if saved_target_date != new_target_date:
+                        logger.error(f"   ❌ TARGET DATE MISMATCH! Saved: {saved_target_date}, Expected: {new_target_date}")
+                    break
             logger.warning(f"   Milestone count verified: {len(verify_data.get('milestones', []))}")
         except Exception as e:
             logger.warning(f"⚠️ Verification failed (non-fatal): {e}")
         
         logger.info(
             f"Updated milestone '{updated_milestone['name']}' "
-            f"in project {project_code}"
+            f"in project {project_code} | target_date={saved_target_date or new_target_date}"
         )
         
         return JSONResponse({
             'success': True,
-            'message': 'Milestone updated successfully'
+            'message': 'Milestone updated successfully',
+            'saved_target_date': saved_target_date or new_target_date,
+            'yaml_path': str(yaml_path)
         })
         
     except HTTPException:
