@@ -256,11 +256,18 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                         # No status transition affecting completion — preserve existing
                         completion_date = milestone.get('completion_date')
                     
+                    # For zero-duration milestones (start==target), move start_date with target_date
+                    old_start = milestone.get('start_date')
+                    if old_start and old_start == old_target_date:
+                        synced_start_date = new_target_date
+                    else:
+                        synced_start_date = updated_milestone.get('start_date') or old_start
+
                     project_data['milestones'][i] = {
                         'id': milestone.get('id'),
                         'name': incoming_name,
                         'target_date': new_target_date,
-                        'start_date': milestone.get('start_date'),
+                        'start_date': synced_start_date,
                         'status': new_status,
                         'resources': updated_milestone.get('resources') or None,
                         'completion_percentage': new_completion,
