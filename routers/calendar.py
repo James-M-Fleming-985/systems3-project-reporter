@@ -708,6 +708,8 @@ async def get_calendar_events(request: Request):
                                         'cadence': cadence,
                                         'cadenceLabel': cadence_label,
                                         'occurrence': occurrence,
+                                        'riskDescription': risk.get('description', ''),
+                                        'riskMitigations': risk.get('mitigations', ''),
                                     }
                                 }
                                 events.append(event)

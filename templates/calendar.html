@@ -388,6 +388,13 @@
                     class="hidden px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 active:scale-95 transition">
                     Acknowledge
                 </button>
+                <!-- Risk Review: Mark Mitigated button -->
+                <button id="markMitigatedBtn"
+                    onclick="markRiskMitigated()"
+                    class="hidden px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 active:scale-95 transition inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Mark Mitigated
+                </button>
             </div>
             <!-- Right: navigation + close -->
             <div class="flex items-center gap-2">
@@ -740,6 +747,9 @@ function showEventModal(event) {
             tableId: ep.tableId,
             rowId: ep.rowId,
             dateColId: ep.dateColId,
+            // Risk-specific
+            riskId: ep.riskId,
+            riskProgram: ep.program,
             // For acknowledge (change/metric) – just need the event id
         };
     
@@ -795,6 +805,13 @@ function showEventModal(event) {
         schedDoneBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Done`;
     }
     acknowledgeBtn.classList.toggle('hidden', ep.type !== 'change' && ep.type !== 'metric_target');
+
+    const markMitigatedBtn = document.getElementById('markMitigatedBtn');
+    markMitigatedBtn.classList.toggle('hidden', ep.type !== 'risk_review');
+    if (ep.type === 'risk_review') {
+        markMitigatedBtn.disabled = false;
+        markMitigatedBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Mark Mitigated`;
+    }
     
     // --- Build navigation URL based on event type ---
     const typeToTab = {
@@ -985,6 +1002,16 @@ function showEventModal(event) {
                         <p class="text-sm font-medium">${ep.occurrence || ''}</p>
                     </div>
                 </div>
+                ${ep.riskDescription ? `
+                <div class="mt-3 pt-3 border-t border-red-200">
+                    <p class="text-xs text-gray-500 mb-1">Description</p>
+                    <p class="text-sm text-gray-700">${ep.riskDescription}</p>
+                </div>` : ''}
+                ${ep.riskMitigations ? `
+                <div class="mt-3 pt-3 border-t border-red-200">
+                    <p class="text-xs text-gray-500 mb-1">Mitigations</p>
+                    <p class="text-sm text-gray-700">${ep.riskMitigations}</p>
+                </div>` : ''}
             </div>
         `;
     }
@@ -1277,6 +1304,50 @@ async function deleteEventFromCalendar() {
         showToast('Could not delete: ' + msg, 'error');
     } finally {
         if (btn) btn.disabled = false;
+    }
+}
+
+async function markRiskMitigated() {
+    if (!currentEventData || currentEventData.type !== 'risk_review') {
+        showToast('No risk event selected', 'info');
+        return;
+    }
+    const { riskId, riskProgram } = currentEventData;
+    if (!riskId || !riskProgram) {
+        showToast('Missing risk details', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('markMitigatedBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Saving…`;
+    }
+
+    try {
+        const resp = await fetch(
+            `/risks/update/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
+            {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Mitigated' })
+            }
+        );
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Server ${resp.status}`);
+        }
+        closeEventModal();
+        showToast('✓ Risk marked as mitigated — removed from calendar', 'success');
+        await reloadCalendarEvents();
+    } catch (err) {
+        console.error('markRiskMitigated error:', err);
+        showToast('Could not update risk: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Mark Mitigated`;
+        }
     }
 }
 
