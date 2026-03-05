@@ -318,8 +318,8 @@ class MSProjectXMLParser:
             if outline_level <= 1:
                 continue
             
-            # Check if this is a summary task
-            summary = task.find('Summary')
+            # Check if this is a summary task (must use _find_element for namespace support)
+            summary = self._find_element(task, 'Summary')
             is_summary = summary is not None and summary.text == '1'
             
             # Check milestone indicators
