@@ -348,17 +348,24 @@ class MSProjectXMLParser:
             
             is_milestone = has_milestone_flag or has_zero_duration
             
-            # CRITICAL FIX: Only add to milestones array if it's a TRUE milestone
-            # Do NOT add regular tasks, summaries, or roadmap items
+            # Decide which tasks to include in the milestones array.
+            # True milestones (Milestone=1 or Duration=0): always keep.
+            # Summary tasks at Level 2+: keep for Gantt level groupings
+            #   (saved with is_true_milestone=False so calendar ignores them).
+            # Non-milestone, non-summary tasks at Level 4+: keep for sibling task lists.
+            # Everything else: skip.
             if not is_milestone:
-                # Skip summaries and shallow levels entirely
-                # But keep Level 4+ non-summary tasks so sibling task lists work
-                if is_summary or outline_level < 4:
+                if is_summary and outline_level >= 2:
+                    # Keep summary tasks — Gantt needs them as level groupings
+                    pass  # fall through with is_true_milestone=False
+                elif outline_level >= 4:
+                    # Keep Level 4+ non-summary tasks for sibling task lists
+                    pass  # fall through with is_true_milestone=False
+                else:
                     name_elem = self._find_element(task, 'Name')
                     task_name = name_elem.text if name_elem is not None else 'Unknown'
                     print(f"DEBUG: SKIPPED Level {outline_level} {'summary ' if is_summary else ''}task '{task_name}' - not a milestone")
                     continue
-                # Fall through: Level 4+ non-summary task — will be saved with is_true_milestone=False
             
             # At this point: confirmed milestone only
             name_elem = self._find_element(task, 'Name')
@@ -402,9 +409,14 @@ class MSProjectXMLParser:
             percent_elem = self._find_element(task, 'PercentComplete')
             percent = 0
             if percent_elem is not None and percent_elem.text:
-                # MS Project stores as decimal (0-1), convert to 0-100
+                # MS Project stores PercentComplete as integer 0-100
                 raw_value = float(percent_elem.text)
-                percent = int(raw_value * 100)
+                if raw_value <= 1.0 and raw_value > 0:
+                    # Edge case: some exports use 0-1 decimal format
+                    percent = int(raw_value * 100)
+                else:
+                    percent = int(raw_value)
+                percent = max(0, min(percent, 100))  # clamp to 0-100
                 
                 # Debug: Log first few to understand the format
                 if len(milestones) < 3:
