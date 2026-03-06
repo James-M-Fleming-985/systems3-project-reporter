@@ -325,6 +325,22 @@
                         <input type="text" id="newTaskName" placeholder="Task name" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <input type="date" id="newTaskDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Recurrence</label>
+                            <select id="newTaskCadence" onchange="document.getElementById('occurrencesGroup').classList.toggle('hidden', this.value === 'none')" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="none">None (one-time)</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div id="occurrencesGroup" class="hidden">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Occurrences</label>
+                            <input type="number" id="newTaskOccurrences" min="2" max="52" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
                     <div class="flex items-center space-x-2 mt-3">
                         <button onclick="saveNewTask()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Add</button>
                         <button onclick="toggleAddTaskForm(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">Cancel</button>
@@ -649,6 +665,7 @@ function renderModernCard(milestone, flatIndex, draggable = true) {
             </div>
         </div>
         ${milestone.parent_project ? `<div class="mt-1.5"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">${milestone.parent_project}</span></div>` : ''}
+        ${milestone.recurrence_occurrence ? `<div class="mt-1"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-50 text-amber-700">&#x1F504; ${milestone.recurrence_occurrence}</span></div>` : ''}
         <div class="flex items-center justify-between mt-2">
             <div class="flex items-center">
                 ${overdue ? '<span class="w-2 h-2 rounded-full bg-red-500 overdue-dot mr-1.5"></span>' : ''}
@@ -1178,6 +1195,7 @@ async function loadRelatedTasks() {
                     <div class="flex items-center space-x-3 mt-0.5">
                         <span class="text-xs text-gray-500">${s.target_date || '-'}</span>
                         ${s.is_milestone ? '<span class="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Milestone</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Task</span>'}
+                        ${s.recurrence_occurrence ? `<span class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">&#x1F504; ${s.recurrence_occurrence}</span>` : ''}
                     </div>
                 </div>
                 <div class="flex-shrink-0 ml-2">
@@ -1355,6 +1373,9 @@ function toggleAddTaskForm(show) {
     if (show) {
         document.getElementById('newTaskName').value = '';
         document.getElementById('newTaskDate').value = '';
+        document.getElementById('newTaskCadence').value = 'none';
+        document.getElementById('newTaskOccurrences').value = '4';
+        document.getElementById('occurrencesGroup').classList.add('hidden');
         document.getElementById('newTaskName').focus();
     }
 }
@@ -1367,26 +1388,44 @@ async function saveNewTask() {
     }
 
     const index = parseInt(document.getElementById('milestoneIndex').value);
+    if (isCreateMode || index < 0) {
+        showToast('Save the milestone first before adding tasks', 'bg-red-600');
+        return;
+    }
     const milestone = allMilestonesFlat[index];
-    if (!milestone) return;
+    if (!milestone) {
+        showToast('Could not find milestone — try reloading the page', 'bg-red-600');
+        return;
+    }
 
     const parentId = milestone.id || milestone.name;
+
+    // Recurrence params
+    const cadence = document.getElementById('newTaskCadence').value;
+    const occurrences = parseInt(document.getElementById('newTaskOccurrences').value) || 1;
+
+    const payload = {
+        project_code: milestone.project || projectCode,
+        parent_milestone_id: parentId,
+        name: name,
+        target_date: document.getElementById('newTaskDate').value || '',
+    };
+    if (cadence && cadence !== 'none') {
+        payload.recurrence_cadence = cadence;
+        payload.recurrence_count = occurrences;
+    }
 
     try {
         const response = await fetch('/milestones/create-task', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                project_code: milestone.project || projectCode,
-                parent_milestone_id: parentId,
-                name: name,
-                target_date: document.getElementById('newTaskDate').value || '',
-            })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
         if (response.ok && data.success) {
-            showToast(`Task "${name}" added`, 'bg-green-600');
+            const countMsg = data.tasks_created > 1 ? ` (${data.tasks_created} occurrences)` : '';
+            showToast(`Task "${name}" added${countMsg}`, 'bg-green-600');
             toggleAddTaskForm(false);
             // Refresh the related tasks list
             loadRelatedTasks();

@@ -1088,6 +1088,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
                            onchange="updateTaskStatus(this)">
                     <label for="${checkboxId}" class="flex-1 text-sm cursor-pointer select-none flex items-center gap-2">
                         <span>${icon} ${sibling.name}</span>
+                        ${sibling.recurrence_occurrence ? `<span class="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">&#x1F504; ${sibling.recurrence_occurrence}</span>` : ''}
                         ${sibling.target_date ? `<span class="text-xs text-gray-400">${sibling.target_date}</span>` : ''}
                     </label>
                     <span class="text-xs px-2 py-0.5 rounded-full ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}" id="badge-${checkboxId}">${isCompleted ? 'Done' : sibling.completion_percentage + '%'}</span>

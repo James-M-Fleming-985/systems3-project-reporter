@@ -226,6 +226,8 @@ async def get_calendar_events(request: Request):
                     'notes': getattr(milestone, 'notes', '') or '',
                     'parentProject': getattr(milestone, 'parent_project', '') or '',
                     'resources': getattr(milestone, 'resources', '') or '',
+                    'recurrenceSeriesId': getattr(milestone, 'recurrence_series_id', None) or '',
+                    'recurrenceOccurrence': getattr(milestone, 'recurrence_occurrence', None) or '',
                     'level3Parent': (getattr(milestone, 'parent_levels', None) or {}).get('3') or (getattr(milestone, 'parent_levels', None) or {}).get(3) or '',
                     'milestone': {
                         'id': getattr(milestone, 'id', '') or milestone.name,

@@ -23,6 +23,9 @@ class Milestone(BaseModel):
     parent_levels: Optional[Dict[str, str]] = None  # Parents at each level: {"2": "Name", "3": "Name"}
     is_true_milestone: Optional[bool] = None  # True if task has Milestone=1 or Duration=0
     user_edited_fields: Optional[List[str]] = None  # Fields manually edited by user (preserved on re-upload)
+    recurrence_cadence: Optional[str] = None  # daily, weekly, biweekly, monthly
+    recurrence_series_id: Optional[str] = None  # Shared UUID linking all instances in a recurring series
+    recurrence_occurrence: Optional[str] = None  # e.g. "1 of 5", "2 of 5"
 
 
 class Risk(BaseModel):
