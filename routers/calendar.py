@@ -507,6 +507,8 @@ async def get_calendar_events(request: Request):
                                         'dateColId': col_id,
                                         'status': status,
                                         'dateField': col_header,
+                                        'notes': row.get('notes', ''),
+                                        'sub_tasks': row.get('sub_tasks', []),
                                         'allData': {
                                             col_lookup.get(k, {}).get('header', k): str(v) 
                                             for k, v in row_data.items() if v
@@ -724,19 +726,27 @@ async def get_calendar_events(request: Request):
         except Exception as e:
             logger.warning(f"Error loading risk review events for calendar: {e}")
         
-        # Build name→code lookup so we can resolve programCode for schedule/metric events
+        # Build name↔code lookups so we can resolve programCode and programName
         name_to_code = {}
+        code_to_name = {}
         for p in projects:
             name_to_code[p.project_name] = p.project_code
             name_to_code[_clean_project_name(p.project_name)] = p.project_code
             name_to_code[p.project_code] = p.project_code
+            code_to_name[p.project_code] = _clean_project_name(p.project_name)
+            code_to_name[_clean_project_name(p.project_name)] = _clean_project_name(p.project_name)
         
-        # Backfill missing programCode on events (schedule & metric events)
+        # Backfill missing programCode and add programName on all events
         for ev in events:
             ep = ev.get('extendedProps', {})
             if not ep.get('programCode'):
                 prog = ep.get('program', '')
                 ep['programCode'] = name_to_code.get(prog) or name_to_code.get(_clean_project_name(prog)) or ''
+            # Always set programName — resolve human-readable name from code
+            prog = ep.get('program', '')
+            prog_code = ep.get('programCode', '')
+            resolved_name = code_to_name.get(prog_code) or code_to_name.get(prog) or _clean_project_name(prog)
+            ep['programName'] = resolved_name if resolved_name != prog_code else _clean_project_name(prog)
         
         # Remove completed items — they don't need to appear on the calendar
         before_count = len(events)

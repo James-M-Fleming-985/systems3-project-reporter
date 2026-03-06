@@ -303,6 +303,57 @@ async def complete_schedule_row(project_name: str, table_id: str, row_id: str):
     return JSONResponse(content={"success": success})
 
 
+@router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/notes")
+async def update_schedule_row_notes(project_name: str, table_id: str, row_id: str, request: Request):
+    """Update the notes on a schedule row (stored separately from column data)."""
+    body = await request.json()
+    notes = body.get('notes', '')
+    success = schedule_repo.update_row_notes(project_name, table_id, row_id, notes)
+    if not success:
+        raise HTTPException(status_code=404, detail="Row not found")
+    return JSONResponse(content={"success": True})
+
+
+@router.post("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/sub-tasks")
+async def add_schedule_sub_task(project_name: str, table_id: str, row_id: str, request: Request):
+    """Add a sub-task to a schedule row."""
+    body = await request.json()
+    title = (body.get('title') or '').strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Sub-task title is required")
+    sub_task = schedule_repo.add_sub_task(project_name, table_id, row_id, title)
+    if not sub_task:
+        raise HTTPException(status_code=404, detail="Row not found")
+    return JSONResponse(content={"success": True, "sub_task": sub_task})
+
+
+@router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/sub-tasks/{sub_task_id}")
+async def update_schedule_sub_task(project_name: str, table_id: str, row_id: str,
+                                    sub_task_id: str, request: Request):
+    """Update a sub-task (toggle completed, rename)."""
+    body = await request.json()
+    updates = {}
+    if 'completed' in body:
+        updates['completed'] = bool(body['completed'])
+    if 'title' in body:
+        updates['title'] = str(body['title']).strip()
+    if not updates:
+        raise HTTPException(status_code=400, detail="No updates provided")
+    success = schedule_repo.update_sub_task(project_name, table_id, row_id, sub_task_id, updates)
+    if not success:
+        raise HTTPException(status_code=404, detail="Sub-task not found")
+    return JSONResponse(content={"success": True})
+
+
+@router.delete("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/sub-tasks/{sub_task_id}")
+async def delete_schedule_sub_task(project_name: str, table_id: str, row_id: str, sub_task_id: str):
+    """Delete a sub-task from a schedule row."""
+    success = schedule_repo.delete_sub_task(project_name, table_id, row_id, sub_task_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Sub-task not found")
+    return JSONResponse(content={"success": True})
+
+
 @router.delete("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}")
 async def delete_table_row(project_name: str, table_id: str, row_id: str):
     """Delete a row from a schedule table"""

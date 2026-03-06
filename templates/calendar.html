@@ -382,6 +382,13 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Done
                 </button>
+                <!-- Schedule only: Save button (notes + date changes) -->
+                <button id="schedSaveBtn"
+                    onclick="saveScheduleFromCalendar()"
+                    class="hidden px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-95 transition inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Save
+                </button>
                 <!-- Change + Metric: Acknowledge button -->
                 <button id="acknowledgeBtn"
                     onclick="acknowledgeCalendarEvent()"
@@ -747,6 +754,7 @@ function showEventModal(event) {
             tableId: ep.tableId,
             rowId: ep.rowId,
             dateColId: ep.dateColId,
+            _origDueDate: ep.due_date ? ep.due_date.split('T')[0] : '',
             // Risk-specific
             riskId: ep.riskId,
             riskProgram: ep.program,
@@ -792,6 +800,7 @@ function showEventModal(event) {
     const deleteBtn = document.getElementById('deleteEventBtn');
     const saveBtn = document.getElementById('saveEventBtn');
     const schedDoneBtn = document.getElementById('schedDoneBtn');
+    const schedSaveBtn = document.getElementById('schedSaveBtn');
     const acknowledgeBtn = document.getElementById('acknowledgeBtn');
 
     const isMilestone = ep.type === 'milestone' && ep.milestone;
@@ -799,10 +808,13 @@ function showEventModal(event) {
     saveBtn.classList.toggle('hidden', !isMilestone);
     const showDone = ep.type === 'schedule' && !!ep.rowId;
     schedDoneBtn.classList.toggle('hidden', !showDone);
+    schedSaveBtn.classList.toggle('hidden', !showDone);
     if (showDone) {
         // Always reset button state so a previous "Saving…" doesn't persist
         schedDoneBtn.disabled = false;
         schedDoneBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Done`;
+        schedSaveBtn.disabled = false;
+        schedSaveBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Save`;
     }
     acknowledgeBtn.classList.toggle('hidden', ep.type !== 'change' && ep.type !== 'metric_target');
 
@@ -858,7 +870,7 @@ function showEventModal(event) {
                 <span class="info-label">Program</span>
                 <span class="info-value">
                     <a href="/dashboard/?project=${encodeURIComponent(ep.programCode || '')}" class="text-blue-600 hover:text-blue-800 hover:underline transition" title="Go to program dashboard">
-                        ${ep.program || 'N/A'} ↗
+                        ${ep.programName && ep.programName !== ep.programCode ? ep.programName + ' (' + ep.programCode + ')' : (ep.programName || ep.program || 'N/A')} ↗
                     </a>
                 </span>
             </div>
@@ -921,9 +933,48 @@ function showEventModal(event) {
             ${ep.impact ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Impact / Contingency</p><p class="text-sm text-gray-700">${ep.impact}</p></div>` : ''}
         `;
     } else if (type === 'schedule') {
+        const _schedSubTasks = ep.sub_tasks || [];
         detailsHtml = `
             ${ep.tableName ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Schedule Table</p><p class="text-sm font-medium">${ep.tableName}</p></div>` : ''}
-            ${ep.dateField ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">${ep.dateField}</p><p class="text-sm font-medium">${formatDate(event.startStr)}</p></div>` : ''}
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Due Date</label>
+                    <input type="date" id="schedEditDueDate" value="${ep.due_date ? ep.due_date.split('T')[0] : ''}" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">${ep.dateField || 'Date Field'}</label>
+                    <p class="text-sm font-medium mt-1.5">${formatDate(event.startStr)}</p>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Notes</label>
+                <textarea id="schedEditNotes" rows="2" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add notes…">${(ep.notes || '').replace(/</g, '&lt;')}</textarea>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Sub-Tasks</p>
+                <div id="schedSubTasksContainer" class="space-y-1 mb-2">
+                    ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map(st => `
+                        <div class="sibling-row ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}">
+                            <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
+                                   data-st-id="${st.id}" ${st.completed ? 'checked' : ''}
+                                   onchange="toggleScheduleSubTask(this)">
+                            <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
+                            <button onclick="deleteScheduleSubTask('${st.id}')" class="text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="schedNewSubTask" placeholder="Add a sub-task…"
+                           class="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();addScheduleSubTask();}">
+                    <button onclick="addScheduleSubTask()"
+                            class="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                        + Add
+                    </button>
+                </div>
+            </div>
             ${ep.allData ? `
                 <div class="p-3 bg-indigo-50 rounded-lg">
                     <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
@@ -1240,6 +1291,164 @@ async function markScheduleDone() {
         console.error('markScheduleDone error:', err);
         showToast('Could not mark as done — please try again', 'error');
         if (btn) { btn.disabled = false; btn.textContent = 'Done'; }
+    }
+}
+
+async function saveScheduleFromCalendar() {
+    if (!currentEventData || !currentEventData.scheduleProgram || !currentEventData.tableId || !currentEventData.rowId) {
+        showToast('Cannot determine schedule item to save', 'error');
+        return;
+    }
+    const { scheduleProgram, tableId, rowId, dateColId } = currentEventData;
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+    const btn = document.getElementById('schedSaveBtn');
+    const saveBtnOriginal = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Saving…`; }
+
+    try {
+        const newNotes = document.getElementById('schedEditNotes')?.value || '';
+        const newDate = document.getElementById('schedEditDueDate')?.value || '';
+        const origDate = currentEventData._origDueDate || '';
+
+        // 1. Save notes
+        const notesResp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/notes`,
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ notes: newNotes }) }
+        );
+        if (!notesResp.ok) throw new Error('Failed to save notes');
+
+        // 2. Reschedule date if changed
+        if (newDate && newDate !== origDate && dateColId) {
+            const dateResp = await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }) }
+            );
+            if (!dateResp.ok) throw new Error('Failed to update date');
+        }
+
+        closeEventModal();
+        showToast('Schedule item saved', 'success');
+        await reloadCalendarEvents();
+
+        // Navigate calendar to the new date so the user sees the pill
+        if (newDate && newDate !== origDate && calendarInstance) {
+            calendarInstance.gotoDate(newDate);
+        }
+    } catch (err) {
+        console.error('saveScheduleFromCalendar error:', err);
+        showToast('Could not save: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = saveBtnOriginal; }
+    }
+}
+
+async function toggleScheduleSubTask(checkbox) {
+    if (!currentEventData) return;
+    const { scheduleProgram, tableId, rowId } = currentEventData;
+    const stId = checkbox.dataset.stId;
+    const completed = checkbox.checked;
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+    const row = document.getElementById(`st-row-${stId}`);
+
+    checkbox.disabled = true;
+    if (row) row.style.opacity = '0.6';
+
+    try {
+        const resp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks/${encodeURIComponent(stId)}`,
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ completed }) }
+        );
+        if (!resp.ok) throw new Error('Update failed');
+        if (row) {
+            row.style.opacity = '1';
+            row.classList.toggle('is-completed', completed);
+        }
+        showToast(completed ? 'Sub-task completed ✓' : 'Sub-task reopened', 'success');
+    } catch (err) {
+        console.error('toggleScheduleSubTask error:', err);
+        checkbox.checked = !completed;
+        if (row) row.style.opacity = '1';
+        showToast('Could not update sub-task', 'error');
+    } finally {
+        checkbox.disabled = false;
+    }
+}
+
+async function addScheduleSubTask() {
+    if (!currentEventData) return;
+    const { scheduleProgram, tableId, rowId } = currentEventData;
+    const input = document.getElementById('schedNewSubTask');
+    const title = (input?.value || '').trim();
+    if (!title) return;
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+
+    input.disabled = true;
+    try {
+        const resp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ title }) }
+        );
+        if (!resp.ok) throw new Error('Add failed');
+        const data = await resp.json();
+        const st = data.sub_task;
+
+        // Append to DOM
+        const container = document.getElementById('schedSubTasksContainer');
+        if (container) {
+            // Remove the "No sub-tasks yet" placeholder if present
+            const placeholder = container.querySelector('p.italic');
+            if (placeholder) placeholder.remove();
+
+            const div = document.createElement('div');
+            div.className = 'sibling-row';
+            div.id = `st-row-${st.id}`;
+            div.innerHTML = `
+                <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
+                       data-st-id="${st.id}"
+                       onchange="toggleScheduleSubTask(this)">
+                <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
+                <button onclick="deleteScheduleSubTask('${st.id}')" class="text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+        input.value = '';
+        showToast('Sub-task added', 'success');
+    } catch (err) {
+        console.error('addScheduleSubTask error:', err);
+        showToast('Could not add sub-task', 'error');
+    } finally {
+        input.disabled = false;
+        input.focus();
+    }
+}
+
+async function deleteScheduleSubTask(stId) {
+    if (!currentEventData) return;
+    const { scheduleProgram, tableId, rowId } = currentEventData;
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+    const row = document.getElementById(`st-row-${stId}`);
+    if (row) row.style.opacity = '0.4';
+
+    try {
+        const resp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks/${encodeURIComponent(stId)}`,
+            { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+        );
+        if (!resp.ok) throw new Error('Delete failed');
+        if (row) row.remove();
+
+        // If no sub-tasks left, show placeholder
+        const container = document.getElementById('schedSubTasksContainer');
+        if (container && container.children.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>';
+        }
+        showToast('Sub-task removed', 'success');
+    } catch (err) {
+        console.error('deleteScheduleSubTask error:', err);
+        if (row) row.style.opacity = '1';
+        showToast('Could not remove sub-task', 'error');
     }
 }
 

@@ -337,6 +337,91 @@ class ScheduleRepository:
                         return self.save_schedules(project_name, data)
         
         return False
+
+    def update_row_notes(self, project_name: str, table_id: str, row_id: str, notes: str) -> bool:
+        """Update the notes field on a schedule row (stored separately from row data)."""
+        data = self.get_schedules(project_name)
+
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        data['tables'][i]['rows'][j]['notes'] = notes
+                        data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                        return self.save_schedules(project_name, data)
+
+        return False
+
+    def get_row_sub_tasks(self, project_name: str, table_id: str, row_id: str) -> Optional[List[Dict[str, Any]]]:
+        """Get sub-tasks for a schedule row."""
+        data = self.get_schedules(project_name)
+        for table in data.get('tables', []):
+            if table.get('id') == table_id:
+                for row in table.get('rows', []):
+                    if row.get('id') == row_id:
+                        return row.get('sub_tasks', [])
+        return None
+
+    def add_sub_task(self, project_name: str, table_id: str, row_id: str, title: str) -> Optional[Dict[str, Any]]:
+        """Add a sub-task to a schedule row."""
+        data = self.get_schedules(project_name)
+
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        sub_task = {
+                            'id': str(uuid.uuid4())[:8],
+                            'title': title,
+                            'completed': False,
+                            'created_at': datetime.now().isoformat()
+                        }
+                        if 'sub_tasks' not in data['tables'][i]['rows'][j]:
+                            data['tables'][i]['rows'][j]['sub_tasks'] = []
+                        data['tables'][i]['rows'][j]['sub_tasks'].append(sub_task)
+                        data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                        self.save_schedules(project_name, data)
+                        return sub_task
+
+        return None
+
+    def update_sub_task(self, project_name: str, table_id: str, row_id: str,
+                        sub_task_id: str, updates: Dict[str, Any]) -> bool:
+        """Update a sub-task (toggle completed, rename, etc.)."""
+        data = self.get_schedules(project_name)
+
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        for k, st in enumerate(row.get('sub_tasks', [])):
+                            if st.get('id') == sub_task_id:
+                                if 'completed' in updates:
+                                    data['tables'][i]['rows'][j]['sub_tasks'][k]['completed'] = updates['completed']
+                                if 'title' in updates:
+                                    data['tables'][i]['rows'][j]['sub_tasks'][k]['title'] = updates['title']
+                                data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                                return self.save_schedules(project_name, data)
+
+        return False
+
+    def delete_sub_task(self, project_name: str, table_id: str, row_id: str, sub_task_id: str) -> bool:
+        """Delete a sub-task from a schedule row."""
+        data = self.get_schedules(project_name)
+
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        original = len(row.get('sub_tasks', []))
+                        data['tables'][i]['rows'][j]['sub_tasks'] = [
+                            st for st in row.get('sub_tasks', []) if st.get('id') != sub_task_id
+                        ]
+                        if len(data['tables'][i]['rows'][j].get('sub_tasks', [])) < original:
+                            data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                            return self.save_schedules(project_name, data)
+
+        return False
     
     def delete_row(self, project_name: str, table_id: str, row_id: str) -> bool:
         """Delete a row from a schedule table"""
