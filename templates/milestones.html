@@ -254,6 +254,31 @@
                     </div>
                 </div>
 
+                <!-- Recurrence -->
+                <div id="recurrenceSection" class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                    <h4 class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2">&#x1F504; Recurrence</h4>
+                    <div id="recurrenceExistingBadge" class="hidden mb-3">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800" id="recurrenceExistingLabel"></span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cadence</label>
+                            <select id="milestoneCadence" onchange="document.getElementById('milestoneOccurrencesGroup').classList.toggle('hidden', this.value === 'none')" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                                <option value="none">None (one-time)</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div id="milestoneOccurrencesGroup" class="hidden">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Occurrences</label>
+                            <input type="number" id="milestoneOccurrences" min="2" max="52" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <p class="text-xs text-amber-600 mt-2" id="recurrenceHint">Creates multiple copies of this milestone with sequential dates.</p>
+                </div>
+
                 <!-- Parent / Hierarchy info -->
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Hierarchy</h4>
@@ -324,22 +349,6 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="text" id="newTaskName" placeholder="Task name" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <input type="date" id="newTaskDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Recurrence</label>
-                            <select id="newTaskCadence" onchange="document.getElementById('occurrencesGroup').classList.toggle('hidden', this.value === 'none')" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                                <option value="none">None (one-time)</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="biweekly">Bi-weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </select>
-                        </div>
-                        <div id="occurrencesGroup" class="hidden">
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Occurrences</label>
-                            <input type="number" id="newTaskOccurrences" min="2" max="52" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
                     </div>
                     <div class="flex items-center space-x-2 mt-3">
                         <button onclick="saveNewTask()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Add</button>
@@ -1047,6 +1056,13 @@ function openCreateMilestone() {
     document.getElementById('addTaskForm').classList.add('hidden');
     document.getElementById('addTaskBtn').classList.remove('hidden');
 
+    // Recurrence: reset to defaults
+    document.getElementById('milestoneCadence').value = 'none';
+    document.getElementById('milestoneOccurrences').value = '4';
+    document.getElementById('milestoneOccurrencesGroup').classList.add('hidden');
+    document.getElementById('recurrenceExistingBadge').classList.add('hidden');
+    document.getElementById('recurrenceHint').textContent = 'Creates multiple copies of this milestone with sequential dates.';
+
     document.getElementById('editMilestoneModal').classList.remove('hidden');
 }
 
@@ -1095,6 +1111,21 @@ function editMilestone(index) {
 
     // Update footer button
     document.getElementById('modalSaveBtn').textContent = 'Save Changes';
+
+    // Recurrence: show existing state or reset
+    if (m.recurrence_series_id) {
+        document.getElementById('recurrenceExistingBadge').classList.remove('hidden');
+        document.getElementById('recurrenceExistingLabel').textContent = `Part of recurring series — ${m.recurrence_occurrence || ''} (${m.recurrence_cadence || ''})` ;
+        document.getElementById('milestoneCadence').value = 'none';
+        document.getElementById('milestoneOccurrencesGroup').classList.add('hidden');
+        document.getElementById('recurrenceHint').textContent = 'This milestone is already part of a recurring series. Set a new cadence to create additional occurrences.';
+    } else {
+        document.getElementById('recurrenceExistingBadge').classList.add('hidden');
+        document.getElementById('milestoneCadence').value = 'none';
+        document.getElementById('milestoneOccurrences').value = '4';
+        document.getElementById('milestoneOccurrencesGroup').classList.add('hidden');
+        document.getElementById('recurrenceHint').textContent = 'Set a cadence to create recurring copies of this milestone.';
+    }
 
     // Load related tasks inline (no tabs)
     loadRelatedTasks();
@@ -1300,6 +1331,35 @@ async function saveMilestone() {
 
         const data = await response.json();
         if (response.ok && data.success) {
+            // After saving, check if user set recurrence on this milestone
+            const cadence = document.getElementById('milestoneCadence').value;
+            if (cadence && cadence !== 'none') {
+                const occurrences = parseInt(document.getElementById('milestoneOccurrences').value) || 4;
+                try {
+                    const recResponse = await fetch('/milestones/make-recurring', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            project_code: milestone.project,
+                            milestone_id: milestone.id || milestone.name,
+                            recurrence_cadence: cadence,
+                            recurrence_count: occurrences
+                        })
+                    });
+                    const recData = await recResponse.json();
+                    if (recResponse.ok && recData.success) {
+                        closeMilestoneModal();
+                        let msg = `"${updatedMilestone.name}" updated. ${recData.milestones_created} recurring copies created.`;
+                        if (dateChanged) msg += ' A change record has been created.';
+                        showNotification('success', 'Milestone Updated', msg);
+                        setTimeout(() => window.location.reload(), 1500);
+                        return;
+                    }
+                } catch (recErr) {
+                    console.error('Recurrence error:', recErr);
+                }
+            }
+
             closeMilestoneModal();
             let msg = `"${updatedMilestone.name}" updated successfully.`;
             if (dateChanged) msg += ' A change record has been created.';
@@ -1343,14 +1403,17 @@ async function createMilestone() {
                 notes: document.getElementById('milestoneNotes').value.trim(),
                 resources: document.getElementById('milestoneResources').value.trim(),
                 parent_project: parentProject,
-                completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0
+                completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0,
+                recurrence_cadence: document.getElementById('milestoneCadence').value !== 'none' ? document.getElementById('milestoneCadence').value : null,
+                recurrence_count: document.getElementById('milestoneCadence').value !== 'none' ? parseInt(document.getElementById('milestoneOccurrences').value) || 4 : null
             })
         });
 
         const data = await response.json();
         if (response.ok && data.success) {
             closeMilestoneModal();
-            showNotification('success', 'Milestone Created', `"${name}" created successfully.`);
+            const countMsg = data.milestones_created > 1 ? ` (${data.milestones_created} occurrences created)` : '';
+            showNotification('success', 'Milestone Created', `"${name}" created successfully.${countMsg}`);
             setTimeout(() => window.location.reload(), 1500);
         } else {
             closeMilestoneModal();

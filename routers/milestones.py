@@ -57,6 +57,8 @@ class MilestoneCreate(BaseModel):
     resources: Optional[str] = ""
     parent_project: Optional[str] = ""
     completion_percentage: Optional[int] = 0
+    recurrence_cadence: Optional[str] = None  # daily, weekly, biweekly, monthly
+    recurrence_count: Optional[int] = None  # number of occurrences (2-52)
 
 
 class TaskCreate(BaseModel):
@@ -67,13 +69,11 @@ class TaskCreate(BaseModel):
     start_date: Optional[str] = ""
     status: Optional[str] = "NOT_STARTED"
     completion_percentage: Optional[int] = 0
-    recurrence_cadence: Optional[str] = None  # daily, weekly, biweekly, monthly
-    recurrence_count: Optional[int] = None  # number of occurrences (2-52)
 
 
 @router.post("/milestones/create")
 def create_milestone(data: MilestoneCreate):
-    """Create a new milestone in the project YAML file."""
+    """Create a new milestone (or recurring series) in the project YAML file."""
     import uuid
     try:
         transformed_code = data.project_code.replace('-', '_')
@@ -88,27 +88,73 @@ def create_milestone(data: MilestoneCreate):
 
         milestones = project_data.get('milestones', [])
 
-        new_milestone = {
-            'id': str(uuid.uuid4()),
-            'name': data.name.strip(),
-            'target_date': data.target_date,
-            'start_date': data.start_date or '',
-            'status': data.status or 'NOT_STARTED',
-            'completion_percentage': data.completion_percentage or 0,
-            'notes': data.notes or '',
-            'resources': data.resources or '',
-            'parent_project': data.parent_project or '',
-            'project': data.project_code,
-            'outline_level': 4,
-            'is_true_milestone': True,
-            'user_edited_fields': ['name', 'target_date', 'status'],
-        }
+        # Determine recurrence
+        cadence = data.recurrence_cadence
+        count = data.recurrence_count or 1
+        if cadence and cadence in ('daily', 'weekly', 'biweekly', 'monthly') and count > 1:
+            count = min(count, 52)
+            series_id = str(uuid.uuid4())
+        else:
+            cadence = None
+            count = 1
+            series_id = None
 
-        # Build parent_levels from parent_project if set
-        if data.parent_project:
-            new_milestone['parent_levels'] = {'3': data.parent_project}
+        base_name = data.name.strip()
+        base_date = data.target_date
+        created_ids = []
 
-        milestones.append(new_milestone)
+        for i in range(count):
+            ms_name = f"{base_name} ({i+1}/{count})" if count > 1 else base_name
+
+            # Calculate date offset for each occurrence
+            ms_date = base_date
+            if base_date and count > 1 and i > 0:
+                try:
+                    from datetime import datetime as dt, timedelta
+                    d = dt.strptime(base_date, '%Y-%m-%d').date()
+                    if cadence == 'daily':
+                        d += timedelta(days=i)
+                    elif cadence == 'weekly':
+                        d += timedelta(weeks=i)
+                    elif cadence == 'biweekly':
+                        d += timedelta(weeks=2 * i)
+                    elif cadence == 'monthly':
+                        month = d.month - 1 + i
+                        year = d.year + month // 12
+                        month = month % 12 + 1
+                        day = min(d.day, [31,29 if year%4==0 and (year%100!=0 or year%400==0) else 28,31,30,31,30,31,31,30,31,30,31][month-1])
+                        d = d.replace(year=year, month=month, day=day)
+                    ms_date = d.isoformat()
+                except Exception:
+                    pass
+
+            new_milestone = {
+                'id': str(uuid.uuid4()),
+                'name': ms_name,
+                'target_date': ms_date,
+                'start_date': data.start_date or '',
+                'status': data.status or 'NOT_STARTED',
+                'completion_percentage': data.completion_percentage or 0,
+                'notes': data.notes or '',
+                'resources': data.resources or '',
+                'parent_project': data.parent_project or '',
+                'project': data.project_code,
+                'outline_level': 4,
+                'is_true_milestone': True,
+                'user_edited_fields': ['name', 'target_date', 'status'],
+            }
+
+            if data.parent_project:
+                new_milestone['parent_levels'] = {'3': data.parent_project}
+
+            if series_id:
+                new_milestone['recurrence_cadence'] = cadence
+                new_milestone['recurrence_series_id'] = series_id
+                new_milestone['recurrence_occurrence'] = f"{i+1} of {count}"
+
+            milestones.append(new_milestone)
+            created_ids.append(new_milestone['id'])
+
         project_data['milestones'] = milestones
 
         with open(yaml_path, 'w', encoding='utf-8') as f:
@@ -116,12 +162,16 @@ def create_milestone(data: MilestoneCreate):
             f.flush()
             os.fsync(f.fileno())
 
-        logger.info(f"✅ Created milestone '{data.name}' in {data.project_code}")
+        if count > 1:
+            logger.info(f"✅ Created {count} recurring milestones '{base_name}' ({cadence}) in {data.project_code}")
+        else:
+            logger.info(f"✅ Created milestone '{base_name}' in {data.project_code}")
 
         return JSONResponse({
             'success': True,
-            'message': f"Milestone '{data.name}' created",
-            'milestone_id': new_milestone['id']
+            'message': f"Milestone '{base_name}' created" + (f" ({count} occurrences)" if count > 1 else ""),
+            'milestone_id': created_ids[0],
+            'milestones_created': count
         })
 
     except HTTPException:
@@ -163,72 +213,127 @@ def create_task(data: TaskCreate):
         parent_levels = dict(parent.get('parent_levels', {}) or {})
         parent_levels[str(parent_level)] = parent.get('name', '')
 
-        # Determine if this is a recurring task
-        cadence = data.recurrence_cadence
-        count = data.recurrence_count or 1
-        if cadence and cadence in ('daily', 'weekly', 'biweekly', 'monthly') and count > 1:
-            count = min(count, 52)  # Cap at 52
-            series_id = str(uuid.uuid4())
+        new_task = {
+            'id': str(uuid.uuid4()),
+            'name': data.name.strip(),
+            'target_date': data.target_date or '',
+            'start_date': data.start_date or '',
+            'status': data.status or 'NOT_STARTED',
+            'completion_percentage': data.completion_percentage or 0,
+            'notes': '',
+            'resources': '',
+            'parent_project': parent.get('parent_project', ''),
+            'project': data.project_code,
+            'outline_level': parent_level + 1,
+            'parent_levels': parent_levels,
+            'is_true_milestone': False,
+            'user_edited_fields': ['name'],
+        }
+
+        milestones.append(new_task)
+        project_data['milestones'] = milestones
+
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+            f.flush()
+            os.fsync(f.fileno())
+
+        logger.info(f"✅ Created task '{data.name}' under '{parent.get('name')}' in {data.project_code}")
+
+        return JSONResponse({
+            'success': True,
+            'message': f"Task '{data.name}' created",
+            'task_id': new_task['id']
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating task: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class MakeRecurring(BaseModel):
+    project_code: str
+    milestone_id: str
+    recurrence_cadence: str          # daily, weekly, biweekly, monthly
+    recurrence_count: int            # total number of occurrences (2-52)
+
+
+@router.post("/milestones/make-recurring")
+def make_recurring(data: MakeRecurring, request: Request):
+    """Turn an existing milestone into a recurring series by creating N-1 copies."""
+    import uuid
+    from datetime import timedelta
+
+    cadence_map = {"daily": 1, "weekly": 7, "biweekly": 14, "monthly": 30}
+    delta_days = cadence_map.get(data.recurrence_cadence)
+    if not delta_days:
+        raise HTTPException(status_code=400, detail=f"Invalid cadence: {data.recurrence_cadence}")
+
+    count = max(2, min(52, data.recurrence_count))
+
+    data_dir = getattr(request.state, "data_dir", DATA_DIR)
+    yaml_path = Path(data_dir) / "projects" / data.project_code / "project_status.yaml"
+    if not yaml_path.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f) or {}
+
+        milestones = project_data.get('milestones', [])
+
+        # Find the target milestone
+        target = None
+        for m in milestones:
+            if str(m.get('id', '')) == data.milestone_id:
+                target = m
+                break
+
+        if not target:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+
+        # Parse the base date
+        raw_date = target.get('target_date', '')
+        if hasattr(raw_date, 'isoformat'):
+            base_date = raw_date
+        elif raw_date:
+            base_date = datetime.strptime(str(raw_date), "%Y-%m-%d").date()
         else:
-            cadence = None
-            count = 1
-            series_id = None
+            base_date = datetime.today().date()
 
-        created_ids = []
-        base_name = data.name.strip()
-        base_date = data.target_date or ''
+        series_id = str(uuid.uuid4())
 
-        for i in range(count):
-            task_name = f"{base_name} ({i+1}/{count})" if count > 1 else base_name
+        # Update original milestone
+        target['recurrence_cadence'] = data.recurrence_cadence
+        target['recurrence_series_id'] = series_id
+        target['recurrence_occurrence'] = f"1 of {count}"
 
-            # Calculate date offset for each occurrence
-            task_date = base_date
-            if base_date and count > 1 and i > 0:
-                try:
-                    from datetime import datetime as dt, timedelta
-                    d = dt.strptime(base_date, '%Y-%m-%d').date()
-                    if cadence == 'daily':
-                        d += timedelta(days=i)
-                    elif cadence == 'weekly':
-                        d += timedelta(weeks=i)
-                    elif cadence == 'biweekly':
-                        d += timedelta(weeks=2 * i)
-                    elif cadence == 'monthly':
-                        # Add i months
-                        month = d.month - 1 + i
-                        year = d.year + month // 12
-                        month = month % 12 + 1
-                        day = min(d.day, [31,29 if year%4==0 and (year%100!=0 or year%400==0) else 28,31,30,31,30,31,31,30,31,30,31][month-1])
-                        d = d.replace(year=year, month=month, day=day)
-                    task_date = d.isoformat()
-                except Exception:
-                    pass  # Keep base_date if parsing fails
-
-            new_task = {
+        # Create N-1 copies
+        created = 0
+        for i in range(1, count):
+            new_date = base_date + timedelta(days=delta_days * i)
+            copy = {
                 'id': str(uuid.uuid4()),
-                'name': task_name,
-                'target_date': task_date,
-                'start_date': data.start_date or '',
-                'status': data.status or 'NOT_STARTED',
-                'completion_percentage': data.completion_percentage or 0,
-                'notes': '',
-                'resources': '',
-                'parent_project': parent.get('parent_project', ''),
+                'name': f"{target.get('name', '')} ({i+1}/{count})",
+                'target_date': new_date.isoformat(),
+                'start_date': '',
+                'status': 'NOT_STARTED',
+                'completion_percentage': 0,
+                'notes': target.get('notes', ''),
+                'resources': target.get('resources', ''),
+                'parent_project': target.get('parent_project', ''),
                 'project': data.project_code,
-                'outline_level': parent_level + 1,
-                'parent_levels': parent_levels,
-                'is_true_milestone': False,
-                'user_edited_fields': ['name'],
+                'outline_level': target.get('outline_level', 4),
+                'parent_levels': dict(target.get('parent_levels', {}) or {}),
+                'is_true_milestone': target.get('is_true_milestone', False),
+                'recurrence_cadence': data.recurrence_cadence,
+                'recurrence_series_id': series_id,
+                'recurrence_occurrence': f"{i+1} of {count}",
             }
-
-            # Add recurrence metadata if recurring
-            if series_id:
-                new_task['recurrence_cadence'] = cadence
-                new_task['recurrence_series_id'] = series_id
-                new_task['recurrence_occurrence'] = f"{i+1} of {count}"
-
-            milestones.append(new_task)
-            created_ids.append(new_task['id'])
+            milestones.append(copy)
+            created += 1
 
         project_data['milestones'] = milestones
 
@@ -237,22 +342,19 @@ def create_task(data: TaskCreate):
             f.flush()
             os.fsync(f.fileno())
 
-        if count > 1:
-            logger.info(f"✅ Created {count} recurring tasks '{base_name}' ({cadence}) under '{parent.get('name')}' in {data.project_code}")
-        else:
-            logger.info(f"✅ Created task '{base_name}' under '{parent.get('name')}' in {data.project_code}")
+        logger.info(f"✅ Made milestone '{target.get('name')}' recurring: {count} occurrences ({data.recurrence_cadence})")
 
         return JSONResponse({
             'success': True,
-            'message': f"Task '{base_name}' created" + (f" ({count} occurrences)" if count > 1 else ""),
-            'task_id': created_ids[0],
-            'tasks_created': count
+            'message': f"Created {created} recurring copies",
+            'series_id': series_id,
+            'total': count
         })
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating task: {e}")
+        logger.error(f"Error making milestone recurring: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
