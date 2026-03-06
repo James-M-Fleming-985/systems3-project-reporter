@@ -254,9 +254,9 @@
                         <p id="dateRelativeLabel" class="text-xs mt-1 text-gray-500"></p>
                     </div>
 
-                    <!-- Start Date (read-only) -->
+                    <!-- Start Date -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date <span class="text-xs text-gray-400 font-normal">(from XML)</span></label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date <span id="startDateHint" class="text-xs text-gray-400 font-normal">(from XML)</span></label>
                         <input type="date" id="milestoneStartDate" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-500" disabled>
                     </div>
 
@@ -279,13 +279,19 @@
                     </div>
                 </div>
 
-                <!-- Parent / Hierarchy info (read-only) -->
+                <!-- Parent / Hierarchy info -->
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Hierarchy</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <span class="text-xs text-gray-500">Parent Project</span>
                             <p id="modalParentProject" class="text-sm font-medium text-gray-800">-</p>
+                            <select id="modalParentProjectSelect" class="hidden w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">(none)</option>
+                                {% for pp in parent_projects %}
+                                <option value="{{ pp }}">{{ pp }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div>
                             <span class="text-xs text-gray-500">Level 3 Group</span>
@@ -332,12 +338,32 @@
                         </div>
                     </div>
                     <div id="relatedTasksList" class="space-y-2"></div>
+                    <!-- Add Task inline form -->
+                    <div id="addTaskForm" class="hidden mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Add New Task</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="newTaskName" placeholder="Task name" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="newTaskDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center space-x-2 mt-3">
+                            <button onclick="saveNewTask()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Add</button>
+                            <button onclick="toggleAddTaskForm(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">Cancel</button>
+                        </div>
+                    </div>
+                    <button id="addTaskBtn" onclick="toggleAddTaskForm(true)" class="mt-3 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition inline-flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Add Task
+                    </button>
                 </div>
                 <div id="relatedEmpty" class="hidden text-center py-12">
                     <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                     </svg>
                     <p class="text-sm text-gray-500">No related tasks found</p>
+                    <button onclick="toggleAddTaskForm(true)" class="mt-3 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition inline-flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Add Task
+                    </button>
                 </div>
             </div>
         </div>
@@ -347,7 +373,7 @@
             <button type="button" onclick="closeMilestoneModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                 Cancel
             </button>
-            <button type="button" onclick="saveMilestone()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+            <button type="button" id="modalSaveBtn" onclick="saveMilestone()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
                 Save Changes
             </button>
         </div>
@@ -356,6 +382,32 @@
 
 <!-- Toast container -->
 <div id="toast" class="toast bg-green-600"></div>
+
+<!-- Kanban Settings Modal -->
+<div id="kanbanSettingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-1/2 max-w-lg max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-bold text-gray-900">⚙️ Kanban Column Settings</h3>
+            <button onclick="closeKanbanSettings()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4">
+            <p class="text-sm text-gray-500 mb-4">Customize your board columns. Drag to reorder, or add/remove custom columns.</p>
+            <div id="kanbanColumnsList" class="space-y-2 mb-4"></div>
+            <button onclick="addKanbanColumn()" class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition inline-flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Add Column
+            </button>
+        </div>
+        <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+            <button onclick="closeKanbanSettings()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+            <button onclick="saveKanbanSettings()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">Save</button>
+        </div>
+    </div>
+</div>
 
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2" id="milestonePageTitle">📍 Milestone Tracker</h2>
@@ -376,6 +428,9 @@
                 </button>
                 <button onclick="switchView('month')" id="monthViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
                     Month View
+                </button>
+                <button onclick="openKanbanSettings()" id="kanbanSettingsBtn" class="px-2 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition" title="Kanban column settings">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
             </div>
         </div>
@@ -405,6 +460,12 @@
                 </button>
             </div>
             
+            <!-- Add Milestone button -->
+            <button onclick="openCreateMilestone()" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition inline-flex items-center gap-1.5" title="Add new milestone">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                New Milestone
+            </button>
+
             <!-- Export XML button -->
             <button onclick="exportXml()" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition inline-flex items-center gap-1.5" title="Export as MS Project XML">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -416,47 +477,7 @@
 
 <!-- Kanban Board View (Default) -->
 <div id="boardView" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Not Started Column -->
-    <div class="bg-gray-50 rounded-xl p-4 kanban-column" data-status="NOT_STARTED"
-         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
-                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Not Started</h3>
-            </div>
-            <span id="kanbanNotStartedCount" class="bg-gray-200 text-gray-600 text-xs font-bold rounded-full px-2 py-0.5">0</span>
-        </div>
-        <div id="kanbanNotStarted" class="space-y-3 min-h-[200px]"></div>
-        <div class="drop-placeholder">Drop here to set as Not Started</div>
-    </div>
-
-    <!-- In Progress Column -->
-    <div class="bg-blue-50 rounded-xl p-4 kanban-column" data-status="IN_PROGRESS"
-         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                <h3 class="text-sm font-bold text-blue-700 uppercase tracking-wider">In Progress</h3>
-            </div>
-            <span id="kanbanInProgressCount" class="bg-blue-200 text-blue-700 text-xs font-bold rounded-full px-2 py-0.5">0</span>
-        </div>
-        <div id="kanbanInProgress" class="space-y-3 min-h-[200px]"></div>
-        <div class="drop-placeholder">Drop here to set as In Progress</div>
-    </div>
-
-    <!-- Completed Column -->
-    <div class="bg-green-50 rounded-xl p-4 kanban-column" data-status="COMPLETED"
-         ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                <h3 class="text-sm font-bold text-green-700 uppercase tracking-wider">Completed</h3>
-            </div>
-            <span id="kanbanCompletedCount" class="bg-green-200 text-green-700 text-xs font-bold rounded-full px-2 py-0.5">0</span>
-        </div>
-        <div id="kanbanCompleted" class="space-y-3 min-h-[200px]"></div>
-        <div class="drop-placeholder">Drop here to mark Completed</div>
-    </div>
+    <!-- Columns rendered dynamically by JS -->
 </div>
 
 <!-- Week View (Hidden by default) -->
@@ -523,6 +544,9 @@ allMilestones.delayed = allMilestones.delayed || [];
 let allMilestonesFlat = [];
 let currentSortOrder = 'asc';
 let currentModalMilestone = null;  // Track original milestone data for change detection
+let isCreateMode = false;  // true when creating a new milestone
+let kanbanColumns = {{ kanban_columns | tojson | safe }};
+const parentProjects = {{ parent_projects | tojson | safe }};
 
 const totalMilestones = allMilestones.completed_past.length + allMilestones.open.length +
                         allMilestones.upcoming_future.length + allMilestones.delayed.length;
@@ -669,28 +693,53 @@ function renderModernCard(milestone, flatIndex, draggable = true) {
 // ═══════════════════════════════════════════════════
 // KANBAN BOARD
 // ═══════════════════════════════════════════════════
+const COLOR_MAP = {
+    gray:   { bg: 'bg-gray-50',  dot: 'bg-gray-400',  text: 'text-gray-700',  countBg: 'bg-gray-200',  countText: 'text-gray-600' },
+    blue:   { bg: 'bg-blue-50',  dot: 'bg-blue-500',  text: 'text-blue-700',  countBg: 'bg-blue-200',  countText: 'text-blue-700' },
+    green:  { bg: 'bg-green-50', dot: 'bg-green-500', text: 'text-green-700', countBg: 'bg-green-200', countText: 'text-green-700' },
+    red:    { bg: 'bg-red-50',   dot: 'bg-red-500',   text: 'text-red-700',   countBg: 'bg-red-200',   countText: 'text-red-700' },
+    yellow: { bg: 'bg-yellow-50',dot: 'bg-yellow-500',text: 'text-yellow-700',countBg: 'bg-yellow-200',countText: 'text-yellow-700' },
+    purple: { bg: 'bg-purple-50',dot: 'bg-purple-500',text: 'text-purple-700',countBg: 'bg-purple-200',countText: 'text-purple-700' },
+    orange: { bg: 'bg-orange-50',dot: 'bg-orange-500',text: 'text-orange-700',countBg: 'bg-orange-200',countText: 'text-orange-700' },
+};
+
+function renderKanbanColumns() {
+    const board = document.getElementById('boardView');
+    const colCount = kanbanColumns.length || 3;
+    board.className = `grid grid-cols-1 md:grid-cols-${Math.min(colCount, 6)} gap-6`;
+    board.innerHTML = kanbanColumns.map(col => {
+        const c = COLOR_MAP[col.color] || COLOR_MAP.gray;
+        return `<div class="${c.bg} rounded-xl p-4 kanban-column" data-status="${col.id}"
+             ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <span class="w-3 h-3 rounded-full ${c.dot} mr-2"></span>
+                    <h3 class="text-sm font-bold ${c.text} uppercase tracking-wider">${col.title}</h3>
+                </div>
+                <span class="kanban-count ${c.countBg} ${c.countText} text-xs font-bold rounded-full px-2 py-0.5">0</span>
+            </div>
+            <div class="kanban-cards space-y-3 min-h-[200px]"></div>
+            <div class="drop-placeholder">Drop here to set as ${col.title}</div>
+        </div>`;
+    }).join('');
+}
+
 function populateBoardView() {
     rebuildFlat();
-    
-    const notStarted = allMilestonesFlat.filter(m => m.status === 'NOT_STARTED');
-    const inProgress = allMilestonesFlat.filter(m => m.status === 'IN_PROGRESS');
-    const completed = allMilestonesFlat.filter(m => m.status === 'COMPLETED');
+    renderKanbanColumns();
 
-    document.getElementById('kanbanNotStarted').innerHTML = notStarted.length > 0
-        ? notStarted.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
-        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
-
-    document.getElementById('kanbanInProgress').innerHTML = inProgress.length > 0
-        ? inProgress.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
-        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
-
-    document.getElementById('kanbanCompleted').innerHTML = completed.length > 0
-        ? completed.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
-        : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
-
-    document.getElementById('kanbanNotStartedCount').textContent = notStarted.length;
-    document.getElementById('kanbanInProgressCount').textContent = inProgress.length;
-    document.getElementById('kanbanCompletedCount').textContent = completed.length;
+    const board = document.getElementById('boardView');
+    const columns = board.querySelectorAll('.kanban-column');
+    columns.forEach(col => {
+        const statusId = col.dataset.status;
+        const cards = allMilestonesFlat.filter(m => m.status === statusId);
+        const cardsDiv = col.querySelector('.kanban-cards');
+        const countSpan = col.querySelector('.kanban-count');
+        cardsDiv.innerHTML = cards.length > 0
+            ? cards.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
+            : '<p class="text-sm text-gray-400 text-center py-8">No milestones</p>';
+        countSpan.textContent = cards.length;
+    });
 }
 
 // ═══════════════════════════════════════════════════
@@ -970,9 +1019,46 @@ function showToast(msg, bgClass = 'bg-green-600') {
 }
 
 // ═══════════════════════════════════════════════════
-// MODAL: EDIT MILESTONE
+// MODAL: CREATE / EDIT MILESTONE
 // ═══════════════════════════════════════════════════
+function openCreateMilestone() {
+    isCreateMode = true;
+    currentModalMilestone = null;
+
+    document.getElementById('milestoneIndex').value = '-1';
+    document.getElementById('milestoneName').value = '';
+    document.getElementById('milestoneTargetDate').value = '';
+    document.getElementById('milestoneStartDate').value = '';
+    document.getElementById('milestoneStartDate').disabled = false;
+    document.getElementById('milestoneStartDate').classList.remove('bg-gray-50', 'text-gray-500');
+    document.getElementById('milestoneStartDate').classList.add('bg-white', 'text-gray-900');
+    document.getElementById('startDateHint').textContent = '';
+    document.getElementById('milestoneResources').value = '';
+    document.getElementById('milestoneCompletion').value = 0;
+    document.getElementById('milestoneCompletionRange').value = 0;
+    document.getElementById('milestoneNotes').value = '';
+    document.getElementById('milestoneStatus').value = 'NOT_STARTED';
+    setModalStatus('NOT_STARTED');
+
+    // Show parent project dropdown
+    document.getElementById('modalParentProject').classList.add('hidden');
+    document.getElementById('modalParentProjectSelect').classList.remove('hidden');
+    document.getElementById('modalParentProjectSelect').value = '';
+
+    document.getElementById('modalLevel3Parent').textContent = '-';
+    document.getElementById('overdueWarning').classList.add('hidden');
+    document.getElementById('dateRelativeLabel').textContent = '';
+    updateModalStatusDot('NOT_STARTED');
+
+    // Update footer button
+    document.getElementById('modalSaveBtn').textContent = 'Create Milestone';
+
+    switchModalTab('details');
+    document.getElementById('editMilestoneModal').classList.remove('hidden');
+}
+
 function editMilestone(index) {
+    isCreateMode = false;
     if (index < 0 || index >= allMilestonesFlat.length) return;
     const m = allMilestonesFlat[index];
     currentModalMilestone = { ...m };  // snapshot for change detection
@@ -981,6 +1067,10 @@ function editMilestone(index) {
     document.getElementById('milestoneName').value = m.name;
     document.getElementById('milestoneTargetDate').value = m.target_date;
     document.getElementById('milestoneStartDate').value = m.start_date || '';
+    document.getElementById('milestoneStartDate').disabled = true;
+    document.getElementById('milestoneStartDate').classList.add('bg-gray-50', 'text-gray-500');
+    document.getElementById('milestoneStartDate').classList.remove('bg-white', 'text-gray-900');
+    document.getElementById('startDateHint').textContent = '(from XML)';
     document.getElementById('milestoneResources').value = m.resources || '';
     document.getElementById('milestoneCompletion').value = m.completion_percentage || 0;
     document.getElementById('milestoneCompletionRange').value = m.completion_percentage || 0;
@@ -988,8 +1078,10 @@ function editMilestone(index) {
     document.getElementById('milestoneStatus').value = m.status;
     setModalStatus(m.status);
 
-    // Hierarchy
+    // Hierarchy — show text, hide dropdown
     document.getElementById('modalParentProject').textContent = m.parent_project || '-';
+    document.getElementById('modalParentProject').classList.remove('hidden');
+    document.getElementById('modalParentProjectSelect').classList.add('hidden');
     const l3 = m.parent_levels ? (m.parent_levels['3'] || m.parent_levels[3] || '-') : '-';
     document.getElementById('modalLevel3Parent').textContent = l3;
 
@@ -1007,6 +1099,9 @@ function editMilestone(index) {
 
     // Status dot color in header
     updateModalStatusDot(m.status);
+
+    // Update footer button
+    document.getElementById('modalSaveBtn').textContent = 'Save Changes';
 
     // Reset to details tab
     switchModalTab('details');
@@ -1146,6 +1241,10 @@ async function toggleSiblingTask(projectCode, taskId, completed) {
 // SAVE MILESTONE (with date change confirmation)
 // ═══════════════════════════════════════════════════
 async function saveMilestone() {
+    if (isCreateMode) {
+        return await createMilestone();
+    }
+
     const index = parseInt(document.getElementById('milestoneIndex').value);
     const milestone = allMilestonesFlat[index];
     if (!milestone) return;
@@ -1161,12 +1260,10 @@ async function saveMilestone() {
     const dateChanged = oldTargetDate && newTargetDate && oldTargetDate !== newTargetDate;
 
     if (dateChanged) {
-        // Show confirmation dialog
         document.getElementById('dateChangeMessage').innerHTML =
             `You are changing the target date of <strong>"${milestone.name}"</strong> from <strong>${oldTargetDate}</strong> to <strong>${newTargetDate}</strong>.`;
         document.getElementById('dateChangeConfirmModal').classList.remove('hidden');
 
-        // Wait for user response
         const accepted = await new Promise(resolve => {
             const acceptBtn = document.getElementById('dateChangeAcceptBtn');
             const cancelBtn = document.getElementById('dateChangeCancelBtn');
@@ -1181,7 +1278,7 @@ async function saveMilestone() {
             cancelBtn.addEventListener('click', onCancel);
         });
 
-        if (!accepted) return; // User cancelled
+        if (!accepted) return;
     }
 
     const updatedMilestone = {
@@ -1219,6 +1316,194 @@ async function saveMilestone() {
     } catch (error) {
         closeMilestoneModal();
         showNotification('error', 'Network Error', 'Unable to connect to the server.', error.message);
+    }
+}
+
+async function createMilestone() {
+    const name = document.getElementById('milestoneName').value.trim();
+    const targetDate = document.getElementById('milestoneTargetDate').value;
+
+    if (!name) {
+        showToast('Milestone name is required', 'bg-red-600');
+        return;
+    }
+    if (!targetDate) {
+        showToast('Target date is required', 'bg-red-600');
+        return;
+    }
+
+    const parentProject = document.getElementById('modalParentProjectSelect').value;
+
+    try {
+        const response = await fetch('/milestones/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: projectCode,
+                name: name,
+                target_date: targetDate,
+                start_date: document.getElementById('milestoneStartDate').value || '',
+                status: document.getElementById('milestoneStatus').value,
+                notes: document.getElementById('milestoneNotes').value.trim(),
+                resources: document.getElementById('milestoneResources').value.trim(),
+                parent_project: parentProject,
+                completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            closeMilestoneModal();
+            showNotification('success', 'Milestone Created', `"${name}" created successfully.`);
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            closeMilestoneModal();
+            showNotification('error', 'Error Creating Milestone', data.detail || 'Unexpected error.');
+        }
+    } catch (error) {
+        closeMilestoneModal();
+        showNotification('error', 'Network Error', 'Unable to connect to the server.', error.message);
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// TASK CREATION (Related Tasks Tab)
+// ═══════════════════════════════════════════════════
+function toggleAddTaskForm(show) {
+    document.getElementById('addTaskForm').classList.toggle('hidden', !show);
+    if (document.getElementById('addTaskBtn')) {
+        document.getElementById('addTaskBtn').classList.toggle('hidden', show);
+    }
+    if (show) {
+        document.getElementById('newTaskName').value = '';
+        document.getElementById('newTaskDate').value = '';
+        document.getElementById('newTaskName').focus();
+    }
+}
+
+async function saveNewTask() {
+    const name = document.getElementById('newTaskName').value.trim();
+    if (!name) {
+        showToast('Task name is required', 'bg-red-600');
+        return;
+    }
+
+    const index = parseInt(document.getElementById('milestoneIndex').value);
+    const milestone = allMilestonesFlat[index];
+    if (!milestone) return;
+
+    const parentId = milestone.id || milestone.name;
+
+    try {
+        const response = await fetch('/milestones/create-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: milestone.project || projectCode,
+                parent_milestone_id: parentId,
+                name: name,
+                target_date: document.getElementById('newTaskDate').value || '',
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            showToast(`Task "${name}" added`, 'bg-green-600');
+            toggleAddTaskForm(false);
+            // Refresh the related tasks list
+            loadRelatedTasks();
+        } else {
+            showToast(data.detail || 'Failed to create task', 'bg-red-600');
+        }
+    } catch (error) {
+        showToast('Network error', 'bg-red-600');
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// KANBAN SETTINGS
+// ═══════════════════════════════════════════════════
+function openKanbanSettings() {
+    const list = document.getElementById('kanbanColumnsList');
+    list.innerHTML = kanbanColumns.map((col, i) => renderKanbanSettingRow(col, i)).join('');
+    document.getElementById('kanbanSettingsModal').classList.remove('hidden');
+}
+
+function closeKanbanSettings() {
+    document.getElementById('kanbanSettingsModal').classList.add('hidden');
+}
+
+function renderKanbanSettingRow(col, index) {
+    const colorOptions = Object.keys(COLOR_MAP).map(c =>
+        `<option value="${c}" ${c === col.color ? 'selected' : ''}>${c}</option>`
+    ).join('');
+    return `<div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg" data-col-index="${index}">
+        <input type="text" value="${col.id}" placeholder="STATUS_ID" class="col-id-input w-32 px-2 py-1.5 border border-gray-300 rounded text-sm font-mono">
+        <input type="text" value="${col.title}" placeholder="Title" class="col-title-input flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm">
+        <select class="col-color-input px-2 py-1.5 border border-gray-300 rounded text-sm">${colorOptions}</select>
+        <button onclick="removeKanbanColumn(${index})" class="text-red-400 hover:text-red-600 p-1" title="Remove column">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>`;
+}
+
+function addKanbanColumn() {
+    const list = document.getElementById('kanbanColumnsList');
+    const newIndex = list.children.length;
+    const newCol = { id: 'NEW_STATUS', title: 'New Column', color: 'gray' };
+    list.insertAdjacentHTML('beforeend', renderKanbanSettingRow(newCol, newIndex));
+}
+
+function removeKanbanColumn(index) {
+    const list = document.getElementById('kanbanColumnsList');
+    const rows = list.querySelectorAll('[data-col-index]');
+    if (rows.length <= 1) {
+        showToast('Must keep at least one column', 'bg-red-600');
+        return;
+    }
+    rows[index]?.remove();
+    // Re-index
+    list.querySelectorAll('[data-col-index]').forEach((row, i) => {
+        row.dataset.colIndex = i;
+        const btn = row.querySelector('button[onclick]');
+        if (btn) btn.setAttribute('onclick', `removeKanbanColumn(${i})`);
+    });
+}
+
+async function saveKanbanSettings() {
+    const rows = document.getElementById('kanbanColumnsList').querySelectorAll('[data-col-index]');
+    const columns = [];
+    rows.forEach(row => {
+        columns.push({
+            id: row.querySelector('.col-id-input').value.trim().toUpperCase().replace(/\s+/g, '_'),
+            title: row.querySelector('.col-title-input').value.trim(),
+            color: row.querySelector('.col-color-input').value
+        });
+    });
+
+    if (columns.length === 0) {
+        showToast('At least one column is required', 'bg-red-600');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/milestones/${encodeURIComponent(projectCode)}/kanban-settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ columns })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            kanbanColumns = columns;
+            closeKanbanSettings();
+            populateBoardView();
+            showToast('Column settings saved', 'bg-green-600');
+        } else {
+            showToast(data.detail || 'Failed to save settings', 'bg-red-600');
+        }
+    } catch (error) {
+        showToast('Network error', 'bg-red-600');
     }
 }
 

@@ -205,12 +205,37 @@ async def milestone_tracker(request: Request):
     )
     
     user = get_user_from_request(request)
+    
+    # Load Kanban column settings
+    kanban_settings_file = DATA_DIR / f"kanban_settings_{project.project_code}.yaml"
+    default_kanban = [
+        {"id": "NOT_STARTED", "title": "Not Started", "color": "gray"},
+        {"id": "IN_PROGRESS", "title": "In Progress", "color": "blue"},
+        {"id": "COMPLETED", "title": "Completed", "color": "green"},
+    ]
+    kanban_columns = default_kanban
+    if kanban_settings_file.exists():
+        try:
+            with open(kanban_settings_file, 'r', encoding='utf-8') as f:
+                ks = yaml.safe_load(f) or {}
+            kanban_columns = ks.get("columns", default_kanban)
+        except Exception:
+            pass
+
+    # Collect unique parent_project values for the create dropdown
+    parent_projects = sorted(set(
+        m.parent_project for m in (project.milestones or [])
+        if m.parent_project
+    ))
+
     context = {
         "request": request,
         "project": project,  # Single project
         "quadrants": quadrants,
         "build_version": BUILD_VERSION,
-        "user": user
+        "user": user,
+        "kanban_columns": kanban_columns,
+        "parent_projects": parent_projects
     }
     
     return templates.TemplateResponse("milestones.html", context)

@@ -47,6 +47,160 @@ class MilestoneUpdate(BaseModel):
     confirmed_date_change: Optional[bool] = False  # User confirmed change record creation
 
 
+class MilestoneCreate(BaseModel):
+    project_code: str
+    name: str
+    target_date: str
+    start_date: Optional[str] = None
+    status: Optional[str] = "NOT_STARTED"
+    notes: Optional[str] = ""
+    resources: Optional[str] = ""
+    parent_project: Optional[str] = ""
+    completion_percentage: Optional[int] = 0
+
+
+class TaskCreate(BaseModel):
+    project_code: str
+    parent_milestone_id: str
+    name: str
+    target_date: Optional[str] = ""
+    start_date: Optional[str] = ""
+    status: Optional[str] = "NOT_STARTED"
+    completion_percentage: Optional[int] = 0
+
+
+@router.post("/milestones/create")
+def create_milestone(data: MilestoneCreate):
+    """Create a new milestone in the project YAML file."""
+    import uuid
+    try:
+        transformed_code = data.project_code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project '{data.project_code}' not found")
+
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f) or {}
+
+        milestones = project_data.get('milestones', [])
+
+        new_milestone = {
+            'id': str(uuid.uuid4()),
+            'name': data.name.strip(),
+            'target_date': data.target_date,
+            'start_date': data.start_date or '',
+            'status': data.status or 'NOT_STARTED',
+            'completion_percentage': data.completion_percentage or 0,
+            'notes': data.notes or '',
+            'resources': data.resources or '',
+            'parent_project': data.parent_project or '',
+            'project': data.project_code,
+            'outline_level': 4,
+            'is_true_milestone': True,
+            'user_edited_fields': ['name', 'target_date', 'status'],
+        }
+
+        # Build parent_levels from parent_project if set
+        if data.parent_project:
+            new_milestone['parent_levels'] = {'3': data.parent_project}
+
+        milestones.append(new_milestone)
+        project_data['milestones'] = milestones
+
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+            f.flush()
+            os.fsync(f.fileno())
+
+        logger.info(f"✅ Created milestone '{data.name}' in {data.project_code}")
+
+        return JSONResponse({
+            'success': True,
+            'message': f"Milestone '{data.name}' created",
+            'milestone_id': new_milestone['id']
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating milestone: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/milestones/create-task")
+def create_task(data: TaskCreate):
+    """Create a new sibling task under a parent milestone."""
+    import uuid
+    try:
+        transformed_code = data.project_code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project '{data.project_code}' not found")
+
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f) or {}
+
+        milestones = project_data.get('milestones', [])
+
+        # Find the parent milestone
+        parent = None
+        for m in milestones:
+            m_id = str(m.get('id', '')) if m.get('id') else ''
+            if m_id == data.parent_milestone_id or m.get('name', '') == data.parent_milestone_id:
+                parent = m
+                break
+
+        if not parent:
+            raise HTTPException(status_code=404, detail=f"Parent milestone '{data.parent_milestone_id}' not found")
+
+        parent_level = int(parent.get('outline_level', 4))
+        parent_levels = dict(parent.get('parent_levels', {}) or {})
+        parent_levels[str(parent_level)] = parent.get('name', '')
+
+        new_task = {
+            'id': str(uuid.uuid4()),
+            'name': data.name.strip(),
+            'target_date': data.target_date or '',
+            'start_date': data.start_date or '',
+            'status': data.status or 'NOT_STARTED',
+            'completion_percentage': data.completion_percentage or 0,
+            'notes': '',
+            'resources': '',
+            'parent_project': parent.get('parent_project', ''),
+            'project': data.project_code,
+            'outline_level': parent_level + 1,
+            'parent_levels': parent_levels,
+            'is_true_milestone': False,
+            'user_edited_fields': ['name'],
+        }
+
+        milestones.append(new_task)
+        project_data['milestones'] = milestones
+
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
+            f.flush()
+            os.fsync(f.fileno())
+
+        logger.info(f"✅ Created task '{data.name}' under '{parent.get('name')}' in {data.project_code}")
+
+        return JSONResponse({
+            'success': True,
+            'message': f"Task '{data.name}' created",
+            'task_id': new_task['id']
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating task: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/milestones/update")
 def update_milestone(data: MilestoneUpdate, request: Request):
     """
@@ -1198,4 +1352,51 @@ async def delete_milestone(project_code: str, milestone_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting milestone: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+DEFAULT_KANBAN_COLUMNS = [
+    {"id": "NOT_STARTED", "title": "Not Started", "color": "gray"},
+    {"id": "IN_PROGRESS", "title": "In Progress", "color": "blue"},
+    {"id": "COMPLETED", "title": "Completed", "color": "green"},
+]
+
+
+@router.get("/api/milestones/{project_code}/kanban-settings")
+def get_kanban_settings(project_code: str):
+    """Get Kanban column settings for a project."""
+    try:
+        settings_file = DATA_DIR / f"kanban_settings_{project_code}.yaml"
+        if settings_file.exists():
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                settings = yaml.safe_load(f) or {}
+            return JSONResponse({"columns": settings.get("columns", DEFAULT_KANBAN_COLUMNS)})
+        return JSONResponse({"columns": DEFAULT_KANBAN_COLUMNS})
+    except Exception as e:
+        logger.error(f"Error loading kanban settings: {e}")
+        return JSONResponse({"columns": DEFAULT_KANBAN_COLUMNS})
+
+
+@router.post("/api/milestones/{project_code}/kanban-settings")
+def save_kanban_settings(project_code: str, data: dict):
+    """Save Kanban column settings for a project."""
+    try:
+        columns = data.get("columns", [])
+        if not columns:
+            raise HTTPException(status_code=400, detail="At least one column is required")
+
+        settings_file = DATA_DIR / f"kanban_settings_{project_code}.yaml"
+        settings = {"project_code": project_code, "columns": columns}
+
+        with open(settings_file, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(settings, f, default_flow_style=False, allow_unicode=True)
+            f.flush()
+            os.fsync(f.fileno())
+
+        logger.info(f"✅ Saved kanban settings for {project_code}")
+        return JSONResponse({"success": True, "message": "Kanban settings saved"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving kanban settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
