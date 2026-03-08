@@ -79,6 +79,21 @@
         to { opacity: 1; transform: translateY(0); }
     }
     .notif-card { animation: fadeIn 0.2s ease-out forwards; }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        /* Header buttons stack */
+        .flex.items-center.gap-3 { flex-wrap: wrap; gap: 8px; }
+        .flex.items-center.gap-3 button { width: 100%; min-height: 44px; }
+        /* Stat cards */
+        .grid.grid-cols-2.md\:grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+        /* Filter bar scroll */
+        .flex.flex-wrap.items-center.gap-3 { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+        .flex.flex-wrap.items-center.gap-3 button { white-space: nowrap; flex-shrink: 0; }
+        /* Notification card gap */
+        .flex.items-start.gap-4 { gap: 8px; }
+        h1.text-2xl { font-size: 1.25rem; }
+    }
 </style>
 {% endblock %}
 

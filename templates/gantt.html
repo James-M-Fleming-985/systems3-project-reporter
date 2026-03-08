@@ -179,6 +179,21 @@
         border-radius: 8px;
         border: 2px dashed #d1d5db;
     }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        .roadmap-controls { flex-direction: column; align-items: stretch; }
+        .level-select { width: 100%; min-width: auto; }
+        .project-dropdown { min-width: auto; width: 100%; }
+        .dropdown-toggle { width: 100%; }
+        .dropdown-menu { max-height: 50vh; }
+        .selection-pills { flex-wrap: wrap; gap: 6px; }
+        /* Chart container: allow horizontal scroll */
+        #ganttChart { overflow-x: auto; -webkit-overflow-scrolling: touch; min-height: 400px; }
+        /* Legend wrap */
+        .flex.flex-wrap.items-center.gap-6 { gap: 8px; justify-content: flex-start; }
+        h2.text-3xl { font-size: 1.5rem; }
+    }
 </style>
 {% endblock %}
 

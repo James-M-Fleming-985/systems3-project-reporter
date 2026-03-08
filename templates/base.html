@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}Systems³ Project Reporter{% endblock %}</title>
     
     <!-- SEO Meta -->
@@ -40,29 +40,105 @@
         tailwind.config = { corePlugins: { preflight: true } };
     </script>
     
-    <!-- Custom CSS for scrollable containers -->
+    <!-- Custom CSS for scrollable containers + Mobile Optimization -->
     <style>
         .scrollable-milestone-container {
             overflow-y: auto !important;
             overflow-x: hidden !important;
-            height: 850px !important;  /* Changed from max-height to fixed height */
+            height: 850px !important;
             display: block !important;
         }
-        /* Custom scrollbar styling */
-        .scrollable-milestone-container::-webkit-scrollbar {
-            width: 8px;
+        .scrollable-milestone-container::-webkit-scrollbar { width: 8px; }
+        .scrollable-milestone-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .scrollable-milestone-container::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .scrollable-milestone-container::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* ── Mobile hamburger nav ── */
+        .mobile-menu-btn { display: none; }
+        .desktop-nav { display: flex; }
+        .desktop-actions { display: flex; }
+        #mobileNavOverlay { display: none; }
+
+        /* ── Mobile: phones <= 640px ── */
+        @media (max-width: 640px) {
+            .mobile-menu-btn { display: flex !important; }
+            .desktop-nav { display: none !important; }
+            .desktop-actions { display: none !important; }
+            .scrollable-milestone-container { height: auto !important; max-height: 60vh !important; }
+            /* Prevent iOS zoom on input focus */
+            input, select, textarea { font-size: 16px !important; }
+            /* Full-screen modals on mobile */
+            .mobile-fullscreen {
+                width: 100vw !important; max-width: 100vw !important;
+                height: 100dvh !important; max-height: 100dvh !important;
+                border-radius: 0 !important; top: 0 !important;
+                margin: 0 !important;
+            }
+            /* Safe area padding */
+            .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+            .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+            /* Larger tap targets */
+            .tap-target { min-height: 44px; min-width: 44px; }
+            /* Stack flex items */
+            .mobile-stack { flex-direction: column !important; align-items: stretch !important; }
+            .mobile-full { width: 100% !important; }
+            .mobile-hidden { display: none !important; }
+            /* Modal body scroll */
+            .mobile-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+            /* Global: table horizontal scroll */
+            .table-scroll-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            /* Global: buttons & inputs min tap size */
+            button, .btn, [type="submit"], [type="button"] { min-height: 44px; }
+            /* Global: flex toolbars stack on mobile */
+            .mobile-toolbar { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+            .mobile-toolbar > * { width: 100% !important; }
+            /* Global: single-column grids on small screens */
+            .mobile-grid-1 { grid-template-columns: 1fr !important; }
         }
-        .scrollable-milestone-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
+
+        /* ── Tablet: 641px - 1024px ── */
+        @media (max-width: 1024px) and (min-width: 641px) {
+            .scrollable-milestone-container { height: auto !important; max-height: 70vh !important; }
+            .tablet-stack { flex-direction: column !important; }
         }
-        .scrollable-milestone-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
+
+        /* ── Mobile nav overlay ── */
+        #mobileNavOverlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
         }
-        .scrollable-milestone-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        #mobileNavOverlay.open { display: block !important; }
+        #mobileNavPanel {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 85vw; max-width: 320px; z-index: 10000;
+            background: white; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            transform: translateX(-100%); transition: transform 0.25s ease-out;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
         }
+        #mobileNavOverlay.open #mobileNavPanel { transform: translateX(0); }
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 14px 20px; font-size: 15px; font-weight: 500;
+            color: #1F2937; border-bottom: 1px solid #F3F4F6;
+            text-decoration: none; transition: background 0.15s;
+        }
+        .mobile-nav-item:active { background: #EFF6FF; }
+        .mobile-nav-item.active { background: #EFF6FF; color: #2563EB; font-weight: 600; }
+        .mobile-nav-section {
+            padding: 10px 20px 6px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em; color: #9CA3AF;
+        }
+        .mobile-nav-accordion {
+            max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out;
+            background: #F9FAFB;
+        }
+        .mobile-nav-accordion.open { max-height: 500px; }
+        .mobile-nav-accordion a {
+            display: block; padding: 10px 20px 10px 44px;
+            font-size: 14px; color: #4B5563; text-decoration: none;
+            border-bottom: 1px solid #F3F4F6;
+        }
+        .mobile-nav-accordion a:active { background: #EFF6FF; color: #2563EB; }
     </style>
     
     <!-- Plotly.js for charts -->
@@ -108,11 +184,15 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation - Two-tier professional header -->
-    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg" {% if ppt_export %}style="display: none;"{% endif %}>
+    <nav class="bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg safe-top" {% if ppt_export %}style="display: none;"{% endif %}>
         <!-- Top bar: Branding + User Account -->
         <div class="border-b border-blue-500/30">
             <div class="container mx-auto px-4 py-2">
                 <div class="flex items-center justify-between">
+                    <!-- Mobile hamburger button -->
+                    <button onclick="openMobileNav()" class="mobile-menu-btn items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition mr-2" aria-label="Open menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
                     <!-- Logo and brand -->
                     <a href="/" class="flex items-center space-x-3 hover:opacity-90 transition">
                         <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
@@ -172,8 +252,8 @@
         <!-- Main navigation bar -->
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between py-2">
-                <!-- Primary navigation -->
-                <div class="flex items-center space-x-1">
+                <!-- Primary navigation (hidden on mobile, shown on desktop) -->
+                <div class="desktop-nav items-center space-x-1">
                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}">
                         📊 Portfolio
                     </a>
@@ -215,8 +295,8 @@
                     </a>
                 </div>
                 
-                <!-- Actions group -->
-                <div class="flex items-center space-x-2">
+                <!-- Actions group (hidden on mobile) -->
+                <div class="desktop-actions items-center space-x-2">
 
                     <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
                        class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1">
@@ -243,6 +323,71 @@
         </div>
     </nav>
 
+    <!-- Mobile Navigation Overlay (slide-out panel) -->
+    <div id="mobileNavOverlay" onclick="closeMobileNav(event)">
+        <div id="mobileNavPanel" onclick="event.stopPropagation()">
+            <!-- Mobile nav header -->
+            <div class="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-blue-700 to-blue-600">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">S³</span>
+                    </div>
+                    <span class="text-white font-bold">Systems³</span>
+                </div>
+                <button onclick="closeMobileNav()" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white rounded-lg" aria-label="Close menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {% if user %}
+            <div class="px-5 py-3 bg-gray-50 border-b flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">{{ user.full_name[0] | upper }}</div>
+                <div>
+                    <p class="font-medium text-gray-800 text-sm">{{ user.full_name }}</p>
+                    {% if user.is_admin %}<span class="text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-semibold">Admin</span>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <!-- Nav items -->
+            <a href="/dashboard/" class="mobile-nav-item {% if request.url.path == '/dashboard/' %}active{% endif %}">📊 Portfolio</a>
+            <a href="/calendar" class="mobile-nav-item {% if '/calendar' in request.url.path %}active{% endif %}">📅 Calendar</a>
+            <div class="mobile-nav-section">Project Views</div>
+            {% set _proj = request.query_params.get('project') %}
+            {% for tab_name, tab_icon, tab_path in [
+                ('Gantt',      '📈', 'gantt'),
+                ('Milestones', '📍', 'milestones'),
+                ('Metrics',    '📏', 'metrics'),
+                ('Risks',      '⚠️', 'risks'),
+                ('Changes',    '🔄', 'changes'),
+                ('Schedule',   '📋', 'schedule'),
+                ('Documents',  '📄', 'documents')
+            ] %}
+            <div>
+                <div class="mobile-nav-item {% if '/' + tab_path in request.url.path %}active{% endif %}" onclick="toggleMobileAccordion(this)" style="cursor:pointer">
+                    <span>{{ tab_icon }} {{ tab_name }}</span>
+                    <svg class="w-4 h-4 ml-auto text-gray-400 transition-transform accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="mobile-nav-accordion" data-tab="{{ tab_path }}">
+                    <a href="/dashboard/{{ tab_path }}{{ ('?project=' + _proj) if _proj else '' }}">All Programs</a>
+                </div>
+            </div>
+            {% endfor %}
+            <a href="/feedback" class="mobile-nav-item {% if '/feedback' in request.url.path %}active{% endif %}">💬 Feedback</a>
+            <div class="mobile-nav-section">Actions</div>
+            <a href="/powerpoint-export{{ '?project=' + _proj if _proj else '' }}" class="mobile-nav-item">📊 Export</a>
+            <a href="/upload{{ '?project=' + _proj if _proj else '' }}" class="mobile-nav-item">📤 Upload</a>
+            <a href="/notifications" class="mobile-nav-item">🔔 Notifications</a>
+            {% if user %}
+            <a href="/subscription" class="mobile-nav-item">⚙️ Account</a>
+            {% endif %}
+            {% if user and user.is_admin %}
+            <a href="/admin" class="mobile-nav-item">🛡️ Admin</a>
+            {% endif %}
+            {% if user %}
+            <a href="/logout" class="mobile-nav-item" style="color:#DC2626">🚪 Sign Out</a>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
         {% block content %}{% endblock %}
@@ -250,7 +395,7 @@
 
     <!-- Floating Feedback Widget -->
     {% if user and not ppt_export %}
-    <div id="feedbackWidget" class="fixed bottom-6 right-6 z-40">
+    <div id="feedbackWidget" class="fixed bottom-6 right-6 z-40" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
         <!-- Toggle Button -->
         <button onclick="toggleFeedbackWidget()" id="fbWidgetBtn" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110" title="Quick Feedback">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -478,6 +623,83 @@
         function closeNavDropdown(groupEl) {
             const d = groupEl.querySelector('.nav-tab-dropdown');
             if (d) d.classList.add('hidden');
+        }
+
+        // ── Mobile Navigation ────────────────────────────────────
+        function openMobileNav() {
+            document.getElementById('mobileNavOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden'; // prevent background scroll
+            // Populate accordion program lists (lazy load)
+            document.querySelectorAll('.mobile-nav-accordion[data-tab]').forEach(async acc => {
+                if (acc.dataset.populated) return;
+                acc.dataset.populated = '1';
+                const tab = acc.dataset.tab;
+                const programs = await getNavPrograms();
+                if (programs.length) {
+                    const cur = new URLSearchParams(window.location.search).get('project') || '';
+                    const links = programs.map(p =>
+                        `<a href="/dashboard/${tab}?project=${encodeURIComponent(p.code)}" ${p.code === cur ? 'style="color:#2563EB;font-weight:600"' : ''}>${p.code === cur ? '✓ ' : ''}${p.name}</a>`
+                    ).join('');
+                    acc.innerHTML = `<a href="/dashboard/${tab}">All Programs</a>` + links;
+                }
+            });
+        }
+
+        function closeMobileNav(event) {
+            if (event && event.target && event.target !== document.getElementById('mobileNavOverlay')) return;
+            document.getElementById('mobileNavOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function toggleMobileAccordion(el) {
+            const acc = el.nextElementSibling;
+            if (!acc) return;
+            const wasOpen = acc.classList.contains('open');
+            // Close all others (accordion behavior)
+            document.querySelectorAll('.mobile-nav-accordion.open').forEach(a => {
+                a.classList.remove('open');
+                const chev = a.previousElementSibling?.querySelector('.accordion-chevron');
+                if (chev) chev.style.transform = '';
+            });
+            if (!wasOpen) {
+                acc.classList.add('open');
+                const chev = el.querySelector('.accordion-chevron');
+                if (chev) chev.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // ── Touch-friendly desktop dropdowns ─────────────────────
+        // On touch devices, convert hover dropdowns to tap-toggle
+        if (window.matchMedia('(pointer: coarse)').matches) {
+            document.querySelectorAll('.nav-tab-group').forEach(group => {
+                group.removeAttribute('onmouseenter');
+                group.removeAttribute('onmouseleave');
+                const link = group.querySelector('a');
+                if (link) {
+                    link.addEventListener('click', function(e) {
+                        const dropdown = group.querySelector('.nav-tab-dropdown');
+                        if (!dropdown) return;
+                        if (dropdown.classList.contains('hidden')) {
+                            // Close all other dropdowns first
+                            document.querySelectorAll('.nav-tab-dropdown').forEach(d => d.classList.add('hidden'));
+                            e.preventDefault();
+                            openNavDropdown(group);
+                        }
+                        // Second tap: follow the link naturally
+                    });
+                }
+                const dropdown = group.querySelector('.nav-tab-dropdown');
+                if (dropdown) {
+                    dropdown.removeAttribute('onmouseenter');
+                    dropdown.removeAttribute('onmouseleave');
+                }
+            });
+            // Close dropdowns on outside tap
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.nav-tab-group')) {
+                    document.querySelectorAll('.nav-tab-dropdown').forEach(d => d.classList.add('hidden'));
+                }
+            });
         }
     </script>
 

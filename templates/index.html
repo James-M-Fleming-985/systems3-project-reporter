@@ -2,6 +2,25 @@
 
 {% block title %}Portfolio Dashboard - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 640px) {
+        h2.text-3xl { font-size: 1.5rem; }
+        /* Summary cards smaller text */
+        .text-4xl { font-size: 1.75rem !important; }
+        /* Program cards: full width */
+        .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        .grid.md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+        /* Card padding on mobile */
+        .program-card, .bg-white.rounded-lg.shadow { padding: 16px !important; }
+        /* Stack header buttons */
+        .flex.items-center.justify-between { flex-wrap: wrap; gap: 8px; }
+        /* Archive/action buttons full width */
+        .inline-flex.items-center.px-4 { min-height: 44px; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mb-8">
     <h2 class="text-3xl font-bold text-gray-800 mb-2" id="dashboardPageTitle">📊 Portfolio Dashboard</h2>

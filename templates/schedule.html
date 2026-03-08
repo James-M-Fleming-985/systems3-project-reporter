@@ -394,6 +394,28 @@
         font-size: 10px;
         color: #92400e;
     }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        .table-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+        .table-toolbar .flex { flex-wrap: wrap; gap: 8px; }
+        .table-toolbar button { min-height: 44px; }
+        .table-container { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .schedule-table th { padding: 8px 6px; font-size: 12px; white-space: nowrap; }
+        .schedule-table td { padding: 6px; font-size: 13px; }
+        .schedule-table td, .schedule-table th { min-width: 100px; }
+        .cell-edit, .cell-dropdown, .cell-status, .cell-priority { font-size: 13px; padding: 6px; }
+        .modal { width: 95vw; max-width: none; border-radius: 12px; padding: 16px; }
+        .modal-actions { flex-direction: column; }
+        .modal-actions button { width: 100%; }
+        .schedule-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+        .schedule-tab { white-space: nowrap; flex-shrink: 0; padding: 8px 14px; font-size: 13px; }
+        .btn-icon-small { opacity: 1; }
+        .row-actions { opacity: 1; }
+        h1.text-2xl { font-size: 1.25rem; }
+        .col-resize-handle { display: none; }
+        .schedule-table th .drag-handle { display: none; }
+    }
 </style>
 {% endblock %}
 

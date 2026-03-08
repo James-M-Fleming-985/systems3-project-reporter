@@ -232,6 +232,42 @@
     }
     .sibling-row:hover { background: #F3F4F6; }
     .sibling-row.is-completed label { text-decoration: line-through; color: #6B7280; }
+
+    /* ── Calendar Mobile Optimizations ── */
+    @media (max-width: 640px) {
+        /* Larger tap targets for events */
+        .fc .fc-event { padding: 4px 6px !important; font-size: 0.8rem !important; min-height: 32px !important; }
+        .cal-event-inner .source-badge { font-size: 0.65rem; padding: 1px 5px; }
+        .cal-event-inner .status-dot { width: 9px; height: 9px; }
+        .fc .fc-toolbar-title { font-size: 1.1rem !important; }
+        .fc .fc-button { padding: 0.35rem 0.6rem !important; font-size: 0.8rem !important; }
+        /* Full-screen modal on mobile */
+        .event-modal {
+            width: 100vw !important; max-width: 100vw !important;
+            height: 100dvh !important; max-height: 100dvh !important;
+            border-radius: 0 !important; top: 0 !important;
+            margin: 0 !important; display: flex; flex-direction: column;
+        }
+        .event-modal > div:nth-child(2) { flex: 1; max-height: none !important; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        .event-modal > div:last-child { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+        /* Modal footer buttons stack */
+        .event-modal > div:last-child { flex-direction: column !important; gap: 8px !important; }
+        .event-modal > div:last-child > div { width: 100%; }
+        .event-modal > div:last-child > div:last-child { justify-content: stretch; }
+        .event-modal > div:last-child button,
+        .event-modal > div:last-child a { width: 100%; justify-content: center; text-align: center; }
+        /* Uniform info grid single column */
+        .uniform-info-grid { grid-template-columns: 1fr !important; }
+        /* Filter bar collapse */
+        #filterPanel { display: none; }
+        #filterPanel.open { display: flex; flex-direction: column; gap: 8px; }
+        #filterToggleBtn { display: inline-flex !important; }
+        /* Toast repositioning */
+        #toastContainer { bottom: auto !important; top: 16px !important; top: calc(16px + env(safe-area-inset-top, 0px)) !important; right: 16px !important; left: 16px !important; align-items: stretch; }
+        .toast { min-width: auto !important; max-width: none !important; }
+        /* Legend wrap */
+        .legend-item { font-size: 0.75rem; }
+    }
 </style>
 {% endblock %}
 
@@ -246,7 +282,12 @@
 
 <!-- Filters & Legend -->
 <div class="bg-white rounded-lg shadow p-4 mb-6">
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <!-- Mobile filter toggle button -->
+    <button id="filterToggleBtn" onclick="document.getElementById('filterPanel').classList.toggle('open')" class="hidden items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg w-full justify-center mb-3 tap-target">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        Filters & Legend
+    </button>
+    <div id="filterPanel" class="flex flex-wrap items-center justify-between gap-4">
         <!-- Filters -->
         <div class="flex flex-wrap items-center gap-3">
             <label class="text-sm font-semibold text-gray-600">Filter:</label>
@@ -294,7 +335,7 @@
             <div class="legend-item"><div class="legend-dot status-dot-not-started" style="width:10px;height:10px"></div> Not Started</div>
             <div class="legend-item"><div class="legend-dot status-dot-overdue" style="width:10px;height:10px"></div> Overdue</div>
         </div>
-    </div>
+    </div><!-- end filterPanel -->
 </div>
 
 <!-- Loading State -->
@@ -334,7 +375,7 @@
 
 <!-- Event Detail Modal -->
 <div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[10000]">
-    <div class="event-modal relative top-10 mx-auto p-0 border w-[550px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]">
+    <div class="event-modal relative top-10 mx-auto p-0 border w-[550px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]" id="eventModalInner">
         <!-- Modal Header -->
         <div id="eventModalHeader" class="px-6 py-4 text-white">
             <div class="flex items-center justify-between">
@@ -342,7 +383,7 @@
                     <p class="text-xs uppercase tracking-wider opacity-80" id="eventModalType">Milestone</p>
                     <h3 class="text-lg font-bold mt-1" id="eventModalTitle">Event Title</h3>
                 </div>
-                <button id="closeEventModal" class="text-white/80 hover:text-white transition">
+                <button id="closeEventModal" class="text-white/80 hover:text-white transition tap-target flex items-center justify-center">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -469,12 +510,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Initialize FullCalendar
         const calendarEl = document.getElementById('calendar');
+        const isMobile = window.innerWidth < 640;
         calendarInstance = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listMonth'
+            initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+            headerToolbar: isMobile
+                ? { left: 'prev,next', center: 'title', right: 'listMonth,timeGridWeek' }
+                : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+            handleWindowResize: true,
+            windowResize: function(arg) {
+                const nowMobile = window.innerWidth < 640;
+                calendarInstance.setOption('headerToolbar', nowMobile
+                    ? { left: 'prev,next', center: 'title', right: 'listMonth,timeGridWeek' }
+                    : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' });
             },
             events: function(fetchInfo, successCallback, failureCallback) {
                 successCallback(filteredEvents);
@@ -484,8 +531,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
             },
-            // Drag-to-reschedule: schedule + milestone items
-            editable: true,
+            // Drag-to-reschedule: disabled on touch devices
+            editable: !window.matchMedia('(pointer: coarse)').matches,
             eventAllow: function(dropInfo, draggedEvent) {
                 return ['schedule', 'milestone'].includes(draggedEvent.extendedProps?.type);
             },

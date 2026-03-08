@@ -2,6 +2,16 @@
 
 {% block title %}Select Project - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 640px) {
+        .max-w-2xl { max-width: 95vw !important; margin: 16px !important; }
+        .p-12 { padding: 1.5rem !important; }
+        button, select { min-height: 44px; width: 100%; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-[60vh] flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl p-12 max-w-2xl mx-auto text-center">

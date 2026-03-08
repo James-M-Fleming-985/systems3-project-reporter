@@ -87,6 +87,24 @@
         border-bottom: 1px solid #F3F4F6;
     }
     .detail-row:last-child { border-bottom: none; }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        /* Tab bar scrollable */
+        nav.flex.space-x-1 { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+        nav.flex.space-x-1 button { white-space: nowrap; flex-shrink: 0; padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+        /* Stat cards stack */
+        .grid.grid-cols-2.md\:grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+        /* Button groups stack */
+        .flex.flex-wrap.gap-3 { flex-direction: column; }
+        .flex.flex-wrap.gap-3 button { width: 100%; }
+        /* User cards single column */
+        .grid.md\:grid-cols-2.xl\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        /* Form inputs full width */
+        input, select, textarea { width: 100% !important; }
+        /* Heading size */
+        h1.text-2xl { font-size: 1.25rem; }
+    }
 </style>
 {% endblock %}
 

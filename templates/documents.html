@@ -562,6 +562,24 @@
         background: #e5e7eb;
         margin: 8px 0;
     }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        .doc-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+        .toolbar-left { flex-direction: column; width: 100%; }
+        .toolbar-btn { width: 100%; justify-content: center; min-height: 44px; }
+        .toolbar-search input { width: 100%; }
+        .doc-table th, .doc-table td { padding: 8px 6px; font-size: 13px; }
+        .doc-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        /* Modal bottom sheet */
+        .modal-backdrop .modal-panel { width: 95vw !important; max-width: none !important; padding: 16px; border-radius: 12px; }
+        /* File info grid single column */
+        .file-details-grid { grid-template-columns: 1fr !important; }
+        /* Always show row actions */
+        .doc-table tr .doc-actions { opacity: 1; }
+        /* Breadcrumb scroll */
+        .breadcrumb { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; white-space: nowrap; }
+    }
 </style>
 {% endblock %}
 

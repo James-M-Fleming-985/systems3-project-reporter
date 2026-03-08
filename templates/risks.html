@@ -2,6 +2,34 @@
 
 {% block title %}Risk Analysis - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 640px) {
+        /* Summary cards: 2-col on mobile */
+        #risksSummaryCards { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+        #risksSummaryCards p.text-4xl { font-size: 1.75rem; }
+        #risksSummaryCards p.text-sm { font-size: 0.7rem; }
+        /* Action buttons stack */
+        .flex.justify-between.items-center.mb-6 { flex-direction: column; align-items: stretch; gap: 12px; }
+        .flex.justify-between.items-center.mb-6 .flex.gap-3 { flex-direction: column; }
+        .flex.justify-between.items-center.mb-6 button { width: 100%; justify-content: center; }
+        /* Toast reposition */
+        #toast { top: auto !important; bottom: 20px !important; right: 12px !important; left: 12px !important; }
+        #toastContent { max-width: none; }
+        /* Table scroll */
+        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        /* Heading */
+        h2.text-3xl { font-size: 1.5rem; }
+        /* Risk modal full-width */
+        .fixed .relative.top-20 { top: 0 !important; width: 100vw !important; max-width: 100vw !important; margin: 0 !important; border-radius: 0 !important; max-height: 100dvh !important; }
+        /* Expand row detail grid single-col */
+        .grid.grid-cols-2.gap-4 { grid-template-columns: 1fr !important; }
+        /* Row actions always visible */
+        .row-actions, .btn-icon-small { opacity: 1 !important; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Toast Notification -->
 <div id="toast" class="fixed top-4 right-4 z-50 hidden">

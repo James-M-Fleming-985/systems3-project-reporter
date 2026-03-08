@@ -2,6 +2,30 @@
 
 {% block title %}Upload Data - Systems³ Project Reporter{% endblock %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 640px) {
+        h2.text-3xl { font-size: 1.5rem; }
+        /* Upload cards single column */
+        .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        /* Card padding */
+        .bg-white.rounded-lg.shadow-md.p-8, .bg-white.rounded-xl.shadow-md.p-8 { padding: 16px !important; }
+        /* Drop zone */
+        .border-dashed { padding: 24px !important; }
+        /* Buttons full width */
+        button[type="submit"], .bg-blue-600, .bg-green-600 { width: 100%; min-height: 48px; }
+        /* Checkbox tap targets */
+        input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; }
+        /* Results grid single column */
+        .grid.grid-cols-2.gap-4 { grid-template-columns: 1fr !important; }
+        /* Table scroll */
+        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        /* Modal full-screen */
+        .fixed .relative.top-10 { top: 0 !important; width: 100vw !important; max-width: 100vw !important; margin: 0 !important; border-radius: 0 !important; max-height: 100dvh !important; overflow-y: auto; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hidden CSRF token for JavaScript file upload functions -->
 <input type="hidden" id="csrfToken" value="{{ csrf_token }}">

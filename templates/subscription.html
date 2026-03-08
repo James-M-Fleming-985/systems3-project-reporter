@@ -41,6 +41,19 @@
     font-size: 0.75rem;
     font-weight: 600;
 }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        h2.text-3xl { font-size: 1.5rem; }
+        /* Tier cards single column */
+        .grid.md\:grid-cols-2.lg\:grid-cols-4 { grid-template-columns: 1fr !important; }
+        /* Stats grid */
+        .grid.md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+        /* Table scroll */
+        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        /* Buttons */
+        button { min-height: 44px; }
+    }
 </style>
 {% endblock %}
 

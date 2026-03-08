@@ -94,6 +94,24 @@
         border-right: 2px solid #d1d5db;
         border-bottom: 2px solid #d1d5db;
     }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        h2.text-3xl { font-size: 1.5rem; }
+        /* GridStack: single column on mobile */
+        .grid-stack { min-height: 100px; }
+        .grid-stack-item { width: 100% !important; position: relative !important; left: 0 !important; }
+        /* Widget header */
+        .gs-widget-header { padding: 0.375rem 0.5rem; }
+        .gs-widget-header .widget-title { font-size: 0.7rem; }
+        /* Button groups stack */
+        .flex.space-x-2 { flex-wrap: wrap; gap: 8px; }
+        .flex.space-x-2 > * { flex: 1 1 auto; min-width: 0; }
+        /* Modal bottom sheet */
+        .fixed .bg-white.rounded-lg.shadow-xl { width: 95vw !important; max-width: none !important; }
+        /* Config modal full width */
+        .w-\[600px\] { width: 95vw !important; max-width: none !important; }
+    }
 </style>
 {% endblock %}
 

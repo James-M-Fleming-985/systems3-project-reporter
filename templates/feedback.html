@@ -80,6 +80,21 @@
         color: #374151;
         border-bottom-color: #E5E7EB;
     }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+        /* Header stack */
+        .flex.items-center.justify-between { flex-wrap: wrap; gap: 12px; }
+        /* Stat cards */
+        .grid.grid-cols-2.md\:grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+        /* Filter tabs scroll */
+        .flex.border-b { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab-btn { white-space: nowrap; flex-shrink: 0; }
+        /* Action buttons */
+        button { min-height: 44px; }
+        /* Form elements */
+        input, select, textarea { min-height: 44px; }
+    }
 </style>
 {% endblock %}
 

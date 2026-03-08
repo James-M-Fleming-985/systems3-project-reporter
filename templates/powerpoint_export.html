@@ -30,6 +30,22 @@
     cursor: grab;
     display: inline-block;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 640px) {
+    h1.text-3xl { font-size: 1.5rem; }
+    /* View cards single column */
+    .grid.md\:grid-cols-2.lg\:grid-cols-3, .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+    /* Form controls */
+    select, input, button { min-height: 44px; width: 100%; }
+    /* Checkbox tap size */
+    input[type="checkbox"] { width: 20px; height: 20px; }
+    /* Slide preview scroll */
+    .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+    /* Layout buttons stack */
+    .flex.gap-2 { flex-direction: column; }
+    .flex.gap-2 button { width: 100%; }
+}
 </style>
 
 <div class="max-w-7xl mx-auto">
