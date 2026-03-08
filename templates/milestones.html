@@ -143,17 +143,77 @@
 
     /* ── Milestones Mobile Optimizations ── */
     @media (max-width: 640px) {
-        /* View controls: compact layout */
-        .milestone-controls { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
-        .milestone-controls .flex { flex-wrap: wrap; gap: 6px; }
-        .milestone-controls button { padding: 8px 12px; font-size: 0.8rem; }
-        .controls-secondary { display: none; }
-        .controls-secondary.open { display: flex; flex-wrap: wrap; gap: 6px; }
-        #mobileMoreBtn { display: inline-flex !important; }
-        /* Card touch optimizations */
+        /* ── Controls bar ── */
+        .controls-container { padding: 12px !important; }
+        .milestone-controls {
+            flex-direction: row !important; flex-wrap: nowrap !important;
+            align-items: center !important; gap: 8px !important;
+            justify-content: space-between !important;
+        }
+        /* Primary row: view toggle group + action icons */
+        .controls-primary { display: contents; }
+        .controls-primary > label { display: none !important; }
+        /* Segmented view toggle */
+        .view-toggle-group {
+            display: flex !important; gap: 0 !important;
+            flex: 1 1 auto; min-width: 0;
+        }
+        .view-toggle-group button {
+            border-radius: 0 !important; border: 1px solid #D1D5DB !important;
+            border-right-width: 0 !important;
+            padding: 7px 10px !important; font-size: 0.75rem !important;
+            flex: 1 1 0; white-space: nowrap; min-height: 36px;
+        }
+        .view-toggle-group button:first-child { border-radius: 8px 0 0 8px !important; }
+        .view-toggle-group button:last-child { border-radius: 0 8px 8px 0 !important; border-right-width: 1px !important; }
+        .view-toggle-group button.bg-blue-600 { border-color: #2563EB !important; z-index: 1; position: relative; }
+        .view-toggle-group button.bg-gray-200 { background: #F9FAFB !important; color: #4B5563 !important; }
+        /* Settings gear in toggle group */
+        #kanbanSettingsBtn { display: none !important; }
+        /* Action icons row */
+        .controls-actions {
+            display: flex !important; gap: 6px !important;
+            flex-shrink: 0; align-items: center;
+        }
+        .controls-actions button {
+            width: 36px !important; height: 36px !important;
+            padding: 0 !important; display: flex !important;
+            align-items: center; justify-content: center;
+            border-radius: 8px !important; font-size: 0.8rem;
+        }
+        #mobileMoreBtn { display: flex !important; }
+        .mobile-add-btn { display: flex !important; }
+        .mobile-settings-btn { display: flex !important; }
+        /* Secondary row: sort + export (collapsed by default) */
+        .controls-secondary {
+            display: none !important;
+            width: 100%; margin-top: 8px;
+        }
+        .controls-secondary.open {
+            display: flex !important;
+            flex-wrap: wrap; gap: 6px;
+            padding-top: 10px; border-top: 1px solid #E5E7EB;
+        }
+        /* Hide desktop-only controls on mobile */
+        .desktop-new-milestone { display: none !important; }
+        .desktop-sort-label { display: none !important; }
+        #cardsPerColumnControl { display: none !important; }
+        /* Sort buttons compact */
+        .controls-secondary .sort-group { display: flex; gap: 6px; flex: 1; }
+        .controls-secondary .sort-group button {
+            flex: 1; padding: 8px 0 !important; text-align: center;
+            font-size: 0.8rem !important; min-height: 38px;
+        }
+        /* Export button compact */
+        .controls-secondary .export-btn {
+            flex: 1; min-height: 38px;
+            font-size: 0.8rem !important; padding: 8px 12px !important;
+        }
+        .controls-secondary .export-btn .btn-label { display: inline; }
+
+        /* ── Card touch optimizations ── */
         .milestone-card { padding: 14px; min-height: 60px; }
         .milestone-card .drag-handle { display: none !important; }
-        /* Mobile "Move to" button */
         .mobile-move-btn { display: inline-flex !important; }
         /* Full-screen edit modal */
         #editMilestoneModal > div:first-of-type {
@@ -164,21 +224,23 @@
         #editMilestoneModal > div:first-of-type > div.flex-1 {
             -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
         }
-        /* Status pills horizontal scroll */
         .status-pill { white-space: nowrap; }
-        /* Kanban single column with accordions */
+        /* ── Kanban single column with accordions ── */
         .kanban-column { min-height: auto !important; }
         .kanban-column .kanban-cards { display: none; }
         .kanban-column .drop-placeholder { display: none !important; }
         .kanban-column.mobile-expanded .kanban-cards { display: block; }
         .kanban-column-toggle { display: flex !important; }
         .kanban-column-header-desktop { display: none !important; }
-        /* Toast reposition */
+        /* Toast */
         .toast { bottom: auto !important; top: 16px !important; right: 16px !important; left: 16px !important; }
-        /* Week/month view: single column already handled by grid-cols-1 */
+        /* Heading */
+        h2.text-3xl { font-size: 1.5rem; }
     }
     /* Default hide mobile-only elements */
     .mobile-move-btn { display: none; }
+    .mobile-add-btn { display: none; }
+    .mobile-settings-btn { display: none; }
     #mobileMoreBtn { display: none; }
     .kanban-column-toggle { display: none; }
 </style>
@@ -450,33 +512,40 @@
 </div>
 
 <!-- View Controls -->
-<div class="bg-white rounded-lg shadow p-6 mb-6">
+<div class="bg-white rounded-lg shadow p-6 mb-6 controls-container">
     <div class="flex items-center justify-between flex-wrap gap-4 milestone-controls">
-        <div class="flex items-center space-x-4">
-            <label class="text-sm font-semibold text-gray-700 mobile-hidden">View:</label>
-            <div class="flex space-x-2">
+        <!-- Primary row: View toggles -->
+        <div class="flex items-center space-x-4 controls-primary">
+            <label class="text-sm font-semibold text-gray-700">View:</label>
+            <div class="flex space-x-2 view-toggle-group">
                 <button onclick="switchView('board')" id="boardViewBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                     Board
                 </button>
                 <button onclick="switchView('week')" id="weekViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                    Week View
+                    Week
                 </button>
                 <button onclick="switchView('month')" id="monthViewBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
-                    Month View
-                </button>
-                <button onclick="openKanbanSettings()" id="kanbanSettingsBtn" class="px-2 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition" title="Kanban column settings">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Month
                 </button>
             </div>
-            <!-- Mobile: + and more -->
-            <button onclick="openCreateMilestone()" class="mobile-move-btn px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium" title="New">
+            <button onclick="openKanbanSettings()" id="kanbanSettingsBtn" class="px-2 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition" title="Kanban column settings">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+        </div>
+        <!-- Mobile action icons (hidden on desktop) -->
+        <div class="controls-actions">
+            <button onclick="openKanbanSettings()" class="mobile-settings-btn bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" title="Settings">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button onclick="openCreateMilestone()" class="mobile-add-btn bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition" title="New Milestone">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             </button>
-            <button id="mobileMoreBtn" onclick="document.querySelector('.controls-secondary').classList.toggle('open')" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">
-                •••
+            <button id="mobileMoreBtn" onclick="document.querySelector('.controls-secondary').classList.toggle('open')" class="bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" title="More options">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
             </button>
         </div>
         
+        <!-- Secondary row: Sort + Actions -->
         <div class="flex items-center space-x-4 controls-secondary">
             <!-- Cards per column dropdown -->
             <div id="cardsPerColumnControl" class="hidden items-center space-x-2">
@@ -492,8 +561,8 @@
                 </select>
             </div>
             
-            <div class="flex items-center space-x-2">
-                <label class="text-sm font-semibold text-gray-700">Sort:</label>
+            <div class="flex items-center space-x-2 sort-group">
+                <label class="text-sm font-semibold text-gray-700 desktop-sort-label">Sort:</label>
                 <button onclick="sortMilestones('asc')" id="sortAscBtn" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
                     ⬆️ Ascending
                 </button>
@@ -502,16 +571,16 @@
                 </button>
             </div>
             
-            <!-- Add Milestone button -->
-            <button onclick="openCreateMilestone()" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition inline-flex items-center gap-1.5" title="Add new milestone">
+            <!-- Add Milestone button (desktop only) -->
+            <button onclick="openCreateMilestone()" class="desktop-new-milestone px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition inline-flex items-center gap-1.5" title="Add new milestone">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 New Milestone
             </button>
 
             <!-- Export XML button -->
-            <button onclick="exportXml()" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition inline-flex items-center gap-1.5" title="Export as MS Project XML">
+            <button onclick="exportXml()" class="export-btn px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition inline-flex items-center gap-1.5" title="Export as MS Project XML">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Export XML
+                <span class="btn-label">Export</span>
             </button>
         </div>
     </div>
