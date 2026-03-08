@@ -6,17 +6,29 @@
 <style>
     @media (max-width: 640px) {
         h2.text-3xl { font-size: 1.5rem; }
-        /* Summary cards smaller text */
+        /* Summary cards: smaller text + tighter gap */
+        .text-3xl { font-size: 1.5rem !important; }
         .text-4xl { font-size: 1.75rem !important; }
-        /* Program cards: full width */
-        .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
-        .grid.md\:grid-cols-2 { grid-template-columns: 1fr !important; }
-        /* Card padding on mobile */
-        .program-card, .bg-white.rounded-lg.shadow { padding: 16px !important; }
+        /* All grids: single column, tighter gap */
+        .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+        .grid.md\:grid-cols-2 { grid-template-columns: 1fr !important; gap: 12px !important; }
+        .grid.grid-cols-1 { gap: 12px !important; }
+        /* Summary card icon: hide decorative icon circle on very narrow screens */
+        .bg-blue-100.rounded-full.p-3, .bg-red-100.rounded-full.p-3, .bg-yellow-100.rounded-full.p-3 { padding: 0.5rem !important; }
+        .bg-blue-100.rounded-full.p-3 svg, .bg-red-100.rounded-full.p-3 svg, .bg-yellow-100.rounded-full.p-3 svg { width: 1.25rem; height: 1.25rem; }
+        /* Card padding tighter on mobile */
+        .bg-white.rounded-lg.shadow.p-6 { padding: 14px !important; }
+        .program-card, .bg-white.rounded-lg.shadow { padding: 14px !important; }
+        /* Prevent content overflow */
+        .bg-blue-50.border-l-4, .bg-green-50.border-l-4 { padding: 10px !important; }
+        .bg-blue-50.border-l-4 p, .bg-green-50.border-l-4 p { font-size: 0.8rem; }
         /* Stack header buttons */
         .flex.items-center.justify-between { flex-wrap: wrap; gap: 8px; }
         /* Archive/action buttons full width */
-        .inline-flex.items-center.px-4 { min-height: 44px; }
+        .inline-flex.items-center.px-4 { min-height: 44px; width: 100%; justify-content: center; }
+        /* Program card metric grid: keep 3-col but tighter */
+        .grid.grid-cols-3.gap-2 { gap: 4px !important; }
+        .grid.grid-cols-3.gap-2 p.text-2xl { font-size: 1.25rem !important; }
     }
 </style>
 {% endblock %}

@@ -42,6 +42,10 @@
     
     <!-- Custom CSS for scrollable containers + Mobile Optimization -->
     <style>
+        /* ── Global viewport lock ── */
+        html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
+        *, *::before, *::after { box-sizing: border-box; }
+
         .scrollable-milestone-container {
             overflow-y: auto !important;
             overflow-x: hidden !important;
@@ -94,6 +98,16 @@
             .mobile-toolbar > * { width: 100% !important; }
             /* Global: single-column grids on small screens */
             .mobile-grid-1 { grid-template-columns: 1fr !important; }
+            /* Global: constrain all containers */
+            .container { max-width: 100% !important; padding-left: 12px !important; padding-right: 12px !important; }
+            /* Notification dropdown constrain */
+            #notifDropdown { width: calc(100vw - 1.5rem) !important; max-width: calc(100vw - 1.5rem) !important; right: -0.5rem !important; }
+            /* Header user section: hide text, tighten spacing */
+            .desktop-user-name { display: none !important; }
+            .desktop-signout { display: none !important; }
+            nav .space-x-4 { gap: 0.25rem !important; }
+            nav .space-x-3 { gap: 0.25rem !important; }
+            nav .space-x-2 { gap: 0.25rem !important; }
         }
 
         /* ── Tablet: 641px - 1024px ── */
@@ -232,9 +246,9 @@
                                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
                                         {{ user.full_name[0] | upper }}
                                     </div>
-                                    <span class="text-sm font-medium">{{ user.full_name }}</span>
+                                    <span class="text-sm font-medium desktop-user-name">{{ user.full_name }}</span>
                                 </div>
-                                <a href="/logout" class="text-blue-200 hover:text-white text-sm transition">
+                                <a href="/logout" class="text-blue-200 hover:text-white text-sm transition desktop-signout">
                                     Sign out
                                 </a>
                             </div>

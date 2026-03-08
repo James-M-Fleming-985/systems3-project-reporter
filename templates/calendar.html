@@ -235,6 +235,19 @@
 
     /* ── Calendar Mobile Optimizations ── */
     @media (max-width: 640px) {
+        /* Lock calendar container to viewport */
+        #calendarContainer { overflow: hidden; max-width: 100%; padding: 8px !important; }
+        .fc { max-width: 100% !important; overflow: hidden !important; }
+        /* Toolbar: wrap buttons, prevent overflow */
+        .fc .fc-toolbar { flex-wrap: wrap !important; gap: 4px !important; }
+        .fc .fc-toolbar-chunk { margin: 0 !important; }
+        /* Day cell events: clip to cell width */
+        .fc-daygrid-day-events { overflow: hidden !important; max-width: 100% !important; }
+        .fc-daygrid-event-harness { max-width: 100% !important; overflow: hidden !important; }
+        .fc .fc-daygrid-event { max-width: 100% !important; overflow: hidden !important; }
+        /* Event text truncation */
+        .cal-event-inner { max-width: 100%; }
+        .cal-event-inner .event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         /* Larger tap targets for events */
         .fc .fc-event { padding: 4px 6px !important; font-size: 0.8rem !important; min-height: 32px !important; }
         .cal-event-inner .source-badge { font-size: 0.65rem; padding: 1px 5px; }
@@ -267,6 +280,13 @@
         .toast { min-width: auto !important; max-width: none !important; }
         /* Legend wrap */
         .legend-item { font-size: 0.75rem; }
+        /* Stats grid constrain */
+        #calendarStats { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+        #calendarStats .text-3xl { font-size: 1.5rem; }
+        /* Page heading */
+        h2.text-3xl { font-size: 1.5rem; }
+        /* Filter/legend container */
+        .bg-white.rounded-lg.shadow.p-4.mb-6 { padding: 10px !important; }
     }
 </style>
 {% endblock %}
