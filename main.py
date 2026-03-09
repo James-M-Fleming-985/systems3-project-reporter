@@ -259,6 +259,25 @@ async def sitemap_xml():
     return Response(content=sitemap, media_type="application/xml")
 
 
+@app.get("/manifest.json")
+async def pwa_manifest():
+    """Serve PWA manifest from static directory"""
+    return FileResponse(
+        STATIC_DIR / "manifest.json",
+        media_type="application/manifest+json"
+    )
+
+
+@app.get("/sw.js")
+async def service_worker():
+    """Serve service worker from root scope"""
+    return FileResponse(
+        STATIC_DIR / "sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}
+    )
+
+
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon.ico from static directory"""

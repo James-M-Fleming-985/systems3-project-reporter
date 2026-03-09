@@ -130,6 +130,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "connect-src 'self' https://api.stripe.com https://js.stripe.com",
                 # Frame: Stripe checkout
                 "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+                # Workers: allow service worker registration
+                "worker-src 'self'",
                 # Object/media
                 "object-src 'none'",
                 "base-uri 'self'",

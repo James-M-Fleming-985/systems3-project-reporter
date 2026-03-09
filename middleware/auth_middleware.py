@@ -25,6 +25,8 @@ PUBLIC_ROUTES = {
     "/favicon.ico",
     "/robots.txt",
     "/sitemap.xml",
+    "/manifest.json",
+    "/sw.js",
     "/static",
     "/public",
 }

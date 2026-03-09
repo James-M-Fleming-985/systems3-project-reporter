@@ -33,6 +33,13 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Systems³">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -721,5 +728,13 @@
     <script src="/static/js/analytics.js"></script>
 
     {% block scripts %}{% endblock %}
+
+    <!-- PWA Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .catch(function(err) { console.warn('SW registration failed:', err); });
+    }
+    </script>
 </body>
 </html>
