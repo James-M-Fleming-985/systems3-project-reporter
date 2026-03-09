@@ -397,9 +397,92 @@
 
     /* ── Mobile responsive ── */
     @media (max-width: 640px) {
-        .table-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
-        .table-toolbar .flex { flex-wrap: wrap; gap: 8px; }
-        .table-toolbar button { min-height: 44px; }
+        /* ── Tab strip: connected segments ── */
+        .schedule-tabs {
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            flex-wrap: nowrap; gap: 0 !important;
+            border-bottom: 2px solid #2563EB;
+            padding-bottom: 0;
+        }
+        .schedule-tab {
+            white-space: nowrap; flex-shrink: 0;
+            padding: 8px 14px; font-size: 13px;
+            border-radius: 0 !important;
+            border: none !important; border-bottom: 2px solid transparent !important;
+            margin-bottom: -2px;
+            background: transparent !important; color: #6b7280;
+        }
+        .schedule-tab.active {
+            background: transparent !important;
+            color: #1e40af; font-weight: 600;
+            border-bottom: 2px solid #2563EB !important;
+        }
+        .schedule-tab:hover { background: #f3f4f6 !important; }
+        .schedule-tab-add {
+            width: 36px !important; height: 36px !important;
+            padding: 0 !important; border: none !important;
+            border-radius: 8px !important; background: #EFF6FF !important;
+            color: #2563EB !important; font-size: 1.1rem; font-weight: 600;
+            display: flex !important; align-items: center; justify-content: center;
+            flex-shrink: 0; margin-left: 6px; margin-bottom: 2px;
+        }
+        .schedule-tab-add:hover { background: #DBEAFE !important; }
+        .tab-add-label { display: none !important; }
+        .tab-add-icon { display: inline !important; }
+
+        /* ── Toolbar: primary row + overflow ── */
+        .table-toolbar {
+            flex-direction: row !important; flex-wrap: nowrap !important;
+            align-items: center !important; gap: 8px !important;
+            justify-content: space-between !important;
+            padding-bottom: 12px !important; margin-bottom: 12px !important;
+        }
+        .toolbar-primary {
+            display: flex; align-items: center; gap: 8px;
+            flex: 1; min-width: 0;
+        }
+        .toolbar-primary h2 { font-size: 1rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .toolbar-primary .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .toolbar-actions {
+            display: flex; gap: 6px; flex-shrink: 0; align-items: center;
+        }
+        .toolbar-actions button {
+            min-height: 36px !important; padding: 6px 10px !important;
+            font-size: 0.8rem !important; white-space: nowrap;
+        }
+        .toolbar-actions .btn-label { display: none; }
+        .toolbar-divider { display: none !important; }
+        .toolbar-more-btn {
+            display: flex !important; width: 36px !important; height: 36px !important;
+            padding: 0 !important; align-items: center; justify-content: center;
+            border-radius: 8px !important; background: #F3F4F6; color: #374151;
+            border: 1px solid #D1D5DB; flex-shrink: 0;
+        }
+        .toolbar-more-btn:hover { background: #E5E7EB; }
+        /* Secondary row: hidden by default */
+        .toolbar-secondary {
+            display: none !important; width: 100%;
+        }
+        .toolbar-secondary.open {
+            display: flex !important; flex-wrap: wrap; gap: 8px;
+            padding-top: 10px; border-top: 1px solid #E5E7EB;
+            margin-top: 8px;
+        }
+        .toolbar-secondary button {
+            flex: 1; min-height: 40px; font-size: 0.8rem !important;
+            padding: 8px 12px !important; white-space: nowrap;
+        }
+        .toolbar-secondary .btn-delete {
+            background: transparent !important; color: #EF4444 !important;
+            border: 1px solid #FCA5A5 !important;
+        }
+        .toolbar-secondary .btn-delete:hover { background: #FEF2F2 !important; }
+
+        /* ── Page header ── */
+        .page-header-desc { display: none; }
+        h1.text-2xl { font-size: 1.25rem; }
+
+        /* ── Table ── */
         .table-container { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .schedule-table th { padding: 8px 6px; font-size: 12px; white-space: nowrap; }
         .schedule-table td { padding: 6px; font-size: 13px; }
@@ -408,14 +491,16 @@
         .modal { width: 95vw; max-width: none; border-radius: 12px; padding: 16px; }
         .modal-actions { flex-direction: column; }
         .modal-actions button { width: 100%; }
-        .schedule-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
-        .schedule-tab { white-space: nowrap; flex-shrink: 0; padding: 8px 14px; font-size: 13px; }
         .btn-icon-small { opacity: 1; }
         .row-actions { opacity: 1; }
-        h1.text-2xl { font-size: 1.25rem; }
         .col-resize-handle { display: none; }
         .schedule-table th .drag-handle { display: none; }
     }
+    /* Default hide mobile-only elements */
+    .toolbar-more-btn { display: none; }
+    .toolbar-secondary { display: none; }
+    .tab-add-label { display: inline; }
+    .tab-add-icon { display: none; }
 </style>
 {% endblock %}
 
@@ -430,7 +515,7 @@
             <p class="text-gray-600">{{ clean_name }} - Track work outside main project scope</p>
         </div>
         <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Tables track maintenance, H&S, document updates, etc.</span>
+            <span class="text-sm text-gray-500 page-header-desc">Tables track maintenance, H&S, document updates, etc.</span>
         </div>
     </div>
 </div>
@@ -444,8 +529,9 @@
         {{ table.name }}
     </button>
     {% endfor %}
-    <button class="schedule-tab-add" onclick="showCreateTableModal()">
-        + Add Table
+    <button class="schedule-tab-add" onclick="showCreateTableModal()" title="Add Table">
+        <span class="tab-add-label">+ Add Table</span>
+        <span style="display:none" class="tab-add-icon">+</span>
     </button>
 </div>
 
@@ -456,22 +542,22 @@
         <div class="table-panel {% if not loop.first %}hidden{% endif %}" id="panel-{{ table.id }}">
             <!-- Toolbar -->
             <div class="table-toolbar">
-                <div class="flex items-center gap-4">
+                <div class="toolbar-primary flex items-center gap-4">
                     <h2 class="text-lg font-semibold text-gray-800">{{ table.name }}</h2>
                     <button class="btn-icon" onclick="showEditTableModal('{{ table.id }}')" title="Edit table settings">
                         ⚙️
                     </button>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="toolbar-actions flex items-center gap-2">
                     <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition"
                             onclick="addRow('{{ table.id }}')">
-                        + Add Row
+                        + <span class="btn-label">Add </span>Row
                     </button>
                     <button class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
                             onclick="showColumnModal('{{ table.id }}')">
-                        + Add Column
+                        + <span class="btn-label">Add </span>Col
                     </button>
-                    <div class="border-l pl-2 ml-2">
+                    <div class="toolbar-divider border-l pl-2 ml-2">
                         <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
                                 onclick="exportTable('{{ table.id }}', 'pdf')">
                             📄 Export PDF
@@ -481,12 +567,30 @@
                             📊 Preview Slide
                         </button>
                     </div>
-                    <div class="border-l pl-2 ml-2">
-                        <button class="px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+                    <div class="toolbar-divider border-l pl-2 ml-2">
+                        <button class="px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition btn-delete"
                                 onclick="deleteTable('{{ table.id }}')" title="Delete this table">
                             🗑️ Delete Table
                         </button>
                     </div>
+                    <button class="toolbar-more-btn" onclick="this.closest('.table-toolbar').querySelector('.toolbar-secondary').classList.toggle('open')" title="More options">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                    </button>
+                </div>
+                <!-- Secondary toolbar: export/delete (mobile overflow) -->
+                <div class="toolbar-secondary">
+                    <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                            onclick="exportTable('{{ table.id }}', 'pdf')">
+                        📄 Export PDF
+                    </button>
+                    <button class="px-3 py-1.5 text-sm bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+                            onclick="exportTable('{{ table.id }}', 'slide')">
+                        📊 Preview Slide
+                    </button>
+                    <button class="px-3 py-1.5 text-sm rounded transition btn-delete"
+                            onclick="deleteTable('{{ table.id }}')" title="Delete this table">
+                        🗑️ Delete Table
+                    </button>
                 </div>
             </div>
             
