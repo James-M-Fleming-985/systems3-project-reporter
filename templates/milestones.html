@@ -1217,10 +1217,10 @@ function editMilestone(index) {
     document.getElementById('milestoneName').value = m.name;
     document.getElementById('milestoneTargetDate').value = m.target_date;
     document.getElementById('milestoneStartDate').value = m.start_date || '';
-    document.getElementById('milestoneStartDate').disabled = true;
-    document.getElementById('milestoneStartDate').classList.add('bg-gray-50', 'text-gray-500');
-    document.getElementById('milestoneStartDate').classList.remove('bg-white', 'text-gray-900');
-    document.getElementById('startDateHint').textContent = '(from XML)';
+    document.getElementById('milestoneStartDate').disabled = false;
+    document.getElementById('milestoneStartDate').classList.remove('bg-gray-50', 'text-gray-500');
+    document.getElementById('milestoneStartDate').classList.add('bg-white', 'text-gray-900');
+    document.getElementById('startDateHint').textContent = '';
     document.getElementById('milestoneResources').value = m.resources || '';
     document.getElementById('milestoneCompletion').value = m.completion_percentage || 0;
     document.getElementById('milestoneCompletionRange').value = m.completion_percentage || 0;
@@ -1453,6 +1453,7 @@ async function saveMilestone() {
         ...milestone,
         name: document.getElementById('milestoneName').value.trim(),
         target_date: newTargetDate,
+        start_date: document.getElementById('milestoneStartDate').value || '',
         status: document.getElementById('milestoneStatus').value,
         resources: document.getElementById('milestoneResources').value.trim(),
         completion_percentage: parseInt(document.getElementById('milestoneCompletion').value) || 0,

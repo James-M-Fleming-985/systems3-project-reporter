@@ -29,6 +29,10 @@
         /* Program card metric grid: keep 3-col but tighter */
         .grid.grid-cols-3.gap-2 { gap: 4px !important; }
         .grid.grid-cols-3.gap-2 p.text-2xl { font-size: 1.25rem !important; }
+        /* Card header: prevent badge overflow */
+        .card-badge-group { flex-shrink: 1; min-width: 0; }
+        .card-badge-group span { overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+        .program-card h3.text-xl { font-size: 1rem !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     }
 </style>
 {% endblock %}
@@ -135,7 +139,7 @@
         <div class="p-6 flex flex-col">
             <div class="flex items-start justify-between mb-2 min-h-[3.5rem]">
                 <h3 class="text-xl font-bold text-gray-800 leading-tight">{{ project.project_name }}</h3>
-                <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                <div class="flex items-center gap-2 ml-2 card-badge-group">
                     <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold whitespace-nowrap">
                         {{ project.status }}
                     </span>

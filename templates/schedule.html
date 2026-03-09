@@ -483,16 +483,53 @@
         h1.text-2xl { font-size: 1.25rem; }
 
         /* ── Table ── */
-        .table-container { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .schedule-table th { padding: 8px 6px; font-size: 12px; white-space: nowrap; }
-        .schedule-table td { padding: 6px; font-size: 13px; }
-        .schedule-table td, .schedule-table th { min-width: 100px; }
-        .cell-edit, .cell-dropdown, .cell-status, .cell-priority { font-size: 13px; padding: 6px; }
+        .table-container {
+            padding: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+        /* Scroll shadow: right-edge fade to hint horizontal scroll */
+        .table-container::after {
+            content: ''; position: sticky; right: 0; top: 0;
+            display: block; width: 24px; height: 100%;
+            pointer-events: none; position: absolute;
+            right: 0; top: 0; bottom: 0;
+            background: linear-gradient(to right, transparent, rgba(0,0,0,0.06));
+            z-index: 5;
+        }
+        .schedule-table th { padding: 8px 6px; font-size: 11px; white-space: nowrap; }
+        .schedule-table td { padding: 4px 6px; font-size: 13px; }
+        /* Column widths: first col wider, rest tighter */
+        .schedule-table th:first-child, .schedule-table td:first-child { min-width: 160px; }
+        .schedule-table th:not(:first-child), .schedule-table td:not(:first-child) { min-width: 110px; }
+        /* Sticky first column */
+        .schedule-table th:first-child {
+            position: sticky; left: 0; z-index: 4;
+            background: #1e40af; /* match header blue */
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+        .schedule-table td:first-child {
+            position: sticky; left: 0; z-index: 3;
+            background: inherit;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+        }
+        /* Zebra striping for readability */
+        .schedule-table tbody tr:nth-child(even) { background: #F9FAFB; }
+        .schedule-table tbody tr:nth-child(odd) { background: #FFFFFF; }
+        /* Inherit bg on sticky cells for zebra to work */
+        .schedule-table tbody tr:nth-child(even) td:first-child { background: #F9FAFB; }
+        .schedule-table tbody tr:nth-child(odd) td:first-child { background: #FFFFFF; }
+        /* Touch targets: taller inputs */
+        .cell-edit, .cell-dropdown { font-size: 13px; padding: 8px 6px; min-height: 40px; }
+        .cell-status, .cell-priority { font-size: 12px; padding: 6px 4px; min-height: 40px; }
+        /* Row action always visible */
+        .row-action-cell { width: 36px !important; }
+        .btn-icon-small { opacity: 1; min-height: 36px; min-width: 36px; }
+        .row-actions { opacity: 1; }
+        /* Modal full-width */
         .modal { width: 95vw; max-width: none; border-radius: 12px; padding: 16px; }
         .modal-actions { flex-direction: column; }
         .modal-actions button { width: 100%; }
-        .btn-icon-small { opacity: 1; }
-        .row-actions { opacity: 1; }
+        /* Hide desktop-only interactive handles */
         .col-resize-handle { display: none; }
         .schedule-table th .drag-handle { display: none; }
     }
