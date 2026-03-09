@@ -352,14 +352,14 @@ class MSProjectXMLParser:
             # True milestones (Milestone=1 or Duration=0): always keep.
             # Summary tasks at Level 2+: keep for Gantt level groupings
             #   (saved with is_true_milestone=False so calendar ignores them).
-            # Non-milestone, non-summary tasks at Level 4+: keep for sibling task lists.
+            # Non-milestone, non-summary tasks at Level 3+: keep for sibling task lists.
             # Everything else: skip.
             if not is_milestone:
                 if is_summary and outline_level >= 2:
                     # Keep summary tasks — Gantt needs them as level groupings
                     pass  # fall through with is_true_milestone=False
-                elif outline_level >= 4:
-                    # Keep Level 4+ non-summary tasks for sibling task lists
+                elif outline_level >= 3:
+                    # Keep Level 3+ non-summary tasks for sibling task lists
                     pass  # fall through with is_true_milestone=False
                 else:
                     name_elem = self._find_element(task, 'Name')
