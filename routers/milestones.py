@@ -459,163 +459,197 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                     f"status={m.get('status')}, date={m.get('target_date')}"
                 )
         
-        # Find and update the milestone (UPDATE FIRST MATCH ONLY)
+        # Find the milestone using priority-ordered passes.
+        # Each pass scans ALL milestones before falling back to
+        # the next strategy.  This prevents a greedy substring match
+        # on a summary task from shadowing an exact-name match that
+        # appears later in the array (e.g. "M0 - Instrument & Measure"
+        # at index 0 vs "M0 - Instrument & Measure Complete" at index 13).
         updated = False
         match_type = None
+        matched_index = None
         if 'milestones' in project_data:
             incoming_id = updated_milestone.get('id')
             incoming_name = updated_milestone['name'].strip()
             incoming_date = updated_milestone.get('target_date', '')
             incoming_parent = (updated_milestone.get('parent_project') or '').strip()
             
-            for i, milestone in enumerate(project_data['milestones']):
-                # Normalize both names for comparison (trim whitespace)
-                yaml_name = milestone['name'].strip()
-                yaml_id = milestone.get('id')
-                
-                if i < 3:  # Log first 3 comparisons
-                    logger.warning(f"Comparing #{i}: ID '{yaml_id}' == '{incoming_id}' ? {yaml_id == incoming_id if incoming_id else 'N/A'}")
-                    logger.warning(f"           Name '{yaml_name}' == '{incoming_name}' ? {yaml_name == incoming_name}")
-                
-                # Try ID match first (most reliable) — compare as strings
-                # to handle YAML int IDs vs JSON string IDs
-                if incoming_id and yaml_id and str(yaml_id) == str(incoming_id):
-                    logger.warning(f"✅ ID MATCH FOUND at index {i}: ID={yaml_id}")
-                    updated = True
-                    match_type = 'id'
-                # Try exact name match
-                elif yaml_name == incoming_name:
-                    logger.warning(f"✅ EXACT NAME MATCH FOUND at index {i}: '{yaml_name}'")
-                    updated = True
-                    match_type = 'exact'
-                # Try bidirectional substring match (handles both truncation and editing)
-                elif incoming_name and len(incoming_name) > 10 and (incoming_name in yaml_name or yaml_name in incoming_name):
-                    logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' ↔ '{yaml_name}'")
-                    updated = True
-                    match_type = 'substring'
-                # Match by target_date + parent_project (allows name changes while keeping same milestone)
-                elif (milestone.get('target_date') == incoming_date and 
-                      (milestone.get('parent_project') or '').strip() == incoming_parent and
-                      incoming_date and incoming_parent):  # Make sure these fields exist
-                    logger.warning(f"✅ DATE+PARENT MATCH FOUND at index {i}: date={incoming_date}, parent={incoming_parent}")
-                    logger.warning(f"   Name change: '{yaml_name}' → '{incoming_name}'")
-                    updated = True
-                    match_type = 'date_parent'
-                
-                if updated:
-                    # Update milestone - always save incoming name (user edits)
-                    new_completion = updated_milestone.get(
-                        'completion_percentage', 0
-                    )
-                    old_completion = milestone.get('completion_percentage', 0)
-                    old_target_date = milestone.get('target_date', '')
-                    new_target_date = updated_milestone['target_date']
-                    old_status = milestone.get('status', 'NOT_STARTED')
-                    new_status = updated_milestone['status']
-                    
-                    # Track which fields the user edited
-                    existing_edited = milestone.get('user_edited_fields') or []
-                    if new_status != old_status and 'status' not in existing_edited:
-                        existing_edited.append('status')
-                    if new_completion != old_completion and 'completion_percentage' not in existing_edited:
-                        existing_edited.append('completion_percentage')
-                    
-                    # Create change record if target date changed and user confirmed
-                    if old_target_date and new_target_date and old_target_date != new_target_date and data.confirmed_date_change:
-                        try:
-                            old_dt = datetime.strptime(old_target_date, '%Y-%m-%d')
-                            new_dt = datetime.strptime(new_target_date, '%Y-%m-%d')
-                            days_diff = (new_dt - old_dt).days
-                            
-                            change_info = {
-                                'milestone_name': incoming_name,
-                                'old_date': old_target_date,
-                                'new_date': new_target_date,
-                                'days_diff': days_diff,
-                                'type': 'DELAY' if days_diff > 0 else 'ACCELERATION'
-                            }
-                            
-                            impact = change_detector.calculate_impact(days_diff, incoming_name)
-                            reason = f"Manual update via milestone tracker on {datetime.now().strftime('%Y-%m-%d')}"
-                            change_record = change_detector.create_change_record(
-                                change_info, reason, impact, project_code
-                            )
-                            
-                            # Add change record to project data
-                            if 'changes' not in project_data:
-                                project_data['changes'] = []
-                            project_data['changes'].append({
-                                'change_id': change_record.change_id,
-                                'date': change_record.date,
-                                'old_date': change_record.old_date,
-                                'new_date': change_record.new_date,
-                                'reason': change_record.reason,
-                                'impact': change_record.impact
-                            })
-                            logger.info(f"📝 Change record created: {change_record.change_id}")
-                        except Exception as ce:
-                            logger.warning(f"⚠️ Failed to create change record: {ce}")
-                    
-                    # Handle completion_date based on status transitions
-                    if new_status == 'COMPLETED' and old_status != 'COMPLETED':
-                        # Just became completed — set completion_date to today
-                        completion_date = datetime.now().strftime('%Y-%m-%d')
-                    elif new_status != 'COMPLETED' and old_status == 'COMPLETED':
-                        # Reverted from completed — clear completion_date
-                        completion_date = None
-                    else:
-                        # No status transition affecting completion — preserve existing
-                        completion_date = milestone.get('completion_date')
-                    
-                    # Determine start_date:
-                    # If the user explicitly changed start_date, use that.
-                    # If only target_date changed (start_date untouched),
-                    # sync start_date to new target_date to preserve
-                    # zero-duration semantics (prevents display filters
-                    # from hiding the milestone as a "multi-day task").
-                    incoming_start = updated_milestone.get('start_date') or ''
-                    existing_start = milestone.get('start_date') or ''
-                    dateChanged = (old_target_date != new_target_date)
-                    start_was_edited = (incoming_start != existing_start)
+            milestones_list = project_data['milestones']
+            
+            # ── Pass 1: ID match (most reliable) ──
+            if incoming_id:
+                for i, milestone in enumerate(milestones_list):
+                    yaml_id = milestone.get('id')
+                    if yaml_id and str(yaml_id) == str(incoming_id):
+                        matched_index = i
+                        match_type = 'id'
+                        logger.warning(f"✅ ID MATCH FOUND at index {i}: ID={yaml_id}")
+                        break
+            
+            # ── Pass 2: Exact name match ──
+            if matched_index is None:
+                for i, milestone in enumerate(milestones_list):
+                    if milestone['name'].strip() == incoming_name:
+                        matched_index = i
+                        match_type = 'exact'
+                        logger.warning(f"✅ EXACT NAME MATCH FOUND at index {i}: '{incoming_name}'")
+                        break
+            
+            # ── Pass 3: Substring match ──
+            if matched_index is None and incoming_name and len(incoming_name) > 10:
+                for i, milestone in enumerate(milestones_list):
+                    yaml_name = milestone['name'].strip()
+                    if incoming_name in yaml_name or yaml_name in incoming_name:
+                        matched_index = i
+                        match_type = 'substring'
+                        logger.warning(f"✅ SUBSTRING MATCH FOUND at index {i}: '{incoming_name}' ↔ '{yaml_name}'")
+                        break
+            
+            # ── Pass 4: Date + parent match ──
+            if matched_index is None and incoming_date and incoming_parent:
+                for i, milestone in enumerate(milestones_list):
+                    if (milestone.get('target_date') == incoming_date and
+                            (milestone.get('parent_project') or '').strip() == incoming_parent):
+                        matched_index = i
+                        match_type = 'date_parent'
+                        yaml_name = milestone['name'].strip()
+                        logger.warning(f"✅ DATE+PARENT MATCH FOUND at index {i}: date={incoming_date}, parent={incoming_parent}")
+                        logger.warning(f"   Name change: '{yaml_name}' → '{incoming_name}'")
+                        break
+            
+            if matched_index is not None:
+                updated = True
+                i = matched_index
+                milestone = milestones_list[i]
 
-                    if start_was_edited and incoming_start:
-                        synced_start_date = incoming_start
-                    elif dateChanged:
-                        synced_start_date = new_target_date
-                    else:
-                        synced_start_date = existing_start or new_target_date
+                # Update milestone - always save incoming name (user edits)
+                new_completion = updated_milestone.get(
+                    'completion_percentage', 0
+                )
+                old_completion = milestone.get('completion_percentage', 0)
+                old_target_date = milestone.get('target_date', '')
+                new_target_date = updated_milestone['target_date']
+                old_status = milestone.get('status', 'NOT_STARTED')
+                new_status = updated_milestone['status']
+                
+                # Track which fields the user edited
+                existing_edited = milestone.get('user_edited_fields') or []
+                if new_status != old_status and 'status' not in existing_edited:
+                    existing_edited.append('status')
+                if new_completion != old_completion and 'completion_percentage' not in existing_edited:
+                    existing_edited.append('completion_percentage')
+                if old_target_date and new_target_date and old_target_date != new_target_date and 'target_date' not in existing_edited:
+                    existing_edited.append('target_date')
+                
+                # Create change record if target date changed and user confirmed
+                if old_target_date and new_target_date and old_target_date != new_target_date and data.confirmed_date_change:
+                    try:
+                        old_dt = datetime.strptime(old_target_date, '%Y-%m-%d')
+                        new_dt = datetime.strptime(new_target_date, '%Y-%m-%d')
+                        days_diff = (new_dt - old_dt).days
+                        
+                        change_info = {
+                            'milestone_name': incoming_name,
+                            'old_date': old_target_date,
+                            'new_date': new_target_date,
+                            'days_diff': days_diff,
+                            'type': 'DELAY' if days_diff > 0 else 'ACCELERATION'
+                        }
+                        
+                        impact = change_detector.calculate_impact(days_diff, incoming_name)
+                        reason = f"Manual update via milestone tracker on {datetime.now().strftime('%Y-%m-%d')}"
+                        change_record = change_detector.create_change_record(
+                            change_info, reason, impact, project_code
+                        )
+                        
+                        # Add change record to project data
+                        if 'changes' not in project_data:
+                            project_data['changes'] = []
+                        project_data['changes'].append({
+                            'change_id': change_record.change_id,
+                            'date': change_record.date,
+                            'old_date': change_record.old_date,
+                            'new_date': change_record.new_date,
+                            'reason': change_record.reason,
+                            'impact': change_record.impact
+                        })
+                        logger.info(f"📝 Change record created: {change_record.change_id}")
+                    except Exception as ce:
+                        logger.warning(f"⚠️ Failed to create change record: {ce}")
+                
+                # Handle completion_date based on status transitions
+                if new_status == 'COMPLETED' and old_status != 'COMPLETED':
+                    completion_date = datetime.now().strftime('%Y-%m-%d')
+                elif new_status != 'COMPLETED' and old_status == 'COMPLETED':
+                    completion_date = None
+                else:
+                    completion_date = milestone.get('completion_date')
+                
+                # Determine start_date:
+                # If the user explicitly changed start_date, use that.
+                # If only target_date changed (start_date untouched),
+                # sync start_date to new target_date to preserve
+                # zero-duration semantics (prevents display filters
+                # from hiding the milestone as a "multi-day task").
+                incoming_start = updated_milestone.get('start_date') or ''
+                existing_start = milestone.get('start_date') or ''
+                dateChanged = (old_target_date != new_target_date)
+                start_was_edited = (incoming_start != existing_start)
 
-                    project_data['milestones'][i] = {
-                        'id': milestone.get('id'),
-                        'name': incoming_name,
-                        'target_date': new_target_date,
-                        'start_date': synced_start_date,
-                        'status': new_status,
-                        'resources': updated_milestone.get('resources') or None,
-                        'completion_percentage': new_completion,
-                        'completion_date': completion_date,
-                        'notes': updated_milestone.get('notes') or milestone.get('notes'),
-                        'parent_project': milestone.get('parent_project'),
-                        'parent_levels': milestone.get('parent_levels'),
-                        'outline_level': milestone.get('outline_level'),
-                        'is_true_milestone': milestone.get('is_true_milestone') if milestone.get('is_true_milestone') is not None else True,
-                        'user_edited_fields': existing_edited if existing_edited else None,
-                        'project': milestone.get('project'),
-                        'recurrence_cadence': milestone.get('recurrence_cadence'),
-                        'recurrence_series_id': milestone.get('recurrence_series_id'),
-                        'recurrence_occurrence': milestone.get('recurrence_occurrence'),
-                    }
-                    logger.warning(f"✅ Updated milestone at index {i}")
-                    logger.warning(f"   ID: {milestone.get('id')}")
-                    logger.warning(
-                        f"   Name: '{project_data['milestones'][i]['name']}'"
-                    )
-                    logger.warning(
-                        f"   Completion: {old_completion}% → {new_completion}%"
-                    )
-                    logger.warning(f"   Status: {updated_milestone['status']}")
-                    logger.warning(f"   Match type: {match_type}")
-                    break  # ✅ STOP after first match - don't update duplicates
+                if start_was_edited and incoming_start:
+                    synced_start_date = incoming_start
+                elif dateChanged:
+                    synced_start_date = new_target_date
+                else:
+                    synced_start_date = existing_start or new_target_date
+
+                # For metadata fields, prefer the incoming JS payload
+                # (which has correct values from the server-rendered
+                # quadrant data) over the matched YAML record.  This
+                # prevents a substring match on a summary task from
+                # copying the wrong is_true_milestone / outline_level.
+                incoming_itm = updated_milestone.get('is_true_milestone')
+                yaml_itm = milestone.get('is_true_milestone')
+                if incoming_itm is not None:
+                    resolved_itm = incoming_itm
+                elif yaml_itm is not None:
+                    resolved_itm = yaml_itm
+                else:
+                    resolved_itm = True  # upgrade None→True
+
+                incoming_ol = updated_milestone.get('outline_level')
+                resolved_ol = incoming_ol if incoming_ol is not None else milestone.get('outline_level')
+
+                project_data['milestones'][i] = {
+                    'id': milestone.get('id'),
+                    'name': incoming_name,
+                    'target_date': new_target_date,
+                    'start_date': synced_start_date,
+                    'status': new_status,
+                    'resources': updated_milestone.get('resources') or None,
+                    'completion_percentage': new_completion,
+                    'completion_date': completion_date,
+                    'notes': updated_milestone.get('notes') or milestone.get('notes'),
+                    'parent_project': updated_milestone.get('parent_project') or milestone.get('parent_project'),
+                    'parent_levels': updated_milestone.get('parent_levels') or milestone.get('parent_levels'),
+                    'outline_level': resolved_ol,
+                    'is_true_milestone': resolved_itm,
+                    'user_edited_fields': existing_edited if existing_edited else None,
+                    'project': milestone.get('project'),
+                    'recurrence_cadence': milestone.get('recurrence_cadence'),
+                    'recurrence_series_id': milestone.get('recurrence_series_id'),
+                    'recurrence_occurrence': milestone.get('recurrence_occurrence'),
+                }
+                logger.warning(f"✅ Updated milestone at index {i}")
+                logger.warning(f"   ID: {milestone.get('id')}")
+                logger.warning(
+                    f"   Name: '{project_data['milestones'][i]['name']}'"
+                )
+                logger.warning(
+                    f"   Completion: {old_completion}% → {new_completion}%"
+                )
+                logger.warning(f"   Status: {updated_milestone['status']}")
+                logger.warning(f"   Match type: {match_type}")
 
         # ── Purge duplicate milestones with the same name ──
         if updated:
