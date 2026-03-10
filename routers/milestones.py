@@ -567,13 +567,23 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                         # No status transition affecting completion — preserve existing
                         completion_date = milestone.get('completion_date')
                     
-                    # Use user-provided start_date if present, otherwise
-                    # fall back to the existing value or target_date.
-                    synced_start_date = (
-                        updated_milestone.get('start_date')
-                        or milestone.get('start_date')
-                        or new_target_date
-                    )
+                    # Determine start_date:
+                    # If the user explicitly changed start_date, use that.
+                    # If only target_date changed (start_date untouched),
+                    # sync start_date to new target_date to preserve
+                    # zero-duration semantics (prevents display filters
+                    # from hiding the milestone as a "multi-day task").
+                    incoming_start = updated_milestone.get('start_date') or ''
+                    existing_start = milestone.get('start_date') or ''
+                    dateChanged = (old_target_date != new_target_date)
+                    start_was_edited = (incoming_start != existing_start)
+
+                    if start_was_edited and incoming_start:
+                        synced_start_date = incoming_start
+                    elif dateChanged:
+                        synced_start_date = new_target_date
+                    else:
+                        synced_start_date = existing_start or new_target_date
 
                     project_data['milestones'][i] = {
                         'id': milestone.get('id'),
@@ -588,9 +598,12 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                         'parent_project': milestone.get('parent_project'),
                         'parent_levels': milestone.get('parent_levels'),
                         'outline_level': milestone.get('outline_level'),
-                        'is_true_milestone': milestone.get('is_true_milestone'),
+                        'is_true_milestone': milestone.get('is_true_milestone') if milestone.get('is_true_milestone') is not None else True,
                         'user_edited_fields': existing_edited if existing_edited else None,
-                        'project': milestone.get('project')
+                        'project': milestone.get('project'),
+                        'recurrence_cadence': milestone.get('recurrence_cadence'),
+                        'recurrence_series_id': milestone.get('recurrence_series_id'),
+                        'recurrence_occurrence': milestone.get('recurrence_occurrence'),
                     }
                     logger.warning(f"✅ Updated milestone at index {i}")
                     logger.warning(f"   ID: {milestone.get('id')}")
