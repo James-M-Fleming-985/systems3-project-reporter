@@ -455,6 +455,9 @@
         <div id="riskDetailsContent" class="space-y-4">
             <!-- Risk details will be populated here -->
         </div>
+
+        <!-- AI Chat Section -->
+        <div id="riskAIChatContainer" class="mt-4"></div>
         
         <div class="flex justify-end gap-3 pt-6 border-t mt-6">
             <button onclick="closeViewRiskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
@@ -826,6 +829,20 @@ function viewRiskDetails(event) {
             `;
             
             document.getElementById('viewRiskModal').classList.remove('hidden');
+
+            // Initialize AI Chat Panel for this risk
+            if (typeof AIChatPanel !== 'undefined') {
+                if (window._riskChatPanel) {
+                    window._riskChatPanel.updateContext('risk', risk.id, programName);
+                } else {
+                    window._riskChatPanel = new AIChatPanel('riskAIChatContainer', {
+                        contextType: 'risk',
+                        contextId: risk.id,
+                        projectCode: programName,
+                        programName: programName
+                    });
+                }
+            }
         })
         .catch(error => {
             showToast('Error loading risk details: ' + error.message, 'error');

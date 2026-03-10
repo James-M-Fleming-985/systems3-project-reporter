@@ -465,6 +465,11 @@
             </div>
         </div>
 
+        <!-- AI Chat Section -->
+        <div id="panelAIChat" class="border-t border-gray-200 pt-5 mt-5 px-6">
+            <div id="milestoneAIChatContainer"></div>
+        </div>
+
         <!-- Modal Footer -->
         <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
             <button type="button" onclick="closeMilestoneModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
@@ -1272,6 +1277,22 @@ function editMilestone(index) {
     loadRelatedTasks();
 
     document.getElementById('editMilestoneModal').classList.remove('hidden');
+
+    // Initialize AI Chat Panel
+    if (typeof AIChatPanel !== 'undefined') {
+        const milestoneId = m.id || m.name;
+        const projectCode = m.project || '';
+        if (window._milestoneChatPanel) {
+            window._milestoneChatPanel.updateContext('milestone', milestoneId, projectCode);
+        } else {
+            window._milestoneChatPanel = new AIChatPanel('milestoneAIChatContainer', {
+                contextType: 'milestone',
+                contextId: milestoneId,
+                projectCode: projectCode,
+                programName: m.parent_project || ''
+            });
+        }
+    }
 }
 
 function closeMilestoneModal() {

@@ -912,6 +912,14 @@
     </div>
 </div>
 
+<!-- AI Chat Floating Panel -->
+<div id="scheduleAIChatSidebar" class="hidden fixed bottom-20 right-6 w-[400px] max-w-[90vw] z-[9999] shadow-2xl rounded-xl overflow-hidden border border-gray-200 bg-white">
+    <div id="scheduleAIChatContainer"></div>
+</div>
+<button id="scheduleAIChatFab" onclick="toggleScheduleChat()" class="fixed bottom-6 right-6 z-[10000] w-12 h-12 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition flex items-center justify-center" title="AI Chat">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+</button>
+
 <script>
 const projectName = "{{ clean_name }}";
 let tablesData = {{ schedule_data | tojson }};
@@ -2141,6 +2149,32 @@ function handleCellMouseOut(e) {
     
     const tooltip = document.getElementById('cellTooltip');
     if (tooltip) tooltip.style.display = 'none';
+}
+
+// ── AI Chat for Schedule ──
+function getActiveTableId() {
+    const activeTab = document.querySelector('.schedule-tab.active');
+    return activeTab ? activeTab.dataset.tableId : (tablesData.length ? tablesData[0].id : null);
+}
+
+function toggleScheduleChat() {
+    const sidebar = document.getElementById('scheduleAIChatSidebar');
+    const isHidden = sidebar.classList.contains('hidden');
+    sidebar.classList.toggle('hidden');
+    if (isHidden && typeof AIChatPanel !== 'undefined') {
+        const tableId = getActiveTableId();
+        if (window._scheduleChatPanel) {
+            window._scheduleChatPanel.updateContext('schedule', tableId, projectName);
+        } else {
+            window._scheduleChatPanel = new AIChatPanel('scheduleAIChatContainer', {
+                contextType: 'schedule',
+                contextId: tableId,
+                projectCode: projectName,
+                programName: projectName,
+                tableId: tableId
+            });
+        }
+    }
 }
 </script>
 {% endblock %}

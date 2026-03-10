@@ -26,6 +26,9 @@ PyJWT>=2.8.0  # JWT authentication for canvas API
 # PDF Export
 reportlab>=4.0.0
 
+# AI Chat (Claude API)
+anthropic>=0.40.0
+
 # Payment Processing
 stripe>=5.0.0
 python-dotenv>=1.0.0

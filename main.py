@@ -569,6 +569,14 @@ except ImportError as e:
     logger.warning(f"⚠️  Enhanced PowerPoint Reports disabled: {e}")
     logger.warning("   Using legacy /export/powerpoint endpoint only")
 
+# AI Chat router has: /api/ai/chat, /api/ai/conversations/*
+try:
+    from routers import ai_chat
+    app.include_router(ai_chat.router, tags=["ai-chat"])
+    logger.info("✅ AI Chat feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  AI Chat feature disabled: {e}")
+
 # Optional: Subscription and Stripe routers (if dependencies available)
 try:
     from routers import subscription, stripe_router

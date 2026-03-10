@@ -395,7 +395,7 @@
 
 <!-- Event Detail Modal -->
 <div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[10000]">
-    <div class="event-modal relative top-10 mx-auto p-0 border w-[550px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]" id="eventModalInner">
+    <div class="event-modal relative top-10 mx-auto p-0 border w-[650px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]" id="eventModalInner">
         <!-- Modal Header -->
         <div id="eventModalHeader" class="px-6 py-4 text-white">
             <div class="flex items-center justify-between">
@@ -414,6 +414,9 @@
             <div id="eventModalBody" class="space-y-4">
                 <!-- Dynamically populated -->
             </div>
+
+            <!-- AI Chat Panel (inside scrollable body) -->
+            <div id="calendarAIChatContainer" class="hidden mt-4"></div>
         </div>
         
         <!-- Modal Footer -->
@@ -1158,6 +1161,28 @@ function showEventModal(event) {
     
     document.getElementById('eventModalBody').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
+
+    // AI Chat Panel — show for milestone and risk_review events
+    const chatContainer = document.getElementById('calendarAIChatContainer');
+    if ((type === 'milestone' || type === 'risk_review') && typeof AIChatPanel !== 'undefined') {
+        chatContainer.classList.remove('hidden');
+        const chatContextType = type === 'risk_review' ? 'risk' : 'milestone';
+        const chatContextId = type === 'risk_review'
+            ? (ep.riskId || event.id)
+            : (ep.milestone ? (ep.milestone.id || ep.milestone.name) : event.id);
+        if (window._calendarChatPanel) {
+            window._calendarChatPanel.updateContext(chatContextType, chatContextId, ep.programCode || ep.program);
+        } else {
+            window._calendarChatPanel = new AIChatPanel('calendarAIChatContainer', {
+                contextType: chatContextType,
+                contextId: chatContextId,
+                projectCode: ep.programCode || ep.program,
+                programName: ep.programName || ep.program || ''
+            });
+        }
+    } else {
+        chatContainer.classList.add('hidden');
+    }
     
     // Load sibling tasks if this is a milestone
     if (type === 'milestone' && ep.milestone && ep.programCode) {
