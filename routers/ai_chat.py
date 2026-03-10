@@ -98,92 +98,103 @@ async def ai_chat(request: Request, data: ChatRequest):
             detail="AI chat not configured. Set ANTHROPIC_API_KEY environment variable.",
         )
 
-    user_id = _get_user_id(request)
+    try:
+        user_id = _get_user_id(request)
 
-    # Resolve or create conversation
-    conversation = None
-    if data.conversation_id:
-        conversation = conversation_repo.get(data.conversation_id)
+        # Resolve or create conversation
+        conversation = None
+        if data.conversation_id:
+            conversation = conversation_repo.get(data.conversation_id)
 
-    if conversation is None:
-        # Check for existing conversation for this entity
-        if data.context_id:
-            existing = conversation_repo.find_by_context(
-                data.context_type, data.context_id, user_id
+        if conversation is None:
+            # Check for existing conversation for this entity
+            if data.context_id:
+                existing = conversation_repo.find_by_context(
+                    data.context_type, data.context_id, user_id
+                )
+                if existing:
+                    conversation = existing[0]
+
+        if conversation is None:
+            conversation = conversation_repo.create(
+                context_type=data.context_type,
+                context_id=data.context_id or "",
+                project_code=data.project_code or "",
+                user_id=user_id,
             )
-            if existing:
-                conversation = existing[0]
 
-    if conversation is None:
-        conversation = conversation_repo.create(
-            context_type=data.context_type,
-            context_id=data.context_id or "",
-            project_code=data.project_code or "",
-            user_id=user_id,
+        # Append user message
+        user_tokens = chat_service.estimate_tokens(data.message)
+        conversation_repo.append_message(
+            conversation["id"], "user", data.message, user_tokens
         )
 
-    # Append user message
-    user_tokens = chat_service.estimate_tokens(data.message)
-    conversation_repo.append_message(
-        conversation["id"], "user", data.message, user_tokens
-    )
+        # Build message history for Claude
+        conv_data = conversation_repo.get(conversation["id"])
+        messages = [
+            {"role": m["role"], "content": m["content"]}
+            for m in conv_data.get("messages", [])
+        ]
 
-    # Build message history for Claude
-    conv_data = conversation_repo.get(conversation["id"])
-    messages = [
-        {"role": m["role"], "content": m["content"]}
-        for m in conv_data.get("messages", [])
-    ]
+        # Build system prompt (graceful fallback on errors)
+        try:
+            system_prompt = _build_system_prompt(data)
+        except Exception as ctx_err:
+            logger.warning(f"Context builder error, using fallback: {ctx_err}", exc_info=True)
+            system_prompt = "You are a helpful project management AI assistant. Answer questions about project risks, timelines, milestones, and scheduling."
 
-    # Build system prompt
-    system_prompt = _build_system_prompt(data)
+        # Send to Claude
+        try:
+            result = chat_service.send_message(system_prompt, messages)
+        except Exception as e:
+            logger.error(f"Claude API call failed: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail=f"AI service error: {str(e)}")
 
-    # Send to Claude
-    try:
-        result = chat_service.send_message(system_prompt, messages)
+        reply = result["reply"]
+        output_tokens = result["output_tokens"]
+        input_tokens = result["input_tokens"]
+
+        # Append assistant reply
+        conversation_repo.append_message(
+            conversation["id"], "assistant", reply, output_tokens
+        )
+
+        # Parse any proposed actions
+        proposed_actions = parse_actions(reply)
+
+        # If execute_actions is True and there are actions, execute them
+        action_results = []
+        if data.execute_actions and proposed_actions:
+            for action in proposed_actions:
+                action_result = execute_action(action)
+                action_results.append(action_result)
+                conversation_repo.record_action(
+                    conversation["id"],
+                    action.get("action", "unknown"),
+                    action_result,
+                )
+
+        # Get updated token totals and staleness
+        updated_conv = conversation_repo.get(conversation["id"])
+        total_tokens = updated_conv.get("total_tokens", 0)
+        staleness = chat_service.check_staleness(total_tokens)
+
+        return JSONResponse({
+            "conversation_id": conversation["id"],
+            "reply": reply,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens_used": total_tokens,
+            "staleness": staleness,
+            "proposed_actions": proposed_actions,
+            "action_results": action_results,
+        })
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Claude API call failed: {e}")
-        raise HTTPException(status_code=502, detail=f"AI service error: {str(e)}")
-
-    reply = result["reply"]
-    output_tokens = result["output_tokens"]
-    input_tokens = result["input_tokens"]
-
-    # Append assistant reply
-    conversation_repo.append_message(
-        conversation["id"], "assistant", reply, output_tokens
-    )
-
-    # Parse any proposed actions
-    proposed_actions = parse_actions(reply)
-
-    # If execute_actions is True and there are actions, execute them
-    action_results = []
-    if data.execute_actions and proposed_actions:
-        for action in proposed_actions:
-            action_result = execute_action(action)
-            action_results.append(action_result)
-            conversation_repo.record_action(
-                conversation["id"],
-                action.get("action", "unknown"),
-                action_result,
-            )
-
-    # Get updated token totals and staleness
-    updated_conv = conversation_repo.get(conversation["id"])
-    total_tokens = updated_conv.get("total_tokens", 0)
-    staleness = chat_service.check_staleness(total_tokens)
-
-    return JSONResponse({
-        "conversation_id": conversation["id"],
-        "reply": reply,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens_used": total_tokens,
-        "staleness": staleness,
-        "proposed_actions": proposed_actions,
-        "action_results": action_results,
-    })
+        logger.error(f"AI chat endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 
 @router.post("/api/ai/actions/execute")

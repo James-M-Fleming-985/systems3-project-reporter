@@ -70,39 +70,53 @@ def _load_project_yaml(project_code: str) -> Optional[Dict[str, Any]]:
 
 def _load_risks(program_name: str) -> List[Dict[str, Any]]:
     """Load risks for a program from the risk repository."""
-    from repositories.risk_repository import RiskRepository
-    repo = RiskRepository()
-    return repo.load_risks(program_name) or []
+    try:
+        from repositories.risk_repository import RiskRepository
+        repo = RiskRepository()
+        return repo.load_risks(program_name) or []
+    except Exception as e:
+        logger.warning(f"Failed to load risks for {program_name}: {e}")
+        return []
 
 
 def _load_schedules(project_name: str) -> Dict[str, Any]:
     """Load schedule tables for a project."""
-    from repositories.schedule_repository import ScheduleRepository
-    repo = ScheduleRepository(DATA_DIR)
-    return repo.get_schedules(project_name)
+    try:
+        from repositories.schedule_repository import ScheduleRepository
+        repo = ScheduleRepository(DATA_DIR)
+        return repo.get_schedules(project_name)
+    except Exception as e:
+        logger.warning(f"Failed to load schedules for {project_name}: {e}")
+        return {}
 
 
 def _summarize_portfolio() -> str:
     """Build a concise portfolio summary across all programs."""
-    from repositories.project_repository import ProjectRepository
-    repo = ProjectRepository(data_dir=DATA_DIR)
-    projects = repo.load_all_projects()
+    try:
+        import datetime
+        from repositories.project_repository import ProjectRepository
+        repo = ProjectRepository(data_dir=DATA_DIR)
+        projects = repo.load_all_projects()
 
-    if not projects:
-        return "No projects loaded in portfolio."
+        if not projects:
+            return "No projects loaded in portfolio."
 
-    lines = [f"Portfolio: {len(projects)} programs"]
-    for p in projects[:20]:
-        milestones = p.milestones or []
-        overdue = sum(1 for m in milestones if m.get("status") == "OVERDUE" or (
-            m.get("status") != "COMPLETED" and m.get("target_date", "") and m.get("target_date", "") < __import__("datetime").date.today().isoformat()
-        ))
-        completed = sum(1 for m in milestones if m.get("status") == "COMPLETED")
-        lines.append(
-            f"  - {p.project_name} ({p.project_code}): "
-            f"{len(milestones)} milestones, {completed} completed, {overdue} overdue"
-        )
-    return "\n".join(lines)
+        today_iso = datetime.date.today().isoformat()
+        lines = [f"Portfolio: {len(projects)} programs"]
+        for p in projects[:20]:
+            milestones = p.milestones or []
+            overdue = sum(1 for m in milestones if m.get("status") == "OVERDUE" or (
+                m.get("status") != "COMPLETED" and m.get("target_date", "") and str(m.get("target_date", "")) < today_iso
+            ))
+            completed = sum(1 for m in milestones if m.get("status") == "COMPLETED")
+            lines.append(
+                f"  - {p.project_name} ({p.project_code}): "
+                f"{len(milestones)} milestones, {completed} completed, {overdue} overdue"
+            )
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Failed to summarize portfolio: {e}")
+        return "Portfolio summary unavailable."
 
 
 def build_milestone_context(project_code: str, milestone_id: str) -> str:
