@@ -1608,9 +1608,6 @@ function toggleAddTaskForm(show) {
     if (show) {
         document.getElementById('newTaskName').value = '';
         document.getElementById('newTaskDate').value = '';
-        document.getElementById('newTaskCadence').value = 'none';
-        document.getElementById('newTaskOccurrences').value = '4';
-        document.getElementById('occurrencesGroup').classList.add('hidden');
         document.getElementById('newTaskName').focus();
     }
 }
@@ -1635,20 +1632,12 @@ async function saveNewTask() {
 
     const parentId = milestone.id || milestone.name;
 
-    // Recurrence params
-    const cadence = document.getElementById('newTaskCadence').value;
-    const occurrences = parseInt(document.getElementById('newTaskOccurrences').value) || 1;
-
     const payload = {
         project_code: milestone.project || projectCode,
         parent_milestone_id: parentId,
         name: name,
         target_date: document.getElementById('newTaskDate').value || '',
     };
-    if (cadence && cadence !== 'none') {
-        payload.recurrence_cadence = cadence;
-        payload.recurrence_count = occurrences;
-    }
 
     try {
         const response = await fetch('/milestones/create-task', {
@@ -1659,8 +1648,7 @@ async function saveNewTask() {
 
         const data = await response.json();
         if (response.ok && data.success) {
-            const countMsg = data.tasks_created > 1 ? ` (${data.tasks_created} occurrences)` : '';
-            showToast(`Task "${name}" added${countMsg}`, 'bg-green-600');
+            showToast(`Task "${name}" added`, 'bg-green-600');
             toggleAddTaskForm(false);
             // Refresh the related tasks list
             loadRelatedTasks();
