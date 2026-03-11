@@ -630,7 +630,18 @@
             return _navPrograms;
         }
 
+        let _navCloseTimer = null;
+
         async function openNavDropdown(groupEl) {
+            // Cancel any pending close
+            if (_navCloseTimer) { clearTimeout(_navCloseTimer); _navCloseTimer = null; }
+            // Close all OTHER open dropdowns immediately
+            document.querySelectorAll('.nav-tab-group').forEach(g => {
+                if (g !== groupEl) {
+                    const d = g.querySelector('.nav-tab-dropdown');
+                    if (d) d.classList.add('hidden');
+                }
+            });
             const dropdown = groupEl.querySelector('.nav-tab-dropdown');
             if (!dropdown) return;
             if (!groupEl.dataset.populated) {
@@ -659,8 +670,12 @@
         }
 
         function closeNavDropdown(groupEl) {
-            const d = groupEl.querySelector('.nav-tab-dropdown');
-            if (d) d.classList.add('hidden');
+            // Small delay prevents flicker when moving between tab and dropdown
+            _navCloseTimer = setTimeout(() => {
+                const d = groupEl.querySelector('.nav-tab-dropdown');
+                if (d) d.classList.add('hidden');
+                _navCloseTimer = null;
+            }, 120);
         }
 
         // ── Mobile Navigation ────────────────────────────────────

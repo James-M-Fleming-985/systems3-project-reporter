@@ -11,6 +11,7 @@ import logging
 import os
 import yaml
 import re
+import time
 from datetime import datetime
 
 from repositories.project_repository import ProjectRepository
@@ -37,6 +38,10 @@ router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
+
+# Simple in-memory cache for calendar events (avoids re-reading all YAML/JSON on every request)
+_calendar_cache: Dict[str, Any] = {"events": None, "timestamp": 0.0}
+CALENDAR_CACHE_TTL = 60  # seconds
 
 
 def get_build_version():
@@ -77,7 +82,16 @@ async def get_calendar_events(request: Request):
     Aggregates: milestones, schedule items, changes, risk due dates.
     
     Returns events in FullCalendar-compatible format.
+    Uses a short-lived in-memory cache to avoid re-reading all files on every request.
     """
+    # Check cache
+    now = time.time()
+    if _calendar_cache["events"] is not None and (now - _calendar_cache["timestamp"]) < CALENDAR_CACHE_TTL:
+        cached = _calendar_cache["events"]
+        response = JSONResponse(content={"events": cached, "total": len(cached)})
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
     events = []
     
     try:
@@ -755,6 +769,11 @@ async def get_calendar_events(request: Request):
         
         logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs"
                     f" (filtered {len(archived_identifiers)} archived identifiers, {completed_count} completed)")
+
+        # Update cache
+        _calendar_cache["events"] = events
+        _calendar_cache["timestamp"] = time.time()
+
         response = JSONResponse(content={"events": events, "total": len(events)})
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
