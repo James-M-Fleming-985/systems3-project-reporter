@@ -71,7 +71,7 @@ class AIChatPanel {
                 <!-- Messages -->
                 <div class="ai-chat-messages" id="aiChatMessages">
                     <div class="ai-chat-welcome">
-                        <p>Ask me about risks, timelines, dependencies, critical paths, or tell me to add tasks and update tables.</p>
+                        <p>Ask me anything about this item — risks, timelines, dependencies, or related business questions. I can also add tasks and update tables.</p>
                     </div>
                 </div>
 
@@ -131,6 +131,7 @@ class AIChatPanel {
                     { icon: '🛡️', label: 'Suggest Mitigations', prompt: 'Suggest mitigation strategies for this risk.' },
                     { icon: '📦', label: 'Create Work Package', prompt: 'Create a mitigation work package - propose milestone tasks that when completed will mitigate this risk.' },
                     { icon: '📊', label: 'Risk Assessment', prompt: 'Provide a detailed risk assessment including impact analysis and likelihood evaluation.' },
+                    { icon: '💡', label: 'Advise Me', prompt: 'Based on this risk, what broader business questions should I be asking and who should I consult?' },
                 ];
             case 'schedule':
                 return [
@@ -358,7 +359,7 @@ class AIChatPanel {
         const msgs = this.container.querySelector('#aiChatMessages');
         if (msgs) {
             msgs.innerHTML = `<div class="ai-chat-welcome">
-                <p>Ask me about risks, timelines, dependencies, critical paths, or tell me to add tasks and update tables.</p>
+                <p>Ask me anything about this item — risks, timelines, dependencies, or related business questions. I can also add tasks and update tables.</p>
             </div>`;
         }
         this._updateTokenCounter();
@@ -404,7 +405,7 @@ class AIChatPanel {
 
         if (messages.length === 0) {
             msgs.innerHTML = `<div class="ai-chat-welcome">
-                <p>Ask me about risks, timelines, dependencies, critical paths, or tell me to add tasks and update tables.</p>
+                <p>Ask me anything about this item — risks, timelines, dependencies, or related business questions. I can also add tasks and update tables.</p>
             </div>`;
             return;
         }

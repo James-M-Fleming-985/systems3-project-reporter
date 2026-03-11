@@ -141,7 +141,7 @@ async def ai_chat(request: Request, data: ChatRequest):
             system_prompt = _build_system_prompt(data)
         except Exception as ctx_err:
             logger.warning(f"Context builder error, using fallback: {ctx_err}", exc_info=True)
-            system_prompt = "You are a helpful project management AI assistant. Answer questions about project risks, timelines, milestones, and scheduling."
+            system_prompt = "You are a helpful AI assistant embedded in a project management tool. Answer any question the user asks — including project risks, timelines, milestones, scheduling, and any related business, legal, financial, or operational topics that arise from their projects."
 
         # Send to Claude
         try:
