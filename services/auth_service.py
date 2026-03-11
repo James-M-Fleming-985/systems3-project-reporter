@@ -51,7 +51,7 @@ def _get_or_create_secret_key() -> str:
 
 
 SECRET_KEY = _get_or_create_secret_key()
-TOKEN_EXPIRY_HOURS = 24 * 7  # 1 week
+TOKEN_EXPIRY_HOURS = 24  # 24 hours
 
 
 class AuthService:
@@ -147,9 +147,15 @@ class AuthService:
         if not email or '@' not in email:
             return False, "Invalid email address", None
         
-        # Validate password
+        # Validate password complexity
         if len(password) < 8:
             return False, "Password must be at least 8 characters", None
+        if not any(c.isupper() for c in password):
+            return False, "Password must contain at least one uppercase letter", None
+        if not any(c.isdigit() for c in password):
+            return False, "Password must contain at least one number", None
+        if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in password):
+            return False, "Password must contain at least one special character", None
         
         # Check if user already exists
         auth_data = self._load_auth_data()
@@ -180,6 +186,7 @@ class AuthService:
         self._save_auth_data(auth_data)
         
         logger.info(f"User registered: {email} (admin: {is_admin})")
+        self._audit_log("user_registered", user_id, email)
         
         # Return user data (without sensitive fields)
         safe_user = {
@@ -208,6 +215,7 @@ class AuthService:
         
         # Verify password
         if not self._verify_password(password, user_record["password_hash"], user_record["salt"]):
+            self._audit_log("login_failed", user_record["user_id"], email)
             return False, "Invalid email or password", None, None
         
         # Update last login
@@ -223,6 +231,7 @@ class AuthService:
         )
         
         logger.info(f"User logged in: {email}")
+        self._audit_log("login_success", user_record["user_id"], email)
         
         # Return user data (without sensitive fields)
         safe_user = {
@@ -289,9 +298,15 @@ class AuthService:
         if not self._verify_password(old_password, user_record["password_hash"], user_record["salt"]):
             return False, "Current password is incorrect"
         
-        # Validate new password
+        # Validate new password complexity
         if len(new_password) < 8:
             return False, "New password must be at least 8 characters"
+        if not any(c.isupper() for c in new_password):
+            return False, "New password must contain at least one uppercase letter"
+        if not any(c.isdigit() for c in new_password):
+            return False, "New password must contain at least one number"
+        if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in new_password):
+            return False, "New password must contain at least one special character"
         
         # Hash new password
         password_hash, salt = self._hash_password(new_password)
@@ -302,6 +317,7 @@ class AuthService:
         self._save_auth_data(auth_data)
         
         logger.info(f"Password changed for: {email}")
+        self._audit_log("password_changed", user_record["user_id"], email)
         
         return True, "Password changed successfully"
     
@@ -321,3 +337,20 @@ class AuthService:
             })
         
         return users
+
+    def _audit_log(self, event_type: str, user_id: str, email: str):
+        """Write security audit log entry"""
+        try:
+            audit_dir = self.data_dir / "audit_logs"
+            audit_dir.mkdir(parents=True, exist_ok=True)
+            log_file = audit_dir / f"audit_{datetime.utcnow().strftime('%Y-%m')}.jsonl"
+            entry = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "event": event_type,
+                "user_id": user_id,
+                "email": email,
+            }
+            with open(log_file, "a") as f:
+                f.write(json.dumps(entry) + "\n")
+        except Exception as e:
+            logger.error(f"Failed to write audit log: {e}")

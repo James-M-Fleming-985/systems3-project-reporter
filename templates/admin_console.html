@@ -128,6 +128,7 @@
             <button onclick="switchTab('users')" class="admin-tab" data-tab="users">👥 Users</button>
             <button onclick="switchTab('feedback')" class="admin-tab" data-tab="feedback">💬 Feedback</button>
             <button onclick="switchTab('marketing')" class="admin-tab" data-tab="marketing">📣 Marketing</button>
+            <button onclick="switchTab('security')" class="admin-tab" data-tab="security">🔒 Security</button>
             <button onclick="switchTab('settings')" class="admin-tab" data-tab="settings">⚙️ Settings</button>
         </nav>
     </div>
@@ -314,6 +315,78 @@
             </div>
         </div>
 
+        <!-- ═══════════════ SECURITY TAB ═══════════════ -->
+        <div id="tab-security" class="tab-panel hidden">
+            <!-- Security Overview Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="admin-stat">
+                    <div class="text-3xl font-bold text-green-600" id="sec-logins">—</div>
+                    <div class="text-sm text-gray-500 mt-1">Successful Logins</div>
+                    <div class="text-xs text-gray-400" id="sec-month-label">This month</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="text-3xl font-bold text-red-600" id="sec-failed">—</div>
+                    <div class="text-sm text-gray-500 mt-1">Failed Logins</div>
+                    <div class="text-xs text-gray-400">This month</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="text-3xl font-bold text-blue-600" id="sec-registrations">—</div>
+                    <div class="text-sm text-gray-500 mt-1">New Registrations</div>
+                    <div class="text-xs text-gray-400">This month</div>
+                </div>
+                <div class="admin-stat">
+                    <div class="text-3xl font-bold text-amber-600" id="sec-pw-changes">—</div>
+                    <div class="text-sm text-gray-500 mt-1">Password Changes</div>
+                    <div class="text-xs text-gray-400">This month</div>
+                </div>
+            </div>
+
+            <!-- User Activity Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+                    <div class="text-2xl font-bold text-green-700" id="sec-active24">—</div>
+                    <div class="text-sm text-green-600">Active last 24h</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
+                    <div class="text-2xl font-bold text-amber-700" id="sec-never-login">—</div>
+                    <div class="text-sm text-amber-600">Never logged in</div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+                    <div class="text-2xl font-bold text-blue-700" id="sec-total-events">—</div>
+                    <div class="text-sm text-blue-600">Total audit events</div>
+                </div>
+            </div>
+
+            <!-- Security Controls Health -->
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🛡️ Security Controls</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="secControlsGrid">
+                    <div class="text-center py-6 text-gray-400">Loading controls...</div>
+                </div>
+            </div>
+
+            <!-- Audit Log -->
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h3 class="text-lg font-bold text-gray-800">📋 Audit Log</h3>
+                    <div class="flex items-center gap-3">
+                        <input type="month" id="auditMonth" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500" onchange="loadAuditLog()">
+                        <select id="auditEventFilter" onchange="loadAuditLog()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Events</option>
+                            <option value="login_success">Login Success</option>
+                            <option value="login_failed">Login Failed</option>
+                            <option value="user_registered">Registration</option>
+                            <option value="password_changed">Password Changed</option>
+                            <option value="account_deleted">Account Deleted</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="auditLogContainer" class="space-y-2 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-gray-400">Loading audit events...</div>
+                </div>
+            </div>
+        </div>
+
     </div><!-- end .p-6 tab content wrapper -->
 </div><!-- end white card -->
 
@@ -329,6 +402,7 @@ function switchTab(tab) {
     if (tab === 'overview') loadOverview();
     if (tab === 'users') loadUsers();
     if (tab === 'feedback') loadFeedback();
+    if (tab === 'security') loadSecurity();
 }
 
 // ── Overview ─────────────────────────────────────────────────
@@ -565,6 +639,114 @@ function copyToClipboard(elementId) {
     // Flash feedback
     el.classList.add('ring-2', 'ring-green-400');
     setTimeout(() => el.classList.remove('ring-2', 'ring-green-400'), 1000);
+}
+
+// ── Security ─────────────────────────────────────────────────
+async function loadSecurity() {
+    // Set default month input to current month
+    const monthInput = document.getElementById('auditMonth');
+    if (monthInput && !monthInput.value) {
+        const now = new Date();
+        monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+    await Promise.all([loadSecuritySummary(), loadSecurityControls(), loadAuditLog()]);
+}
+
+async function loadSecuritySummary() {
+    try {
+        const resp = await fetch('/admin/api/security/summary');
+        const data = await resp.json();
+        document.getElementById('sec-logins').textContent = data.login_success ?? '—';
+        document.getElementById('sec-failed').textContent = data.login_failed ?? '—';
+        document.getElementById('sec-registrations').textContent = data.registrations ?? '—';
+        document.getElementById('sec-pw-changes').textContent = data.password_changes ?? '—';
+        document.getElementById('sec-active24').textContent = data.active_24h ?? '—';
+        document.getElementById('sec-never-login').textContent = data.never_logged_in ?? '—';
+        document.getElementById('sec-total-events').textContent = data.total_events ?? '—';
+        document.getElementById('sec-month-label').textContent = data.month || 'This month';
+    } catch (e) {
+        console.error('Failed to load security summary', e);
+    }
+}
+
+async function loadSecurityControls() {
+    try {
+        const resp = await fetch('/admin/api/security/controls');
+        const data = await resp.json();
+        const grid = document.getElementById('secControlsGrid');
+        const catIcons = { auth:'🔑', headers:'🌐', rate:'⏱️', data:'💾', monitoring:'📊' };
+        grid.innerHTML = (data.controls || []).map(c => `
+            <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-100">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">${catIcons[c.category] || '🔒'}</span>
+                    <div>
+                        <div class="text-sm font-semibold text-gray-800">${esc(c.name)}</div>
+                        <div class="text-xs text-gray-500">${esc(c.value)}</div>
+                    </div>
+                </div>
+                <span class="pill ${c.status === 'active' ? 'pill-green' : 'pill-yellow'}">${c.status}</span>
+            </div>
+        `).join('');
+    } catch (e) {
+        document.getElementById('secControlsGrid').innerHTML = '<div class="text-center py-4 text-red-400">Failed to load controls</div>';
+    }
+}
+
+async function loadAuditLog() {
+    try {
+        const month = document.getElementById('auditMonth')?.value || '';
+        const eventType = document.getElementById('auditEventFilter')?.value || '';
+        let url = '/admin/api/security/audit-log';
+        const params = [];
+        if (month) params.push('month=' + month);
+        if (eventType) params.push('event_type=' + eventType);
+        if (params.length) url += '?' + params.join('&');
+
+        const resp = await fetch(url);
+        const data = await resp.json();
+        const container = document.getElementById('auditLogContainer');
+        const events = data.events || [];
+
+        if (events.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-400">No audit events found for this period</div>';
+            return;
+        }
+
+        const eventColors = {
+            login_success: 'pill-green',
+            login_failed: 'pill-red',
+            user_registered: 'pill-blue',
+            password_changed: 'pill-yellow',
+            account_deleted: 'pill-red'
+        };
+        const eventLabels = {
+            login_success: 'Login OK',
+            login_failed: 'Login Failed',
+            user_registered: 'Registered',
+            password_changed: 'Password Changed',
+            account_deleted: 'Account Deleted'
+        };
+
+        container.innerHTML = events.map(ev => {
+            const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—';
+            const evtClass = eventColors[ev.event] || 'pill-gray';
+            const evtLabel = eventLabels[ev.event] || ev.event;
+            return `
+                <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-gray-100 text-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="pill ${evtClass}">${evtLabel}</span>
+                        <span class="text-gray-700 font-medium">${esc(ev.email || '—')}</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-gray-400 text-xs">
+                        ${ev.ip ? '<span>IP: ' + esc(ev.ip) + '</span>' : ''}
+                        <span>${ts}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        document.getElementById('auditLogContainer').innerHTML = '<div class="text-center py-4 text-red-400">Failed to load audit log</div>';
+    }
 }
 
 // ── Helpers ──────────────────────────────────────────────────

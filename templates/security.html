@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Security Certification - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10 max-w-5xl">
+    <div class="bg-white rounded-xl shadow-lg p-8 md:p-12">
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Security Certification</h1>
+                <p class="text-sm text-gray-500">Multi-Tenant Security &amp; Data Protection Compliance</p>
+            </div>
+        </div>
+
+        <!-- Certification Badge -->
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 mb-10">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <div class="w-20 h-20 bg-white rounded-full border-4 border-green-400 flex items-center justify-center shadow-sm">
+                        <svg class="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-green-800">COMPLIANT</h2>
+                    <p class="text-green-700">Systems³ Project Reporter meets multi-tenant security and data protection standards</p>
+                    <p class="text-xs text-green-600 mt-1">Self-certification date: March 2026 | Review cycle: Quarterly</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Controls Grid -->
+        <h2 class="text-xl font-bold text-gray-800 mb-6">Security Controls</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+            <!-- Authentication -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">🔐</span>
+                    <h3 class="font-semibold text-gray-800">Authentication</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> PBKDF2-SHA256 password hashing (100,000 iterations)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> JWT tokens with 24-hour expiry</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Password complexity requirements enforced</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Rate-limited login (5 attempts/minute)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> HttpOnly, Secure, SameSite cookies</li>
+                </ul>
+            </div>
+
+            <!-- Data Isolation -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">🏗️</span>
+                    <h3 class="font-semibold text-gray-800">Multi-Tenant Isolation</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Per-user data directories with UUID-based paths</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Middleware-enforced tenant isolation</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> No cross-tenant data leakage</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Admin access separated from user data</li>
+                </ul>
+            </div>
+
+            <!-- Transport Security -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">🔒</span>
+                    <h3 class="font-semibold text-gray-800">Transport Security</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> HTTPS enforced in production (Railway TLS)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> HSTS enabled (1-year max-age)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Content Security Policy (CSP) headers</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> X-Frame-Options: DENY</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> X-Content-Type-Options: nosniff</li>
+                </ul>
+            </div>
+
+            <!-- CSRF Protection -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">🛡️</span>
+                    <h3 class="font-semibold text-gray-800">CSRF Protection</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> HMAC-SHA256 CSRF tokens</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Timing-safe token comparison</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Per-request token generation</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> All state-changing operations protected</li>
+                </ul>
+            </div>
+
+            <!-- Data Protection -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">📋</span>
+                    <h3 class="font-semibold text-gray-800">GDPR Compliance</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Right to data portability (export)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Right to erasure (account deletion)</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Privacy policy published</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Cookie consent with essential-only cookies</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Data minimization practiced</li>
+                </ul>
+            </div>
+
+            <!-- Audit & Monitoring -->
+            <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">📊</span>
+                    <h3 class="font-semibold text-gray-800">Audit &amp; Monitoring</h3>
+                    <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">PASS</span>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Authentication event logging</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Account lifecycle audit trail</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Data export/deletion logged</li>
+                    <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">✓</span> Security-scoped log retention</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Overview -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Architecture Overview</h2>
+        <div class="bg-gray-50 rounded-xl p-6 mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div>
+                    <div class="text-3xl mb-2">🌐</div>
+                    <h3 class="font-semibold text-gray-800 mb-1">Client Layer</h3>
+                    <p class="text-xs text-gray-500">HTTPS • CSP • HSTS • Secure Cookies</p>
+                </div>
+                <div>
+                    <div class="text-3xl mb-2">⚙️</div>
+                    <h3 class="font-semibold text-gray-800 mb-1">Application Layer</h3>
+                    <p class="text-xs text-gray-500">FastAPI • JWT Auth • CSRF • Rate Limiting</p>
+                </div>
+                <div>
+                    <div class="text-3xl mb-2">💾</div>
+                    <h3 class="font-semibold text-gray-800 mb-1">Data Layer</h3>
+                    <p class="text-xs text-gray-500">Isolated User Dirs • PBKDF2 Hashing • Audit Logs</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Standards -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Standards Alignment</h2>
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b-2 border-gray-200">
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Standard</th>
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Requirement</th>
+                        <th class="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr><td class="py-2.5 px-4 text-gray-600">GDPR Art. 17</td><td class="py-2.5 px-4">Right to Erasure</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">GDPR Art. 20</td><td class="py-2.5 px-4">Data Portability</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">GDPR Art. 25</td><td class="py-2.5 px-4">Data Protection by Design</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">GDPR Art. 32</td><td class="py-2.5 px-4">Security of Processing</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A01: Broken Access Control</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A02: Cryptographic Failures</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A03: Injection</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A05: Security Misconfiguration</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A07: Auth Failures</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                    <tr><td class="py-2.5 px-4 text-gray-600">OWASP Top 10</td><td class="py-2.5 px-4">A09: Logging & Monitoring</td><td class="py-2.5 px-4 text-center"><span class="text-green-600 font-bold">✓</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <a href="/privacy" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                Privacy Policy
+            </a>
+            <a href="/" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -39,7 +39,7 @@ def _csrf_token(request: Request) -> str:
 
 # Cookie settings
 AUTH_COOKIE_NAME = "systems3_auth"
-AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 1 week
+AUTH_COOKIE_MAX_AGE = 60 * 60 * 24  # 24 hours (matches JWT expiry)
 
 # Detect if running in production OR in GitHub Codespaces (both use HTTPS)
 IS_PRODUCTION = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("RAILWAY_PROJECT_ID") is not None

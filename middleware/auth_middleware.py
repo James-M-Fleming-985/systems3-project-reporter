@@ -21,6 +21,8 @@ PUBLIC_ROUTES = {
     "/register",
     "/api/auth/login",
     "/api/auth/register",
+    "/privacy",
+    "/security",
     "/health",
     "/favicon.ico",
     "/robots.txt",
@@ -137,6 +139,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         return None
 
 
+import re
+
+_UUID_PATTERN = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+
+def _validate_user_id(user_id: str) -> bool:
+    """Validate that user_id is a proper UUID to prevent path traversal"""
+    return bool(_UUID_PATTERN.match(user_id))
+
+
 def get_user_data_path(user_id: str, is_admin: bool = False) -> Path:
     """
     Get the data storage path for a specific user.
@@ -150,6 +162,9 @@ def get_user_data_path(user_id: str, is_admin: bool = False) -> Path:
         # Admin sees all data in the main directory
         return base_data_dir
     else:
+        # Validate user_id is a proper UUID to prevent path traversal
+        if not _validate_user_id(user_id):
+            raise ValueError(f"Invalid user_id format: {user_id}")
         # Regular users get isolated directories
         user_data_dir = base_data_dir / "users" / user_id
         user_data_dir.mkdir(parents=True, exist_ok=True)

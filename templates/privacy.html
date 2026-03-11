@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - Systems³ Project Reporter{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10 max-w-4xl">
+    <div class="bg-white rounded-xl shadow-lg p-8 md:p-12">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Privacy Policy</h1>
+                <p class="text-sm text-gray-500">Last updated: March 2026</p>
+            </div>
+        </div>
+
+        <div class="prose prose-blue max-w-none space-y-8">
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">1. Data Controller</h2>
+                <p class="text-gray-600 mt-3">Systems³ Project Reporter ("we", "us") acts as the data controller for personal data processed through this application. We are committed to protecting your privacy and complying with applicable data protection regulations including GDPR.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">2. Data We Collect</h2>
+                <div class="mt-3 space-y-3">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">Account Data</h3>
+                        <ul class="list-disc list-inside text-gray-600 space-y-1">
+                            <li>Email address (for authentication)</li>
+                            <li>Full name (display purposes)</li>
+                            <li>Hashed password (PBKDF2-SHA256 with 100,000 iterations)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">Project Data</h3>
+                        <ul class="list-disc list-inside text-gray-600 space-y-1">
+                            <li>Project files you upload (XML, YAML)</li>
+                            <li>Milestones, risks, schedules, and notes you create</li>
+                            <li>AI chat conversations (stored per-user)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">Technical Data</h3>
+                        <ul class="list-disc list-inside text-gray-600 space-y-1">
+                            <li>Authentication tokens (JWT, session-scoped)</li>
+                            <li>Security audit logs (login events, data operations)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">3. How We Use Your Data</h2>
+                <ul class="list-disc list-inside text-gray-600 mt-3 space-y-2">
+                    <li><strong>Authentication:</strong> To verify your identity and secure your account</li>
+                    <li><strong>Service delivery:</strong> To provide project management and reporting features</li>
+                    <li><strong>AI assistance:</strong> Chat conversations are sent to Anthropic's Claude API for processing (subject to Anthropic's privacy policy)</li>
+                    <li><strong>Security:</strong> To detect and prevent unauthorized access</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">4. Data Isolation (Multi-Tenant)</h2>
+                <p class="text-gray-600 mt-3">Each user's data is stored in isolated directories. Users can only access their own projects and data. Admin users can view organizational data but cannot access other users' credentials.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">5. Your Rights (GDPR)</h2>
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="border border-green-200 bg-green-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-green-800 mb-1">📥 Right to Data Portability</h3>
+                        <p class="text-sm text-green-700">Export all your data as a ZIP file from your account settings.</p>
+                    </div>
+                    <div class="border border-red-200 bg-red-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-red-800 mb-1">🗑️ Right to Erasure</h3>
+                        <p class="text-sm text-red-700">Delete your account and all associated data permanently.</p>
+                    </div>
+                    <div class="border border-blue-200 bg-blue-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-800 mb-1">👁️ Right of Access</h3>
+                        <p class="text-sm text-blue-700">View all data we hold about you via data export.</p>
+                    </div>
+                    <div class="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-purple-800 mb-1">✏️ Right to Rectification</h3>
+                        <p class="text-sm text-purple-700">Update your profile information at any time.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">6. Data Retention</h2>
+                <p class="text-gray-600 mt-3">Your data is retained for as long as your account is active. Upon account deletion, all personal data and project data are permanently removed. Security audit logs are retained for 12 months for compliance purposes.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">7. Cookies</h2>
+                <p class="text-gray-600 mt-3">We use a single essential authentication cookie (<code>systems3_auth</code>) to maintain your login session. This cookie is:</p>
+                <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                    <li>HttpOnly (not accessible via JavaScript)</li>
+                    <li>Secure (transmitted only over HTTPS in production)</li>
+                    <li>SameSite=Lax (protection against CSRF attacks)</li>
+                </ul>
+                <p class="text-gray-600 mt-2">We do not use tracking cookies, advertising cookies, or third-party analytics cookies that process personal data.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">8. Third-Party Services</h2>
+                <ul class="list-disc list-inside text-gray-600 mt-3 space-y-2">
+                    <li><strong>Anthropic Claude API:</strong> AI chat messages are processed by Anthropic. See <a href="https://www.anthropic.com/privacy" class="text-blue-600 hover:underline" target="_blank" rel="noopener">Anthropic's Privacy Policy</a>.</li>
+                    <li><strong>Railway:</strong> Application hosting. See <a href="https://railway.app/legal/privacy" class="text-blue-600 hover:underline" target="_blank" rel="noopener">Railway's Privacy Policy</a>.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">9. Contact</h2>
+                <p class="text-gray-600 mt-3">For privacy-related inquiries or to exercise your data rights, please contact the system administrator.</p>
+            </section>
+        </div>
+
+        <div class="mt-10 pt-6 border-t border-gray-200 flex flex-wrap gap-3">
+            <a href="/api/user/data-export" class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export My Data
+            </a>
+            <button onclick="confirmDeleteAccount()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Delete My Account
+            </button>
+            <a href="/security" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Security Certification
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div id="deleteAccountModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">Delete Account</h3>
+        </div>
+        <p class="text-gray-600 mb-2">This action is <strong>permanent and irreversible</strong>. All your data will be deleted including:</p>
+        <ul class="list-disc list-inside text-sm text-gray-500 mb-4 space-y-1">
+            <li>Your profile and credentials</li>
+            <li>All project data and files</li>
+            <li>AI chat conversations</li>
+            <li>Notes and custom configurations</li>
+        </ul>
+        <p class="text-sm text-red-600 font-medium mb-4">Type "DELETE" to confirm:</p>
+        <input type="text" id="deleteConfirmInput" placeholder="Type DELETE" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+        <div class="flex justify-end gap-3">
+            <button onclick="document.getElementById('deleteAccountModal').classList.add('hidden')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+            <button id="confirmDeleteBtn" onclick="executeDeleteAccount()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50" disabled>Delete Permanently</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDeleteAccount() {
+    document.getElementById('deleteAccountModal').classList.remove('hidden');
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+document.getElementById('deleteConfirmInput')?.addEventListener('input', function() {
+    document.getElementById('confirmDeleteBtn').disabled = this.value !== 'DELETE';
+});
+
+async function executeDeleteAccount() {
+    const input = document.getElementById('deleteConfirmInput');
+    if (input.value !== 'DELETE') return;
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+
+    try {
+        const resp = await fetch('/api/user/account', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert('Your account has been deleted. You will be redirected to the login page.');
+            window.location.href = '/login';
+        } else {
+            alert('Error: ' + (data.detail || 'Failed to delete account'));
+            btn.disabled = false;
+            btn.textContent = 'Delete Permanently';
+        }
+    } catch (e) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Delete Permanently';
+    }
+}
+</script>
+{% endblock %}

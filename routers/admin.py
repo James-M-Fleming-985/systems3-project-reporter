@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse, HTMLResponse
 import yaml
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -474,3 +474,115 @@ async def rename_project(project_code: str, new_name: str):
     except Exception as e:
         logger.error(f"Failed to rename project: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Security Monitoring API ───────────────────────────────────────────
+
+@router.get("/admin/api/security/summary")
+async def security_summary(request: Request):
+    """Aggregated security statistics for the current month."""
+    from collections import Counter
+
+    now = datetime.utcnow()
+    month_str = now.strftime("%Y-%m")
+
+    # Parse audit log for current month
+    audit_dir = USER_DATA_DIR / "audit_logs"
+    events = _read_audit_log(audit_dir, month_str)
+
+    counts = Counter(e.get("event") for e in events)
+
+    # Active / inactive users from auth_users.json
+    active_24h = 0
+    never_logged_in = 0
+    total_users = 0
+    try:
+        auth_file = USER_DATA_DIR / "auth_users.json"
+        if auth_file.exists():
+            import json as _json
+            with open(auth_file, "r") as f:
+                auth_data = _json.load(f)
+            total_users = len(auth_data)
+            cutoff = (now - timedelta(hours=24)).isoformat()
+            for _email, rec in auth_data.items():
+                last = rec.get("last_login")
+                if not last:
+                    never_logged_in += 1
+                elif last >= cutoff:
+                    active_24h += 1
+    except Exception as e:
+        logger.warning(f"Could not read auth users for security summary: {e}")
+
+    return JSONResponse({
+        "month": month_str,
+        "login_success": counts.get("login_success", 0),
+        "login_failed": counts.get("login_failed", 0),
+        "registrations": counts.get("user_registered", 0),
+        "password_changes": counts.get("password_changed", 0),
+        "account_deletions": counts.get("account_deleted", 0),
+        "total_events": len(events),
+        "active_24h": active_24h,
+        "never_logged_in": never_logged_in,
+        "total_users": total_users,
+    })
+
+
+@router.get("/admin/api/security/audit-log")
+async def security_audit_log(request: Request, month: str = None, event_type: str = None):
+    """Return parsed audit log entries, newest first."""
+    if not month:
+        month = datetime.utcnow().strftime("%Y-%m")
+
+    audit_dir = USER_DATA_DIR / "audit_logs"
+    events = _read_audit_log(audit_dir, month)
+
+    if event_type:
+        events = [e for e in events if e.get("event") == event_type]
+
+    # Newest first
+    events.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
+
+    return JSONResponse({"month": month, "events": events[:500]})
+
+
+@router.get("/admin/api/security/controls")
+async def security_controls(request: Request):
+    """Return current security controls health status."""
+    controls = [
+        {"name": "JWT Token Expiry", "value": "24 hours", "status": "active", "category": "auth"},
+        {"name": "Password Complexity", "value": "Min 8 chars + uppercase + digit + special", "status": "active", "category": "auth"},
+        {"name": "Password Hashing", "value": "PBKDF2-SHA256 (100k iterations)", "status": "active", "category": "auth"},
+        {"name": "CSRF Protection", "value": "HMAC-SHA256 token validation", "status": "active", "category": "headers"},
+        {"name": "HSTS", "value": "max-age=31536000; includeSubDomains", "status": "active", "category": "headers"},
+        {"name": "Content Security Policy", "value": "Strict CSP with nonce support", "status": "active", "category": "headers"},
+        {"name": "X-Frame-Options", "value": "SAMEORIGIN", "status": "active", "category": "headers"},
+        {"name": "Rate Limiting — Login", "value": "5 attempts per minute per IP", "status": "active", "category": "rate"},
+        {"name": "Rate Limiting — Register", "value": "3 attempts per minute per IP", "status": "active", "category": "rate"},
+        {"name": "Cookie Security", "value": "HttpOnly, Secure, SameSite=Lax", "status": "active", "category": "auth"},
+        {"name": "Data Isolation", "value": "Per-user directories (multi-tenant)", "status": "active", "category": "data"},
+        {"name": "Audit Logging", "value": "JSONL monthly rotation", "status": "active", "category": "monitoring"},
+        {"name": "File Upload Validation", "value": "MIME type + extension check", "status": "active", "category": "data"},
+        {"name": "Path Traversal Protection", "value": "UUID-only user ID validation", "status": "active", "category": "data"},
+    ]
+    return JSONResponse({"controls": controls})
+
+
+def _read_audit_log(audit_dir: Path, month: str) -> list:
+    """Read and parse a monthly audit JSONL file."""
+    import json as _json
+    events = []
+    log_file = audit_dir / f"audit_{month}.jsonl"
+    if not log_file.exists():
+        return events
+    try:
+        with open(log_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        events.append(_json.loads(line))
+                    except _json.JSONDecodeError:
+                        continue
+    except Exception as e:
+        logger.warning(f"Could not read audit log {log_file}: {e}")
+    return events

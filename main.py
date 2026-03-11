@@ -589,6 +589,14 @@ except ImportError as e:
     logger.warning(f"⚠️  Subscription features disabled: {e}")
     logger.warning("   Install 'stripe' and 'python-dotenv' to enable subscription features")
 
+# Compliance router has: /privacy, /security, /api/user/data-export, /api/user/account
+try:
+    from routers import compliance
+    app.include_router(compliance.router, tags=["compliance"])
+    logger.info("✅ Compliance (GDPR/Security) feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Compliance feature disabled: {e}")
+
 
 if __name__ == "__main__":
     import uvicorn

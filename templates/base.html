@@ -496,10 +496,24 @@
 
     <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-16" {% if ppt_export %}style="display: none;"{% endif %}>
-        <div class="container mx-auto px-4 py-6 text-center">
-            <p>&copy; 2026 Systems³ | Project Reporter v{{ build_version }} | Automation at exponential scale</p>
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+                <p class="text-sm">&copy; 2026 Systems³ | Project Reporter v{{ build_version }}</p>
+                <div class="flex items-center gap-4 text-sm">
+                    <a href="/privacy" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+                    <a href="/security" class="text-gray-400 hover:text-white transition">Security</a>
+                </div>
+            </div>
         </div>
     </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookieConsent" class="hidden fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 z-50 shadow-lg border-t border-gray-700">
+        <div class="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p class="text-sm text-gray-300">This application uses a single essential cookie for authentication. No tracking cookies are used. <a href="/privacy" class="text-blue-400 hover:underline">Learn more</a></p>
+            <button onclick="acceptCookies()" class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex-shrink-0">Accept</button>
+        </div>
+    </div>
 
     <script>
         // ── Notification Bell Logic ──────────────────────────────
@@ -740,6 +754,17 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
             .catch(function(err) { console.warn('SW registration failed:', err); });
+    }
+
+    // Cookie consent
+    if (!localStorage.getItem('cookieConsent')) {
+        const banner = document.getElementById('cookieConsent');
+        if (banner) banner.classList.remove('hidden');
+    }
+    function acceptCookies() {
+        localStorage.setItem('cookieConsent', 'accepted');
+        const banner = document.getElementById('cookieConsent');
+        if (banner) banner.classList.add('hidden');
     }
     </script>
 </body>

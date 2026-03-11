@@ -187,6 +187,15 @@ async def upload_xml(
         logger.info(f"Starting XML upload for user {user.user_id}")
         logger.info(f"Baseline upload: {is_baseline_upload}")
         
+        # Validate file type
+        allowed_extensions = {'.xml', '.XML'}
+        allowed_mimes = {'text/xml', 'application/xml', 'application/octet-stream'}
+        filename = file.filename or ''
+        if not any(filename.endswith(ext) for ext in allowed_extensions):
+            return JSONResponse({'success': False, 'error': 'Only XML files are accepted'}, status_code=400)
+        if file.content_type and file.content_type not in allowed_mimes:
+            return JSONResponse({'success': False, 'error': f'Invalid file type: {file.content_type}. Only XML files are accepted.'}, status_code=400)
+        
         # Check file size and subscription limits
         file_size_mb = len(await file.read()) / (1024 * 1024)
         await file.seek(0)  # Reset file position
@@ -1009,11 +1018,17 @@ async def upload_powerpoint_template(
 ):
     """Upload a PowerPoint template with organization branding"""
     try:
-        # Validate file type
+        # Validate file type (extension + MIME)
         if not file.filename.endswith('.pptx'):
             return JSONResponse({
                 'success': False,
                 'detail': 'Only .pptx PowerPoint files are accepted'
+            }, status_code=400)
+        pptx_mimes = {'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/octet-stream'}
+        if file.content_type and file.content_type not in pptx_mimes:
+            return JSONResponse({
+                'success': False,
+                'detail': f'Invalid file type: {file.content_type}. Only .pptx files are accepted.'
             }, status_code=400)
         
         # Generate unique template ID

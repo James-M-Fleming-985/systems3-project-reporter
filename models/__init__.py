@@ -18,6 +18,7 @@ class Milestone(BaseModel):
     notes: Optional[str] = None
     parent_project: Optional[str] = None  # Parent project for roadmap grouping (default level)
     resources: Optional[str] = None  # Resource names assigned to milestone
+    owner: Optional[str] = None  # Owner/responsible person for this milestone
     project: Optional[str] = None  # Project code this milestone belongs to
     outline_level: Optional[int] = None  # The outline level of this milestone in hierarchy
     parent_levels: Optional[Dict[str, str]] = None  # Parents at each level: {"2": "Name", "3": "Name"}
