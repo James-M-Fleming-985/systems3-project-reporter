@@ -188,13 +188,16 @@ async def upload_xml(
         logger.info(f"Baseline upload: {is_baseline_upload}")
         
         # Validate file type
-        allowed_extensions = {'.xml', '.XML'}
-        allowed_mimes = {'text/xml', 'application/xml', 'application/octet-stream'}
+        allowed_extensions = {'.xml', '.XML', '.yaml', '.YAML', '.yml', '.YML'}
+        allowed_mimes = {'text/xml', 'application/xml', 'application/octet-stream',
+                         'text/yaml', 'application/x-yaml', 'text/x-yaml',
+                         'application/yaml', 'text/plain'}
         filename = file.filename or ''
-        if not any(filename.endswith(ext) for ext in allowed_extensions):
-            return JSONResponse({'success': False, 'error': 'Only XML files are accepted'}, status_code=400)
+        file_ext = os.path.splitext(filename)[1].lower()
+        if file_ext not in {'.xml', '.yaml', '.yml'}:
+            return JSONResponse({'success': False, 'error': 'Only XML or YAML files are accepted'}, status_code=400)
         if file.content_type and file.content_type not in allowed_mimes:
-            return JSONResponse({'success': False, 'error': f'Invalid file type: {file.content_type}. Only XML files are accepted.'}, status_code=400)
+            return JSONResponse({'success': False, 'error': f'Invalid file type: {file.content_type}. Only XML or YAML files are accepted.'}, status_code=400)
         
         # Check file size and subscription limits
         file_size_mb = len(await file.read()) / (1024 * 1024)
@@ -215,14 +218,50 @@ async def upload_xml(
                 'limit_info': se.limit_info if hasattr(se, 'limit_info') else None
             }, status_code=402)
         
-        # Read and parse XML
+        # Read and parse file
         content = await file.read()
-        xml_content = content.decode('utf-8')
+        file_text = content.decode('utf-8')
         
-        logger.info("XML file read successfully")
+        is_yaml = file_ext in {'.yaml', '.yml'}
         
-        # Parse the XML
-        new_project = xml_parser.parse_string(xml_content)
+        if is_yaml:
+            logger.info("YAML file read successfully")
+            # Parse YAML project plan
+            from models import Project, Milestone
+            yaml_data = yaml.safe_load(file_text)
+            if not yaml_data or not isinstance(yaml_data, dict):
+                return JSONResponse({'success': False, 'error': 'Invalid YAML file: empty or not a mapping'}, status_code=400)
+            
+            # Ensure required fields
+            if 'project_name' not in yaml_data and 'project_code' not in yaml_data:
+                return JSONResponse({'success': False, 'error': 'YAML must contain project_name or project_code'}, status_code=400)
+            
+            # Fill defaults for required Project fields
+            yaml_data.setdefault('project_name', yaml_data.get('project_code', 'Untitled'))
+            yaml_data.setdefault('project_code', yaml_data['project_name'].replace(' ', '-')[:10])
+            yaml_data.setdefault('status', 'Active')
+            yaml_data.setdefault('start_date', '')
+            yaml_data.setdefault('target_completion', '')
+            yaml_data.setdefault('completion_percentage', 0)
+            yaml_data.setdefault('milestones', [])
+            yaml_data.setdefault('risks', [])
+            yaml_data.setdefault('changes', [])
+            
+            # Build Milestone objects with defaults for missing fields
+            milestones = []
+            for m in yaml_data.get('milestones', []):
+                if isinstance(m, dict):
+                    m.setdefault('status', 'NOT_STARTED')
+                    m.setdefault('target_date', '')
+                    milestones.append(m)
+            yaml_data['milestones'] = milestones
+            
+            new_project = Project(**{k: v for k, v in yaml_data.items()
+                                     if k in Project.__fields__})
+        else:
+            logger.info("XML file read successfully")
+            # Parse the XML
+            new_project = xml_parser.parse_string(file_text)
         
         logger.info(f"Parsed project: {new_project.project_name} ({new_project.project_code})")
         logger.info(f"Milestones found: {len(new_project.milestones)}")

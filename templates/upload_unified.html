@@ -45,23 +45,23 @@
             </svg>
             <div>
                 <h3 class="text-xl font-bold text-gray-800">Project Data</h3>
-                <p class="text-sm text-gray-600">MS Project XML files</p>
+                <p class="text-sm text-gray-600">MS Project XML or YAML files</p>
             </div>
         </div>
         
         <p class="text-gray-700 mb-4">
-            Upload Microsoft Project XML files to track milestones, timelines, and project progress.
+            Upload MS Project XML or YAML project plan files to track milestones, timelines, and project progress.
         </p>
         
         <ul class="text-sm text-gray-600 mb-4 space-y-1">
+            <li>✓ XML and YAML formats</li>
             <li>✓ Automatic change detection</li>
             <li>✓ Milestone tracking</li>
             <li>✓ Gantt chart generation</li>
-            <li>✓ Weekly update comparison</li>
         </ul>
         
         <button onclick="openProjectUploadModal()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-            Upload Project XML
+            Upload Project Data
         </button>
     </div>
 
@@ -430,7 +430,7 @@
     <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-bold text-gray-800">Upload Project XML</h3>
+                <h3 class="text-2xl font-bold text-gray-800">Upload Project Data</h3>
                 <button onclick="closeProjectUploadModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -462,9 +462,9 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="mt-4 text-lg text-gray-600">Drag and drop MS Project XML file</p>
-                <p class="text-sm text-gray-500 mt-2">or click to browse</p>
-                <input type="file" id="projectFileInput" accept=".xml" class="hidden">
+                <p class="mt-4 text-lg text-gray-600">Drag and drop MS Project XML or YAML file</p>
+                <p class="text-sm text-gray-500 mt-2">or click to browse (.xml, .yaml, .yml)</p>
+                <input type="file" id="projectFileInput" accept=".xml,.yaml,.yml" class="hidden">
             </div>
             
             <div id="projectFileInfo" class="hidden bg-blue-50 border border-blue-200 rounded p-4 mb-4">
@@ -496,7 +496,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span class="text-gray-700">Processing XML file...</span>
+                    <span class="text-gray-700">Processing project file...</span>
                 </div>
             </div>
             
@@ -827,8 +827,9 @@ projectFileInput.addEventListener('change', (e) => {
 });
 
 function handleProjectFile(file) {
-    if (!file.name.endsWith('.xml')) {
-        alert('Please select an XML file');
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xml') && !name.endsWith('.yaml') && !name.endsWith('.yml')) {
+        alert('Please select an XML or YAML file');
         return;
     }
     
