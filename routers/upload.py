@@ -249,8 +249,9 @@ async def upload_xml(
             
             # Build Milestone objects with defaults for missing fields
             milestones = []
-            for m in yaml_data.get('milestones', []):
+            for i, m in enumerate(yaml_data.get('milestones', [])):
                 if isinstance(m, dict):
+                    m.setdefault('name', f'Unnamed Task {i + 1}')
                     m.setdefault('status', 'NOT_STARTED')
                     m.setdefault('target_date', '')
                     milestones.append(m)
@@ -356,9 +357,9 @@ async def upload_xml(
         
         # Save uploaded file for reference
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{new_project.project_code}_{timestamp}.xml"
+        filename = f"{new_project.project_code}_{timestamp}{file_ext}"
         upload_path = UPLOAD_DIR / filename
-        upload_path.write_text(xml_content)
+        upload_path.write_text(file_text)
         
         logger.info(f"Saved upload to {upload_path}")
         
@@ -734,7 +735,7 @@ async def upload_xml(
             'success': False,
             'error': str(e),
             'error_type': 'general_error'
-        }, status_code=400)
+        }, status_code=500)
 
 
 @router.post("/upload/confirm")
