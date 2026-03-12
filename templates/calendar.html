@@ -395,7 +395,7 @@
 
 <!-- Event Detail Modal -->
 <div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[10000]">
-    <div class="event-modal relative top-10 mx-auto p-0 border w-[650px] max-w-[95vw] shadow-xl rounded-xl bg-white overflow-hidden max-h-[85vh]" id="eventModalInner" style="resize: both; overflow: auto; min-width: 320px; min-height: 250px;">
+    <div class="event-modal relative top-10 mx-auto p-0 border w-[650px] shadow-xl rounded-xl bg-white overflow-hidden" id="eventModalInner" style="resize: both; overflow: auto; min-width: 320px; min-height: 250px; max-width: none; max-height: none;">
         <!-- Modal Header -->
         <div id="eventModalHeader" class="px-6 py-4 text-white">
             <div class="flex items-center justify-between">
@@ -613,7 +613,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 completion_percentage: ep.completionPct || 0,
                                 notes: ep.notes || '',
                                 resources: ep.resources || ms.resources || '',
-                                parent_project: ep.parentProject || ms.parent_project || ''
+                                parent_project: ep.parentProject || ms.parent_project || '',
+                                is_true_milestone: ms.is_true_milestone,
+                                outline_level: ms.outline_level,
+                                parent_levels: ms.parent_levels
                             },
                             confirmed_date_change: false
                         };

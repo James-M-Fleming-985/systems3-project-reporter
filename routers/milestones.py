@@ -682,18 +682,15 @@ def update_milestone(data: MilestoneUpdate, request: Request):
             logger.warning(
                 f"❌ NO MATCH FOUND after searching {milestone_count}"
             )
-            similar = [
-                m['name'] for m in project_data.get('milestones', [])
-                if 'Kardex' in m['name'] or 'Gordano' in m['name']
-            ]
-            logger.warning(
-                f"Milestones containing 'Kardex' or 'Gordano': {similar}"
-            )
+            all_names = [m['name'] for m in project_data.get('milestones', [])]
+            logger.warning(f"All milestone names: {all_names}")
             raise HTTPException(
                 status_code=404,
                 detail=(
                     f"Milestone '{updated_milestone['name'].strip()}' "
-                    f"not found in {milestone_count} milestones"
+                    f"(id={updated_milestone.get('id')}) "
+                    f"not found in {milestone_count} milestones "
+                    f"for project '{project_code}'"
                 )
             )
         
