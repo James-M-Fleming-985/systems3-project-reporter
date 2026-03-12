@@ -45,6 +45,23 @@
         opacity: 0.5;
         transform: rotate(2deg);
     }
+    .date-drop-column.drag-over {
+        background-color: #EBF5FF !important;
+        border: 2px dashed #3B82F6 !important;
+        border-radius: 0.5rem;
+    }
+    .date-drop-column .drop-placeholder {
+        display: none;
+        border: 2px dashed #CBD5E1;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        color: #94A3B8;
+        margin: 0.5rem 0;
+    }
+    .date-drop-column.drag-over .drop-placeholder {
+        display: block;
+    }
     .milestone-card .drag-handle {
         cursor: grab;
         color: #CBD5E1;
@@ -605,19 +622,22 @@
 <!-- Week View (Hidden by default) -->
 <div id="weekView" class="hidden">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" style="overflow: hidden;" data-week-offset="-1" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastWeekRange"></p>
+            <div class="drop-placeholder">Drop here to move to last week</div>
             <div id="lastWeekCompleted" class="space-y-3 scrollable-milestone-container"></div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" style="overflow: hidden;" data-week-offset="0" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisWeekRange"></p>
+            <div class="drop-placeholder">Drop here to move to this week</div>
             <div id="thisWeekMilestones" class="space-y-3 scrollable-milestone-container"></div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6" style="overflow: hidden;">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" style="overflow: hidden;" data-week-offset="1" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Week</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextWeekRange"></p>
+            <div class="drop-placeholder">Drop here to move to next week</div>
             <div id="nextWeekMilestones" class="space-y-3 scrollable-milestone-container"></div>
         </div>
     </div>
@@ -626,19 +646,22 @@
 <!-- Month View (Hidden by default) -->
 <div id="monthView" class="hidden">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" data-month-offset="-1" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Last Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="lastMonthRange"></p>
+            <div class="drop-placeholder">Drop here to move to last month</div>
             <div id="lastMonthCompleted" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" data-month-offset="0" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-blue-800 mb-4">📍 This Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="thisMonthRange"></p>
+            <div class="drop-placeholder">Drop here to move to this month</div>
             <div id="thisMonthMilestones" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-6 date-drop-column" data-month-offset="1" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDateDrop(event)">
             <h3 class="text-xl font-bold text-gray-800 mb-4">📌 Next Month</h3>
             <p class="text-sm text-gray-500 mb-4" id="nextMonthRange"></p>
+            <div class="drop-placeholder">Drop here to move to next month</div>
             <div id="nextMonthMilestones" class="space-y-2 overflow-y-auto" style="max-height: 800px;"></div>
         </div>
     </div>
@@ -982,6 +1005,103 @@ async function handleDrop(e) {
     }
 }
 
+async function handleDateDrop(e) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.remove('drag-over');
+
+    const index = parseInt(e.dataTransfer.getData('text/plain'));
+    if (isNaN(index) || index < 0 || index >= allMilestonesFlat.length) return;
+
+    const milestone = allMilestonesFlat[index];
+    if (!milestone.target_date) {
+        showToast('Milestone has no target date to shift', 'bg-red-600');
+        return;
+    }
+    if (!milestone.project) {
+        showToast('Missing project information', 'bg-red-600');
+        return;
+    }
+
+    const oldDate = milestone.target_date;
+    const d = new Date(oldDate + 'T00:00:00');
+
+    const monthOffset = col.dataset.monthOffset;
+    const weekOffset = col.dataset.weekOffset;
+
+    if (monthOffset !== undefined) {
+        // Determine current column offset for this milestone
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const msMonth = d.getMonth();
+        const msYear = d.getFullYear();
+        const currentOffset = (msYear - currentYear) * 12 + (msMonth - currentMonth);
+        const targetOffset = parseInt(monthOffset);
+        const delta = targetOffset - currentOffset;
+        if (delta === 0) return; // Same column
+
+        const newMonth = d.getMonth() + delta;
+        const newYear = d.getFullYear() + Math.floor((d.getMonth() + delta) / 12);
+        const adjustedMonth = ((d.getMonth() + delta) % 12 + 12) % 12;
+        const maxDay = new Date(newYear, adjustedMonth + 1, 0).getDate();
+        d.setFullYear(newYear);
+        d.setMonth(adjustedMonth);
+        d.setDate(Math.min(d.getDate(), maxDay));
+    } else if (weekOffset !== undefined) {
+        const today = new Date();
+        const currentWeekStart = new Date(today);
+        currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+        currentWeekStart.setHours(0, 0, 0, 0);
+        const msWeekStart = new Date(d);
+        msWeekStart.setDate(msWeekStart.getDate() - msWeekStart.getDay());
+        msWeekStart.setHours(0, 0, 0, 0);
+        const currentOffset = Math.round((msWeekStart - currentWeekStart) / (7 * 24 * 60 * 60 * 1000));
+        const targetOffset = parseInt(weekOffset);
+        const delta = targetOffset - currentOffset;
+        if (delta === 0) return; // Same column
+
+        d.setDate(d.getDate() + delta * 7);
+    } else {
+        return;
+    }
+
+    const newDate = d.toISOString().split('T')[0];
+    if (newDate === oldDate) return;
+
+    // Optimistic update
+    milestone.target_date = newDate;
+    const currentView = document.querySelector('[id$="View"]:not(.hidden)');
+    if (currentView && currentView.id === 'monthView') populateMonthView();
+    else if (currentView && currentView.id === 'weekView') populateWeekView();
+
+    try {
+        const response = await fetch('/milestones/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: milestone.project,
+                milestone: { ...milestone, target_date: newDate },
+                confirmed_date_change: true
+            })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+            showToast(`Moved to ${newDate}`, 'bg-green-600');
+        } else {
+            milestone.target_date = oldDate;
+            if (currentView && currentView.id === 'monthView') populateMonthView();
+            else if (currentView && currentView.id === 'weekView') populateWeekView();
+            showToast('Failed to update date', 'bg-red-600');
+        }
+    } catch (err) {
+        milestone.target_date = oldDate;
+        if (currentView && currentView.id === 'monthView') populateMonthView();
+        else if (currentView && currentView.id === 'weekView') populateWeekView();
+        showToast('Network error', 'bg-red-600');
+    }
+}
+
 // ═══════════════════════════════════════════════════
 // WEEK / MONTH VIEWS (using modern cards)
 // ═══════════════════════════════════════════════════
@@ -1007,7 +1127,7 @@ function populateWeekView() {
 
     const renderList = (items, containerId, empty) => {
         document.getElementById(containerId).innerHTML = items.length > 0
-            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), false)).join('')
+            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
             : `<p class="text-sm text-gray-500">${empty}</p>`;
     };
 
@@ -1052,7 +1172,7 @@ function populateMonthView() {
 
     const renderList = (items, containerId, empty) => {
         document.getElementById(containerId).innerHTML = items.length > 0
-            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), false)).join('')
+            ? items.map(m => renderModernCard(m, allMilestonesFlat.indexOf(m), true)).join('')
             : `<p class="text-sm text-gray-500">${empty}</p>`;
     };
 
