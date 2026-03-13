@@ -305,7 +305,8 @@
 
 <!-- Tabbed Milestone Modal -->
 <div id="editMilestoneModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-3/4 lg:w-2/3 flex flex-col" style="resize: both; overflow: auto; min-width: 320px; min-height: 300px; max-width: 95vw; max-height: 90vh;">
+    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-3/4 lg:w-2/3" style="resize: both; overflow: auto; min-width: 320px; min-height: 300px; max-width: 95vw; max-height: 90vh;">
+      <div class="flex flex-col h-full">
         <!-- Modal Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div class="flex items-center space-x-3 flex-1 min-w-0">
@@ -502,6 +503,7 @@
                 Save Changes
             </button>
         </div>
+      </div>
     </div>
 </div>
 
@@ -510,7 +512,8 @@
 
 <!-- Kanban Settings Modal -->
 <div id="kanbanSettingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-1/2 flex flex-col" style="resize: both; overflow: auto; min-width: 280px; min-height: 200px; max-width: 95vw; max-height: 90vh;">
+    <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-1/2" style="resize: both; overflow: auto; min-width: 280px; min-height: 200px; max-width: 95vw; max-height: 90vh;">
+      <div class="flex flex-col h-full">
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-bold text-gray-900">⚙️ Kanban Column Settings</h3>
             <button onclick="closeKanbanSettings()" class="text-gray-400 hover:text-gray-600">
@@ -531,6 +534,7 @@
             <button onclick="closeKanbanSettings()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
             <button onclick="saveKanbanSettings()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">Save</button>
         </div>
+      </div>
     </div>
 </div>
 
