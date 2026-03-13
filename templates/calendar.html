@@ -395,7 +395,7 @@
 
 <!-- Event Detail Modal -->
 <div id="eventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[10000]">
-    <div class="event-modal relative top-10 mx-auto p-0 border w-[650px] shadow-xl rounded-xl bg-white overflow-hidden" id="eventModalInner" style="resize: both; overflow: auto; min-width: 320px; min-height: 250px; max-width: none; max-height: none;">
+    <div class="event-modal relative top-10 mx-auto p-0 border w-[650px] shadow-xl rounded-xl bg-white overflow-hidden" id="eventModalInner" style="resize: both; overflow: auto; min-width: 320px; min-height: 250px; max-width: 95vw; max-height: 90vh;">
         <!-- Modal Header -->
         <div id="eventModalHeader" class="px-6 py-4 text-white">
             <div class="flex items-center justify-between">
@@ -600,7 +600,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (ep.type === 'milestone') {
                     const ms = ep.milestone || {};
                     const projectCode = ep.programCode || ms.project;
-                    if (!projectCode || !ms.name) { info.revert(); return; }
+                    if (!projectCode || !ms.name) {
+                        console.warn('Milestone drag missing data:', { projectCode, msName: ms.name, ms });
+                        info.revert();
+                        showToast('Missing project code or milestone name', 'error');
+                        return;
+                    }
                     try {
                         const payload = {
                             project_code: projectCode,
@@ -620,6 +625,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             },
                             confirmed_date_change: false
                         };
+                        console.log('Milestone drag payload:', JSON.stringify(payload, null, 2));
                         const resp = await fetch('/milestones/update', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
