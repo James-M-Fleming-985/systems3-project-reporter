@@ -674,8 +674,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (ep.type === 'milestone') {
                     const ms = ep.milestone || {};
                     const projectCode = ep.programCode || ms.project;
+                    console.log('eventDrop milestone context:', {
+                        eventId: info.event.id, programCode: ep.programCode,
+                        program: ep.program, msProject: ms.project,
+                        resolvedCode: projectCode, msName: ms.name, msId: ms.id
+                    });
                     if (!projectCode || !ms.name) {
-                        console.warn('Milestone drag missing data:', { projectCode, msName: ms.name, ms });
+                        console.warn('Milestone drag missing data:', { projectCode, msName: ms.name, ep });
                         info.revert();
                         showToast('Missing project code or milestone name', 'error');
                         return;
@@ -707,6 +712,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         });
                         if (!resp.ok) {
                             const err = await resp.json().catch(() => ({}));
+                            console.error('eventDrop 404 detail:', err, '| sent project_code:', projectCode, '| milestone:', ms.name);
                             throw new Error(err.detail || `Server ${resp.status}`);
                         }
                         // Update in-memory events and reload from server

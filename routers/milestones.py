@@ -404,7 +404,7 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                 yaml_path = global_candidate
                 logger.warning(f"Found project in global directory: {yaml_path}")
         
-        # 3. Fallback: search all user directories
+        # 3. Fallback: search all user directories (exact match)
         if not yaml_path:
             users_dir = DATA_DIR / "users"
             if users_dir.exists():
@@ -415,6 +415,54 @@ def update_milestone(data: MilestoneUpdate, request: Request):
                             yaml_path = candidate
                             logger.warning(f"Found project in user directory: {yaml_path}")
                             break
+        
+        # 4. Fuzzy fallback: scan all PROJECT-* dirs for a case/dash/underscore-agnostic match
+        if not yaml_path:
+            normalized_code = transformed_code.lower().replace('-', '').replace('_', '').replace(' ', '')
+            
+            def _fuzzy_scan(search_dir):
+                """Scan a directory for PROJECT-* folders matching the normalized code."""
+                if not search_dir.exists():
+                    return None
+                for d in search_dir.iterdir():
+                    if d.is_dir() and d.name.startswith('PROJECT-'):
+                        dir_code = d.name[len('PROJECT-'):]
+                        dir_norm = dir_code.lower().replace('-', '').replace('_', '').replace(' ', '')
+                        if dir_norm == normalized_code:
+                            candidate = d / "project_status.yaml"
+                            if candidate.exists():
+                                logger.warning(f"Fuzzy match: '{project_code}' → {d.name} in {search_dir}")
+                                return candidate
+                        # Also check project_code inside YAML metadata if dir name differs
+                        status_file = d / "project_status.yaml"
+                        if status_file.exists():
+                            try:
+                                with open(status_file, 'r', encoding='utf-8') as f:
+                                    header = f.read(512)
+                                import re as _re
+                                m = _re.search(r'project_code:\s*[\'"]?([^\'"\n]+)', header)
+                                if m:
+                                    file_code = m.group(1).strip()
+                                    file_norm = file_code.lower().replace('-', '').replace('_', '').replace(' ', '')
+                                    if file_norm == normalized_code:
+                                        logger.warning(f"Fuzzy match via YAML code: '{project_code}' → {d.name} (code={file_code})")
+                                        return status_file
+                            except Exception:
+                                pass
+                return None
+            
+            # Scan global dir
+            yaml_path = _fuzzy_scan(DATA_DIR)
+            
+            # Scan user dirs
+            if not yaml_path:
+                users_dir = DATA_DIR / "users"
+                if users_dir.exists():
+                    for user_dir in users_dir.iterdir():
+                        if user_dir.is_dir():
+                            yaml_path = _fuzzy_scan(user_dir)
+                            if yaml_path:
+                                break
         
         if not yaml_path:
             existing_dirs = [d.name for d in DATA_DIR.iterdir() if d.is_dir() and d.name.startswith('PROJECT')]
