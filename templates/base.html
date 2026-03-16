@@ -644,11 +644,15 @@
             });
             const dropdown = groupEl.querySelector('.nav-tab-dropdown');
             if (!dropdown) return;
+            // Show dropdown immediately (with "Loading…" if not yet populated)
+            dropdown.classList.remove('hidden');
             if (!groupEl.dataset.populated) {
                 groupEl.dataset.populated = '1';
                 const tab = groupEl.dataset.tab;
                 const cur = new URLSearchParams(window.location.search).get('project') || '';
                 const programs = await getNavPrograms();
+                // Guard: if dropdown was closed during fetch, don't re-show
+                if (dropdown.classList.contains('hidden')) return;
                 const body = groupEl.querySelector('.nav-tab-dropdown-body');
                 if (!body) return;
                 if (!programs.length) {
@@ -666,7 +670,6 @@
                     }).join('');
                 }
             }
-            dropdown.classList.remove('hidden');
         }
 
         function closeNavDropdown(groupEl) {
@@ -675,7 +678,7 @@
                 const d = groupEl.querySelector('.nav-tab-dropdown');
                 if (d) d.classList.add('hidden');
                 _navCloseTimer = null;
-            }, 120);
+            }, 200);
         }
 
         // ── Mobile Navigation ────────────────────────────────────

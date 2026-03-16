@@ -820,9 +820,9 @@ function renderModernCard(milestone, flatIndex, draggable = true) {
     return `
     <div class="milestone-card" ${dragAttr} onclick="editMilestone(${flatIndex})" data-index="${flatIndex}">
         <div class="flex items-start justify-between">
-            <div class="flex-1 min-w-0 pr-2">
-                ${(draggable && !window.matchMedia('(pointer: coarse)').matches) ? '<div class="drag-handle inline-block mr-1 align-top"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg></div>' : ''}
-                <p class="font-semibold text-gray-800 text-sm leading-tight truncate inline" title="${milestone.name}">${milestone.name}</p>
+            <div class="flex-1 min-w-0 pr-2 flex items-start">
+                ${(draggable && !window.matchMedia('(pointer: coarse)').matches) ? '<div class="drag-handle flex-shrink-0 mr-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg></div>' : ''}
+                <p class="font-semibold text-gray-800 text-sm leading-tight truncate flex-1 min-w-0" title="${milestone.name}">${milestone.name}</p>
             </div>
             <div class="flex-shrink-0">
                 ${progressRingSvg(pct)}
