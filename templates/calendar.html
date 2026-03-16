@@ -333,16 +333,10 @@
     .clv-done-btn {
         flex-shrink: 0; padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;
         border: none; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        background: #D1FAE5; color: #065F46;
     }
+    .clv-done-btn:hover:not(:disabled) { background: #A7F3D0; }
     .clv-done-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .clv-done-btn-milestone { background: #D1FAE5; color: #065F46; }
-    .clv-done-btn-milestone:hover:not(:disabled) { background: #A7F3D0; }
-    .clv-done-btn-schedule { background: #E0E7FF; color: #3730A3; }
-    .clv-done-btn-schedule:hover:not(:disabled) { background: #C7D2FE; }
-    .clv-done-btn-risk_review { background: #FEE2E2; color: #991B1B; }
-    .clv-done-btn-risk_review:hover:not(:disabled) { background: #FECACA; }
-    .clv-done-btn-change, .clv-done-btn-metric_target { background: #F3F4F6; color: #374151; }
-    .clv-done-btn-change:hover:not(:disabled), .clv-done-btn-metric_target:hover:not(:disabled) { background: #E5E7EB; }
     .clv-empty { text-align: center; padding: 40px 20px; color: #9CA3AF; font-size: 0.875rem; }
     @media (max-width: 640px) {
         .clv-program { display: none; }
