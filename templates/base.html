@@ -630,9 +630,38 @@
             return _navPrograms;
         }
 
+        // Pre-populate all tab dropdowns on page load
+        function populateNavDropdown(groupEl, programs) {
+            if (groupEl.dataset.populated) return;
+            groupEl.dataset.populated = '1';
+            const tab = groupEl.dataset.tab;
+            const cur = new URLSearchParams(window.location.search).get('project') || '';
+            const body = groupEl.querySelector('.nav-tab-dropdown-body');
+            if (!body) return;
+            if (!programs.length) {
+                body.innerHTML = '<span class="text-gray-400 not-italic">No programs found</span>';
+            } else {
+                body.className = 'nav-tab-dropdown-body py-1';
+                body.innerHTML = programs.map(p => {
+                    const active = p.code === cur;
+                    return `<a href="/dashboard/${tab}?project=${encodeURIComponent(p.code)}"
+                        class="flex items-center gap-2 px-3 py-2 text-sm transition
+                            ${active ? 'text-blue-700 font-semibold bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'}">
+                        <span class="w-4 text-blue-500 flex-shrink-0">${active ? '✓' : ''}</span>
+                        <span class="truncate">${p.name}</span>
+                    </a>`;
+                }).join('');
+            }
+        }
+
+        // Eagerly fetch and render all dropdowns so hover is instant
+        getNavPrograms().then(programs => {
+            document.querySelectorAll('.nav-tab-group').forEach(g => populateNavDropdown(g, programs));
+        });
+
         let _navCloseTimer = null;
 
-        async function openNavDropdown(groupEl) {
+        function openNavDropdown(groupEl) {
             // Cancel any pending close
             if (_navCloseTimer) { clearTimeout(_navCloseTimer); _navCloseTimer = null; }
             // Close all OTHER open dropdowns immediately
@@ -644,32 +673,7 @@
             });
             const dropdown = groupEl.querySelector('.nav-tab-dropdown');
             if (!dropdown) return;
-            // Show dropdown immediately (with "Loading…" if not yet populated)
             dropdown.classList.remove('hidden');
-            if (!groupEl.dataset.populated) {
-                groupEl.dataset.populated = '1';
-                const tab = groupEl.dataset.tab;
-                const cur = new URLSearchParams(window.location.search).get('project') || '';
-                const programs = await getNavPrograms();
-                // Guard: if dropdown was closed during fetch, don't re-show
-                if (dropdown.classList.contains('hidden')) return;
-                const body = groupEl.querySelector('.nav-tab-dropdown-body');
-                if (!body) return;
-                if (!programs.length) {
-                    body.innerHTML = '<span class="text-gray-400 not-italic">No programs found</span>';
-                } else {
-                    body.className = 'nav-tab-dropdown-body py-1';
-                    body.innerHTML = programs.map(p => {
-                        const active = p.code === cur;
-                        return `<a href="/dashboard/${tab}?project=${encodeURIComponent(p.code)}"
-                            class="flex items-center gap-2 px-3 py-2 text-sm transition
-                                ${active ? 'text-blue-700 font-semibold bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'}">
-                            <span class="w-4 text-blue-500 flex-shrink-0">${active ? '✓' : ''}</span>
-                            <span class="truncate">${p.name}</span>
-                        </a>`;
-                    }).join('');
-                }
-            }
         }
 
         function closeNavDropdown(groupEl) {
