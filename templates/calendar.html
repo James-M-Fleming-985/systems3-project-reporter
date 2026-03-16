@@ -288,6 +288,67 @@
         /* Filter/legend container */
         .bg-white.rounded-lg.shadow.p-4.mb-6 { padding: 10px !important; }
     }
+
+    /* ── Custom List View ── */
+    #customListView { display: none; }
+    #customListView.active { display: block; }
+    .clv-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 16px; border-bottom: 2px solid #E5E7EB;
+    }
+    .clv-header h3 { font-size: 1.1rem; font-weight: 700; color: #1F2937; }
+    .clv-group-label {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+        color: #6B7280; padding: 8px 16px 4px; background: #F9FAFB; border-bottom: 1px solid #F3F4F6;
+    }
+    .clv-row {
+        display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+        border-bottom: 1px solid #F3F4F6; cursor: pointer; transition: background 0.12s;
+        user-select: none;
+    }
+    .clv-row:hover { background: #F9FAFB; }
+    .clv-row.dragging { opacity: 0.4; background: #EFF6FF; }
+    .clv-row.drag-over-top { box-shadow: inset 0 2px 0 #3B82F6; }
+    .clv-row.drag-over-bottom { box-shadow: inset 0 -2px 0 #3B82F6; }
+    .clv-drag-handle {
+        cursor: grab; color: #9CA3AF; font-size: 1.1rem; flex-shrink: 0;
+        padding: 2px 4px; border-radius: 4px; line-height: 1;
+    }
+    .clv-drag-handle:hover { color: #6B7280; background: #F3F4F6; }
+    .clv-drag-handle:active { cursor: grabbing; }
+    .clv-type-badge {
+        display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.03em; padding: 2px 6px; border-radius: 4px; color: #fff; flex-shrink: 0;
+        min-width: 30px; text-align: center;
+    }
+    .clv-type-milestone { background: #3B82F6; }
+    .clv-type-schedule { background: #6366F1; }
+    .clv-type-risk_review { background: #EF4444; }
+    .clv-type-change { background: #F59E0B; }
+    .clv-type-metric_target { background: #8B5CF6; }
+    .clv-title { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 500; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .clv-date { font-size: 0.75rem; color: #6B7280; flex-shrink: 0; min-width: 70px; text-align: right; }
+    .clv-program { font-size: 0.65rem; color: #9CA3AF; flex-shrink: 0; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .clv-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .clv-done-btn {
+        flex-shrink: 0; padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;
+        border: none; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .clv-done-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .clv-done-btn-milestone { background: #D1FAE5; color: #065F46; }
+    .clv-done-btn-milestone:hover:not(:disabled) { background: #A7F3D0; }
+    .clv-done-btn-schedule { background: #E0E7FF; color: #3730A3; }
+    .clv-done-btn-schedule:hover:not(:disabled) { background: #C7D2FE; }
+    .clv-done-btn-risk_review { background: #FEE2E2; color: #991B1B; }
+    .clv-done-btn-risk_review:hover:not(:disabled) { background: #FECACA; }
+    .clv-done-btn-change, .clv-done-btn-metric_target { background: #F3F4F6; color: #374151; }
+    .clv-done-btn-change:hover:not(:disabled), .clv-done-btn-metric_target:hover:not(:disabled) { background: #E5E7EB; }
+    .clv-empty { text-align: center; padding: 40px 20px; color: #9CA3AF; font-size: 0.875rem; }
+    @media (max-width: 640px) {
+        .clv-program { display: none; }
+        .clv-date { min-width: 55px; font-size: 0.7rem; }
+        .clv-row { padding: 8px 10px; gap: 6px; }
+    }
 </style>
 {% endblock %}
 
@@ -367,6 +428,14 @@
 <!-- Calendar Container -->
 <div class="bg-white rounded-lg shadow p-4" id="calendarContainer" style="display: none;">
     <div id="calendar"></div>
+    <!-- Custom List View (replaces FullCalendar listMonth) -->
+    <div id="customListView">
+        <div class="clv-header">
+            <h3 id="clvTitle">List View</h3>
+            <span id="clvCount" class="text-sm text-gray-500"></span>
+        </div>
+        <div id="clvBody"></div>
+    </div>
 </div>
 
 <!-- Summary Stats -->
@@ -553,6 +622,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('Event clicked:', info.event);
                 info.jsEvent.preventDefault();
                 showEventModal(info.event);
+            },
+            viewDidMount: function(arg) {
+                const isListView = arg.view.type === 'listMonth';
+                document.getElementById('customListView').classList.toggle('active', isListView);
+                document.querySelector('.fc-view-harness').style.display = isListView ? 'none' : '';
+                if (isListView) renderCustomListView();
+            },
+            datesSet: function(arg) {
+                // Re-render custom list when navigating months
+                const clv = document.getElementById('customListView');
+                if (clv && clv.classList.contains('active')) renderCustomListView();
             },
             // Drag-to-reschedule: disabled on touch devices
             editable: !window.matchMedia('(pointer: coarse)').matches,
@@ -760,6 +840,12 @@ function refreshCalendar() {
     
     if (calendarInstance) {
         calendarInstance.refetchEvents();
+    }
+    
+    // Update custom list view if active
+    const clv = document.getElementById('customListView');
+    if (clv && clv.classList.contains('active')) {
+        renderCustomListView();
     }
     
     updateStats();
@@ -1343,6 +1429,9 @@ async function updateTaskStatus(checkbox) {
 }
 
 function showMilestoneAchieved(milestoneName) {
+    // Capture event ID before modifying DOM
+    const eventId = currentEventData?.eventId;
+
     // Replace the modal body content with a celebration banner
     const body = document.getElementById('eventModalBody');
     if (body) {
@@ -1359,6 +1448,16 @@ function showMilestoneAchieved(milestoneName) {
                 </div>
             </div>`;
     }
+
+    // Immediately remove from in-memory events for instant UI update
+    if (eventId) {
+        allEvents = allEvents.filter(e => e.id !== eventId);
+        if (calendarInstance) {
+            const fcEvent = calendarInstance.getEventById(eventId);
+            if (fcEvent) fcEvent.remove();
+        }
+    }
+
     // After a short celebration, close and refresh
     setTimeout(() => {
         closeEventModal();
@@ -1819,6 +1918,307 @@ function formatDate(dateStr) {
         return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch (e) {
         return dateStr;
+    }
+}
+
+// ── Custom List View ───────────────────────────────────────────────────
+let clvDragSrcIdx = null;
+
+function getListSortOrder() {
+    try { return JSON.parse(localStorage.getItem('calendarListOrder') || '{}'); } catch { return {}; }
+}
+function saveListSortOrder(orderMap) {
+    localStorage.setItem('calendarListOrder', JSON.stringify(orderMap));
+}
+
+function renderCustomListView() {
+    const body = document.getElementById('clvBody');
+    const countEl = document.getElementById('clvCount');
+    const titleEl = document.getElementById('clvTitle');
+    if (!body) return;
+
+    // Use filteredEvents (matches current filter checkboxes)
+    applyFilters();
+    const events = [...filteredEvents];
+
+    // Get current month/year from FullCalendar view
+    let monthLabel = '';
+    if (calendarInstance) {
+        const viewDate = calendarInstance.getDate();
+        monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        // Filter to events within the current month view
+        const viewStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+        const viewEnd = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0, 23, 59, 59);
+        events.splice(0, events.length, ...events.filter(e => {
+            const d = new Date(e.start);
+            return d >= viewStart && d <= viewEnd;
+        }));
+    }
+    if (titleEl) titleEl.textContent = monthLabel ? `List — ${monthLabel}` : 'List View';
+    if (countEl) countEl.textContent = `${events.length} item${events.length !== 1 ? 's' : ''}`;
+
+    if (events.length === 0) {
+        body.innerHTML = '<div class="clv-empty">No events this month matching current filters</div>';
+        return;
+    }
+
+    // Sort: user sort order (localStorage) → then by date
+    const orderMap = getListSortOrder();
+    events.sort((a, b) => {
+        const oa = orderMap[a.id] ?? 9999;
+        const ob = orderMap[b.id] ?? 9999;
+        if (oa !== ob) return oa - ob;
+        return (a.start || '').localeCompare(b.start || '');
+    });
+
+    // Group by date
+    const groups = {};
+    events.forEach(e => {
+        const dateKey = (e.start || '').split('T')[0];
+        if (!groups[dateKey]) groups[dateKey] = [];
+        groups[dateKey].push(e);
+    });
+
+    const typeLabels = { milestone: 'MIL', schedule: 'SCH', risk_review: 'RSK', change: 'CHG', metric_target: 'MET' };
+    const doneLabels = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓' };
+
+    let html = '';
+    let globalIdx = 0;
+    const sortedDates = Object.keys(groups).sort();
+
+    for (const dateKey of sortedDates) {
+        const d = new Date(dateKey + 'T00:00:00');
+        const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        html += `<div class="clv-group-label">${label}</div>`;
+
+        for (const evt of groups[dateKey]) {
+            const ep = evt.extendedProps || {};
+            const type = ep.type || 'milestone';
+            const statusCat = ep.status_category || 'not-started';
+            const program = ep.programName || ep.program || '';
+            const evtId = evt.id;
+            const idx = globalIdx++;
+
+            html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}">`;
+            html += `<span class="clv-drag-handle" title="Drag to reorder">⠿</span>`;
+            html += `<span class="clv-type-badge clv-type-${type}">${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
+            html += `<span class="clv-status-dot status-dot-${statusCat}"></span>`;
+            html += `<span class="clv-title" data-event-id="${evtId}">${escapeHtml(evt.title)}</span>`;
+            html += `<span class="clv-program">${escapeHtml(program)}</span>`;
+            html += `<span class="clv-date">${dateKey}</span>`;
+            html += `<button class="clv-done-btn clv-done-btn-${type}" data-event-id="${evtId}" data-event-type="${type}" onclick="event.stopPropagation(); clvQuickDone(this)">${doneLabels[type] || 'Done ✓'}</button>`;
+            html += `</div>`;
+        }
+    }
+
+    body.innerHTML = html;
+
+    // Wire up click-to-open-modal on title spans
+    body.querySelectorAll('.clv-title').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const eid = el.dataset.eventId;
+            if (calendarInstance) {
+                const fcEvent = calendarInstance.getEventById(eid);
+                if (fcEvent) showEventModal(fcEvent);
+            }
+        });
+    });
+
+    // Wire up row click (excluding button and handle clicks)
+    body.querySelectorAll('.clv-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('.clv-done-btn') || e.target.closest('.clv-drag-handle')) return;
+            const eid = row.dataset.eventId;
+            if (calendarInstance) {
+                const fcEvent = calendarInstance.getEventById(eid);
+                if (fcEvent) showEventModal(fcEvent);
+            }
+        });
+    });
+
+    // Wire up drag-and-drop
+    clvInitDrag(body);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+
+function clvInitDrag(container) {
+    const rows = container.querySelectorAll('.clv-row');
+    rows.forEach(row => {
+        row.addEventListener('dragstart', (e) => {
+            clvDragSrcIdx = parseInt(row.dataset.idx);
+            row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', row.dataset.idx);
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            container.querySelectorAll('.clv-row').forEach(r => {
+                r.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+        });
+        row.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const rect = row.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            row.classList.toggle('drag-over-top', e.clientY < midY);
+            row.classList.toggle('drag-over-bottom', e.clientY >= midY);
+        });
+        row.addEventListener('dragleave', () => {
+            row.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        row.addEventListener('drop', (e) => {
+            e.preventDefault();
+            row.classList.remove('drag-over-top', 'drag-over-bottom');
+            const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIdx = parseInt(row.dataset.idx);
+            if (fromIdx === toIdx || isNaN(fromIdx) || isNaN(toIdx)) return;
+            clvReorder(container, fromIdx, toIdx, e);
+        });
+    });
+}
+
+function clvReorder(container, fromIdx, toIdx, dropEvent) {
+    // Get all rows in current order
+    const rows = Array.from(container.querySelectorAll('.clv-row'));
+    const eventIds = rows.map(r => r.dataset.eventId);
+
+    // Move the dragged item
+    const movedId = eventIds[fromIdx];
+    eventIds.splice(fromIdx, 1);
+
+    // Determine insert position based on drop position
+    const targetRow = rows[toIdx];
+    const rect = targetRow.getBoundingClientRect();
+    const insertBefore = dropEvent.clientY < (rect.top + rect.height / 2);
+    let insertIdx = toIdx;
+    if (fromIdx < toIdx) insertIdx--;
+    if (!insertBefore) insertIdx++;
+    eventIds.splice(insertIdx, 0, movedId);
+
+    // Save new order to localStorage
+    const orderMap = {};
+    eventIds.forEach((id, i) => { orderMap[id] = i; });
+    saveListSortOrder(orderMap);
+
+    // Re-render
+    renderCustomListView();
+    showToast('Order updated', 'success', 2000);
+}
+
+async function clvQuickDone(btn) {
+    const eventId = btn.dataset.eventId;
+    const eventType = btn.dataset.eventType;
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    // Find the event data
+    const evt = allEvents.find(e => e.id === eventId);
+    if (!evt) {
+        showToast('Event not found', 'error');
+        btn.disabled = false;
+        return;
+    }
+    const ep = evt.extendedProps || {};
+
+    try {
+        if (eventType === 'milestone') {
+            const ms = ep.milestone || {};
+            const projectCode = ep.programCode || ms.project;
+            if (!projectCode || !ms.name) throw new Error('Missing milestone data');
+            const resp = await fetch('/milestones/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project_code: projectCode,
+                    milestone: {
+                        id: ms.id || ms.name, name: ms.name,
+                        target_date: ep.targetDate || ms.target_date || '',
+                        start_date: ep.startDate || ms.start_date || '',
+                        status: 'COMPLETED', completion_percentage: 100,
+                        notes: ep.notes || '', resources: ep.resources || ms.resources || '',
+                        parent_project: ep.parentProject || ms.parent_project || '',
+                        is_true_milestone: ms.is_true_milestone,
+                        outline_level: ms.outline_level,
+                        parent_levels: ms.parent_levels
+                    },
+                    confirmed_date_change: false
+                })
+            });
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+
+        } else if (eventType === 'schedule') {
+            const { program, tableId, rowId } = ep;
+            if (!program || !tableId || !rowId) throw new Error('Missing schedule data');
+            const resp = await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(program)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' } }
+            );
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+
+        } else if (eventType === 'risk_review') {
+            const { riskId, program } = ep;
+            if (!riskId || !program) throw new Error('Missing risk data');
+            const resp = await fetch(
+                `/risks/update/${encodeURIComponent(program)}/${encodeURIComponent(riskId)}`,
+                { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Mitigated' }) }
+            );
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+
+        } else if (eventType === 'change' || eventType === 'metric_target') {
+            // Client-side acknowledgment via localStorage
+            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
+            if (!acked.includes(eventId)) {
+                acked.push(eventId);
+                if (acked.length > 500) acked.splice(0, acked.length - 500);
+                localStorage.setItem('calendarAcknowledged', JSON.stringify(acked));
+            }
+        }
+
+        // Remove from in-memory events + FullCalendar
+        allEvents = allEvents.filter(e => e.id !== eventId);
+        if (calendarInstance) {
+            const fcEvent = calendarInstance.getEventById(eventId);
+            if (fcEvent) fcEvent.remove();
+        }
+        applyFilters();
+
+        // Remove the row with animation
+        const row = btn.closest('.clv-row');
+        if (row) {
+            row.style.transition = 'opacity 0.2s, transform 0.2s';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(30px)';
+            setTimeout(() => {
+                row.remove();
+                // Update count
+                const countEl = document.getElementById('clvCount');
+                const remaining = document.querySelectorAll('#clvBody .clv-row').length;
+                if (countEl) countEl.textContent = `${remaining} item${remaining !== 1 ? 's' : ''}`;
+                if (remaining === 0) {
+                    document.getElementById('clvBody').innerHTML = '<div class="clv-empty">No events this month matching current filters</div>';
+                }
+            }, 220);
+        }
+
+        const doneMsg = { milestone: 'Milestone completed', schedule: 'Schedule item done', risk_review: 'Risk mitigated', change: 'Change acknowledged', metric_target: 'Metric acknowledged' };
+        showToast(`✓ ${doneMsg[eventType] || 'Done'}`, 'success');
+
+        // Reload from server for server-persisted types
+        if (['milestone', 'schedule', 'risk_review'].includes(eventType)) {
+            await reloadCalendarEvents();
+        }
+    } catch (err) {
+        console.error('clvQuickDone error:', err);
+        showToast('Could not complete: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓' }[eventType] || 'Done ✓';
     }
 }
 
