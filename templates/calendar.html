@@ -648,14 +648,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const { program: prog, tableId, rowId, dateColId } = ep;
                     if (!prog || !tableId || !rowId || !dateColId) { info.revert(); return; }
                     try {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 15000);
                         const resp = await fetch(
                             `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
                             {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                                body: JSON.stringify({ date_col_id: dateColId, new_date: newDate })
+                                body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }),
+                                signal: controller.signal
                             }
                         );
+                        clearTimeout(timeout);
                         if (!resp.ok) throw new Error(`Server ${resp.status}`);
                         const result = await resp.json();
                         if (!result.success) throw new Error('Update failed');
@@ -665,7 +669,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     } catch (err) {
                         console.error('eventDrop error:', err);
                         info.revert();
-                        showToast('Could not reschedule — please try again', 'error');
+                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : 'Could not reschedule — please try again';
+                        showToast(msg, 'error');
                     }
                     return;
                 }
@@ -705,11 +710,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                             confirmed_date_change: false
                         };
                         console.log('Milestone drag payload:', JSON.stringify(payload, null, 2));
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 15000);
                         const resp = await fetch('/milestones/update', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify(payload),
+                            signal: controller.signal
                         });
+                        clearTimeout(timeout);
                         if (!resp.ok) {
                             const err = await resp.json().catch(() => ({}));
                             console.error('eventDrop 404 detail:', err, '| sent project_code:', projectCode, '| milestone:', ms.name);
@@ -723,7 +732,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     } catch (err) {
                         console.error('eventDrop milestone error:', err);
                         info.revert();
-                        showToast('Could not reschedule milestone — ' + err.message, 'error');
+                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
+                        showToast('Could not reschedule milestone — ' + msg, 'error');
                     }
                     return;
                 }
@@ -2132,6 +2142,8 @@ async function clvQuickDone(btn) {
             const ms = ep.milestone || {};
             const projectCode = ep.programCode || ms.project;
             if (!projectCode || !ms.name) throw new Error('Missing milestone data');
+            const ctrl1 = new AbortController();
+            const t1 = setTimeout(() => ctrl1.abort(), 15000);
             const resp = await fetch('/milestones/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2149,17 +2161,22 @@ async function clvQuickDone(btn) {
                         parent_levels: ms.parent_levels
                     },
                     confirmed_date_change: false
-                })
+                }),
+                signal: ctrl1.signal
             });
+            clearTimeout(t1);
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
         } else if (eventType === 'schedule') {
             const { program, tableId, rowId } = ep;
             if (!program || !tableId || !rowId) throw new Error('Missing schedule data');
+            const ctrl2 = new AbortController();
+            const t2 = setTimeout(() => ctrl2.abort(), 15000);
             const resp = await fetch(
                 `/dashboard/api/schedule/${encodeURIComponent(program)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
-                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' } }
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' }, signal: ctrl2.signal }
             );
+            clearTimeout(t2);
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
         } else if (eventType === 'risk_review') {
@@ -2216,7 +2233,8 @@ async function clvQuickDone(btn) {
         }
     } catch (err) {
         console.error('clvQuickDone error:', err);
-        showToast('Could not complete: ' + err.message, 'error');
+        const errMsg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
+        showToast('Could not complete: ' + errMsg, 'error');
         btn.disabled = false;
         btn.textContent = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓' }[eventType] || 'Done ✓';
     }

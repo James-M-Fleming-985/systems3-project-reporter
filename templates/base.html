@@ -569,10 +569,15 @@
             }
         }
 
-        // Poll for notification count every 60s
+        // Poll for notification count with exponential backoff on errors
+        let _notifPollInterval = 60000;
+        let _notifPollTimer = null;
         async function pollNotifCount() {
             try {
-                const resp = await fetch('/api/notifications/count');
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const resp = await fetch('/api/notifications/count', { signal: controller.signal });
+                clearTimeout(timeout);
                 const data = await resp.json();
                 const badge = document.getElementById('notifBadge');
                 if (badge) {
@@ -583,13 +588,19 @@
                         badge.classList.add('hidden');
                     }
                 }
-            } catch (e) { /* silent */ }
+                // Success: reset interval to 60s
+                _notifPollInterval = 60000;
+            } catch (e) {
+                // Backoff: double interval up to 5 min
+                _notifPollInterval = Math.min(_notifPollInterval * 2, 300000);
+            }
+            // Schedule next poll
+            _notifPollTimer = setTimeout(pollNotifCount, _notifPollInterval);
         }
 
         // Start polling after page load
         document.addEventListener('DOMContentLoaded', function() {
             pollNotifCount();
-            setInterval(pollNotifCount, 60000);
         });
 
         function handleTitleKeydown(event) {

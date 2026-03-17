@@ -10,6 +10,7 @@ from datetime import datetime
 from services.change_detection import ChangeDetectionService
 import yaml
 import os
+import re
 import time
 import tempfile
 import logging
