@@ -310,6 +310,7 @@
     .clv-row.dragging { opacity: 0.4; background: #EFF6FF; }
     .clv-row.drag-over-top { box-shadow: inset 0 2px 0 #3B82F6; }
     .clv-row.drag-over-bottom { box-shadow: inset 0 -2px 0 #3B82F6; }
+    .clv-group-label.drag-over-day { background: #DBEAFE; border-bottom: 2px solid #3B82F6; }
     .clv-drag-handle {
         cursor: grab; color: #9CA3AF; font-size: 1.1rem; flex-shrink: 0;
         padding: 2px 4px; border-radius: 4px; line-height: 1;
@@ -2039,6 +2040,7 @@ function formatDate(dateStr) {
 
 // ── Custom List View ───────────────────────────────────────────────────
 let clvDragSrcIdx = null;
+let clvDragSrcDate = null;
 
 function getListSortOrder() {
     try { return JSON.parse(localStorage.getItem('calendarListOrder') || '{}'); } catch { return {}; }
@@ -2105,7 +2107,7 @@ function renderCustomListView() {
     for (const dateKey of sortedDates) {
         const d = new Date(dateKey + 'T00:00:00');
         const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        html += `<div class="clv-group-label">${label}</div>`;
+        html += `<div class="clv-group-label" data-date="${dateKey}">${label}</div>`;
 
         for (const evt of groups[dateKey]) {
             const ep = evt.extendedProps || {};
@@ -2115,7 +2117,7 @@ function renderCustomListView() {
             const evtId = evt.id;
             const idx = globalIdx++;
 
-            html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}">`;
+            html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}" data-date="${dateKey}">`;
             html += `<span class="clv-drag-handle" title="Drag to reorder">⠿</span>`;
             html += `<span class="clv-type-badge clv-type-${type}">${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
             html += `<span class="clv-status-dot status-dot-${statusCat}"></span>`;
@@ -2168,6 +2170,7 @@ function clvInitDrag(container) {
     rows.forEach(row => {
         row.addEventListener('dragstart', (e) => {
             clvDragSrcIdx = parseInt(row.dataset.idx);
+            clvDragSrcDate = row.dataset.date;
             row.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', row.dataset.idx);
@@ -2176,6 +2179,9 @@ function clvInitDrag(container) {
             row.classList.remove('dragging');
             container.querySelectorAll('.clv-row').forEach(r => {
                 r.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+            container.querySelectorAll('.clv-group-label').forEach(l => {
+                l.classList.remove('drag-over-day');
             });
         });
         row.addEventListener('dragover', (e) => {
@@ -2198,14 +2204,49 @@ function clvInitDrag(container) {
             clvReorder(container, fromIdx, toIdx, e);
         });
     });
+
+    // Group labels as cross-day drop targets
+    container.querySelectorAll('.clv-group-label').forEach(label => {
+        label.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            label.classList.add('drag-over-day');
+        });
+        label.addEventListener('dragleave', () => {
+            label.classList.remove('drag-over-day');
+        });
+        label.addEventListener('drop', (e) => {
+            e.preventDefault();
+            label.classList.remove('drag-over-day');
+            const targetDate = label.dataset.date;
+            if (!clvDragSrcDate || !targetDate || clvDragSrcDate === targetDate) return;
+            // Find the source row
+            const srcRow = container.querySelector(`.clv-row[data-idx="${clvDragSrcIdx}"]`);
+            if (!srcRow) return;
+            const eventId = srcRow.dataset.eventId;
+            const eventType = srcRow.dataset.eventType;
+            clvCrossDayMove(eventId, eventType, targetDate);
+        });
+    });
 }
 
 function clvReorder(container, fromIdx, toIdx, dropEvent) {
     // Get all rows in current order
     const rows = Array.from(container.querySelectorAll('.clv-row'));
-    const eventIds = rows.map(r => r.dataset.eventId);
+    const srcRow = rows[fromIdx];
+    const tgtRow = rows[toIdx];
+    if (!srcRow || !tgtRow) return;
 
-    // Move the dragged item
+    // Cross-day move: if source and target are on different dates, reschedule
+    const srcDate = srcRow.dataset.date;
+    const tgtDate = tgtRow.dataset.date;
+    if (srcDate && tgtDate && srcDate !== tgtDate) {
+        clvCrossDayMove(srcRow.dataset.eventId, srcRow.dataset.eventType, tgtDate);
+        return;
+    }
+
+    // Same-day reorder
+    const eventIds = rows.map(r => r.dataset.eventId);
     const movedId = eventIds[fromIdx];
     eventIds.splice(fromIdx, 1);
 
@@ -2226,6 +2267,100 @@ function clvReorder(container, fromIdx, toIdx, dropEvent) {
     // Re-render
     renderCustomListView();
     showToast('Order updated', 'success', 2000);
+}
+
+async function clvCrossDayMove(eventId, eventType, newDate) {
+    // Only milestone, schedule, risk_review can be rescheduled
+    if (!['milestone', 'schedule', 'risk_review'].includes(eventType)) {
+        showToast('This item type cannot be rescheduled', 'error');
+        return;
+    }
+
+    const evt = allEvents.find(e => e.id === eventId);
+    if (!evt) { showToast('Event not found', 'error'); return; }
+    const ep = evt.extendedProps || {};
+
+    try {
+        if (eventType === 'schedule') {
+            const { program: prog, tableId, rowId, dateColId } = ep;
+            if (!prog || !tableId || !rowId || !dateColId) throw new Error('Missing schedule data');
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 15000);
+            const resp = await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                    body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }),
+                    signal: ctrl.signal
+                }
+            );
+            clearTimeout(t);
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+            showToast('✓ Rescheduled', 'success');
+
+        } else if (eventType === 'milestone') {
+            const ms = ep.milestone || {};
+            const projectCode = ep.programCode || ms.project;
+            if (!projectCode || !ms.name) throw new Error('Missing milestone data');
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 15000);
+            const resp = await fetch('/milestones/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project_code: projectCode,
+                    milestone: {
+                        id: ms.id || ms.name, name: ms.name,
+                        target_date: newDate,
+                        start_date: ep.startDate || ms.start_date || '',
+                        status: ep.status || ms.status || 'NOT_STARTED',
+                        completion_percentage: ep.completionPct || 0,
+                        notes: ep.notes || '',
+                        resources: ep.resources || ms.resources || '',
+                        parent_project: ep.parentProject || ms.parent_project || '',
+                        is_true_milestone: ms.is_true_milestone,
+                        outline_level: ms.outline_level,
+                        parent_levels: ms.parent_levels
+                    },
+                    confirmed_date_change: false
+                }),
+                signal: ctrl.signal
+            });
+            clearTimeout(t);
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+            showToast('✓ Milestone rescheduled', 'success');
+
+        } else if (eventType === 'risk_review') {
+            const riskId = ep.riskId;
+            const riskProgram = ep.program;
+            if (!riskId || !riskProgram) throw new Error('Missing risk data');
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 15000);
+            const resp = await fetch(
+                `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_date: newDate }),
+                    signal: ctrl.signal
+                }
+            );
+            clearTimeout(t);
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+            showToast('✓ Risk review rescheduled', 'success');
+        }
+
+        // Update in-memory and reload
+        const idx = allEvents.findIndex(e => e.id === eventId);
+        if (idx !== -1) allEvents[idx].start = newDate;
+        await reloadCalendarEvents();
+
+    } catch (err) {
+        console.error('clvCrossDayMove error:', err);
+        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
+        showToast('Could not reschedule — ' + msg, 'error');
+    }
 }
 
 async function clvQuickDone(btn) {
