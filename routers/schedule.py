@@ -269,6 +269,11 @@ async def reschedule_row(project_name: str, table_id: str, row_id: str, request:
     row_data[date_col_id] = new_date
 
     success = schedule_repo.update_row(project_name, table_id, row_id, row_data)
+    try:
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
+    except Exception:
+        pass
     return JSONResponse(content={"success": success})
 
 
@@ -300,6 +305,11 @@ async def complete_schedule_row(project_name: str, table_id: str, row_id: str):
 
     row_data[status_col_id] = 'Complete'
     success = schedule_repo.update_row(project_name, table_id, row_id, row_data)
+    try:
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
+    except Exception:
+        pass
     return JSONResponse(content={"success": success})
 
 

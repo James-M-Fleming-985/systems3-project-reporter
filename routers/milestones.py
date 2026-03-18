@@ -783,6 +783,13 @@ def update_milestone(data: MilestoneUpdate, request: Request):
             f"in project {project_code} | target_date={new_target_date}"
         )
         
+        # Invalidate calendar cache so next fetch returns fresh data
+        try:
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+        
         return JSONResponse({
             'success': True,
             'message': 'Milestone updated successfully',

@@ -631,12 +631,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Drag-to-reschedule: disabled on touch devices
             editable: !window.matchMedia('(pointer: coarse)').matches,
             eventAllow: function(dropInfo, draggedEvent) {
-                return ['schedule', 'milestone'].includes(draggedEvent.extendedProps?.type);
+                return ['schedule', 'milestone', 'risk_review'].includes(draggedEvent.extendedProps?.type);
             },
             eventDragStart: function(info) {
                 const t = info.event.extendedProps?.type;
-                if (t !== 'schedule' && t !== 'milestone') {
-                    showToast('Only schedule and milestone items can be rescheduled from the calendar', 'info');
+                if (!['schedule', 'milestone', 'risk_review'].includes(t)) {
+                    showToast('Only schedule, milestone, and risk items can be rescheduled', 'info');
                 }
             },
             eventDrop: async function(info) {
@@ -666,6 +666,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         const idx = allEvents.findIndex(e => e.id === info.event.id);
                         if (idx !== -1) allEvents[idx].start = newDate;
                         showToast('✓ Rescheduled', 'success');
+                        await reloadCalendarEvents();
                     } catch (err) {
                         console.error('eventDrop error:', err);
                         info.revert();
@@ -739,6 +740,45 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
 
                 // ── Other event types: revert ──
+                // ── Risk review drag ──
+                if (ep.type === 'risk_review') {
+                    const riskId = ep.riskId;
+                    const riskProgram = ep.program;
+                    if (!riskId || !riskProgram) {
+                        info.revert();
+                        showToast('Missing risk details for reschedule', 'error');
+                        return;
+                    }
+                    try {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 15000);
+                        const resp = await fetch(
+                            `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
+                            {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ new_date: newDate }),
+                                signal: controller.signal
+                            }
+                        );
+                        clearTimeout(timeout);
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({}));
+                            throw new Error(err.detail || `Server ${resp.status}`);
+                        }
+                        const idx = allEvents.findIndex(e => e.id === info.event.id);
+                        if (idx !== -1) allEvents[idx].start = newDate;
+                        showToast('✓ Risk review rescheduled', 'success');
+                        await reloadCalendarEvents();
+                    } catch (err) {
+                        console.error('eventDrop risk error:', err);
+                        info.revert();
+                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
+                        showToast('Could not reschedule risk review — ' + msg, 'error');
+                    }
+                    return;
+                }
+
                 info.revert();
             },
             eventContent: function(arg) {
@@ -1247,6 +1287,17 @@ function showEventModal(event) {
                     <p class="text-xs text-gray-500 mb-1">Mitigations</p>
                     <p class="text-sm text-gray-700">${ep.riskMitigations}</p>
                 </div>` : ''}
+                <div class="mt-3 pt-3 border-t border-red-200">
+                    <p class="text-xs text-gray-500 mb-1">Reschedule Review</p>
+                    <div class="flex gap-2 items-center">
+                        <input type="date" id="riskRescheduleDate" value="${ep.due_date ? ep.due_date.split('T')[0] : ''}"
+                               class="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        <button onclick="rescheduleRiskFromModal()" id="riskRescheduleBtn"
+                                class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition whitespace-nowrap">
+                            Move
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -1313,7 +1364,10 @@ function showEventModal(event) {
 async function loadSiblingTasks(projectCode, milestoneId) {
     try {
         console.log(`🔍 loadSiblingTasks: code=${projectCode} id=${JSON.stringify(milestoneId)}`);
-        const response = await fetch(`/api/milestones/${projectCode}/siblings/${encodeURIComponent(milestoneId)}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const response = await fetch(`/api/milestones/${projectCode}/siblings/${encodeURIComponent(milestoneId)}`, { signal: controller.signal });
+        clearTimeout(timeout);
         if (!response.ok) {
             throw new Error('Failed to load sibling tasks');
         }
@@ -1495,22 +1549,26 @@ async function markScheduleDone() {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
         const resp = await fetch(
             `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/complete`,
-            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' } }
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' }, signal: controller.signal }
         );
+        clearTimeout(timeout);
         if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
         const result = await resp.json();
         if (!result.success) throw new Error('Update failed');
 
-        // Remove from the in-memory event list and re-render
+        // Remove from the in-memory event list and reload from server
         allEvents = allEvents.filter(e => e.id !== eventId);
-        refreshCalendar();
         closeEventModal();
         showToast('✓ Schedule item marked complete', 'success');
+        await reloadCalendarEvents();
     } catch (err) {
         console.error('markScheduleDone error:', err);
-        showToast('Could not mark as done — please try again', 'error');
+        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : 'Could not mark as done — please try again';
+        showToast(msg, 'error');
         if (btn) { btn.disabled = false; btn.textContent = 'Done'; }
     }
 }
@@ -1532,18 +1590,24 @@ async function saveScheduleFromCalendar() {
         const origDate = currentEventData._origDueDate || '';
 
         // 1. Save notes
+        const ctrl1 = new AbortController();
+        const t1 = setTimeout(() => ctrl1.abort(), 15000);
         const notesResp = await fetch(
             `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/notes`,
-            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ notes: newNotes }) }
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ notes: newNotes }), signal: ctrl1.signal }
         );
+        clearTimeout(t1);
         if (!notesResp.ok) throw new Error('Failed to save notes');
 
         // 2. Reschedule date if changed
         if (newDate && newDate !== origDate && dateColId) {
+            const ctrl2 = new AbortController();
+            const t2 = setTimeout(() => ctrl2.abort(), 15000);
             const dateResp = await fetch(
                 `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
-                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }) }
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }), signal: ctrl2.signal }
             );
+            clearTimeout(t2);
             if (!dateResp.ok) throw new Error('Failed to update date');
         }
 
@@ -1756,14 +1820,18 @@ async function markRiskMitigated() {
     }
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
         const resp = await fetch(
             `/risks/update/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
             {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'Mitigated' })
+                body: JSON.stringify({ status: 'Mitigated' }),
+                signal: controller.signal
             }
         );
+        clearTimeout(timeout);
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.detail || `Server ${resp.status}`);
@@ -1779,6 +1847,41 @@ async function markRiskMitigated() {
             btn.disabled = false;
             btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Mark Mitigated`;
         }
+    }
+}
+
+async function rescheduleRiskFromModal() {
+    if (!currentEventData || currentEventData.type !== 'risk_review') return;
+    const newDate = document.getElementById('riskRescheduleDate')?.value;
+    if (!newDate) { showToast('Please select a date', 'info'); return; }
+    const { riskId, riskProgram, eventId } = currentEventData;
+    if (!riskId || !riskProgram) { showToast('Missing risk details', 'error'); return; }
+
+    const btn = document.getElementById('riskRescheduleBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Moving…'; }
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(
+            `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_date: newDate }), signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Server ${resp.status}`);
+        }
+        closeEventModal();
+        showToast('✓ Risk review rescheduled', 'success');
+        await reloadCalendarEvents();
+        if (calendarInstance) calendarInstance.gotoDate(newDate);
+    } catch (err) {
+        console.error('rescheduleRiskFromModal error:', err);
+        const msg = err.name === 'AbortError' ? 'Request timed out' : err.message;
+        showToast('Could not reschedule: ' + msg, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Move'; }
     }
 }
 
@@ -1825,7 +1928,10 @@ async function saveEventFromCalendar() {
                 notes: newNotes,
                 resources: newResources,
                 owner: newOwner,
-                parent_project: milestone.parent_project
+                parent_project: milestone.parent_project,
+                is_true_milestone: milestone.is_true_milestone,
+                outline_level: milestone.outline_level,
+                parent_levels: milestone.parent_levels
             },
             confirmed_date_change: confirmedDateChange
         };
@@ -2182,10 +2288,13 @@ async function clvQuickDone(btn) {
         } else if (eventType === 'risk_review') {
             const { riskId, program } = ep;
             if (!riskId || !program) throw new Error('Missing risk data');
+            const ctrl3 = new AbortController();
+            const t3 = setTimeout(() => ctrl3.abort(), 15000);
             const resp = await fetch(
                 `/risks/update/${encodeURIComponent(program)}/${encodeURIComponent(riskId)}`,
-                { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Mitigated' }) }
+                { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Mitigated' }), signal: ctrl3.signal }
             );
+            clearTimeout(t3);
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
         } else if (eventType === 'change' || eventType === 'metric_target') {

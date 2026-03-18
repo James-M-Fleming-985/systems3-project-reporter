@@ -2,7 +2,7 @@
 Risk Upload Router
 Handles risk file uploads and management.
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Body, Query
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Body, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
@@ -281,6 +281,13 @@ async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
         # Save back to repository
         risk_repo.save_risks(clean_prog_name, risks)
         
+        # Invalidate calendar cache so next fetch returns fresh data
+        try:
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+        
         logger.info(f"Updated risk {risk_id} for program {clean_prog_name}")
         
         return JSONResponse(content={
@@ -293,6 +300,45 @@ async def update_risk(program_name: str, risk_id: str, updates: RiskUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating risk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.patch("/reschedule/{program_name}/{risk_id}")
+async def reschedule_risk(program_name: str, risk_id: str, request: Request):
+    """
+    Update the next_review_date of a risk (called from calendar drag-and-drop).
+    """
+    try:
+        body = await request.json()
+        new_date = body.get('new_date')
+        if not new_date:
+            raise HTTPException(status_code=400, detail="new_date required")
+
+        clean_prog_name = clean_program_name(program_name)
+        risks = risk_repo.load_risks(clean_prog_name)
+        if not risks:
+            raise HTTPException(status_code=404, detail=f"No risks found for program: {clean_prog_name}")
+
+        risk = next((r for r in risks if r['id'] == risk_id), None)
+        if not risk:
+            raise HTTPException(status_code=404, detail=f"Risk {risk_id} not found")
+
+        risk['next_review_date'] = new_date
+        risk_repo.save_risks(clean_prog_name, risks)
+
+        try:
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+
+        logger.info(f"Rescheduled risk {risk_id} for program {clean_prog_name} to {new_date}")
+        return JSONResponse(content={'success': True, 'new_date': new_date})
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error rescheduling risk: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 

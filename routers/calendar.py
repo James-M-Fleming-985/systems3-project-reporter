@@ -44,6 +44,12 @@ _calendar_cache: Dict[str, Any] = {"events": None, "timestamp": 0.0}
 CALENDAR_CACHE_TTL = 60  # seconds
 
 
+def invalidate_calendar_cache():
+    """Clear the calendar event cache so the next request reads fresh data from disk."""
+    _calendar_cache["events"] = None
+    _calendar_cache["timestamp"] = 0.0
+
+
 def get_build_version():
     try:
         import main
@@ -514,6 +520,7 @@ async def get_calendar_events(request: Request):
                                         'status_label': sched_status_label,
                                         'status_category': sched_status_category,
                                         'program': sched_program,
+                                        'programCode': sched_code or sched_program,
                                         'tableName': table_name,
                                         'tableId': table.get('id', ''),
                                         'rowId': row.get('id', ''),
