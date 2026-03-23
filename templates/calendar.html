@@ -724,8 +724,8 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- FullCalendar JS -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<!-- FullCalendar JS (self-hosted to avoid CDN tracking prevention blocks) -->
+<script src="/static/js/libs/fullcalendar.min.js"></script>
 
 <script>
 let calendarInstance = null;
