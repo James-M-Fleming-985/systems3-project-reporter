@@ -69,26 +69,17 @@ async def calendar_page(request: Request):
     Application-wide calendar view.
     Shows milestones, schedule actions, and deadlines from ALL programs.
     """
-    import traceback as _tb
-    try:
-        user = get_user_from_request(request)
-        csrf_token = getattr(request.state, 'csrf_token', '')
-        context = {
-            "request": request,
-            "build_version": get_build_version(),
-            "user": user,
-            "csrf_token": csrf_token
-        }
-        # Pre-render the template synchronously so any Jinja2 error is caught here
-        # rather than propagating through the ASGI streaming layer as an ExceptionGroup.
-        template = templates.get_template("calendar.html")
-        html_content = template.render(context)
-        response = HTMLResponse(content=html_content)
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        return response
-    except Exception as _exc:
-        logger.error(f"CALENDAR PAGE ERROR: {type(_exc).__name__}: {_exc}\n{_tb.format_exc()}")
-        raise
+    user = get_user_from_request(request)
+    csrf_token = getattr(request.state, 'csrf_token', '')
+    context = {
+        "request": request,
+        "build_version": get_build_version(),
+        "user": user,
+        "csrf_token": csrf_token
+    }
+    response = templates.TemplateResponse("calendar.html", context)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
 
 
 @router.get("/api/calendar/events")
