@@ -74,3 +74,26 @@ class GanttTask(BaseModel):
     Finish: str  # End date (same as start for milestones)
     Resource: str  # Project name
     Status: str  # COMPLETED, IN_PROGRESS, NOT_STARTED
+
+
+class StandaloneTask(BaseModel):
+    """Standalone task — project-free, user-scoped calendar item"""
+    id: Optional[str] = None                    # UUID, auto-generated on create
+    title: str                                  # Required: task title
+    description: Optional[str] = None          # Optional longer description
+    start_date: Optional[str] = None           # YYYY-MM-DD (optional)
+    due_date: str                               # YYYY-MM-DD (required)
+    status: str = "NOT_STARTED"                # NOT_STARTED | IN_PROGRESS | COMPLETED
+    priority: Optional[str] = "MEDIUM"         # HIGH | MEDIUM | LOW
+    owner: Optional[str] = None                # Person responsible
+    resources: Optional[str] = None            # Comma-separated resource names
+    category: Optional[str] = None             # Free-text category label
+    notes: Optional[str] = None                # Internal notes
+    sub_tasks: Optional[List[dict]] = None     # [{id, title, completed, created_at}]
+    recurrence_cadence: Optional[str] = None   # daily | weekly | biweekly | monthly
+    recurrence_series_id: Optional[str] = None # UUID shared by all occurrences in a series
+    recurrence_occurrence: Optional[str] = None  # e.g. "1 of 4"
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    user_edited_fields: Optional[List[str]] = None  # Track manually edited fields

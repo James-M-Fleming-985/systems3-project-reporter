@@ -17,6 +17,7 @@ from datetime import datetime
 from repositories.project_repository import ProjectRepository
 from repositories.schedule_repository import ScheduleRepository
 from repositories.custom_metrics_repository import CustomMetricsRepository
+from repositories.standalone_task_repository import StandaloneTaskRepository
 
 
 def _clean_project_name(name: str) -> str:
@@ -747,6 +748,85 @@ async def get_calendar_events(request: Request):
         except Exception as e:
             logger.warning(f"Error loading risk review events for calendar: {e}")
         
+        # 5. Load standalone tasks (per-user, project-free)
+        try:
+            standalone_repo = StandaloneTaskRepository(storage_dir=DATA_DIR)
+            user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+            if user_id:
+                standalone_tasks = standalone_repo.get_all(user_id)
+                for task in standalone_tasks:
+                    # Only skip COMPLETED tasks (same filter applied to other event types below)
+                    task_status = task.get('status', 'NOT_STARTED')
+                    if task_status == 'COMPLETED':
+                        continue
+
+                    task_id = task.get('id', '')
+                    due_date = task.get('due_date', '')
+                    start_date = task.get('start_date') or due_date
+
+                    if not due_date:
+                        continue
+
+                    # Normalise status for visual styling
+                    if task_status == 'IN_PROGRESS':
+                        status_category = 'in-progress'
+                        status_label = 'In Progress'
+                    else:
+                        status_category = 'not-started'
+                        status_label = 'Not Started'
+
+                    # Check overdue
+                    try:
+                        from datetime import date as _date
+                        due = _date.fromisoformat(due_date)
+                        if due < _date.today():
+                            status_category = 'overdue'
+                            status_label = 'Overdue'
+                    except Exception:
+                        pass
+
+                    priority = task.get('priority', 'MEDIUM')
+                    priority_label = {'HIGH': '🔴 High', 'MEDIUM': '🟡 Medium', 'LOW': '🟢 Low'}.get(priority, priority)
+
+                    event = {
+                        'id': f'standalone-{task_id}',
+                        'title': task.get('title', 'Untitled Task'),
+                        'start': start_date,
+                        'end': due_date,
+                        'allDay': True,
+                        'backgroundColor': '#10B981',   # emerald green — visually distinct
+                        'borderColor': '#059669',
+                        'textColor': '#FFFFFF',
+                        'extendedProps': {
+                            'type': 'standalone',
+                            'source': 'standalone',
+                            'source_label': 'My Task',
+                            'description': task.get('description') or task.get('title', ''),
+                            'due_date': due_date,
+                            'status': task_status,
+                            'status_label': status_label,
+                            'status_category': status_category,
+                            'priority': priority,
+                            'priority_label': priority_label,
+                            'owner': task.get('owner') or '',
+                            'resources': task.get('resources') or '',
+                            'category': task.get('category') or '',
+                            'notes': task.get('notes') or '',
+                            'sub_tasks': task.get('sub_tasks') or [],
+                            'taskId': task_id,
+                            'recurrence_cadence': task.get('recurrence_cadence') or '',
+                            'recurrence_series_id': task.get('recurrence_series_id') or '',
+                            'recurrence_occurrence': task.get('recurrence_occurrence') or '',
+                            'program': '',
+                            'programCode': '',
+                        }
+                    }
+                    events.append(event)
+
+                logger.info(f"📅 Calendar: loaded {len([t for t in standalone_tasks if t.get('status') != 'COMPLETED'])} standalone tasks for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Error loading standalone tasks for calendar: {e}")
+
         # Build name↔code lookups so we can resolve programCode and programName
         name_to_code = {}
         code_to_name = {}

@@ -543,6 +543,14 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️  Calendar feature disabled: {e}")
 
+# Standalone Tasks router has: /api/standalone-tasks/*
+try:
+    from routers import standalone_tasks
+    app.include_router(standalone_tasks.router, tags=["standalone-tasks"])
+    logger.info("✅ Standalone Tasks feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Standalone Tasks feature disabled: {e}")
+
 # Notifications router has: /notifications, /api/notifications/*
 try:
     from routers import notifications
