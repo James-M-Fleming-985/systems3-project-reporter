@@ -1,7 +1,8 @@
 # Systems³ Project Reporter - Web Application Dependencies
 
 # FastAPI Framework
-fastapi>=0.115.0
+fastapi==0.115.6
+starlette==0.41.3
 uvicorn[standard]>=0.24.0
 jinja2>=3.1.6
 python-multipart>=0.0.22
