@@ -2736,6 +2736,7 @@ function showConfirm(message) {
         overlay.querySelector('#confirmYes').onclick = () => { overlay.remove(); resolve(true); };
         overlay.querySelector('#confirmNo').onclick  = () => { overlay.remove(); resolve(false); };
     });
+}
 // ── Standalone Task Modal ──────────────────────────────────────────────
 let _stModalMode = 'create';  // 'create' | 'edit'
 let _stTaskId = null;
