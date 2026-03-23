@@ -77,7 +77,9 @@ async def calendar_page(request: Request):
         "user": user,
         "csrf_token": csrf_token
     }
-    response = templates.TemplateResponse("calendar.html", context)
+    template = templates.get_template("calendar.html")
+    content = await template.render_async(**context)
+    response = HTMLResponse(content=content)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
