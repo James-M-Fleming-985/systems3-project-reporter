@@ -112,22 +112,35 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if content_type.startswith("text/html"):
             csp_directives = [
                 "default-src 'self'",
-                # Scripts: Tailwind CDN, Plotly CDN, FullCalendar CDN, SheetJS, inline scripts
+                # Scripts: Tailwind CDN, Plotly CDN, FullCalendar CDN, SheetJS,
+                # Google Analytics, Mixpanel, inline scripts
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
                 "https://cdn.tailwindcss.com "
                 "https://cdn.plot.ly "
-                "https://cdn.jsdelivr.net",
-                # Styles: Tailwind, FullCalendar, inline styles
+                "https://cdn.jsdelivr.net "
+                "https://cdnjs.cloudflare.com "
+                "https://cdn.sheetjs.com "
+                "https://www.googletagmanager.com "
+                "https://www.google-analytics.com "
+                "https://cdn.mxpnl.com",
+                # Styles: Tailwind, FullCalendar, Bootstrap, Font Awesome, inline styles
                 "style-src 'self' 'unsafe-inline' "
                 "https://cdn.tailwindcss.com "
                 "https://cdn.jsdelivr.net "
-                "https://fonts.googleapis.com",
-                # Fonts: allow data: URIs for bundled icon fonts (e.g. FullCalendar)
-                "font-src 'self' https://fonts.gstatic.com data:",
-                # Images: self + data URIs (for Plotly exports)
-                "img-src 'self' data: blob:",
-                # Connect: self + Stripe
-                "connect-src 'self' https://api.stripe.com https://js.stripe.com",
+                "https://fonts.googleapis.com "
+                "https://cdnjs.cloudflare.com",
+                # Fonts: Google Fonts, Font Awesome, data: URIs for bundled icon fonts
+                "font-src 'self' https://fonts.gstatic.com "
+                "https://cdnjs.cloudflare.com data:",
+                # Images: self + data URIs (for Plotly exports) + analytics pixels
+                "img-src 'self' data: blob: "
+                "https://www.google-analytics.com "
+                "https://www.googletagmanager.com",
+                # Connect: self + Stripe + analytics
+                "connect-src 'self' https://api.stripe.com https://js.stripe.com "
+                "https://www.google-analytics.com "
+                "https://www.googletagmanager.com "
+                "https://api-js.mixpanel.com",
                 # Frame: Stripe checkout
                 "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
                 # Workers: allow service worker registration
