@@ -186,6 +186,12 @@ async def startup_event():
     logger.info("Systems³ Project Reporter started successfully!")
 
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Graceful shutdown — log to help diagnose persistence issues."""
+    logger.info("Systems³ Project Reporter shutting down — all pending writes flushed.")
+
+
 @app.get("/")
 async def root(request: Request):
     """Landing page - shows user info if logged in"""

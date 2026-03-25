@@ -181,13 +181,21 @@ class AIChatPanel {
         if (toggle) toggle.style.display = isHidden ? 'none' : 'flex';
 
         if (isHidden) {
-            this._loadExistingConversation();
+            this._loadExistingConversation().then(() => this._checkPendingMessage());
             const input = this.container.querySelector('#aiChatInput');
             if (input) setTimeout(() => input.focus(), 100);
         }
     }
 
     // ── API Calls ─────────────────────────────────────────────
+
+    _checkPendingMessage() {
+        const pending = sessionStorage.getItem('ai_chat_pending_message');
+        if (!pending) return;
+        sessionStorage.removeItem('ai_chat_pending_message');
+        sessionStorage.removeItem('ai_chat_pending_context');
+        setTimeout(() => this.sendMessage(pending), 500);
+    }
 
     async _checkStatus() {
         try {
@@ -265,6 +273,23 @@ class AIChatPanel {
             });
 
             if (!resp.ok) {
+                if (resp.status === 401) {
+                    // Session expired — queue message for retry after re-login
+                    sessionStorage.setItem('ai_chat_pending_message', text);
+                    sessionStorage.setItem('ai_chat_pending_context', JSON.stringify({
+                        contextType: this.contextType,
+                        contextId: this.contextId,
+                        projectCode: this.projectCode,
+                        programName: this.programName,
+                        tableId: this.tableId,
+                    }));
+                    this._removeTypingIndicator();
+                    this._appendMessage('error',
+                        'Session expired. Redirecting to login — your message will be resent automatically.');
+                    this.isLoading = false;
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
+                    return;
+                }
                 const err = await resp.json().catch(() => ({}));
                 throw new Error(err.detail || `HTTP ${resp.status}`);
             }

@@ -1,10 +1,20 @@
 """
 Conversation Repository - YAML-based persistence for AI chat conversations.
 Stores conversations keyed by entity (context_type + context_id) for cross-tab continuity.
+
+Persistence guarantees:
+- Atomic writes via temp file + os.replace() — no truncation on crash
+- File locking via fcntl.flock() — serialises concurrent read-modify-write
+- .bak backup before every write — recovery from corruption
+- Startup canary file — detects ephemeral filesystem across deploys
 """
+import fcntl
 import os
+import shutil
+import tempfile
 import uuid
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -25,7 +35,39 @@ class ConversationRepository:
             storage_dir = base / "ai_conversations"
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self._check_persistence()
         logger.info(f"ConversationRepository initialized: {self.storage_dir}")
+
+    # ── Persistence canary ───────────────────────────────────────────
+
+    def _check_persistence(self) -> None:
+        """Write/check a canary file to detect ephemeral filesystem resets."""
+        canary = self.storage_dir / ".canary"
+        if canary.exists():
+            try:
+                prev = canary.read_text().strip()
+                logger.info(f"Storage persisted across restart (canary from {prev})")
+            except Exception:
+                pass
+        else:
+            logger.warning(
+                "No previous canary found — first boot or storage was wiped"
+            )
+        canary.write_text(datetime.now().isoformat())
+
+    # ── File locking ─────────────────────────────────────────────────
+
+    @contextmanager
+    def _file_lock(self, conversation_id: str):
+        """Advisory file lock for serialising read-modify-write cycles."""
+        lock_path = self._filepath(conversation_id).with_suffix(".lock")
+        fd = open(lock_path, "w")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            fd.close()
 
     def _filepath(self, conversation_id: str) -> Path:
         safe_id = "".join(
@@ -61,12 +103,17 @@ class ConversationRepository:
         return conversation
 
     def get(self, conversation_id: str) -> Optional[Dict[str, Any]]:
-        """Load a conversation by ID."""
+        """Load a conversation by ID. Returns None if missing or corrupted."""
         path = self._filepath(conversation_id)
         if not path.exists():
             return None
-        with open(path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            return data if isinstance(data, dict) else None
+        except Exception as e:
+            logger.error(f"Corrupted conversation file {path.name}: {e}")
+            return None
 
     def append_message(
         self,
@@ -75,20 +122,22 @@ class ConversationRepository:
         content: str,
         token_count: int = 0,
     ) -> Optional[Dict[str, Any]]:
-        """Append a message and update token totals."""
-        conv = self.get(conversation_id)
-        if conv is None:
-            return None
-        conv["messages"].append({
-            "role": role,
-            "content": content,
-            "timestamp": datetime.now().isoformat(),
-            "token_count": token_count,
-        })
-        conv["total_tokens"] = conv.get("total_tokens", 0) + token_count
-        conv["updated_at"] = datetime.now().isoformat()
-        self._save(conv)
-        return conv
+        """Append a message and update token totals (locked + atomic)."""
+        with self._file_lock(conversation_id):
+            conv = self.get(conversation_id)
+            if conv is None:
+                return None
+            conv["messages"].append({
+                "role": role,
+                "content": content,
+                "timestamp": datetime.now().isoformat(),
+                "token_count": token_count,
+            })
+            conv["total_tokens"] = conv.get("total_tokens", 0) + token_count
+            conv["updated_at"] = datetime.now().isoformat()
+            expected_count = len(conv["messages"])
+            self._save(conv, expected_message_count=expected_count)
+            return conv
 
     def record_action(
         self,
@@ -96,16 +145,17 @@ class ConversationRepository:
         action: str,
         details: Dict[str, Any],
     ) -> None:
-        conv = self.get(conversation_id)
-        if conv is None:
-            return
-        conv.setdefault("actions_taken", []).append({
-            "action": action,
-            "timestamp": datetime.now().isoformat(),
-            "details": details,
-        })
-        conv["updated_at"] = datetime.now().isoformat()
-        self._save(conv)
+        with self._file_lock(conversation_id):
+            conv = self.get(conversation_id)
+            if conv is None:
+                return
+            conv.setdefault("actions_taken", []).append({
+                "action": action,
+                "timestamp": datetime.now().isoformat(),
+                "details": details,
+            })
+            conv["updated_at"] = datetime.now().isoformat()
+            self._save(conv)
 
     def delete(self, conversation_id: str) -> bool:
         path = self._filepath(conversation_id)
@@ -191,7 +241,67 @@ class ConversationRepository:
 
     # ── Internal ─────────────────────────────────────────────────────
 
-    def _save(self, conversation: Dict[str, Any]) -> None:
+    def _save(
+        self,
+        conversation: Dict[str, Any],
+        expected_message_count: int = None,
+    ) -> None:
+        """Atomic write: temp file → backup current → os.replace().
+
+        Args:
+            conversation: Full conversation dict to persist.
+            expected_message_count: If provided, re-read after write and
+                verify the message count matches. Logs a warning on mismatch.
+        """
         path = self._filepath(conversation["id"])
-        with open(path, "w", encoding="utf-8") as f:
-            yaml.dump(conversation, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+        # 1. Write to a temp file in the same directory (same filesystem)
+        fd, tmp_path = tempfile.mkstemp(
+            dir=str(self.storage_dir), suffix=".tmp", prefix="conv_"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                yaml.dump(
+                    conversation, f,
+                    default_flow_style=False,
+                    sort_keys=False,
+                    allow_unicode=True,
+                )
+                f.flush()
+                os.fsync(f.fileno())
+
+            # 2. Backup current file before replacing
+            if path.exists():
+                bak_path = path.with_suffix(".bak")
+                try:
+                    shutil.copy2(str(path), str(bak_path))
+                except Exception as bak_err:
+                    logger.warning(f"Backup failed for {path.name}: {bak_err}")
+
+            # 3. Atomic rename (POSIX guarantees this is atomic)
+            os.replace(tmp_path, str(path))
+
+        except Exception:
+            # Clean up temp file on failure
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
+
+        # 4. Post-write verification
+        if expected_message_count is not None:
+            try:
+                check = yaml.safe_load(path.read_text(encoding="utf-8"))
+                actual = len(check.get("messages", []))
+                if actual != expected_message_count:
+                    logger.error(
+                        f"WRITE VERIFICATION FAILED for {path.name}: "
+                        f"expected {expected_message_count} messages, "
+                        f"got {actual}"
+                    )
+            except Exception as verify_err:
+                logger.error(
+                    f"Write verification read-back failed for {path.name}: "
+                    f"{verify_err}"
+                )

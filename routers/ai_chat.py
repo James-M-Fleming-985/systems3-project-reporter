@@ -52,10 +52,8 @@ class ActionExecuteRequest(BaseModel):
 
 def _get_user_id(request: Request) -> str:
     user = getattr(request.state, "user", None) if hasattr(request, "state") else None
-    if user and hasattr(user, "id"):
-        return str(user.id)
     if user and isinstance(user, dict):
-        return str(user.get("id", "anonymous"))
+        return str(user.get("user_id", "anonymous"))
     return "anonymous"
 
 
@@ -112,6 +110,11 @@ async def ai_chat(request: Request, data: ChatRequest):
                 existing = conversation_repo.find_by_context(
                     data.context_type, data.context_id, user_id
                 )
+                # Migration: find conversations saved under "anonymous" before user_id fix
+                if not existing and user_id != "anonymous":
+                    existing = conversation_repo.find_by_context(
+                        data.context_type, data.context_id, "anonymous"
+                    )
                 if existing:
                     conversation = existing[0]
 
@@ -246,6 +249,9 @@ async def list_conversations(
 
     if context_id and context_type:
         convs = conversation_repo.find_by_context(context_type, context_id, user_id)
+        # Migration: also find conversations saved under "anonymous" before user_id fix
+        if not convs and user_id != "anonymous":
+            convs = conversation_repo.find_by_context(context_type, context_id, "anonymous")
         return JSONResponse({"conversations": convs})
 
     convs = conversation_repo.list_all(project_code, context_type, limit)
@@ -284,8 +290,11 @@ async def start_new_conversation(request: Request, data: ChatRequest):
 
 
 @router.get("/api/ai/conversations/export/all")
-async def export_conversations():
-    """Export all conversations for training/analysis."""
+async def export_conversations(request: Request):
+    """Export all conversations for training/analysis. Admin only."""
+    user = getattr(request.state, "user", None) if hasattr(request, "state") else None
+    if not user or not isinstance(user, dict) or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
     conversations = conversation_repo.export_all()
     return JSONResponse({"conversations": conversations, "count": len(conversations)})
 
