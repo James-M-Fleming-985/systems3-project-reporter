@@ -45,7 +45,7 @@ def _is_project_file(yaml_file: Path) -> bool:
         return False
 
     # Directory-based ancillary files
-    if any(d in path_str for d in ("custom_metrics", "schedules", "documents", "risks")):
+    if any(d in path_str for d in ("custom_metrics", "schedules", "documents", "risks", "ai_conversations")):
         return False
 
     return True
