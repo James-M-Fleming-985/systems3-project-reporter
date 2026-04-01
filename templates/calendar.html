@@ -326,6 +326,7 @@
     .clv-type-risk_review { background: #EF4444; }
     .clv-type-change { background: #F59E0B; }
     .clv-type-metric_target { background: #8B5CF6; }
+    .clv-type-standalone { background: #10B981; }
     .clv-title { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 500; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .clv-date { font-size: 0.75rem; color: #6B7280; flex-shrink: 0; min-width: 70px; text-align: right; }
     .clv-program { font-size: 0.65rem; color: #9CA3AF; flex-shrink: 0; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2317,8 +2318,8 @@ function renderCustomListView() {
         groups[dateKey].push(e);
     });
 
-    const typeLabels = { milestone: 'MIL', schedule: 'SCH', risk_review: 'RSK', change: 'CHG', metric_target: 'MET' };
-    const doneLabels = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓' };
+    const typeLabels = { milestone: 'MIL', schedule: 'SCH', risk_review: 'RSK', change: 'CHG', metric_target: 'MET', standalone: 'SAT' };
+    const doneLabels = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓', standalone: 'Complete ✓' };
 
     let html = '';
     let globalIdx = 0;
@@ -2356,6 +2357,12 @@ function renderCustomListView() {
         el.addEventListener('click', (e) => {
             e.stopPropagation();
             const eid = el.dataset.eventId;
+            const row = el.closest('.clv-row');
+            if (row && row.dataset.eventType === 'standalone') {
+                const fcEvt = calendarInstance?.getEventById(eid);
+                if (fcEvt) openEditStandaloneTaskModal(fcEvt.extendedProps.taskId);
+                return;
+            }
             if (calendarInstance) {
                 const fcEvent = calendarInstance.getEventById(eid);
                 if (fcEvent) showEventModal(fcEvent);
@@ -2368,6 +2375,11 @@ function renderCustomListView() {
         row.addEventListener('click', (e) => {
             if (e.target.closest('.clv-done-btn') || e.target.closest('.clv-drag-handle')) return;
             const eid = row.dataset.eventId;
+            if (row.dataset.eventType === 'standalone') {
+                const fcEvt = calendarInstance?.getEventById(eid);
+                if (fcEvt) openEditStandaloneTaskModal(fcEvt.extendedProps.taskId);
+                return;
+            }
             if (calendarInstance) {
                 const fcEvent = calendarInstance.getEventById(eid);
                 if (fcEvent) showEventModal(fcEvent);
@@ -2490,8 +2502,8 @@ function clvReorder(container, fromIdx, toIdx, dropEvent) {
 }
 
 async function clvCrossDayMove(eventId, eventType, newDate) {
-    // Only milestone, schedule, risk_review can be rescheduled
-    if (!['milestone', 'schedule', 'risk_review'].includes(eventType)) {
+    // Only milestone, schedule, risk_review, standalone can be rescheduled
+    if (!['milestone', 'schedule', 'risk_review', 'standalone'].includes(eventType)) {
         showToast('This item type cannot be rescheduled', 'error');
         return;
     }
@@ -2569,6 +2581,24 @@ async function clvCrossDayMove(eventId, eventType, newDate) {
             clearTimeout(t);
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
             showToast('✓ Risk review rescheduled', 'success');
+
+        } else if (eventType === 'standalone') {
+            const taskId = ep.taskId;
+            if (!taskId) throw new Error('Missing standalone task data');
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 15000);
+            const resp = await fetch(
+                `/api/standalone-tasks/${encodeURIComponent(taskId)}/reschedule`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                    body: JSON.stringify({ new_due_date: newDate }),
+                    signal: ctrl.signal
+                }
+            );
+            clearTimeout(t);
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+            showToast('✓ Task rescheduled', 'success');
         }
 
         // Update in-memory and reload
@@ -2652,6 +2682,20 @@ async function clvQuickDone(btn) {
             clearTimeout(t3);
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
+        } else if (eventType === 'standalone') {
+            const taskId = ep.taskId;
+            if (!taskId) throw new Error('Missing standalone task data');
+            const ctrl4 = new AbortController();
+            const t4 = setTimeout(() => ctrl4.abort(), 15000);
+            const resp = await fetch(`/api/standalone-tasks/${encodeURIComponent(taskId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                body: JSON.stringify({ status: 'COMPLETED' }),
+                signal: ctrl4.signal
+            });
+            clearTimeout(t4);
+            if (!resp.ok) throw new Error(`Server ${resp.status}`);
+
         } else if (eventType === 'change' || eventType === 'metric_target') {
             // Client-side acknowledgment via localStorage
             const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
@@ -2688,11 +2732,11 @@ async function clvQuickDone(btn) {
             }, 220);
         }
 
-        const doneMsg = { milestone: 'Milestone completed', schedule: 'Schedule item done', risk_review: 'Risk mitigated', change: 'Change acknowledged', metric_target: 'Metric acknowledged' };
+        const doneMsg = { milestone: 'Milestone completed', schedule: 'Schedule item done', risk_review: 'Risk mitigated', change: 'Change acknowledged', metric_target: 'Metric acknowledged', standalone: 'Task completed' };
         showToast(`✓ ${doneMsg[eventType] || 'Done'}`, 'success');
 
         // Reload from server for server-persisted types
-        if (['milestone', 'schedule', 'risk_review'].includes(eventType)) {
+        if (['milestone', 'schedule', 'risk_review', 'standalone'].includes(eventType)) {
             await reloadCalendarEvents();
         }
     } catch (err) {
