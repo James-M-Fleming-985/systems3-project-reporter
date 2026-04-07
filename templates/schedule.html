@@ -358,6 +358,9 @@
         border-radius: 6px;
         font-size: 14px;
     }
+    #dropdownOptionsList .flex input {
+        width: auto;
+    }
     .form-group input:focus, .form-group select:focus {
         border-color: #1e40af;
         outline: none;
@@ -1584,8 +1587,8 @@ function addDropdownOptionRow(label, color) {
     const row = document.createElement('div');
     row.className = 'flex items-center gap-2';
     row.innerHTML = `
-        <input type="color" value="${color || '#3B82F6'}" class="dropdown-color-input w-10 h-8 border-0 cursor-pointer rounded">
-        <input type="text" value="${label}" placeholder="Option label" class="dropdown-label-input flex-1 p-2 border border-gray-300 rounded text-sm">
+        <input type="color" value="${color || '#3B82F6'}" class="dropdown-color-input h-8 border-0 cursor-pointer rounded" style="flex:1;min-width:32px">
+        <input type="text" value="${label}" placeholder="Option label" class="dropdown-label-input p-2 border border-gray-300 rounded text-sm" style="flex:3">
         <button type="button" class="text-red-500 hover:text-red-700 px-2" onclick="this.parentElement.remove()">✕</button>
     `;
     list.appendChild(row);
