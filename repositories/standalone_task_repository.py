@@ -296,3 +296,22 @@ class StandaloneTaskRepository:
                     self._save(user_id, data)
                     return True
         return False
+
+    def reorder_sub_tasks(self, user_id: str, task_id: str, ordered_ids: list) -> bool:
+        """Reorder sub-tasks of a standalone task according to the given ID list."""
+        data = self._load(user_id)
+        for task in data.get("tasks", []):
+            if task.get("id") != task_id:
+                continue
+            existing = task.get("sub_tasks", [])
+            by_id = {st["id"]: st for st in existing}
+            reordered = [by_id[sid] for sid in ordered_ids if sid in by_id]
+            seen = set(ordered_ids)
+            for st in existing:
+                if st["id"] not in seen:
+                    reordered.append(st)
+            task["sub_tasks"] = reordered
+            task["updated_at"] = datetime.now().isoformat()
+            self._save(user_id, data)
+            return True
+        return False

@@ -209,3 +209,17 @@ async def toggle_sub_task(
     if not ok:
         raise HTTPException(status_code=404, detail="Sub-task not found")
     return JSONResponse({"success": True})
+
+
+@router.put("/api/standalone-tasks/{task_id}/sub-tasks/reorder")
+async def reorder_sub_tasks(request: Request, task_id: str):
+    """Reorder sub-tasks of a standalone task. Body: { "order": ["id1","id2",...] }"""
+    user_id = _require_user_id(request)
+    body = await request.json()
+    ordered_ids = body.get("order")
+    if not isinstance(ordered_ids, list):
+        raise HTTPException(status_code=400, detail="'order' must be a list of sub-task IDs")
+    ok = _get_repo().reorder_sub_tasks(user_id, task_id, ordered_ids)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return JSONResponse({"success": True})

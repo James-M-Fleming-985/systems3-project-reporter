@@ -366,6 +366,19 @@ async def delete_schedule_sub_task(project_name: str, table_id: str, row_id: str
     return JSONResponse(content={"success": True})
 
 
+@router.put("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/sub-tasks/reorder")
+async def reorder_schedule_sub_tasks(project_name: str, table_id: str, row_id: str, request: Request):
+    """Reorder sub-tasks on a schedule row. Body: { "order": ["id1","id2",...] }"""
+    body = await request.json()
+    ordered_ids = body.get('order')
+    if not isinstance(ordered_ids, list):
+        raise HTTPException(status_code=400, detail="'order' must be a list of sub-task IDs")
+    success = schedule_repo.reorder_sub_tasks(project_name, table_id, row_id, ordered_ids)
+    if not success:
+        raise HTTPException(status_code=404, detail="Row not found")
+    return JSONResponse(content={"success": True})
+
+
 @router.delete("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}")
 async def delete_table_row(project_name: str, table_id: str, row_id: str):
     """Delete a row from a schedule table"""

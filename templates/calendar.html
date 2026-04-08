@@ -227,10 +227,20 @@
         gap: 8px;
         padding: 6px 8px;
         border-radius: 6px;
-        transition: background 0.15s;
+        transition: background 0.15s, box-shadow 0.12s;
     }
-    .sibling-row:hover { background: #F3F4F6; }
+    .sibling-row:hover { filter: brightness(0.97); }
     .sibling-row.is-completed label { text-decoration: line-through; color: #6B7280; }
+    /* Drag-reorder styles for sub-item rows */
+    .sibling-row .subtask-drag-handle {
+        cursor: grab; color: #C0C0C0; font-size: 0.85rem; flex-shrink: 0;
+        padding: 1px 3px; border-radius: 3px; line-height: 1;
+        user-select: none; touch-action: none;
+    }
+    .sibling-row .subtask-drag-handle:hover { color: #6B7280; background: #F3F4F6; }
+    .sibling-row .subtask-drag-handle:active { cursor: grabbing; }
+    .sibling-row.subtask-dragging { opacity: 0.35; }
+    .sibling-row.subtask-drag-over { box-shadow: inset 0 -2px 0 #3B82F6; }
 
     /* ── Calendar Mobile Optimizations ── */
     @media (max-width: 640px) {
@@ -733,6 +743,77 @@ let calendarInstance = null;
 let allEvents = [];
 let filteredEvents = [];
 let currentEventData = null; // Store current event for actions
+
+// ── Priority gradient for draggable sub-item lists ──────────────────────────
+// Pastel red (#F4A0A0) at top (high priority) → pastel green (#A0D8A0) at bottom (low priority)
+function getPriorityColor(index, total) {
+    if (total <= 1) return 'transparent';
+    const t = index / (total - 1); // 0 → 1
+    const r = Math.round(244 + (160 - 244) * t); // 244 → 160
+    const g = Math.round(160 + (216 - 160) * t); // 160 → 216
+    const b = Math.round(160 + (160 - 160) * t); // stays 160
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+function applyPriorityColors(container) {
+    const rows = container.querySelectorAll('.sibling-row');
+    const total = rows.length;
+    rows.forEach((row, i) => {
+        row.style.background = getPriorityColor(i, total);
+    });
+}
+
+// Generic drag-reorder for .sibling-row items inside a container
+// Uses an AbortController so re-init after innerHTML clear works correctly
+function initSubtaskDrag(container, onReorderDone) {
+    if (container._subtaskDragAbort) container._subtaskDragAbort.abort();
+    const ac = new AbortController();
+    container._subtaskDragAbort = ac;
+    const opts = { signal: ac.signal };
+    let dragEl = null;
+    container.addEventListener('dragstart', e => {
+        const row = e.target.closest('.sibling-row');
+        if (!row || !e.target.closest('.subtask-drag-handle')) { e.preventDefault(); return; }
+        dragEl = row;
+        row.classList.add('subtask-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+    }, opts);
+    container.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const row = e.target.closest('.sibling-row');
+        if (row && row !== dragEl) {
+            container.querySelectorAll('.sibling-row').forEach(r => r.classList.remove('subtask-drag-over'));
+            row.classList.add('subtask-drag-over');
+        }
+    }, opts);
+    container.addEventListener('dragleave', e => {
+        const row = e.target.closest('.sibling-row');
+        if (row) row.classList.remove('subtask-drag-over');
+    }, opts);
+    container.addEventListener('drop', e => {
+        e.preventDefault();
+        const targetRow = e.target.closest('.sibling-row');
+        if (!targetRow || !dragEl || targetRow === dragEl) return;
+        // Insert dragged element before or after target based on position
+        const rect = targetRow.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+            container.insertBefore(dragEl, targetRow);
+        } else {
+            container.insertBefore(dragEl, targetRow.nextSibling);
+        }
+        container.querySelectorAll('.sibling-row').forEach(r => r.classList.remove('subtask-drag-over'));
+        applyPriorityColors(container);
+        if (onReorderDone) onReorderDone(container);
+    }, opts);
+    container.addEventListener('dragend', () => {
+        if (dragEl) dragEl.classList.remove('subtask-dragging');
+        container.querySelectorAll('.sibling-row').forEach(r => r.classList.remove('subtask-drag-over'));
+        dragEl = null;
+    }, opts);
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📅 Calendar: Initializing...');
@@ -1399,8 +1480,9 @@ function showEventModal(event) {
             <div>
                 <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Sub-Tasks</p>
                 <div id="schedSubTasksContainer" class="space-y-1 mb-2">
-                    ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map(st => `
-                        <div class="sibling-row ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}">
+                    ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map((st, _si) => `
+                        <div class="sibling-row ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" style="background:${getPriorityColor(_si, _schedSubTasks.length)}">
+                            <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
                             <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                                    data-st-id="${st.id}" ${st.completed ? 'checked' : ''}
                                    onchange="toggleScheduleSubTask(this)">
@@ -1549,6 +1631,20 @@ function showEventModal(event) {
     document.getElementById('eventModalBody').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
 
+    // Initialize drag-reorder for schedule sub-tasks
+    if (type === 'schedule') {
+        const schedContainer = document.getElementById('schedSubTasksContainer');
+        if (schedContainer && schedContainer.querySelectorAll('.sibling-row').length > 1) {
+            initSubtaskDrag(schedContainer, (cont) => {
+                const ids = [...cont.querySelectorAll('.sibling-row[data-st-id]')].map(r => r.dataset.stId);
+                fetch(`/dashboard/api/schedule/${encodeURIComponent(ep.program)}/tables/${ep.tableId}/rows/${ep.rowId}/sub-tasks/reorder`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ order: ids })
+                }).catch(err => console.error('Sub-task reorder failed:', err));
+            });
+        }
+    }
+
     // AI Chat Panel — show for milestone, risk_review, and schedule events
     const chatContainer = document.getElementById('calendarAIChatContainer');
     if ((type === 'milestone' || type === 'risk_review' || type === 'schedule') && typeof AIChatPanel !== 'undefined') {
@@ -1607,13 +1703,15 @@ async function loadSiblingTasks(projectCode, milestoneId) {
         
         // Render sibling tasks with checkboxes
         let html = '';
-        for (const sibling of data.siblings) {
+        const sibCount = data.siblings.length;
+        data.siblings.forEach((sibling, sibIdx) => {
             const isCompleted = sibling.status === 'COMPLETED' || Number(sibling.completion_percentage) === 100;
             const checkboxId = `sibling-${sibling.id}`;
             const icon = sibling.is_milestone ? '🎯' : '📋';
             
             html += `
-                <div class="sibling-row ${isCompleted ? 'is-completed' : ''}" id="row-${checkboxId}">
+                <div class="sibling-row ${isCompleted ? 'is-completed' : ''}" id="row-${checkboxId}" draggable="true" data-sib-id="${sibling.id}" style="background:${getPriorityColor(sibIdx, sibCount)}">
+                    <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
                     <input type="checkbox" 
                            id="${checkboxId}" 
                            class="sibling-checkbox w-4 h-4 text-blue-600 rounded flex-shrink-0"
@@ -1629,9 +1727,20 @@ async function loadSiblingTasks(projectCode, milestoneId) {
                     <span class="text-xs px-2 py-0.5 rounded-full ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}" id="badge-${checkboxId}">${isCompleted ? 'Done' : sibling.completion_percentage + '%'}</span>
                 </div>
             `;
-        }
+        });
         
         container.innerHTML = html;
+
+        // Init drag-reorder for siblings
+        if (data.siblings.length > 1) {
+            initSubtaskDrag(container, (cont) => {
+                const ids = [...cont.querySelectorAll('.sibling-row[data-sib-id]')].map(r => r.dataset.sibId);
+                fetch(`/api/milestones/${encodeURIComponent(projectCode)}/siblings/reorder`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ order: ids })
+                }).catch(err => console.error('Sibling reorder failed:', err));
+            });
+        }
     } catch (error) {
         console.error('Error loading sibling tasks:', error);
         const container = document.getElementById('siblingTasksContainer');
@@ -2942,10 +3051,15 @@ function _renderSubTaskList() {
     const list = document.getElementById('stSubTaskList');
     const badge = document.getElementById('subTaskBadge');
     list.innerHTML = '';
+    const total = _stSubTaskData.length;
     _stSubTaskData.forEach((sub, idx) => {
         const li = document.createElement('li');
-        li.className = 'flex items-center gap-2 py-1 px-2 rounded hover:bg-gray-50 group';
+        li.className = 'sibling-row group';
+        li.draggable = true;
+        li.dataset.stIdx = idx;
+        li.style.background = getPriorityColor(idx, total);
         li.innerHTML = `
+            <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
             <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="_stSubTaskData[${idx}].completed = this.checked"
                 class="rounded text-emerald-600 focus:ring-emerald-500 flex-shrink-0">
             <span class="flex-1 text-sm ${sub.completed ? 'line-through text-gray-400' : 'text-gray-700'}">${_escapeHtml(sub.title)}</span>
@@ -2958,6 +3072,28 @@ function _renderSubTaskList() {
     const count = _stSubTaskData.length;
     badge.textContent = count > 0 ? count : '';
     badge.classList.toggle('hidden', count === 0);
+    // Init drag-reorder for standalone sub-tasks (reorders in-memory array)
+    if (total > 1) {
+        initSubtaskDrag(list, (cont) => {
+            const rows = [...cont.querySelectorAll('.sibling-row')];
+            const newOrder = rows.map(r => parseInt(r.dataset.stIdx));
+            const reordered = newOrder.map(i => _stSubTaskData[i]).filter(Boolean);
+            // Fallback: if any indices are stale, just keep the current DOM order
+            if (reordered.length === _stSubTaskData.length) {
+                _stSubTaskData.splice(0, _stSubTaskData.length, ...reordered);
+            }
+            // Re-render to update indices and colors
+            _renderSubTaskList();
+            // If editing an existing task, persist the reorder via API
+            if (_stTaskId) {
+                const ids = _stSubTaskData.map(s => s.id);
+                fetch(`/api/standalone-tasks/${encodeURIComponent(_stTaskId)}/sub-tasks/reorder`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ order: ids })
+                }).catch(err => console.error('Standalone sub-task reorder failed:', err));
+            }
+        });
+    }
 }
 
 function _escapeHtml(s) {

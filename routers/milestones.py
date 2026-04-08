@@ -1408,6 +1408,96 @@ def get_milestone_siblings(code: str, id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SiblingReorderRequest(BaseModel):
+    order: List[str]
+
+
+@router.put("/api/milestones/{code}/siblings/reorder")
+def reorder_milestone_siblings(code: str, data: SiblingReorderRequest):
+    """
+    Reorder sibling milestones within the project YAML.
+    Rearranges only the siblings that share the same immediate parent,
+    according to the supplied ID list.
+    """
+    try:
+        transformed_code = code.replace('-', '_')
+        project_dir = DATA_DIR / f"PROJECT-{transformed_code}"
+        yaml_path = project_dir / "project_status.yaml"
+
+        if not yaml_path.exists():
+            users_dir = DATA_DIR / "users"
+            if users_dir.exists():
+                for user_dir in users_dir.iterdir():
+                    if user_dir.is_dir():
+                        candidate = user_dir / f"PROJECT-{transformed_code}" / "project_status.yaml"
+                        if candidate.exists():
+                            yaml_path = candidate
+                            break
+
+        if not yaml_path.exists():
+            raise HTTPException(status_code=404, detail=f"Project {code} not found")
+
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            project_data = yaml.safe_load(f)
+
+        milestones = project_data.get('milestones', [])
+
+        # Normalize IDs to strings
+        for m in milestones:
+            if 'id' in m and m['id'] is not None:
+                m['id'] = str(m['id'])
+
+        # Build a lookup: position in milestones list → milestone
+        # We only reorder milestones whose id or name is in the order list
+        ordered_set = set(data.order)
+        affected_indices = []
+        for idx, m in enumerate(milestones):
+            m_id = m.get('id') or m.get('name', '')
+            if m_id in ordered_set or m.get('name', '') in ordered_set:
+                affected_indices.append(idx)
+
+        if not affected_indices:
+            return JSONResponse(content={"success": True, "message": "No matching siblings found"})
+
+        # Extract affected milestones, reorder them by the provided order
+        affected_milestones = [milestones[i] for i in affected_indices]
+        by_key = {}
+        for m in affected_milestones:
+            by_key[m.get('id') or m.get('name', '')] = m
+            by_key[m.get('name', '')] = m  # also index by name
+
+        reordered = []
+        seen = set()
+        for mid in data.order:
+            m = by_key.get(mid)
+            if m and id(m) not in seen:
+                reordered.append(m)
+                seen.add(id(m))
+        # Append any affected milestones not in the order list
+        for m in affected_milestones:
+            if id(m) not in seen:
+                reordered.append(m)
+
+        # Put them back into the milestones list at their original positions
+        for new_idx, orig_idx in enumerate(affected_indices):
+            if new_idx < len(reordered):
+                milestones[orig_idx] = reordered[new_idx]
+
+        project_data['milestones'] = milestones
+
+        with open(yaml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(project_data, f, default_flow_style=False, allow_unicode=True)
+
+        logger.info(f"✅ Reordered {len(reordered)} sibling milestones for project {code}")
+        return JSONResponse(content={"success": True})
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reordering siblings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/api/milestones/update-task-status")
 def update_task_status(data: TaskStatusUpdate):
     """

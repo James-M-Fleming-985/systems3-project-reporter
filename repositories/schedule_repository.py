@@ -245,6 +245,8 @@ class ScheduleRepository:
                 # Update allowed fields
                 if 'name' in updates:
                     data['tables'][i]['name'] = updates['name']
+                if 'description' in updates:
+                    data['tables'][i]['description'] = updates['description']
                 if 'columns' in updates:
                     data['tables'][i]['columns'] = updates['columns']
                 if 'rows' in updates:
@@ -425,6 +427,28 @@ class ScheduleRepository:
 
         return False
     
+    def reorder_sub_tasks(self, project_name: str, table_id: str, row_id: str, ordered_ids: List[str]) -> bool:
+        """Reorder sub-tasks on a schedule row according to the given ID list."""
+        data = self.get_schedules(project_name)
+
+        for i, table in enumerate(data.get('tables', [])):
+            if table.get('id') == table_id:
+                for j, row in enumerate(table.get('rows', [])):
+                    if row.get('id') == row_id:
+                        existing = row.get('sub_tasks', [])
+                        by_id = {st['id']: st for st in existing}
+                        reordered = [by_id[sid] for sid in ordered_ids if sid in by_id]
+                        # Append any sub-tasks whose IDs weren't in the list (safety)
+                        seen = set(ordered_ids)
+                        for st in existing:
+                            if st['id'] not in seen:
+                                reordered.append(st)
+                        data['tables'][i]['rows'][j]['sub_tasks'] = reordered
+                        data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
+                        return self.save_schedules(project_name, data)
+
+        return False
+
     def delete_row(self, project_name: str, table_id: str, row_id: str) -> bool:
         """Delete a row from a schedule table"""
         data = self.get_schedules(project_name)
