@@ -772,9 +772,13 @@ function initSubtaskDrag(container, onReorderDone) {
     container._subtaskDragAbort = ac;
     const opts = { signal: ac.signal };
     let dragEl = null;
+    // Track mousedown target so dragstart can check if user grabbed the handle
+    // (dragstart e.target is the draggable row, not the child element clicked)
+    let _mousedownTarget = null;
+    container.addEventListener('mousedown', e => { _mousedownTarget = e.target; }, opts);
     container.addEventListener('dragstart', e => {
         const row = e.target.closest('.sibling-row');
-        if (!row || !e.target.closest('.subtask-drag-handle')) { e.preventDefault(); e.stopPropagation(); return; }
+        if (!row || !_mousedownTarget || !_mousedownTarget.closest('.subtask-drag-handle')) { e.preventDefault(); e.stopPropagation(); return; }
         dragEl = row;
         row.classList.add('subtask-dragging');
         e.dataTransfer.effectAllowed = 'move';
