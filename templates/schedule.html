@@ -585,7 +585,12 @@
             <!-- Toolbar -->
             <div class="table-toolbar">
                 <div class="toolbar-primary flex items-center gap-4">
-                    <h2 class="text-lg font-semibold text-gray-800">{{ table.name }}</h2>
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800">{{ table.name }}</h2>
+                        {% if table.description %}
+                        <p class="text-sm text-gray-500 mt-0.5">{{ table.description }}</p>
+                        {% endif %}
+                    </div>
                     <button class="btn-icon" onclick="showEditTableModal('{{ table.id }}')" title="Edit table settings">
                         ⚙️
                     </button>
@@ -788,6 +793,10 @@
                     <label for="tableName">Table Name</label>
                     <input type="text" id="tableName" placeholder="e.g., Maintenance Schedule">
                 </div>
+                <div class="form-group">
+                    <label for="tableDescription">Description <span class="text-xs text-gray-400 font-normal">(optional)</span></label>
+                    <textarea id="tableDescription" rows="2" placeholder="Brief summary of this table's purpose..." class="w-full p-2 border border-gray-300 rounded text-sm" style="resize:vertical"></textarea>
+                </div>
                 <p class="text-sm text-gray-500 mb-4">
                     Default columns (Task, Status, Due Date, Owner, Notes) will be created. You can customize them later.
                 </p>
@@ -832,6 +841,28 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Edit Table Modal -->
+<div class="modal-backdrop hidden" id="editTableModal">
+    <div class="modal" style="max-width: 500px;">
+        <h3 class="text-xl font-semibold mb-4">Edit Table Settings</h3>
+        <input type="hidden" id="editTableId">
+        <div class="form-group">
+            <label for="editTableName">Table Name</label>
+            <input type="text" id="editTableName" placeholder="Table name">
+        </div>
+        <div class="form-group">
+            <label for="editTableDescription">Description <span class="text-xs text-gray-400 font-normal">(optional)</span></label>
+            <textarea id="editTableDescription" rows="2" placeholder="Brief summary of this table's purpose..." class="w-full p-2 border border-gray-300 rounded text-sm" style="resize:vertical"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    onclick="hideModal('editTableModal')">Cancel</button>
+            <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onclick="saveEditTable()">Save</button>
+        </div>
     </div>
 </div>
 
@@ -1378,6 +1409,7 @@ async function createOrCopyTable(event) {
 
 async function createNewTable() {
     const name = document.getElementById('tableName').value.trim();
+    const description = document.getElementById('tableDescription').value.trim();
     if (!name) {
         showErrorModal('Missing Name', 'Please enter a table name before creating.');
         return;
@@ -1387,7 +1419,7 @@ async function createNewTable() {
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name, description: description || undefined })
         });
         
         if (response.ok) {
@@ -2023,25 +2055,34 @@ function showEditTableModal(tableId) {
     const table = tablesData.tables?.find(t => t.id === tableId);
     if (!table) return;
     
-    const newName = prompt('Enter new table name:', table.name);
-    if (newName && newName.trim() !== table.name) {
-        updateTableName(tableId, newName.trim());
-    }
+    document.getElementById('editTableId').value = tableId;
+    document.getElementById('editTableName').value = table.name || '';
+    document.getElementById('editTableDescription').value = table.description || '';
+    showModal('editTableModal');
 }
 
-async function updateTableName(tableId, name) {
+async function saveEditTable() {
+    const tableId = document.getElementById('editTableId').value;
+    const name = document.getElementById('editTableName').value.trim();
+    const description = document.getElementById('editTableDescription').value.trim();
+    
+    if (!name) {
+        showErrorModal('Missing Name', 'Table name cannot be empty.');
+        return;
+    }
+    
     try {
         const response = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projectName)}/tables/${tableId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name, description })
         });
         
         if (response.ok) {
             window.location.reload();
         }
     } catch (error) {
-        console.error('Error updating table name:', error);
+        console.error('Error updating table:', error);
     }
 }
 

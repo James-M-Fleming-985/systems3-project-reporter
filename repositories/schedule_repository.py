@@ -136,7 +136,7 @@ class ScheduleRepository:
             logger.error(f"❌ Error saving schedules for '{project_name}': {e}")
             return False
     
-    def create_table(self, project_name: str, table_name: str, columns: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create_table(self, project_name: str, table_name: str, columns: List[Dict[str, Any]] = None, description: str = None) -> Dict[str, Any]:
         """
         Create a new schedule table
         
@@ -144,6 +144,7 @@ class ScheduleRepository:
             project_name: Project name
             table_name: Name for the new table
             columns: Optional column configuration, uses defaults if not provided
+            description: Optional description of the table's purpose
             
         Returns:
             The created table configuration
@@ -200,6 +201,7 @@ class ScheduleRepository:
         new_table = {
             'id': str(uuid.uuid4()),
             'name': table_name,
+            'description': description or '',
             'created_at': datetime.now().isoformat(),
             'columns': columns,
             'rows': []

@@ -53,11 +53,13 @@ class ColumnConfig(BaseModel):
 
 class CreateTableRequest(BaseModel):
     name: str
+    description: Optional[str] = None
     columns: Optional[List[ColumnConfig]] = None
 
 
 class UpdateTableRequest(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
     columns: Optional[List[Dict[str, Any]]] = None
     rows: Optional[List[Dict[str, Any]]] = None
 
@@ -182,7 +184,7 @@ async def create_schedule_table(project_name: str, request: CreateTableRequest):
     if request.columns:
         columns = [col.dict() for col in request.columns]
     
-    table = schedule_repo.create_table(project_name, request.name, columns)
+    table = schedule_repo.create_table(project_name, request.name, columns, description=request.description)
     return JSONResponse(content={"success": True, "table": table})
 
 
