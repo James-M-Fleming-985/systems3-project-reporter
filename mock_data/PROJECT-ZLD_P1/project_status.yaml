@@ -17,6 +17,7 @@ milestones:
   start_date: '2025-09-15'
   status: COMPLETED
   target_date: '2025-09-15'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -32,6 +33,7 @@ milestones:
   start_date: '2026-01-07'
   status: NOT_STARTED
   target_date: '2026-01-07'
+  is_true_milestone: true
 - completion_date: '2024-09-03'
   completion_percentage: 10000
   id: null
@@ -46,6 +48,7 @@ milestones:
   start_date: '2024-08-14'
   status: COMPLETED
   target_date: '2024-09-03'
+  is_true_milestone: false
 - completion_date: '2024-09-03'
   completion_percentage: 10000
   id: null
@@ -61,6 +64,7 @@ milestones:
   start_date: '2024-08-14'
   status: COMPLETED
   target_date: '2024-09-03'
+  is_true_milestone: false
 - completion_date: '2024-11-13'
   completion_percentage: 10000
   id: null
@@ -75,6 +79,7 @@ milestones:
   start_date: '2024-10-24'
   status: COMPLETED
   target_date: '2024-11-13'
+  is_true_milestone: false
 - completion_date: '2024-11-13'
   completion_percentage: 10000
   id: null
@@ -90,6 +95,7 @@ milestones:
   start_date: '2024-10-24'
   status: COMPLETED
   target_date: '2024-11-13'
+  is_true_milestone: false
 - completion_date: '2025-06-24'
   completion_percentage: 10000
   id: null
@@ -104,6 +110,7 @@ milestones:
   start_date: '2024-05-01'
   status: COMPLETED
   target_date: '2025-06-24'
+  is_true_milestone: false
 - completion_date: '2025-06-24'
   completion_percentage: 10000
   id: null
@@ -119,6 +126,7 @@ milestones:
   start_date: '2024-05-01'
   status: COMPLETED
   target_date: '2025-06-24'
+  is_true_milestone: false
 - completion_date: '2025-03-31'
   completion_percentage: 10000
   id: null
@@ -135,6 +143,7 @@ milestones:
   start_date: '2025-03-31'
   status: COMPLETED
   target_date: '2025-03-31'
+  is_true_milestone: true
 - completion_date: '2025-04-15'
   completion_percentage: 10000
   id: null
@@ -151,6 +160,7 @@ milestones:
   start_date: '2025-04-14'
   status: COMPLETED
   target_date: '2025-04-15'
+  is_true_milestone: true
 - completion_date: '2025-05-13'
   completion_percentage: 10000
   id: null
@@ -167,6 +177,7 @@ milestones:
   start_date: '2025-05-13'
   status: COMPLETED
   target_date: '2025-05-13'
+  is_true_milestone: true
 - completion_date: '2024-11-01'
   completion_percentage: 10000
   id: null
@@ -183,6 +194,7 @@ milestones:
   start_date: '2024-11-01'
   status: COMPLETED
   target_date: '2024-11-01'
+  is_true_milestone: false
 - completion_date: '2024-11-01'
   completion_percentage: 10000
   id: null
@@ -199,6 +211,7 @@ milestones:
   start_date: '2024-11-01'
   status: COMPLETED
   target_date: '2024-11-01'
+  is_true_milestone: false
 - completion_date: '2025-04-18'
   completion_percentage: 10000
   id: null
@@ -215,6 +228,7 @@ milestones:
   start_date: '2025-04-18'
   status: COMPLETED
   target_date: '2025-04-18'
+  is_true_milestone: true
 - completion_date: '2025-05-30'
   completion_percentage: 10000
   id: null
@@ -232,6 +246,7 @@ milestones:
   start_date: '2025-05-23'
   status: COMPLETED
   target_date: '2025-05-30'
+  is_true_milestone: true
 - completion_date: '2025-06-18'
   completion_percentage: 10000
   id: null
@@ -249,6 +264,7 @@ milestones:
   start_date: '2025-06-18'
   status: COMPLETED
   target_date: '2025-06-18'
+  is_true_milestone: true
 - completion_date: '2025-06-25'
   completion_percentage: 10000
   id: null
@@ -266,6 +282,7 @@ milestones:
   start_date: '2025-06-25'
   status: COMPLETED
   target_date: '2025-06-25'
+  is_true_milestone: true
 - completion_date: '2025-10-01'
   completion_percentage: 10000
   id: null
@@ -282,6 +299,7 @@ milestones:
   start_date: '2025-10-01'
   status: COMPLETED
   target_date: '2025-10-01'
+  is_true_milestone: true
 - completion_date: '2025-10-06'
   completion_percentage: 10000
   id: null
@@ -299,6 +317,7 @@ milestones:
   start_date: '2025-10-03'
   status: COMPLETED
   target_date: '2025-10-06'
+  is_true_milestone: false
 - completion_date: '2025-10-22'
   completion_percentage: 10000
   id: null
@@ -316,6 +335,7 @@ milestones:
   start_date: '2025-10-22'
   status: COMPLETED
   target_date: '2025-10-22'
+  is_true_milestone: true
 - completion_date: '2025-11-03'
   completion_percentage: 10000
   id: null
@@ -333,6 +353,7 @@ milestones:
   start_date: '2025-11-03'
   status: COMPLETED
   target_date: '2025-11-03'
+  is_true_milestone: true
 - completion_date: '2025-11-05'
   completion_percentage: 10000
   id: null
@@ -349,6 +370,7 @@ milestones:
   start_date: '2025-11-05'
   status: COMPLETED
   target_date: '2025-11-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -365,6 +387,7 @@ milestones:
   start_date: '2025-11-28'
   status: NOT_STARTED
   target_date: '2025-11-28'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -381,6 +404,7 @@ milestones:
   start_date: '2025-11-28'
   status: NOT_STARTED
   target_date: '2025-11-28'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -397,6 +421,7 @@ milestones:
   start_date: '2026-01-27'
   status: NOT_STARTED
   target_date: '2026-01-27'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -413,6 +438,7 @@ milestones:
   start_date: '2026-03-27'
   status: NOT_STARTED
   target_date: '2026-03-27'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -429,6 +455,7 @@ milestones:
   start_date: '2026-03-27'
   status: NOT_STARTED
   target_date: '2026-03-27'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -445,6 +472,7 @@ milestones:
   start_date: '2026-06-05'
   status: NOT_STARTED
   target_date: '2026-06-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -461,6 +489,7 @@ milestones:
   start_date: '2026-06-05'
   status: NOT_STARTED
   target_date: '2026-06-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -477,6 +506,7 @@ milestones:
   start_date: '2026-06-05'
   status: NOT_STARTED
   target_date: '2026-06-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -493,6 +523,7 @@ milestones:
   start_date: '2026-06-08'
   status: NOT_STARTED
   target_date: '2026-06-08'
+  is_true_milestone: true
 - completion_date: '2024-09-18'
   completion_percentage: 10000
   id: null
@@ -510,6 +541,7 @@ milestones:
   start_date: '2024-09-17'
   status: COMPLETED
   target_date: '2024-09-18'
+  is_true_milestone: false
 - completion_date: '2024-09-18'
   completion_percentage: 10000
   id: null
@@ -527,6 +559,7 @@ milestones:
   start_date: '2024-09-17'
   status: COMPLETED
   target_date: '2024-09-18'
+  is_true_milestone: true
 - completion_date: '2024-10-01'
   completion_percentage: 10000
   id: null
@@ -546,6 +579,7 @@ milestones:
   start_date: '2024-09-30'
   status: COMPLETED
   target_date: '2024-10-01'
+  is_true_milestone: false
 - completion_date: '2025-02-19'
   completion_percentage: 10000
   id: null
@@ -562,6 +596,7 @@ milestones:
   start_date: '2025-02-19'
   status: COMPLETED
   target_date: '2025-02-19'
+  is_true_milestone: true
 - completion_date: '2025-04-15'
   completion_percentage: 10000
   id: null
@@ -594,6 +629,7 @@ milestones:
   start_date: '2025-04-15'
   status: COMPLETED
   target_date: '2025-04-15'
+  is_true_milestone: true
 - completion_date: '2025-04-30'
   completion_percentage: 10000
   id: null
@@ -610,6 +646,7 @@ milestones:
   start_date: '2025-04-30'
   status: COMPLETED
   target_date: '2025-04-30'
+  is_true_milestone: true
 - completion_date: '2025-04-29'
   completion_percentage: 10000
   id: null
@@ -626,6 +663,7 @@ milestones:
   start_date: '2025-04-29'
   status: COMPLETED
   target_date: '2025-04-29'
+  is_true_milestone: true
 - completion_date: '2025-05-07'
   completion_percentage: 10000
   id: null
@@ -642,6 +680,7 @@ milestones:
   start_date: '2025-05-07'
   status: COMPLETED
   target_date: '2025-05-07'
+  is_true_milestone: true
 - completion_date: '2025-06-12'
   completion_percentage: 10000
   id: null
@@ -658,6 +697,7 @@ milestones:
   start_date: '2025-06-12'
   status: COMPLETED
   target_date: '2025-06-12'
+  is_true_milestone: true
 - completion_date: '2025-06-13'
   completion_percentage: 10000
   id: null
@@ -674,6 +714,7 @@ milestones:
   start_date: '2025-06-13'
   status: COMPLETED
   target_date: '2025-06-13'
+  is_true_milestone: true
 - completion_date: '2025-04-29'
   completion_percentage: 10000
   id: null
@@ -690,6 +731,7 @@ milestones:
   start_date: '2025-04-29'
   status: COMPLETED
   target_date: '2025-04-29'
+  is_true_milestone: true
 - completion_date: '2025-06-13'
   completion_percentage: 10000
   id: null
@@ -706,6 +748,7 @@ milestones:
   start_date: '2025-06-13'
   status: COMPLETED
   target_date: '2025-06-13'
+  is_true_milestone: true
 - completion_date: '2025-08-19'
   completion_percentage: 10000
   id: null
@@ -722,6 +765,7 @@ milestones:
   start_date: '2025-08-19'
   status: COMPLETED
   target_date: '2025-08-19'
+  is_true_milestone: true
 - completion_date: '2025-09-15'
   completion_percentage: 10000
   id: null
@@ -738,6 +782,7 @@ milestones:
   start_date: '2025-09-15'
   status: COMPLETED
   target_date: '2025-09-15'
+  is_true_milestone: true
 - completion_date: '2025-09-15'
   completion_percentage: 10000
   id: null
@@ -754,6 +799,7 @@ milestones:
   start_date: '2025-09-15'
   status: COMPLETED
   target_date: '2025-09-15'
+  is_true_milestone: true
 - completion_date: '2025-10-06'
   completion_percentage: 10000
   id: null
@@ -770,6 +816,7 @@ milestones:
   start_date: '2025-10-06'
   status: COMPLETED
   target_date: '2025-10-06'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -786,6 +833,7 @@ milestones:
   start_date: '2025-12-29'
   status: NOT_STARTED
   target_date: '2025-12-29'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -802,6 +850,7 @@ milestones:
   start_date: '2026-01-19'
   status: NOT_STARTED
   target_date: '2026-04-10'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -818,6 +867,7 @@ milestones:
   start_date: '2026-04-20'
   status: NOT_STARTED
   target_date: '2026-04-20'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -835,6 +885,7 @@ milestones:
   start_date: '2026-05-06'
   status: NOT_STARTED
   target_date: '2026-05-06'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -851,6 +902,7 @@ milestones:
   start_date: '2026-05-14'
   status: NOT_STARTED
   target_date: '2026-05-14'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -867,6 +919,7 @@ milestones:
   start_date: '2026-05-29'
   status: NOT_STARTED
   target_date: '2026-05-29'
+  is_true_milestone: true
 - completion_date: '2024-11-08'
   completion_percentage: 10000
   id: null
@@ -883,6 +936,7 @@ milestones:
   start_date: '2024-11-08'
   status: COMPLETED
   target_date: '2024-11-08'
+  is_true_milestone: false
 - completion_date: '2025-01-29'
   completion_percentage: 10000
   id: null
@@ -899,6 +953,7 @@ milestones:
   start_date: '2025-01-29'
   status: COMPLETED
   target_date: '2025-01-29'
+  is_true_milestone: false
 - completion_date: '2025-03-14'
   completion_percentage: 10000
   id: null
@@ -916,6 +971,7 @@ milestones:
   start_date: '2025-03-14'
   status: COMPLETED
   target_date: '2025-03-14'
+  is_true_milestone: true
 - completion_date: '2025-06-06'
   completion_percentage: 10000
   id: null
@@ -933,6 +989,7 @@ milestones:
   start_date: '2025-06-06'
   status: COMPLETED
   target_date: '2025-06-06'
+  is_true_milestone: true
 - completion_date: '2025-06-17'
   completion_percentage: 10000
   id: null
@@ -965,6 +1022,7 @@ milestones:
   start_date: '2025-05-09'
   status: COMPLETED
   target_date: '2025-05-09'
+  is_true_milestone: true
 - completion_date: '2025-05-12'
   completion_percentage: 10000
   id: null
@@ -981,6 +1039,7 @@ milestones:
   start_date: '2025-05-12'
   status: COMPLETED
   target_date: '2025-05-12'
+  is_true_milestone: false
 - completion_date: '2025-05-12'
   completion_percentage: 10000
   id: null
@@ -998,6 +1057,7 @@ milestones:
   start_date: '2025-05-12'
   status: COMPLETED
   target_date: '2025-05-12'
+  is_true_milestone: true
 - completion_date: '2025-05-12'
   completion_percentage: 10000
   id: null
@@ -1015,6 +1075,7 @@ milestones:
   start_date: '2025-05-12'
   status: COMPLETED
   target_date: '2025-05-12'
+  is_true_milestone: true
 - completion_date: '2025-03-20'
   completion_percentage: 10000
   id: null
@@ -1032,6 +1093,7 @@ milestones:
   start_date: '2025-03-19'
   status: COMPLETED
   target_date: '2025-03-20'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1049,6 +1111,7 @@ milestones:
   start_date: '2026-03-12'
   status: NOT_STARTED
   target_date: '2026-03-12'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1066,6 +1129,7 @@ milestones:
   start_date: '2026-04-03'
   status: NOT_STARTED
   target_date: '2026-04-03'
+  is_true_milestone: true
 - completion_date: '2024-10-22'
   completion_percentage: 10000
   id: null
@@ -1083,6 +1147,7 @@ milestones:
   start_date: '2024-10-22'
   status: COMPLETED
   target_date: '2024-10-22'
+  is_true_milestone: false
 - completion_date: '2024-12-03'
   completion_percentage: 10000
   id: null
@@ -1099,6 +1164,7 @@ milestones:
   start_date: '2024-11-29'
   status: COMPLETED
   target_date: '2024-12-03'
+  is_true_milestone: false
 - completion_date: '2025-10-07'
   completion_percentage: 10000
   id: null
@@ -1115,6 +1181,7 @@ milestones:
   start_date: '2025-10-07'
   status: COMPLETED
   target_date: '2025-10-07'
+  is_true_milestone: true
 - completion_date: '2025-10-21'
   completion_percentage: 10000
   id: null
@@ -1131,6 +1198,7 @@ milestones:
   start_date: '2025-10-21'
   status: COMPLETED
   target_date: '2025-10-21'
+  is_true_milestone: true
 - completion_date: '2025-10-22'
   completion_percentage: 10000
   id: null
@@ -1147,6 +1215,7 @@ milestones:
   start_date: '2025-10-22'
   status: COMPLETED
   target_date: '2025-10-22'
+  is_true_milestone: true
 - completion_date: '2025-11-05'
   completion_percentage: 10000
   id: null
@@ -1163,6 +1232,7 @@ milestones:
   start_date: '2025-11-05'
   status: COMPLETED
   target_date: '2025-11-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1180,6 +1250,7 @@ milestones:
   start_date: '2025-11-28'
   status: NOT_STARTED
   target_date: '2025-11-28'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1197,6 +1268,7 @@ milestones:
   start_date: '2025-12-22'
   status: NOT_STARTED
   target_date: '2025-12-22'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1214,6 +1286,7 @@ milestones:
   start_date: '2025-12-22'
   status: NOT_STARTED
   target_date: '2025-12-22'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1230,6 +1303,7 @@ milestones:
   start_date: '2026-10-06'
   status: NOT_STARTED
   target_date: '2026-10-06'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1246,6 +1320,7 @@ milestones:
   start_date: '2026-10-07'
   status: NOT_STARTED
   target_date: '2026-10-07'
+  is_true_milestone: true
 - completion_date: '2025-05-07'
   completion_percentage: 10000
   id: null
@@ -1262,6 +1337,7 @@ milestones:
   start_date: '2025-05-07'
   status: COMPLETED
   target_date: '2025-05-07'
+  is_true_milestone: true
 - completion_date: '2025-05-28'
   completion_percentage: 10000
   id: null
@@ -1278,6 +1354,7 @@ milestones:
   start_date: '2025-05-28'
   status: COMPLETED
   target_date: '2025-05-28'
+  is_true_milestone: true
 - completion_date: '2025-08-11'
   completion_percentage: 10000
   id: null
@@ -1294,6 +1371,7 @@ milestones:
   start_date: '2025-08-11'
   status: COMPLETED
   target_date: '2025-08-11'
+  is_true_milestone: true
 - completion_date: '2025-08-11'
   completion_percentage: 10000
   id: null
@@ -1310,6 +1388,7 @@ milestones:
   start_date: '2025-08-11'
   status: COMPLETED
   target_date: '2025-08-11'
+  is_true_milestone: true
 - completion_date: '2025-09-11'
   completion_percentage: 10000
   id: null
@@ -1327,6 +1406,7 @@ milestones:
   start_date: '2025-09-11'
   status: COMPLETED
   target_date: '2025-09-11'
+  is_true_milestone: true
 - completion_date: '2025-08-05'
   completion_percentage: 10000
   id: null
@@ -1343,6 +1423,7 @@ milestones:
   start_date: '2025-08-05'
   status: COMPLETED
   target_date: '2025-08-05'
+  is_true_milestone: true
 - completion_date: '2025-08-12'
   completion_percentage: 10000
   id: null
@@ -1359,6 +1440,7 @@ milestones:
   start_date: '2025-08-12'
   status: COMPLETED
   target_date: '2025-08-12'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1375,6 +1457,7 @@ milestones:
   start_date: '2025-11-12'
   status: NOT_STARTED
   target_date: '2025-11-12'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 9900
   id: null
@@ -1391,6 +1474,7 @@ milestones:
   start_date: '2025-11-03'
   status: COMPLETED
   target_date: '2025-11-03'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1407,6 +1491,7 @@ milestones:
   start_date: '2025-12-12'
   status: NOT_STARTED
   target_date: '2025-12-12'
+  is_true_milestone: true
 - completion_date: '2025-04-29'
   completion_percentage: 10000
   id: null
@@ -1424,6 +1509,7 @@ milestones:
   start_date: '2025-04-29'
   status: COMPLETED
   target_date: '2025-04-29'
+  is_true_milestone: true
 - completion_date: '2025-05-06'
   completion_percentage: 10000
   id: null
@@ -1442,6 +1528,7 @@ milestones:
   start_date: '2025-04-30'
   status: COMPLETED
   target_date: '2025-05-06'
+  is_true_milestone: false
 - completion_date: '2025-09-04'
   completion_percentage: 10000
   id: null
@@ -1458,6 +1545,7 @@ milestones:
   start_date: '2025-09-04'
   status: COMPLETED
   target_date: '2025-09-04'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1475,6 +1563,7 @@ milestones:
   start_date: '2026-04-02'
   status: NOT_STARTED
   target_date: '2026-04-02'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1492,6 +1581,7 @@ milestones:
   start_date: '2026-04-02'
   status: NOT_STARTED
   target_date: '2026-04-02'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1509,6 +1599,7 @@ milestones:
   start_date: '2026-04-03'
   status: NOT_STARTED
   target_date: '2026-04-03'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1527,6 +1618,7 @@ milestones:
   start_date: '2026-04-03'
   status: NOT_STARTED
   target_date: '2026-04-03'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1545,6 +1637,7 @@ milestones:
   start_date: '2026-04-03'
   status: NOT_STARTED
   target_date: '2026-04-03'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1563,6 +1656,7 @@ milestones:
   start_date: '2026-04-03'
   status: NOT_STARTED
   target_date: '2026-04-03'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1580,6 +1674,7 @@ milestones:
   start_date: '2026-04-21'
   status: NOT_STARTED
   target_date: '2026-04-21'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1597,6 +1692,7 @@ milestones:
   start_date: '2026-05-12'
   status: NOT_STARTED
   target_date: '2026-05-12'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1613,6 +1709,7 @@ milestones:
   start_date: '2026-06-02'
   status: NOT_STARTED
   target_date: '2026-06-02'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1628,6 +1725,7 @@ milestones:
   start_date: '2026-06-04'
   status: NOT_STARTED
   target_date: '2026-08-27'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1644,6 +1742,7 @@ milestones:
   start_date: '2026-06-04'
   status: NOT_STARTED
   target_date: '2026-06-25'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1661,6 +1760,7 @@ milestones:
   start_date: '2026-06-04'
   status: NOT_STARTED
   target_date: '2026-06-05'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1679,6 +1779,7 @@ milestones:
   start_date: '2026-06-05'
   status: NOT_STARTED
   target_date: '2026-06-08'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1697,6 +1798,7 @@ milestones:
   start_date: '2026-06-08'
   status: NOT_STARTED
   target_date: '2026-06-09'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1714,6 +1816,7 @@ milestones:
   start_date: '2026-06-09'
   status: NOT_STARTED
   target_date: '2026-06-10'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1732,6 +1835,7 @@ milestones:
   start_date: '2026-06-10'
   status: NOT_STARTED
   target_date: '2026-06-11'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1749,6 +1853,7 @@ milestones:
   start_date: '2026-06-11'
   status: NOT_STARTED
   target_date: '2026-06-12'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1767,6 +1872,7 @@ milestones:
   start_date: '2026-06-12'
   status: NOT_STARTED
   target_date: '2026-06-15'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1785,6 +1891,7 @@ milestones:
   start_date: '2026-06-15'
   status: NOT_STARTED
   target_date: '2026-06-16'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1803,6 +1910,7 @@ milestones:
   start_date: '2026-06-16'
   status: NOT_STARTED
   target_date: '2026-06-17'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1821,6 +1929,7 @@ milestones:
   start_date: '2026-06-17'
   status: NOT_STARTED
   target_date: '2026-06-18'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1839,6 +1948,7 @@ milestones:
   start_date: '2026-06-18'
   status: NOT_STARTED
   target_date: '2026-06-19'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1856,6 +1966,7 @@ milestones:
   start_date: '2026-06-19'
   status: NOT_STARTED
   target_date: '2026-06-22'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1874,6 +1985,7 @@ milestones:
   start_date: '2026-06-22'
   status: NOT_STARTED
   target_date: '2026-06-23'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1892,6 +2004,7 @@ milestones:
   start_date: '2026-06-23'
   status: NOT_STARTED
   target_date: '2026-06-24'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1909,6 +2022,7 @@ milestones:
   start_date: '2026-06-24'
   status: NOT_STARTED
   target_date: '2026-06-25'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1927,6 +2041,7 @@ milestones:
   start_date: '2026-06-24'
   status: NOT_STARTED
   target_date: '2026-06-24'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1945,6 +2060,7 @@ milestones:
   start_date: '2026-06-24'
   status: NOT_STARTED
   target_date: '2026-06-25'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1961,6 +2077,7 @@ milestones:
   start_date: '2026-06-25'
   status: NOT_STARTED
   target_date: '2026-07-16'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1978,6 +2095,7 @@ milestones:
   start_date: '2026-06-25'
   status: NOT_STARTED
   target_date: '2026-06-26'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -1996,6 +2114,7 @@ milestones:
   start_date: '2026-06-26'
   status: NOT_STARTED
   target_date: '2026-06-29'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2014,6 +2133,7 @@ milestones:
   start_date: '2026-06-29'
   status: NOT_STARTED
   target_date: '2026-06-30'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2031,6 +2151,7 @@ milestones:
   start_date: '2026-06-30'
   status: NOT_STARTED
   target_date: '2026-07-01'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2049,6 +2170,7 @@ milestones:
   start_date: '2026-07-01'
   status: NOT_STARTED
   target_date: '2026-07-02'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2066,6 +2188,7 @@ milestones:
   start_date: '2026-07-02'
   status: NOT_STARTED
   target_date: '2026-07-03'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2084,6 +2207,7 @@ milestones:
   start_date: '2026-07-03'
   status: NOT_STARTED
   target_date: '2026-07-06'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2102,6 +2226,7 @@ milestones:
   start_date: '2026-07-06'
   status: NOT_STARTED
   target_date: '2026-07-07'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2120,6 +2245,7 @@ milestones:
   start_date: '2026-07-07'
   status: NOT_STARTED
   target_date: '2026-07-08'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2138,6 +2264,7 @@ milestones:
   start_date: '2026-07-08'
   status: NOT_STARTED
   target_date: '2026-07-09'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2156,6 +2283,7 @@ milestones:
   start_date: '2026-07-09'
   status: NOT_STARTED
   target_date: '2026-07-10'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2173,6 +2301,7 @@ milestones:
   start_date: '2026-07-10'
   status: NOT_STARTED
   target_date: '2026-07-13'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2191,6 +2320,7 @@ milestones:
   start_date: '2026-07-13'
   status: NOT_STARTED
   target_date: '2026-07-14'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2209,6 +2339,7 @@ milestones:
   start_date: '2026-07-14'
   status: NOT_STARTED
   target_date: '2026-07-15'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2226,6 +2357,7 @@ milestones:
   start_date: '2026-07-15'
   status: NOT_STARTED
   target_date: '2026-07-16'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2244,6 +2376,7 @@ milestones:
   start_date: '2026-07-15'
   status: NOT_STARTED
   target_date: '2026-07-15'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2262,6 +2395,7 @@ milestones:
   start_date: '2026-07-15'
   status: NOT_STARTED
   target_date: '2026-07-16'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2278,6 +2412,7 @@ milestones:
   start_date: '2026-07-16'
   status: NOT_STARTED
   target_date: '2026-08-06'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2295,6 +2430,7 @@ milestones:
   start_date: '2026-07-16'
   status: NOT_STARTED
   target_date: '2026-07-17'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2312,6 +2448,7 @@ milestones:
   start_date: '2026-07-17'
   status: NOT_STARTED
   target_date: '2026-07-20'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2330,6 +2467,7 @@ milestones:
   start_date: '2026-07-20'
   status: NOT_STARTED
   target_date: '2026-07-21'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2347,6 +2485,7 @@ milestones:
   start_date: '2026-07-21'
   status: NOT_STARTED
   target_date: '2026-07-22'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2365,6 +2504,7 @@ milestones:
   start_date: '2026-07-22'
   status: NOT_STARTED
   target_date: '2026-07-23'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2382,6 +2522,7 @@ milestones:
   start_date: '2026-07-23'
   status: NOT_STARTED
   target_date: '2026-07-24'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2400,6 +2541,7 @@ milestones:
   start_date: '2026-07-24'
   status: NOT_STARTED
   target_date: '2026-07-27'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2418,6 +2560,7 @@ milestones:
   start_date: '2026-07-27'
   status: NOT_STARTED
   target_date: '2026-07-28'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2436,6 +2579,7 @@ milestones:
   start_date: '2026-07-28'
   status: NOT_STARTED
   target_date: '2026-07-29'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2454,6 +2598,7 @@ milestones:
   start_date: '2026-07-29'
   status: NOT_STARTED
   target_date: '2026-07-30'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2472,6 +2617,7 @@ milestones:
   start_date: '2026-07-30'
   status: NOT_STARTED
   target_date: '2026-07-31'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2489,6 +2635,7 @@ milestones:
   start_date: '2026-07-31'
   status: NOT_STARTED
   target_date: '2026-08-03'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2507,6 +2654,7 @@ milestones:
   start_date: '2026-08-03'
   status: NOT_STARTED
   target_date: '2026-08-04'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2525,6 +2673,7 @@ milestones:
   start_date: '2026-08-04'
   status: NOT_STARTED
   target_date: '2026-08-05'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2542,6 +2691,7 @@ milestones:
   start_date: '2026-08-05'
   status: NOT_STARTED
   target_date: '2026-08-06'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2560,6 +2710,7 @@ milestones:
   start_date: '2026-08-05'
   status: NOT_STARTED
   target_date: '2026-08-05'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2578,6 +2729,7 @@ milestones:
   start_date: '2026-08-05'
   status: NOT_STARTED
   target_date: '2026-08-06'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2594,6 +2746,7 @@ milestones:
   start_date: '2026-08-06'
   status: NOT_STARTED
   target_date: '2026-08-27'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2611,6 +2764,7 @@ milestones:
   start_date: '2026-08-06'
   status: NOT_STARTED
   target_date: '2026-08-07'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2628,6 +2782,7 @@ milestones:
   start_date: '2026-08-07'
   status: NOT_STARTED
   target_date: '2026-08-10'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2646,6 +2801,7 @@ milestones:
   start_date: '2026-08-10'
   status: NOT_STARTED
   target_date: '2026-08-11'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2663,6 +2819,7 @@ milestones:
   start_date: '2026-08-11'
   status: NOT_STARTED
   target_date: '2026-08-12'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2681,6 +2838,7 @@ milestones:
   start_date: '2026-08-12'
   status: NOT_STARTED
   target_date: '2026-08-13'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2698,6 +2856,7 @@ milestones:
   start_date: '2026-08-13'
   status: NOT_STARTED
   target_date: '2026-08-14'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2716,6 +2875,7 @@ milestones:
   start_date: '2026-08-14'
   status: NOT_STARTED
   target_date: '2026-08-17'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2734,6 +2894,7 @@ milestones:
   start_date: '2026-08-17'
   status: NOT_STARTED
   target_date: '2026-08-18'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2752,6 +2913,7 @@ milestones:
   start_date: '2026-08-18'
   status: NOT_STARTED
   target_date: '2026-08-19'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2770,6 +2932,7 @@ milestones:
   start_date: '2026-08-19'
   status: NOT_STARTED
   target_date: '2026-08-20'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2788,6 +2951,7 @@ milestones:
   start_date: '2026-08-20'
   status: NOT_STARTED
   target_date: '2026-08-21'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2805,6 +2969,7 @@ milestones:
   start_date: '2026-08-21'
   status: NOT_STARTED
   target_date: '2026-08-24'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2823,6 +2988,7 @@ milestones:
   start_date: '2026-08-24'
   status: NOT_STARTED
   target_date: '2026-08-25'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2841,6 +3007,7 @@ milestones:
   start_date: '2026-08-25'
   status: NOT_STARTED
   target_date: '2026-08-26'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2858,6 +3025,7 @@ milestones:
   start_date: '2026-08-26'
   status: NOT_STARTED
   target_date: '2026-08-27'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2876,6 +3044,7 @@ milestones:
   start_date: '2026-08-26'
   status: NOT_STARTED
   target_date: '2026-08-26'
+  is_true_milestone: true
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2894,6 +3063,7 @@ milestones:
   start_date: '2026-08-26'
   status: NOT_STARTED
   target_date: '2026-08-27'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2909,6 +3079,7 @@ milestones:
   start_date: '2026-08-27'
   status: NOT_STARTED
   target_date: '2026-09-11'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2925,6 +3096,7 @@ milestones:
   start_date: '2026-08-27'
   status: NOT_STARTED
   target_date: '2026-08-28'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2941,6 +3113,7 @@ milestones:
   start_date: '2026-08-28'
   status: NOT_STARTED
   target_date: '2026-08-31'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2958,6 +3131,7 @@ milestones:
   start_date: '2026-08-31'
   status: NOT_STARTED
   target_date: '2026-09-01'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2974,6 +3148,7 @@ milestones:
   start_date: '2026-09-01'
   status: NOT_STARTED
   target_date: '2026-09-02'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -2990,6 +3165,7 @@ milestones:
   start_date: '2026-09-02'
   status: NOT_STARTED
   target_date: '2026-09-03'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3007,6 +3183,7 @@ milestones:
   start_date: '2026-09-03'
   status: NOT_STARTED
   target_date: '2026-09-04'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3023,6 +3200,7 @@ milestones:
   start_date: '2026-09-04'
   status: NOT_STARTED
   target_date: '2026-09-07'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3039,6 +3217,7 @@ milestones:
   start_date: '2026-09-07'
   status: NOT_STARTED
   target_date: '2026-09-08'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3056,6 +3235,7 @@ milestones:
   start_date: '2026-09-08'
   status: NOT_STARTED
   target_date: '2026-09-09'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3073,6 +3253,7 @@ milestones:
   start_date: '2026-09-09'
   status: NOT_STARTED
   target_date: '2026-09-10'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3089,6 +3270,7 @@ milestones:
   start_date: '2026-09-10'
   status: NOT_STARTED
   target_date: '2026-09-11'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3107,6 +3289,7 @@ milestones:
   start_date: '2026-09-10'
   status: NOT_STARTED
   target_date: '2026-09-11'
+  is_true_milestone: false
 - completion_date: null
   completion_percentage: 0
   id: null
@@ -3124,6 +3307,7 @@ milestones:
   start_date: '2026-09-11'
   status: NOT_STARTED
   target_date: '2026-09-11'
+  is_true_milestone: true
 project_code: ZLD-P1
 project_name: ZnNi Line Development Plan-12.xml
 risks: []

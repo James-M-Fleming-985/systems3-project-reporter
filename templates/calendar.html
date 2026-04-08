@@ -230,11 +230,12 @@
         transition: background 0.15s, box-shadow 0.12s;
     }
     .sibling-row:hover { filter: brightness(0.97); }
-    .sibling-row.is-completed label { text-decoration: line-through; color: #6B7280; }
+    .sibling-row.is-completed label,
+    .sibling-row.is-completed span.st-label { text-decoration: line-through; color: #6B7280; }
     /* Drag-reorder styles for sub-item rows */
     .sibling-row .subtask-drag-handle {
-        cursor: grab; color: #C0C0C0; font-size: 0.85rem; flex-shrink: 0;
-        padding: 1px 3px; border-radius: 3px; line-height: 1;
+        cursor: grab; color: #C0C0C0; font-size: 1rem; flex-shrink: 0;
+        padding: 4px 6px; border-radius: 3px; line-height: 1;
         user-select: none; touch-action: none;
     }
     .sibling-row .subtask-drag-handle:hover { color: #6B7280; background: #F3F4F6; }
@@ -606,14 +607,14 @@
                         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                         Sub-tasks / Checklist
                     </span>
-                    <span id="subTaskBadge" class="hidden text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold"></span>
+                    <span id="subTaskBadge" class="hidden text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold"></span>
                     <svg id="subTaskChevron" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div id="subTaskSection" class="hidden px-4 pb-4 pt-3 bg-white space-y-2">
                     <div class="flex gap-2">
-                        <input id="stSubTaskInput" type="text" placeholder="Add a sub-task..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" autocomplete="off"
+                        <input id="stSubTaskInput" type="text" placeholder="Add a sub-task..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" autocomplete="off"
                             onkeydown="if(event.key==='Enter'){event.preventDefault();addSubTaskToForm();}">
-                        <button type="button" onclick="addSubTaskToForm()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition">Add</button>
+                        <button type="button" onclick="addSubTaskToForm()" class="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">+ Add</button>
                     </div>
                     <ul id="stSubTaskList" class="space-y-1.5"></ul>
                 </div>
@@ -773,7 +774,7 @@ function initSubtaskDrag(container, onReorderDone) {
     let dragEl = null;
     container.addEventListener('dragstart', e => {
         const row = e.target.closest('.sibling-row');
-        if (!row || !e.target.closest('.subtask-drag-handle')) { e.preventDefault(); return; }
+        if (!row || !e.target.closest('.subtask-drag-handle')) { e.preventDefault(); e.stopPropagation(); return; }
         dragEl = row;
         row.classList.add('subtask-dragging');
         e.dataTransfer.effectAllowed = 'move';
@@ -1048,13 +1049,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                     try {
                         const controller = new AbortController();
                         const timeout = setTimeout(() => controller.abort(), 15000);
-                        const startStr = info.event.startStr ? info.event.startStr.split('T')[0] : newDate;
+                        // Compute new start and end dates preserving the task's duration
+                        const oldStart = info.oldEvent.startStr.split('T')[0];
+                        const oldEnd = (info.oldEvent.endStr || info.oldEvent.startStr).split('T')[0];
+                        const newStart = info.event.startStr.split('T')[0];
+                        const dayDelta = Math.round((new Date(newStart) - new Date(oldStart)) / 86400000);
+                        const newEnd = new Date(new Date(oldEnd).getTime() + dayDelta * 86400000).toISOString().split('T')[0];
                         const resp = await fetch(
                             `/api/standalone-tasks/${encodeURIComponent(taskId)}/reschedule`,
                             {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                                body: JSON.stringify({ new_due_date: newDate }),
+                                body: JSON.stringify({ new_due_date: newEnd, new_start_date: newStart }),
                                 signal: controller.signal
                             }
                         );
@@ -1481,13 +1487,13 @@ function showEventModal(event) {
                 <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Sub-Tasks</p>
                 <div id="schedSubTasksContainer" class="space-y-1 mb-2">
                     ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map((st, _si) => `
-                        <div class="sibling-row ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" style="background:${getPriorityColor(_si, _schedSubTasks.length)}">
+                        <div class="sibling-row group ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" style="background:${getPriorityColor(_si, _schedSubTasks.length)}">
                             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
                             <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                                    data-st-id="${st.id}" ${st.completed ? 'checked' : ''}
                                    onchange="toggleScheduleSubTask(this)">
                             <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
-                            <button onclick="deleteScheduleSubTask('${st.id}')" class="text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
+                            <button onclick="deleteScheduleSubTask('${st.id}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
@@ -1714,7 +1720,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
                     <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
                     <input type="checkbox" 
                            id="${checkboxId}" 
-                           class="sibling-checkbox w-4 h-4 text-blue-600 rounded flex-shrink-0"
+                           class="sibling-checkbox w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                            data-task-id="${sibling.id}"
                            data-project-code="${projectCode}"
                            ${isCompleted ? 'checked' : ''}
@@ -3054,17 +3060,17 @@ function _renderSubTaskList() {
     const total = _stSubTaskData.length;
     _stSubTaskData.forEach((sub, idx) => {
         const li = document.createElement('li');
-        li.className = 'sibling-row group';
+        li.className = `sibling-row group ${sub.completed ? 'is-completed' : ''}`;
         li.draggable = true;
         li.dataset.stIdx = idx;
         li.style.background = getPriorityColor(idx, total);
         li.innerHTML = `
             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
-            <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="_stSubTaskData[${idx}].completed = this.checked"
-                class="rounded text-emerald-600 focus:ring-emerald-500 flex-shrink-0">
-            <span class="flex-1 text-sm ${sub.completed ? 'line-through text-gray-400' : 'text-gray-700'}">${_escapeHtml(sub.title)}</span>
+            <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="_stSubTaskData[${idx}].completed = this.checked; _renderSubTaskList();"
+                class="rounded text-indigo-600 focus:ring-indigo-500 flex-shrink-0 w-4 h-4">
+            <label class="flex-1 text-sm cursor-pointer select-none">${_escapeHtml(sub.title)}</label>
             <button type="button" onclick="_stSubTaskData.splice(${idx},1);_renderSubTaskList();"
-                class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition">
+                class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-0.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>`;
         list.appendChild(li);

@@ -1224,7 +1224,7 @@ async function handleDrop(event, tableId, targetColId) {
         
         if (response.ok) {
             // Reload to reflect new order
-            window.location.reload();
+            reloadWithActiveTab();
         } else {
             showErrorModal('Save Failed', 'Could not save the column order. Please try again.');
         }
@@ -1255,6 +1255,14 @@ function switchTab(tableId) {
     
     // Store active tab in localStorage for persistence
     localStorage.setItem(`schedule_active_tab_${projectName}`, tableId);
+}
+
+// Reload page while preserving the active tab via ?table= query param
+function reloadWithActiveTab(targetTableId) {
+    const tableId = targetTableId || document.querySelector('.schedule-tab.active')?.dataset?.tableId;
+    const url = new URL(window.location.href);
+    if (tableId) url.searchParams.set('table', tableId);
+    window.location.href = url.toString();
 }
 
 // Restore active tab from localStorage
@@ -1423,7 +1431,7 @@ async function createNewTable() {
         });
         
         if (response.ok) {
-            window.location.reload();
+            reloadWithActiveTab();
         } else {
             showErrorModal('Creation Failed', 'Could not create the table. Please try again.');
         }
@@ -1462,7 +1470,7 @@ async function copyTableFromProgram() {
         
         if (response.ok) {
             const result = await response.json();
-            window.location.reload();
+            reloadWithActiveTab();
         } else {
             const error = await response.json();
             showErrorModal('Copy Failed', 'Could not copy the table: ' + (error.detail || 'Unknown error'));
@@ -1487,7 +1495,7 @@ async function addRow(tableId) {
         });
         
         if (response.ok) {
-            window.location.reload();
+            reloadWithActiveTab();
         }
     } catch (error) {
         console.error('Error adding row:', error);
@@ -1965,7 +1973,7 @@ async function saveColumn(event) {
         });
         
         if (response.ok) {
-            window.location.reload();
+            reloadWithActiveTab();
         } else {
             showErrorModal('Save Failed', 'Could not save the column. Please try again.');
         }
@@ -1995,7 +2003,7 @@ async function deleteColumn(tableId, columnId) {
         });
         
         if (response.ok) {
-            window.location.reload();
+            reloadWithActiveTab();
         }
     } catch (error) {
         console.error('Error deleting column:', error);
@@ -2041,7 +2049,7 @@ async function deleteTable(tableId) {
         }
         
         // Success - reload page
-        window.location.reload();
+        reloadWithActiveTab();
         
     } catch (error) {
         console.error('Error deleting table:', error);
@@ -2079,7 +2087,7 @@ async function saveEditTable() {
         });
         
         if (response.ok) {
-            window.location.reload();
+            reloadWithActiveTab();
         }
     } catch (error) {
         console.error('Error updating table:', error);

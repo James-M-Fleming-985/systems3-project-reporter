@@ -773,6 +773,9 @@ async def get_calendar_events(request: Request):
                     if task_status == 'IN_PROGRESS':
                         status_category = 'in-progress'
                         status_label = 'In Progress'
+                    elif task_status == 'COMPLETED':
+                        status_category = 'completed'
+                        status_label = 'Completed'
                     else:
                         status_category = 'not-started'
                         status_label = 'Not Started'
