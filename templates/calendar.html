@@ -239,6 +239,11 @@
         user-select: none; touch-action: none;
     }
     .sibling-row .subtask-drag-handle:hover { color: #6B7280; background: #F3F4F6; }
+    .priority-label {
+        font-size: 0.65rem; font-weight: 700; color: rgba(0,0,0,0.40);
+        min-width: 22px; text-align: center; flex-shrink: 0; line-height: 1;
+        user-select: none;
+    }
     .sibling-row .subtask-drag-handle:active { cursor: grabbing; }
     .sibling-row.subtask-dragging { opacity: 0.35; }
     .sibling-row.subtask-drag-over { box-shadow: inset 0 -2px 0 #3B82F6; }
@@ -316,7 +321,7 @@
         border-bottom: 1px solid #F3F4F6; cursor: pointer; transition: background 0.12s;
         user-select: none; overflow: hidden;
     }
-    .clv-row:hover { background: #F9FAFB; }
+    .clv-row:hover { filter: brightness(0.97); }
     .clv-row.dragging { opacity: 0.4; background: #EFF6FF; }
     .clv-row.drag-over-top { box-shadow: inset 0 2px 0 #3B82F6; }
     .clv-row.drag-over-bottom { box-shadow: inset 0 -2px 0 #3B82F6; }
@@ -761,6 +766,42 @@ function applyPriorityColors(container) {
     const total = rows.length;
     rows.forEach((row, i) => {
         row.style.background = getPriorityColor(i, total);
+        const pl = row.querySelector('.priority-label');
+        if (pl) pl.textContent = 'P' + (i + 1);
+    });
+}
+
+// Inline-edit: double-click a sub-task label to rename it
+function makeSubtaskEditable(labelEl, saveCallback) {
+    labelEl.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (labelEl.querySelector('input')) return; // already editing
+        const origText = labelEl.textContent.trim();
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = origText;
+        input.className = 'flex-1 text-sm px-1 py-0.5 border border-indigo-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none';
+        input.style.minWidth = '0';
+        labelEl.textContent = '';
+        labelEl.appendChild(input);
+        input.focus();
+        input.select();
+
+        function finish(save) {
+            const newTitle = input.value.trim();
+            if (save && newTitle && newTitle !== origText) {
+                labelEl.textContent = newTitle;
+                saveCallback(newTitle);
+            } else {
+                labelEl.textContent = origText;
+            }
+        }
+        input.addEventListener('keydown', (ke) => {
+            if (ke.key === 'Enter') { ke.preventDefault(); finish(true); }
+            else if (ke.key === 'Escape') { ke.preventDefault(); finish(false); }
+        });
+        input.addEventListener('blur', () => finish(true));
     });
 }
 
@@ -1493,6 +1534,7 @@ function showEventModal(event) {
                     ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map((st, _si) => `
                         <div class="sibling-row group ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" style="background:${getPriorityColor(_si, _schedSubTasks.length)}">
                             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
+                            <span class="priority-label">P${_si + 1}</span>
                             <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                                    data-st-id="${st.id}" ${st.completed ? 'checked' : ''}
                                    onchange="toggleScheduleSubTask(this)">
@@ -1653,6 +1695,23 @@ function showEventModal(event) {
                 }).catch(err => console.error('Sub-task reorder failed:', err));
             });
         }
+        // Wire up double-click-to-edit on schedule sub-task labels
+        if (schedContainer) {
+            schedContainer.querySelectorAll('.sibling-row label').forEach(lbl => {
+                const row = lbl.closest('.sibling-row');
+                const stId = row?.dataset.stId;
+                if (!stId) return;
+                makeSubtaskEditable(lbl, (newTitle) => {
+                    const csrf = document.getElementById('csrfToken')?.value || '';
+                    fetch(`/dashboard/api/schedule/${encodeURIComponent(ep.program)}/tables/${encodeURIComponent(ep.tableId)}/rows/${encodeURIComponent(ep.rowId)}/sub-tasks/${encodeURIComponent(stId)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+                        body: JSON.stringify({ title: newTitle })
+                    }).then(r => { if (!r.ok) throw new Error('Save failed'); showToast('Title updated', 'success', 2000); })
+                      .catch(err => { console.error('Rename sub-task failed:', err); showToast('Could not rename', 'error'); });
+                });
+            });
+        }
     }
 
     // AI Chat Panel — show for milestone, risk_review, and schedule events
@@ -1722,6 +1781,7 @@ async function loadSiblingTasks(projectCode, milestoneId) {
             html += `
                 <div class="sibling-row group ${isCompleted ? 'is-completed' : ''}" id="row-${checkboxId}" draggable="true" data-sib-id="${sibling.id}" style="background:${getPriorityColor(sibIdx, sibCount)}">
                     <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
+                    <span class="priority-label">P${sibIdx + 1}</span>
                     <input type="checkbox" 
                            id="${checkboxId}" 
                            class="sibling-checkbox w-4 h-4 text-indigo-600 rounded flex-shrink-0"
@@ -2026,18 +2086,48 @@ async function addScheduleSubTask() {
             if (placeholder) placeholder.remove();
 
             const div = document.createElement('div');
-            div.className = 'sibling-row';
+            div.className = 'sibling-row group';
             div.id = `st-row-${st.id}`;
+            div.draggable = true;
+            div.dataset.stId = st.id;
             div.innerHTML = `
+                <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
+                <span class="priority-label"></span>
                 <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                        data-st-id="${st.id}"
                        onchange="toggleScheduleSubTask(this)">
                 <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
-                <button onclick="deleteScheduleSubTask('${st.id}')" class="text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
+                <button onclick="deleteScheduleSubTask('${st.id}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             `;
             container.appendChild(div);
+
+            // Wire up double-click-to-edit on the new sub-task label
+            const lbl = div.querySelector('label');
+            if (lbl) {
+                makeSubtaskEditable(lbl, (newTitle) => {
+                    const csrf = document.getElementById('csrfToken')?.value || '';
+                    fetch(`/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks/${encodeURIComponent(st.id)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+                        body: JSON.stringify({ title: newTitle })
+                    }).then(r => { if (!r.ok) throw new Error('Save failed'); showToast('Title updated', 'success', 2000); })
+                      .catch(err => { console.error('Rename sub-task failed:', err); showToast('Could not rename', 'error'); });
+                });
+            }
+
+            // Re-apply gradient colors and re-init drag
+            applyPriorityColors(container);
+            if (container.querySelectorAll('.sibling-row').length > 1) {
+                initSubtaskDrag(container, (cont) => {
+                    const ids = [...cont.querySelectorAll('.sibling-row[data-st-id]')].map(r => r.dataset.stId);
+                    fetch(`/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks/reorder`, {
+                        method: 'PUT', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ order: ids })
+                    }).catch(err => console.error('Sub-task reorder failed:', err));
+                });
+            }
         }
         input.value = '';
         showToast('Sub-task added', 'success');
@@ -2449,7 +2539,9 @@ function renderCustomListView() {
         const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         html += `<div class="clv-group-label" data-date="${dateKey}">${label}</div>`;
 
-        for (const evt of groups[dateKey]) {
+        const dayItems = groups[dateKey];
+        const dayTotal = dayItems.length;
+        dayItems.forEach((evt, dayIdx) => {
             const ep = evt.extendedProps || {};
             const type = ep.type || 'milestone';
             const statusCat = ep.status_category || 'not-started';
@@ -2457,8 +2549,9 @@ function renderCustomListView() {
             const evtId = evt.id;
             const idx = globalIdx++;
 
-            html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}" data-date="${dateKey}">`;
+            html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}" data-date="${dateKey}" style="background:${getPriorityColor(dayIdx, dayTotal)}">`;
             html += `<span class="clv-drag-handle" title="Drag to reorder">⠿</span>`;
+            html += `<span class="priority-label">P${dayIdx + 1}</span>`;
             html += `<span class="clv-type-badge clv-type-${type}">${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
             html += `<span class="clv-status-dot status-dot-${statusCat}"></span>`;
             html += `<span class="clv-title" data-event-id="${evtId}">${escapeHtml(evt.title)}</span>`;
@@ -2466,7 +2559,7 @@ function renderCustomListView() {
             html += `<span class="clv-date">${dateKey}</span>`;
             html += `<button class="clv-done-btn clv-done-btn-${type}" data-event-id="${evtId}" data-event-type="${type}" onclick="event.stopPropagation(); clvQuickDone(this)">${doneLabels[type] || 'Done ✓'}</button>`;
             html += `</div>`;
-        }
+        });
     }
 
     body.innerHTML = html;
@@ -3070,6 +3163,7 @@ function _renderSubTaskList() {
         el.style.background = getPriorityColor(idx, total);
         el.innerHTML = `
             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
+            <span class="priority-label">P${idx + 1}</span>
             <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="_stSubTaskData[${idx}].completed = this.checked; _renderSubTaskList();"
                 class="rounded text-indigo-600 focus:ring-indigo-500 flex-shrink-0 w-4 h-4">
             <label class="flex-1 text-sm cursor-pointer select-none">${_escapeHtml(sub.title)}</label>
@@ -3078,6 +3172,21 @@ function _renderSubTaskList() {
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>`;
         list.appendChild(el);
+        // Wire up double-click-to-edit on standalone sub-task label
+        const lbl = el.querySelector('label');
+        if (lbl) {
+            const capturedIdx = idx;
+            makeSubtaskEditable(lbl, (newTitle) => {
+                _stSubTaskData[capturedIdx].title = newTitle;
+                if (_stTaskId && sub.id && !sub.id.startsWith('new-')) {
+                    fetch(`/api/standalone-tasks/${encodeURIComponent(_stTaskId)}/sub-tasks/${encodeURIComponent(sub.id)}`, {
+                        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: newTitle })
+                    }).then(r => { if (!r.ok) throw new Error('Save failed'); showToast('Title updated', 'success', 2000); })
+                      .catch(err => { console.error('Rename sub-task failed:', err); showToast('Could not rename', 'error'); });
+                }
+            });
+        }
     });
     const count = _stSubTaskData.length;
     badge.textContent = count > 0 ? count : '';

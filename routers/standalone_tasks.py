@@ -83,7 +83,8 @@ class SubTaskBody(BaseModel):
 
 
 class SubTaskToggleBody(BaseModel):
-    completed: bool
+    completed: Optional[bool] = None
+    title: Optional[str] = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -203,11 +204,20 @@ async def toggle_sub_task(
     sub_task_id: str,
     body: SubTaskToggleBody,
 ):
-    """Toggle a sub-task completed flag."""
+    """Update a sub-task (toggle completed, rename)."""
     user_id = _require_user_id(request)
-    ok = _get_repo().toggle_sub_task(user_id, task_id, sub_task_id, body.completed)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Sub-task not found")
+    repo = _get_repo()
+    if body.completed is not None:
+        ok = repo.toggle_sub_task(user_id, task_id, sub_task_id, body.completed)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Sub-task not found")
+    if body.title is not None:
+        title = body.title.strip()
+        if not title:
+            raise HTTPException(status_code=422, detail="title cannot be empty")
+        ok = repo.update_sub_task_title(user_id, task_id, sub_task_id, title)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Sub-task not found")
     return JSONResponse({"success": True})
 
 
