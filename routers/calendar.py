@@ -503,8 +503,8 @@ async def get_calendar_events(request: Request):
                                         sched_status_category = 'pending'
                                         sched_status_label = status
 
-                                # Source-based color: schedule items are always indigo
-                                sched_color = '#6366F1'
+                                # Source-based color: use table-specific color or default indigo
+                                sched_color = table.get('color', '') or '#6366F1'
 
                                 # Use unique ID per row+column combination
                                 event = {
@@ -526,6 +526,7 @@ async def get_calendar_events(request: Request):
                                         'programCode': sched_code or sched_program,
                                         'tableName': table_name,
                                         'tableId': table.get('id', ''),
+                                        'tableColor': table.get('color', ''),
                                         'rowId': row.get('id', ''),
                                         'statusColId': status_col or '',
                                         'dateColId': col_id,

@@ -104,7 +104,29 @@
         height: 12px;
         border-radius: 50%;
         flex-shrink: 0;
+        cursor: pointer;
+        transition: transform 0.12s, box-shadow 0.12s;
+        border: 2px solid transparent;
     }
+    .legend-dot[data-type]:hover { transform: scale(1.3); box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+    /* Color picker popover */
+    .color-picker-popover {
+        position: absolute; z-index: 1000; background: #fff; border: 1px solid #E5E7EB;
+        border-radius: 10px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; min-width: 140px;
+    }
+    .color-swatch {
+        width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+        transition: transform 0.1s, border-color 0.1s; flex-shrink: 0;
+    }
+    .color-swatch:hover { transform: scale(1.2); border-color: rgba(0,0,0,0.3); }
+    .color-swatch.active { border-color: #111827; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111827; }
+    .color-swatch-reset {
+        width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px dashed #9CA3AF;
+        display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #6B7280;
+        transition: transform 0.1s, border-color 0.1s; background: #F9FAFB;
+    }
+    .color-swatch-reset:hover { transform: scale(1.2); border-color: #374151; }
     /* Modal animation */
     .event-modal {
         animation: slideIn 0.2s ease-out;
@@ -419,12 +441,12 @@
         <!-- Legend: Source Types -->
         <div class="flex flex-wrap items-center gap-4">
             <span class="text-xs font-semibold text-gray-500 uppercase">Source:</span>
-            <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div> Milestone</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div> Change</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#6366F1"></div> Schedule</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div> Metric</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div> Risk Review</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div> My Tasks</div>
+            <div class="legend-item"><div class="legend-dot" data-type="milestone" onclick="showColorPicker(event,'milestone')" style="background:#3B82F6" title="Click to change color"></div> Milestone</div>
+            <div class="legend-item"><div class="legend-dot" data-type="change" onclick="showColorPicker(event,'change')" style="background:#F59E0B" title="Click to change color"></div> Change</div>
+            <div class="legend-item"><div class="legend-dot" data-type="schedule" onclick="showColorPicker(event,'schedule')" style="background:#6366F1" title="Click to change color"></div> Schedule</div>
+            <div class="legend-item"><div class="legend-dot" data-type="metric_target" onclick="showColorPicker(event,'metric_target')" style="background:#8B5CF6" title="Click to change color"></div> Metric</div>
+            <div class="legend-item"><div class="legend-dot" data-type="risk_review" onclick="showColorPicker(event,'risk_review')" style="background:#EF4444" title="Click to change color"></div> Risk Review</div>
+            <div class="legend-item"><div class="legend-dot" data-type="standalone" onclick="showColorPicker(event,'standalone')" style="background:#10B981" title="Click to change color"></div> My Tasks</div>
             <span class="text-gray-300 mx-1">|</span>
             <span class="text-xs font-semibold text-gray-500 uppercase">Status:</span>
             <div class="legend-item"><div class="legend-dot status-dot-completed" style="width:10px;height:10px"></div> Done</div>
@@ -1180,6 +1202,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Force recalculate after container is visible
         calendarInstance.updateSize();
         
+        // Restore saved legend dot colors
+        const savedColors = getTypeColors();
+        document.querySelectorAll('.legend-dot[data-type]').forEach(dot => {
+            const t = dot.getAttribute('data-type');
+            if (savedColors[t]) dot.style.background = savedColors[t];
+        });
+
         updateStats();
         
     } catch (error) {
@@ -1208,6 +1237,72 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 });
 
+// ── Custom Type Colors ──
+const DEFAULT_TYPE_COLORS = {
+    milestone: '#3B82F6', change: '#F59E0B', schedule: '#6366F1',
+    metric_target: '#8B5CF6', risk_review: '#EF4444', standalone: '#10B981'
+};
+const COLOR_PALETTE = [
+    '#D50000','#E67C73','#F4511E','#F6BF26','#33B679','#0B8043',
+    '#039BE5','#3F51B5','#7986CB','#8E24AA','#616161'
+];
+function getTypeColors() {
+    try {
+        const stored = localStorage.getItem('calendarTypeColors');
+        return stored ? { ...DEFAULT_TYPE_COLORS, ...JSON.parse(stored) } : { ...DEFAULT_TYPE_COLORS };
+    } catch { return { ...DEFAULT_TYPE_COLORS }; }
+}
+function saveTypeColors(overrides) {
+    localStorage.setItem('calendarTypeColors', JSON.stringify(overrides));
+}
+function showColorPicker(evt, type) {
+    evt.stopPropagation();
+    // Remove any existing popover
+    document.querySelectorAll('.color-picker-popover').forEach(el => el.remove());
+    const dot = evt.currentTarget;
+    const rect = dot.getBoundingClientRect();
+    const pop = document.createElement('div');
+    pop.className = 'color-picker-popover';
+    pop.style.left = rect.left + 'px';
+    pop.style.top = (rect.bottom + 6) + 'px';
+    pop.style.position = 'fixed';
+
+    const currentColors = getTypeColors();
+    const storedOverrides = (() => { try { return JSON.parse(localStorage.getItem('calendarTypeColors') || '{}'); } catch { return {}; } })();
+
+    COLOR_PALETTE.forEach(c => {
+        const sw = document.createElement('div');
+        sw.className = 'color-swatch' + (currentColors[type] === c ? ' active' : '');
+        sw.style.background = c;
+        sw.onclick = (e) => { e.stopPropagation(); pickTypeColor(type, c, dot, pop); };
+        pop.appendChild(sw);
+    });
+    // Reset swatch
+    const rs = document.createElement('div');
+    rs.className = 'color-swatch-reset' + (!storedOverrides[type] ? ' active' : '');
+    rs.textContent = '↺';
+    rs.title = 'Reset to default';
+    rs.onclick = (e) => { e.stopPropagation(); pickTypeColor(type, null, dot, pop); };
+    pop.appendChild(rs);
+
+    document.body.appendChild(pop);
+    // Close on outside click
+    setTimeout(() => {
+        const closer = (e) => { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('click', closer); } };
+        document.addEventListener('click', closer);
+    }, 0);
+}
+function pickTypeColor(type, color, dot, pop) {
+    const stored = (() => { try { return JSON.parse(localStorage.getItem('calendarTypeColors') || '{}'); } catch { return {}; } })();
+    if (color) { stored[type] = color; } else { delete stored[type]; }
+    saveTypeColors(stored);
+    // Update legend dot
+    const resolved = color || DEFAULT_TYPE_COLORS[type];
+    dot.style.background = resolved;
+    pop.remove();
+    refreshCalendar();
+}
+
 function applyFilters() {
     const showMilestones = document.getElementById('filterMilestones').checked;
     const showChanges = document.getElementById('filterChanges').checked;
@@ -1233,6 +1328,21 @@ function applyFilters() {
         if (programFilter !== 'all' && type !== 'standalone' && program !== programFilter) return false;
         
         return true;
+    });
+
+    // Apply custom type colors (overridden by table-level color for schedule events)
+    const typeColors = getTypeColors();
+    filteredEvents.forEach(e => {
+        const type = e.extendedProps?.type;
+        const tableColor = e.extendedProps?.tableColor;
+        // Table-level color takes precedence for schedule events
+        if (tableColor) {
+            e.backgroundColor = tableColor;
+            e.borderColor = tableColor;
+        } else if (type && typeColors[type]) {
+            e.backgroundColor = typeColors[type];
+            e.borderColor = typeColors[type];
+        }
     });
 }
 
@@ -1330,15 +1440,11 @@ function showEventModal(event) {
             // For acknowledge (change/metric) – just need the event id
         };
     
-    // Source-based header colors
-    const headerColors = {
-        'milestone': '#3B82F6',
-        'change': '#F59E0B',
-        'schedule': '#6366F1',
-        'metric_target': '#8B5CF6',
-        'risk_review': '#EF4444'
-    };
-    document.getElementById('eventModalHeader').style.backgroundColor = headerColors[type] || '#3B82F6';
+    // Source-based header colors (use custom type colors + table-level override)
+    const headerColors = getTypeColors();
+    let modalColor = headerColors[type] || '#3B82F6';
+    if (ep.tableColor) modalColor = ep.tableColor;
+    document.getElementById('eventModalHeader').style.backgroundColor = modalColor;
     
     // Type label from uniform field
     document.getElementById('eventModalType').textContent = ep.source_label || type;
@@ -2485,6 +2591,9 @@ function renderCustomListView() {
     const titleEl = document.getElementById('clvTitle');
     if (!body) return;
 
+    // Cache type colors for badge rendering
+    const _clvTypeColors = getTypeColors();
+
     // Use filteredEvents (matches current filter checkboxes)
     applyFilters();
     const events = [...filteredEvents];
@@ -2552,7 +2661,9 @@ function renderCustomListView() {
             html += `<div class="clv-row" draggable="true" data-idx="${idx}" data-event-id="${evtId}" data-event-type="${type}" data-date="${dateKey}" style="background:${getPriorityColor(dayIdx, dayTotal)}">`;
             html += `<span class="clv-drag-handle" title="Drag to reorder">⠿</span>`;
             html += `<span class="priority-label">P${dayIdx + 1}</span>`;
-            html += `<span class="clv-type-badge clv-type-${type}">${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
+            const badgeColor = ep.tableColor || _clvTypeColors[type] || '';
+            const badgeStyle = badgeColor ? ` style="background:${badgeColor}"` : '';
+            html += `<span class="clv-type-badge clv-type-${type}"${badgeStyle}>${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
             html += `<span class="clv-status-dot status-dot-${statusCat}"></span>`;
             html += `<span class="clv-title" data-event-id="${evtId}">${escapeHtml(evt.title)}</span>`;
             html += `<span class="clv-program">${escapeHtml(program)}</span>`;

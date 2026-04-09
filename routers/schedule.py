@@ -55,6 +55,7 @@ class CreateTableRequest(BaseModel):
     name: str
     description: Optional[str] = None
     columns: Optional[List[ColumnConfig]] = None
+    color: Optional[str] = None
 
 
 class UpdateTableRequest(BaseModel):
@@ -62,6 +63,7 @@ class UpdateTableRequest(BaseModel):
     description: Optional[str] = None
     columns: Optional[List[Dict[str, Any]]] = None
     rows: Optional[List[Dict[str, Any]]] = None
+    color: Optional[str] = None
 
 
 class RowData(BaseModel):
@@ -184,7 +186,7 @@ async def create_schedule_table(project_name: str, request: CreateTableRequest):
     if request.columns:
         columns = [col.dict() for col in request.columns]
     
-    table = schedule_repo.create_table(project_name, request.name, columns, description=request.description)
+    table = schedule_repo.create_table(project_name, request.name, columns, description=request.description, color=request.color)
     return JSONResponse(content={"success": True, "table": table})
 
 
