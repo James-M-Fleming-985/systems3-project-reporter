@@ -557,6 +557,14 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️  Standalone Tasks feature disabled: {e}")
 
+# Backlog router has: /backlog, /api/backlog/*
+try:
+    from routers import backlog
+    app.include_router(backlog.router, tags=["backlog"])
+    logger.info("✅ Backlog feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Backlog feature disabled: {e}")
+
 # Notifications router has: /notifications, /api/notifications/*
 try:
     from routers import notifications
