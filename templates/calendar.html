@@ -164,6 +164,8 @@
     .source-type-change { background: #F59E0B; }
     .source-type-schedule { background: #6366F1; }
     .source-type-metric_target { background: #8B5CF6; }
+    .source-type-risk_review { background: #EF4444; }
+    .source-type-standalone { background: #10B981; }
     /* Uniform info grid in modal */
     .uniform-info-grid {
         display: grid;
@@ -1255,6 +1257,12 @@ function getTypeColors() {
 function saveTypeColors(overrides) {
     localStorage.setItem('calendarTypeColors', JSON.stringify(overrides));
 }
+function getContrastColor(hex) {
+    const r = parseInt(hex.substr(1, 2), 16);
+    const g = parseInt(hex.substr(3, 2), 16);
+    const b = parseInt(hex.substr(5, 2), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#000000' : '#FFFFFF';
+}
 function showColorPicker(evt, type) {
     evt.stopPropagation();
     // Remove any existing popover
@@ -1272,7 +1280,7 @@ function showColorPicker(evt, type) {
 
     COLOR_PALETTE.forEach(c => {
         const sw = document.createElement('div');
-        sw.className = 'color-swatch' + (currentColors[type] === c ? ' active' : '');
+        sw.className = 'color-swatch' + (storedOverrides[type] === c ? ' active' : '');
         sw.style.background = c;
         sw.onclick = (e) => { e.stopPropagation(); pickTypeColor(type, c, dot, pop); };
         pop.appendChild(sw);
@@ -1339,9 +1347,11 @@ function applyFilters() {
         if (tableColor) {
             e.backgroundColor = tableColor;
             e.borderColor = tableColor;
+            e.textColor = getContrastColor(tableColor);
         } else if (type && typeColors[type]) {
             e.backgroundColor = typeColors[type];
             e.borderColor = typeColors[type];
+            e.textColor = getContrastColor(typeColors[type]);
         }
     });
 }
@@ -1445,6 +1455,7 @@ function showEventModal(event) {
     let modalColor = headerColors[type] || '#3B82F6';
     if (ep.tableColor) modalColor = ep.tableColor;
     document.getElementById('eventModalHeader').style.backgroundColor = modalColor;
+    document.getElementById('eventModalHeader').style.color = getContrastColor(modalColor);
     
     // Type label from uniform field
     document.getElementById('eventModalType').textContent = ep.source_label || type;
@@ -1524,7 +1535,7 @@ function showEventModal(event) {
             <div class="info-item">
                 <span class="info-label">Type</span>
                 <span class="info-value">
-                    <a href="${navUrl}" class="source-type-badge source-type-${type} hover:brightness-110 hover:ring-2 hover:ring-offset-1 hover:ring-blue-300 transition cursor-pointer no-underline" title="Go to ${tab} tab for this program">
+                    <a href="${navUrl}" class="source-type-badge source-type-${type} hover:brightness-110 hover:ring-2 hover:ring-offset-1 hover:ring-blue-300 transition cursor-pointer no-underline" style="background:${modalColor}; color:${getContrastColor(modalColor)}" title="Go to ${tab} tab for this program">
                         ${ep.source_label || type} ↗
                     </a>
                 </span>
@@ -2662,7 +2673,8 @@ function renderCustomListView() {
             html += `<span class="clv-drag-handle" title="Drag to reorder">⠿</span>`;
             html += `<span class="priority-label">P${dayIdx + 1}</span>`;
             const badgeColor = ep.tableColor || _clvTypeColors[type] || '';
-            const badgeStyle = badgeColor ? ` style="background:${badgeColor}"` : '';
+            const badgeTextColor = badgeColor ? getContrastColor(badgeColor) : '';
+            const badgeStyle = badgeColor ? ` style="background:${badgeColor}; color:${badgeTextColor}"` : '';
             html += `<span class="clv-type-badge clv-type-${type}"${badgeStyle}>${typeLabels[type] || type.substring(0,3).toUpperCase()}</span>`;
             html += `<span class="clv-status-dot status-dot-${statusCat}"></span>`;
             html += `<span class="clv-title" data-event-id="${evtId}">${escapeHtml(evt.title)}</span>`;
