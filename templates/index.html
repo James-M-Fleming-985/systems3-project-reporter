@@ -550,22 +550,18 @@ async function runMerge() {
     btn.textContent = '⏳ Merging...';
     result.classList.add('hidden');
     try {
-        const resp = await fetch('/dashboard/api/admin/merge-programs', {
+        const resp = await fetch('/dashboard/api/do-merge', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                source_codes: ['AMP-P1', 'EP-P1'],
-                target_code: 'PD-P1',
-                target_name: 'Product Development'
-            })
+            body: JSON.stringify({})
         });
         const data = await resp.json();
         result.classList.remove('hidden');
         if (resp.ok) {
-            result.innerHTML = '<span class="text-green-400 font-bold">✅ Merge complete! ' + (data.total_milestones || 0) + ' milestones merged. Reloading...</span>';
-            setTimeout(() => location.reload(), 2000);
+            result.innerHTML = '<span class="text-green-400 font-bold">✅ Merge complete! ' + (data.total_milestones || 0) + ' milestones merged (verified: ' + (data.verified_milestones || '?') + '). Reloading...</span>';
+            setTimeout(() => location.reload(), 3000);
         } else {
-            result.innerHTML = '<span class="text-red-400">❌ Error: ' + (data.detail || JSON.stringify(data)) + '</span>';
+            result.innerHTML = '<span class="text-red-400">❌ Error: ' + (data.detail || data.error || JSON.stringify(data)) + '</span><br><pre class="text-xs text-gray-400 mt-1">' + (data.log || []).join('\n') + '</pre>';
             btn.disabled = false;
             btn.textContent = '🔀 Merge AMP-P1 + EP-P1 → PD-P1';
         }
