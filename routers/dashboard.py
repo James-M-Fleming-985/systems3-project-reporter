@@ -1156,10 +1156,10 @@ from datetime import datetime
 # ONE-OFF: Merge Programs Endpoint (remove after use)
 # =============================================================================
 
-@router.get("/admin/merge-now", response_class=HTMLResponse)
+@router.get("/tools/consolidate-programs", response_class=HTMLResponse)
 async def merge_now_get(request: Request):
     """
-    ONE-OFF: Navigate to /dashboard/admin/merge-now to trigger the merge.
+    ONE-OFF: Navigate to /dashboard/tools/consolidate-programs to trigger the merge.
     Merges AMP-P1 + EP-P1 into PD-P1 (Product Development).
     Returns an HTML page with the result.
     """
