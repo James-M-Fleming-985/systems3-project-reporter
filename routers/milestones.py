@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from services.change_detection import ChangeDetectionService
 import yaml
 import os
@@ -106,30 +106,42 @@ def create_milestone(data: MilestoneCreate):
         base_date = data.target_date
         created_ids = []
 
+        # Pre-parse the base date once before the loop
+        base_date_parsed = None
+        if base_date and cadence and count > 1:
+            # Normalise: handle datetime.date objects (from YAML) and ISO strings
+            base_date_normalised = base_date
+            if hasattr(base_date, 'isoformat'):
+                base_date_normalised = base_date.isoformat()
+            base_date_str = str(base_date_normalised).split('T')[0].strip()
+            try:
+                base_date_parsed = datetime.strptime(base_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                logger.error(
+                    f"❌ Cannot parse target_date '{base_date}' as YYYY-MM-DD — "
+                    f"all {count} recurring milestones will use the same date"
+                )
+
         for i in range(count):
             ms_name = f"{base_name} ({i+1}/{count})" if count > 1 else base_name
 
             # Calculate date offset for each occurrence
             ms_date = base_date
-            if base_date and count > 1 and i > 0:
-                try:
-                    from datetime import datetime as dt, timedelta
-                    d = dt.strptime(base_date, '%Y-%m-%d').date()
-                    if cadence == 'daily':
-                        d += timedelta(days=i)
-                    elif cadence == 'weekly':
-                        d += timedelta(weeks=i)
-                    elif cadence == 'biweekly':
-                        d += timedelta(weeks=2 * i)
-                    elif cadence == 'monthly':
-                        month = d.month - 1 + i
-                        year = d.year + month // 12
-                        month = month % 12 + 1
-                        day = min(d.day, [31,29 if year%4==0 and (year%100!=0 or year%400==0) else 28,31,30,31,30,31,31,30,31,30,31][month-1])
-                        d = d.replace(year=year, month=month, day=day)
-                    ms_date = d.isoformat()
-                except Exception:
-                    pass
+            if base_date_parsed and count > 1 and i > 0:
+                d = base_date_parsed
+                if cadence == 'daily':
+                    d = d + timedelta(days=i)
+                elif cadence == 'weekly':
+                    d = d + timedelta(weeks=i)
+                elif cadence == 'biweekly':
+                    d = d + timedelta(weeks=2 * i)
+                elif cadence == 'monthly':
+                    month = d.month - 1 + i
+                    year = d.year + month // 12
+                    month = month % 12 + 1
+                    day = min(d.day, [31,29 if year%4==0 and (year%100!=0 or year%400==0) else 28,31,30,31,30,31,31,30,31,30,31][month-1])
+                    d = d.replace(year=year, month=month, day=day)
+                ms_date = d.isoformat()
 
             new_milestone = {
                 'id': str(uuid.uuid4()),

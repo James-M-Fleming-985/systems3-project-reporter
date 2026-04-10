@@ -537,6 +537,10 @@ async def get_calendar_events(request: Request):
                                         'allData': {
                                             col_lookup.get(k, {}).get('header', k): str(v) 
                                             for k, v in row_data.items() if v
+                                        },
+                                        'allDataById': {
+                                            k: {'header': col_lookup.get(k, {}).get('header', k), 'value': str(v), 'type': col_lookup.get(k, {}).get('type', 'text')}
+                                            for k, v in row_data.items() if v
                                         }
                                     }
                                 }

@@ -973,8 +973,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Initialize FullCalendar
         const calendarEl = document.getElementById('calendar');
         const isMobile = window.innerWidth < 640;
+        const validViews = ['dayGridMonth', 'timeGridWeek', 'listMonth'];
+        const storedView = localStorage.getItem('calendarView');
+        const defaultView = isMobile ? 'listMonth' : 'dayGridMonth';
+        const initialView = (storedView && validViews.includes(storedView)) ? storedView : defaultView;
         calendarInstance = new FullCalendar.Calendar(calendarEl, {
-            initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+            initialView: initialView,
             headerToolbar: isMobile
                 ? { left: 'prev,next', center: 'title', right: 'listMonth,timeGridWeek' }
                 : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
@@ -1006,6 +1010,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 document.getElementById('customListView').classList.toggle('active', isListView);
                 document.querySelector('.fc-view-harness').style.display = isListView ? 'none' : '';
                 if (isListView) renderCustomListView();
+                // Persist view selection so refresh restores the same view
+                localStorage.setItem('calendarView', arg.view.type);
             },
             datesSet: function(arg) {
                 // Re-render custom list when navigating months
@@ -1496,6 +1502,7 @@ function showEventModal(event) {
             rowId: ep.rowId,
             dateColId: ep.dateColId,
             _origDueDate: ep.due_date ? ep.due_date.split('T')[0] : '',
+            allDataById: ep.allDataById || {},
             // Risk-specific
             riskId: ep.riskId,
             riskProgram: ep.program,
@@ -1623,6 +1630,10 @@ function showEventModal(event) {
         const _statusOpts = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'];
         const _statusLabels = { NOT_STARTED: 'Not Started', IN_PROGRESS: 'In Progress', COMPLETED: 'Completed' };
         detailsHtml = `
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Name</label>
+                <input type="text" id="calEditName" value="${(ms.name || event.title || '').replace(/"/g, '&quot;')}" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Start Date</label>
@@ -1735,7 +1746,24 @@ function showEventModal(event) {
                     </button>
                 </div>
             </div>
-            ${ep.allData ? `
+            ${ep.allDataById ? `
+                <div class="p-3 bg-indigo-50 rounded-lg">
+                    <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
+                    <div class="space-y-2">
+                        ${Object.entries(ep.allDataById).map(([colId, col]) => {
+                            const isDate = col.type === 'date' || /^\d{4}-\d{2}-\d{2}/.test(col.value || '');
+                            const safeVal = (col.value || '').replace(/"/g, '&quot;');
+                            const inputType = isDate ? 'date' : 'text';
+                            const inputVal = isDate ? (col.value || '').split('T')[0] : safeVal;
+                            return `<div class="flex items-center gap-3 text-sm">
+                                <label class="text-gray-500 flex-shrink-0 w-1/3 text-xs uppercase font-semibold">${col.header}</label>
+                                <input type="${inputType}" data-col-id="${colId}" data-orig-value="${safeVal}" value="${inputVal}"
+                                       class="schedFieldInput flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            ` : (ep.allData ? `
                 <div class="p-3 bg-indigo-50 rounded-lg">
                     <p class="text-xs text-indigo-600 uppercase font-semibold mb-2">All Fields</p>
                     <div class="space-y-1">
@@ -1750,7 +1778,7 @@ function showEventModal(event) {
                         }).join('')}
                     </div>
                 </div>
-            ` : ''}
+            ` : '')}
         `;
     } else if (type === 'metric_target') {
         detailsHtml = `
@@ -2199,6 +2227,28 @@ async function saveScheduleFromCalendar() {
             );
             clearTimeout(t2);
             if (!dateResp.ok) throw new Error('Failed to update date');
+        }
+
+        // 3. Save any changed "All Fields" cell values
+        const fieldInputs = document.querySelectorAll('.schedFieldInput');
+        const cellUpdates = {};
+        fieldInputs.forEach(input => {
+            const colId = input.dataset.colId;
+            const origVal = input.dataset.origValue || '';
+            const newVal = input.value || '';
+            if (newVal !== origVal) {
+                cellUpdates[colId] = newVal;
+            }
+        });
+        if (Object.keys(cellUpdates).length > 0) {
+            const ctrl3 = new AbortController();
+            const t3 = setTimeout(() => ctrl3.abort(), 15000);
+            const cellResp = await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/cells`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ updates: cellUpdates }), signal: ctrl3.signal }
+            );
+            clearTimeout(t3);
+            if (!cellResp.ok) throw new Error('Failed to update fields');
         }
 
         closeEventModal();
@@ -2776,6 +2826,7 @@ async function saveEventFromCalendar() {
     const projectCode = currentEventData.projectCode || milestone.project;
     
     // Read values from form inputs
+    const newName = document.getElementById('calEditName')?.value?.trim() || milestone.name;
     const newTargetDate = document.getElementById('calEditTargetDate')?.value || milestone.target_date;
     const newStartDate = document.getElementById('calEditStartDate')?.value || milestone.start_date;
     const newStatus = document.getElementById('calEditStatus')?.value || milestone.status;
@@ -2789,7 +2840,7 @@ async function saveEventFromCalendar() {
     let confirmedDateChange = false;
     
     if (dateChanged) {
-        confirmedDateChange = await showDateChangeConfirm(milestone.target_date, newTargetDate, milestone.name);
+        confirmedDateChange = await showDateChangeConfirm(milestone.target_date, newTargetDate, newName);
         if (confirmedDateChange === null) return;  // user cancelled entirely
     }
     
@@ -2802,7 +2853,7 @@ async function saveEventFromCalendar() {
             project_code: projectCode,
             milestone: {
                 id: milestone.id,
-                name: milestone.name,
+                name: newName,
                 target_date: newTargetDate,
                 start_date: newStartDate,
                 status: newStatus,

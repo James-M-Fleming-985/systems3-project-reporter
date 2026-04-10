@@ -281,6 +281,41 @@ async def reschedule_row(project_name: str, table_id: str, row_id: str, request:
     return JSONResponse(content={"success": success})
 
 
+@router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/cells")
+async def update_row_cells(project_name: str, table_id: str, row_id: str, request: Request):
+    """Update one or more cells in a schedule row by column ID."""
+    body = await request.json()
+    updates = body.get('updates')  # dict of {col_id: new_value}
+    if not updates or not isinstance(updates, dict):
+        raise HTTPException(status_code=400, detail="'updates' dict of {col_id: value} required")
+
+    table = schedule_repo.get_table(project_name, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    row = next((r for r in table.get('rows', []) if r.get('id') == row_id), None)
+    if not row:
+        raise HTTPException(status_code=404, detail="Row not found")
+
+    # Validate col_ids against table columns
+    valid_col_ids = {c.get('id') for c in table.get('columns', [])}
+    for col_id in updates:
+        if col_id not in valid_col_ids:
+            raise HTTPException(status_code=400, detail=f"Unknown column ID: {col_id}")
+
+    row_data = dict(row.get('data', {}))
+    for col_id, value in updates.items():
+        row_data[col_id] = str(value) if value is not None else ''
+
+    success = schedule_repo.update_row(project_name, table_id, row_id, row_data)
+    try:
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
+    except Exception:
+        pass
+    return JSONResponse(content={"success": success})
+
+
 @router.patch("/api/schedule/{project_name}/tables/{table_id}/rows/{row_id}/complete")
 async def complete_schedule_row(project_name: str, table_id: str, row_id: str):
     """Mark a schedule row as complete (used from calendar 'Done' button)"""
