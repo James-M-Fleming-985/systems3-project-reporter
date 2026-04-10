@@ -255,7 +255,10 @@
     }
     .sibling-row:hover { filter: brightness(0.97); }
     .sibling-row.is-completed label,
-    .sibling-row.is-completed span.st-label { text-decoration: line-through; color: #6B7280; }
+    .sibling-row.is-completed span.st-label { text-decoration: line-through; color: #9CA3AF; }
+    .sibling-row.is-completed { opacity: 0.55; background: #F9FAFB !important; }
+    .sibling-row.is-completed .priority-label { display: none; }
+    .sibling-row.is-completed .subtask-drag-handle { visibility: hidden; }
     .sibling-row label { min-width: 0; word-break: break-word; overflow-wrap: anywhere; }
     /* Drag-reorder styles for sub-item rows */
     .sibling-row .subtask-drag-handle {
@@ -665,6 +668,54 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     <span id="stSaveBtnLabel">Save Task</span>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sub-Task Mini Modal -->
+<div id="subTaskMiniModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-30 overflow-y-auto h-full w-full z-[10002]" onclick="if(event.target===this)closeSubTaskMiniModal()">
+    <div class="relative top-20 mx-auto p-0 border w-[440px] shadow-xl rounded-xl bg-white" style="max-width: 95vw;">
+        <div class="px-5 py-3 bg-indigo-600 text-white rounded-t-xl flex items-center justify-between">
+            <h3 class="text-sm font-bold" id="stMiniTitle">Sub-Task Detail</h3>
+            <button onclick="closeSubTaskMiniModal()" class="text-white hover:bg-white/20 rounded-lg p-1 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-5 space-y-4">
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Title</label>
+                <input type="text" id="stMiniTitleInput" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Notes</label>
+                <textarea id="stMiniNotes" rows="3" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add notes…"></textarea>
+            </div>
+            <div class="border-t pt-4">
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-2">Move to another object</label>
+                <div class="space-y-2">
+                    <select id="stMiniMoveDest" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" onchange="onMiniMoveDestChange()">
+                        <option value="">— Don't move —</option>
+                        <option value="schedule">Schedule Row</option>
+                        <option value="standalone">Standalone Task</option>
+                    </select>
+                    <select id="stMiniMoveProgram" class="hidden w-full px-3 py-2 text-sm border border-gray-300 rounded-lg" onchange="onMiniMoveProgramChange()">
+                        <option value="">Select program…</option>
+                    </select>
+                    <select id="stMiniMoveTable" class="hidden w-full px-3 py-2 text-sm border border-gray-300 rounded-lg" onchange="onMiniMoveTableChange()">
+                        <option value="">Select table…</option>
+                    </select>
+                    <select id="stMiniMoveRow" class="hidden w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                        <option value="">Select row…</option>
+                    </select>
+                    <select id="stMiniMoveTask" class="hidden w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                        <option value="">Select task…</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeSubTaskMiniModal()" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+                <button onclick="saveSubTaskMiniModal()" id="stMiniSaveBtn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save</button>
             </div>
         </div>
     </div>
@@ -1629,7 +1680,11 @@ function showEventModal(event) {
             ${ep.impact ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Impact / Contingency</p><p class="text-sm text-gray-700">${ep.impact}</p></div>` : ''}
         `;
     } else if (type === 'schedule') {
-        const _schedSubTasks = ep.sub_tasks || [];
+        const _schedSubTasksRaw = ep.sub_tasks || [];
+        // Sort: active first, completed last
+        const _schedActive = _schedSubTasksRaw.filter(s => !s.completed);
+        const _schedDone = _schedSubTasksRaw.filter(s => s.completed);
+        const _schedSubTasks = [..._schedActive, ..._schedDone];
         detailsHtml = `
             ${ep.tableName ? `<div><p class="text-xs text-gray-500 uppercase font-semibold">Schedule Table</p><p class="text-sm font-medium">${ep.tableName}</p></div>` : ''}
             <div class="grid grid-cols-2 gap-3">
@@ -1649,19 +1704,26 @@ function showEventModal(event) {
             <div>
                 <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Sub-Tasks</p>
                 <div id="schedSubTasksContainer" class="space-y-1 mb-2">
-                    ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : _schedSubTasks.map((st, _si) => `
-                        <div class="sibling-row group ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" style="background:${getPriorityColor(_si, _schedSubTasks.length)}">
+                    ${_schedSubTasks.length === 0 ? '<p class="text-sm text-gray-400 italic">No sub-tasks yet</p>' : (() => {
+                        let _activeIdx = 0;
+                        const _activeCount = _schedSubTasks.filter(s => !s.completed).length;
+                        return _schedSubTasks.map((st) => {
+                            const isActive = !st.completed;
+                            const pIdx = isActive ? _activeIdx++ : -1;
+                            return `
+                        <div class="sibling-row group ${st.completed ? 'is-completed' : ''}" id="st-row-${st.id}" draggable="true" data-st-id="${st.id}" data-st-notes="${(st.notes || '').replace(/"/g, '&quot;')}" style="background:${isActive ? getPriorityColor(pIdx, _activeCount) : '#F9FAFB'}">
                             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
-                            <span class="priority-label">P${_si + 1}</span>
+                            <span class="priority-label">${isActive ? 'P' + (pIdx + 1) : ''}</span>
                             <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                                    data-st-id="${st.id}" ${st.completed ? 'checked' : ''}
                                    onchange="toggleScheduleSubTask(this)">
-                            <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
+                            <label class="flex-1 text-sm cursor-pointer select-none" ondblclick="openSchedSubTaskMini('${st.id}')" title="Double-click to edit details">${st.title.replace(/</g, '&lt;')}</label>
                             <button onclick="deleteScheduleSubTask('${st.id}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
-                    `).join('')}
+                    `}).join('');
+                    })()}
                 </div>
                 <div class="flex gap-2">
                     <input type="text" id="schedNewSubTask" placeholder="Add a sub-task…"
@@ -1888,18 +1950,25 @@ async function loadSiblingTasks(projectCode, milestoneId) {
             return;
         }
         
-        // Render sibling tasks with checkboxes
+        // Render sibling tasks with checkboxes — active first, completed last
         let html = '';
-        const sibCount = data.siblings.length;
-        data.siblings.forEach((sibling, sibIdx) => {
+        const sortedSibs = [...data.siblings].sort((a, b) => {
+            const ac = a.status === 'COMPLETED' || Number(a.completion_percentage) === 100;
+            const bc = b.status === 'COMPLETED' || Number(b.completion_percentage) === 100;
+            return ac - bc;
+        });
+        const activeCount = sortedSibs.filter(s => !(s.status === 'COMPLETED' || Number(s.completion_percentage) === 100)).length;
+        let activeIdx = 0;
+        sortedSibs.forEach((sibling) => {
             const isCompleted = sibling.status === 'COMPLETED' || Number(sibling.completion_percentage) === 100;
             const checkboxId = `sibling-${sibling.id}`;
             const icon = sibling.is_milestone ? '🎯' : '📋';
+            const pIdx = isCompleted ? -1 : activeIdx++;
             
             html += `
-                <div class="sibling-row group ${isCompleted ? 'is-completed' : ''}" id="row-${checkboxId}" draggable="true" data-sib-id="${sibling.id}" style="background:${getPriorityColor(sibIdx, sibCount)}">
+                <div class="sibling-row group ${isCompleted ? 'is-completed' : ''}" id="row-${checkboxId}" draggable="true" data-sib-id="${sibling.id}" style="background:${isCompleted ? '#F9FAFB' : getPriorityColor(pIdx, activeCount)}">
                     <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
-                    <span class="priority-label">P${sibIdx + 1}</span>
+                    <span class="priority-label">${isCompleted ? '' : 'P' + (pIdx + 1)}</span>
                     <input type="checkbox" 
                            id="${checkboxId}" 
                            class="sibling-checkbox w-4 h-4 text-indigo-600 rounded flex-shrink-0"
@@ -1997,6 +2066,8 @@ async function updateTaskStatus(checkbox) {
             // All sibling tasks done — milestone auto-completed
             showMilestoneAchieved(result.milestone_name);
         } else {
+            // Reorder: move completed items to bottom
+            reorderSubTaskRows(document.getElementById('siblingTasksContainer'));
             showToast(shouldComplete ? 'Task marked complete ✓' : 'Task reopened', 'success');
             reloadCalendarEvents();
         }
@@ -2167,6 +2238,27 @@ async function toggleScheduleSubTask(checkbox) {
             row.style.opacity = '1';
             row.classList.toggle('is-completed', completed);
         }
+
+        // Update in-memory data so re-opening modal shows correct state
+        const eventId = currentEventData.eventId;
+        if (eventId) {
+            const cached = allEvents.find(e => e.id === eventId);
+            if (cached && cached.extendedProps?.sub_tasks) {
+                const st = cached.extendedProps.sub_tasks.find(s => s.id === stId);
+                if (st) st.completed = completed;
+            }
+            const fcEvent = calendarInstance?.getEventById(eventId);
+            if (fcEvent) {
+                const fcSubs = (fcEvent.extendedProps.sub_tasks || []).map(s =>
+                    s.id === stId ? { ...s, completed } : s
+                );
+                fcEvent.setExtendedProp('sub_tasks', fcSubs);
+            }
+        }
+
+        // Reorder: move completed items to bottom
+        reorderSubTaskRows(document.getElementById('schedSubTasksContainer'));
+
         showToast(completed ? 'Sub-task completed ✓' : 'Sub-task reopened', 'success');
     } catch (err) {
         console.error('toggleScheduleSubTask error:', err);
@@ -2176,6 +2268,22 @@ async function toggleScheduleSubTask(checkbox) {
     } finally {
         checkbox.disabled = false;
     }
+}
+
+/** Move completed .sibling-row items to the bottom, re-number active P-labels */
+function reorderSubTaskRows(container) {
+    if (!container) return;
+    const rows = [...container.querySelectorAll('.sibling-row')];
+    const active = rows.filter(r => !r.classList.contains('is-completed'));
+    const done = rows.filter(r => r.classList.contains('is-completed'));
+    // Re-number priority labels on active items only
+    active.forEach((r, i) => {
+        const lbl = r.querySelector('.priority-label');
+        if (lbl) lbl.textContent = `P${i + 1}`;
+        r.style.background = getPriorityColor(i, active.length);
+    });
+    // Append in order: active first, then completed
+    [...active, ...done].forEach(r => container.appendChild(r));
 }
 
 async function addScheduleSubTask() {
@@ -2208,31 +2316,25 @@ async function addScheduleSubTask() {
             div.id = `st-row-${st.id}`;
             div.draggable = true;
             div.dataset.stId = st.id;
+            div.dataset.stNotes = '';
             div.innerHTML = `
                 <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
                 <span class="priority-label"></span>
                 <input type="checkbox" class="sched-subtask-cb w-4 h-4 text-indigo-600 rounded flex-shrink-0"
                        data-st-id="${st.id}"
                        onchange="toggleScheduleSubTask(this)">
-                <label class="flex-1 text-sm cursor-pointer select-none">${st.title.replace(/</g, '&lt;')}</label>
+                <label class="flex-1 text-sm cursor-pointer select-none" ondblclick="openSchedSubTaskMini('${st.id}')" title="Double-click to edit details">${st.title.replace(/</g, '&lt;')}</label>
                 <button onclick="deleteScheduleSubTask('${st.id}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-0.5" title="Remove sub-task">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             `;
             container.appendChild(div);
 
-            // Wire up double-click-to-edit on the new sub-task label
+            // Wire up double-click to open mini modal on the new sub-task label
             const lbl = div.querySelector('label');
             if (lbl) {
-                makeSubtaskEditable(lbl, (newTitle) => {
-                    const csrf = document.getElementById('csrfToken')?.value || '';
-                    fetch(`/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/sub-tasks/${encodeURIComponent(st.id)}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
-                        body: JSON.stringify({ title: newTitle })
-                    }).then(r => { if (!r.ok) throw new Error('Save failed'); showToast('Title updated', 'success', 2000); })
-                      .catch(err => { console.error('Rename sub-task failed:', err); showToast('Could not rename', 'error'); });
-                });
+                lbl.ondblclick = () => openSchedSubTaskMini(st.id);
+                lbl.title = 'Double-click to edit details';
             }
 
             // Re-apply gradient colors and re-init drag
@@ -2283,6 +2385,237 @@ async function deleteScheduleSubTask(stId) {
         console.error('deleteScheduleSubTask error:', err);
         if (row) row.style.opacity = '1';
         showToast('Could not remove sub-task', 'error');
+    }
+}
+
+// ── Sub-Task Mini Modal ──────────────────────────────────────────────────────
+let _miniModalContext = null; // { source: 'schedule'|'standalone', stId, program, tableId, rowId, taskId }
+let _miniModalScheduleData = null; // cached programs/tables from API
+
+function openSchedSubTaskMini(stId) {
+    if (!currentEventData) return;
+    const row = document.getElementById(`st-row-${stId}`);
+    const title = row?.querySelector('label')?.textContent || '';
+    const notes = row?.dataset?.stNotes || '';
+    openSubTaskMiniModal(stId, title, notes, 'schedule', {
+        program: currentEventData.scheduleProgram,
+        tableId: currentEventData.tableId,
+        rowId: currentEventData.rowId
+    });
+}
+
+function openSubTaskMiniModal(stId, title, notes, source, ctx) {
+    _miniModalContext = { stId, source, ...ctx };
+    document.getElementById('stMiniTitleInput').value = title || '';
+    document.getElementById('stMiniNotes').value = notes || '';
+    document.getElementById('stMiniTitle').textContent = title || 'Sub-Task Detail';
+    // Reset move selects
+    document.getElementById('stMiniMoveDest').value = '';
+    document.getElementById('stMiniMoveProgram').classList.add('hidden');
+    document.getElementById('stMiniMoveTable').classList.add('hidden');
+    document.getElementById('stMiniMoveRow').classList.add('hidden');
+    document.getElementById('stMiniMoveTask').classList.add('hidden');
+    document.getElementById('stMiniSaveBtn').disabled = false;
+    document.getElementById('subTaskMiniModal').classList.remove('hidden');
+}
+
+function closeSubTaskMiniModal() {
+    document.getElementById('subTaskMiniModal').classList.add('hidden');
+    _miniModalContext = null;
+}
+
+async function onMiniMoveDestChange() {
+    const dest = document.getElementById('stMiniMoveDest').value;
+    const progSel = document.getElementById('stMiniMoveProgram');
+    const tableSel = document.getElementById('stMiniMoveTable');
+    const rowSel = document.getElementById('stMiniMoveRow');
+    const taskSel = document.getElementById('stMiniMoveTask');
+
+    progSel.classList.add('hidden'); tableSel.classList.add('hidden');
+    rowSel.classList.add('hidden'); taskSel.classList.add('hidden');
+
+    if (dest === 'schedule') {
+        // Load programs + tables
+        if (!_miniModalScheduleData) {
+            try {
+                const resp = await fetch('/dashboard/api/schedule/all-programs/tables');
+                _miniModalScheduleData = (await resp.json()).programs || [];
+            } catch (e) { _miniModalScheduleData = []; }
+        }
+        progSel.innerHTML = '<option value="">Select program…</option>' +
+            _miniModalScheduleData.map(p => `<option value="${p.project_name}">${p.project_name}</option>`).join('');
+        progSel.classList.remove('hidden');
+    } else if (dest === 'standalone') {
+        try {
+            const resp = await fetch('/api/standalone-tasks');
+            const tasks = (await resp.json()).tasks || [];
+            taskSel.innerHTML = '<option value="">Select task…</option>' +
+                tasks.map(t => `<option value="${t.id}">${(t.title || t.name || t.id).replace(/</g, '&lt;')}</option>`).join('');
+            taskSel.classList.remove('hidden');
+        } catch (e) {
+            taskSel.innerHTML = '<option value="">Error loading tasks</option>';
+            taskSel.classList.remove('hidden');
+        }
+    }
+}
+
+function onMiniMoveProgramChange() {
+    const prog = document.getElementById('stMiniMoveProgram').value;
+    const tableSel = document.getElementById('stMiniMoveTable');
+    const rowSel = document.getElementById('stMiniMoveRow');
+    tableSel.classList.add('hidden'); rowSel.classList.add('hidden');
+    if (!prog || !_miniModalScheduleData) return;
+    const p = _miniModalScheduleData.find(x => x.project_name === prog);
+    if (!p) return;
+    tableSel.innerHTML = '<option value="">Select table…</option>' +
+        p.tables.map(t => `<option value="${t.id}">${t.name} (${t.row_count} rows)</option>`).join('');
+    tableSel.classList.remove('hidden');
+}
+
+async function onMiniMoveTableChange() {
+    const prog = document.getElementById('stMiniMoveProgram').value;
+    const tableId = document.getElementById('stMiniMoveTable').value;
+    const rowSel = document.getElementById('stMiniMoveRow');
+    rowSel.classList.add('hidden');
+    if (!prog || !tableId) return;
+    try {
+        const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}`);
+        const table = await resp.json();
+        const rows = table.rows || [];
+        rowSel.innerHTML = '<option value="">Select row…</option>' +
+            rows.map(r => {
+                const label = r.columns?.[0]?.value || r.id;
+                return `<option value="${r.id}">${String(label).replace(/</g, '&lt;')}</option>`;
+            }).join('');
+        rowSel.classList.remove('hidden');
+    } catch (e) {
+        rowSel.innerHTML = '<option value="">Error loading rows</option>';
+        rowSel.classList.remove('hidden');
+    }
+}
+
+async function saveSubTaskMiniModal() {
+    if (!_miniModalContext) return;
+    const ctx = _miniModalContext;
+    const title = document.getElementById('stMiniTitleInput').value.trim();
+    const notes = document.getElementById('stMiniNotes').value.trim();
+    const moveDest = document.getElementById('stMiniMoveDest').value;
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+    const saveBtn = document.getElementById('stMiniSaveBtn');
+    saveBtn.disabled = true;
+
+    try {
+        // 1. Save title + notes to current location
+        if (ctx.source === 'schedule') {
+            await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+                  body: JSON.stringify({ title, notes }) }
+            );
+        } else if (ctx.source === 'standalone') {
+            await fetch(
+                `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+                  body: JSON.stringify({ title, notes }) }
+            );
+        }
+
+        // Update in-memory data for schedule sub-tasks
+        if (ctx.source === 'schedule' && currentEventData?.eventId) {
+            const cached = allEvents.find(e => e.id === currentEventData.eventId);
+            if (cached?.extendedProps?.sub_tasks) {
+                const st = cached.extendedProps.sub_tasks.find(s => s.id === ctx.stId);
+                if (st) { st.title = title; st.notes = notes; }
+            }
+            const fcEvent = calendarInstance?.getEventById(currentEventData.eventId);
+            if (fcEvent) {
+                const fcSubs = (fcEvent.extendedProps.sub_tasks || []).map(s =>
+                    s.id === ctx.stId ? { ...s, title, notes } : s
+                );
+                fcEvent.setExtendedProp('sub_tasks', fcSubs);
+            }
+        }
+
+        // Update DOM label and notes data attribute
+        const row = document.getElementById(`st-row-${ctx.stId}`);
+        if (row) {
+            const lbl = row.querySelector('label');
+            if (lbl) lbl.textContent = title;
+            row.dataset.stNotes = notes;
+        }
+
+        // 2. Handle move if requested
+        if (moveDest === 'schedule') {
+            const destProg = document.getElementById('stMiniMoveProgram').value;
+            const destTable = document.getElementById('stMiniMoveTable').value;
+            const destRow = document.getElementById('stMiniMoveRow').value;
+            if (!destProg || !destTable || !destRow) {
+                showToast('Please select a destination row', 'error');
+                saveBtn.disabled = false;
+                return;
+            }
+            // Create on destination
+            const addResp = await fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(destProg)}/tables/${encodeURIComponent(destTable)}/rows/${encodeURIComponent(destRow)}/sub-tasks`,
+                { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+                  body: JSON.stringify({ title }) }
+            );
+            if (!addResp.ok) throw new Error('Failed to create on destination');
+
+            // Delete from source
+            if (ctx.source === 'schedule') {
+                await fetch(
+                    `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                );
+            } else if (ctx.source === 'standalone') {
+                await fetch(
+                    `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                );
+            }
+            // Remove from DOM
+            if (row) row.remove();
+            showToast(`Moved "${title}" to schedule row`, 'success');
+        } else if (moveDest === 'standalone') {
+            const destTask = document.getElementById('stMiniMoveTask').value;
+            if (!destTask) {
+                showToast('Please select a destination task', 'error');
+                saveBtn.disabled = false;
+                return;
+            }
+            // Create on destination
+            const addResp = await fetch(
+                `/api/standalone-tasks/${encodeURIComponent(destTask)}/sub-tasks`,
+                { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+                  body: JSON.stringify({ title }) }
+            );
+            if (!addResp.ok) throw new Error('Failed to create on destination');
+
+            // Delete from source
+            if (ctx.source === 'schedule') {
+                await fetch(
+                    `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                );
+            } else if (ctx.source === 'standalone') {
+                await fetch(
+                    `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                );
+            }
+            // Remove from DOM
+            if (row) row.remove();
+            showToast(`Moved "${title}" to standalone task`, 'success');
+        } else {
+            showToast('Sub-task updated', 'success');
+        }
+
+        closeSubTaskMiniModal();
+    } catch (err) {
+        console.error('saveSubTaskMiniModal error:', err);
+        showToast('Could not save sub-task', 'error');
+        saveBtn.disabled = false;
     }
 }
 
@@ -3278,16 +3611,24 @@ function _renderSubTaskList() {
     const list = document.getElementById('stSubTaskList');
     const badge = document.getElementById('subTaskBadge');
     list.innerHTML = '';
-    const total = _stSubTaskData.length;
-    _stSubTaskData.forEach((sub, idx) => {
+    // Sort: active first, completed last (stable sort preserves original order within groups)
+    const activeItems = _stSubTaskData.map((s, i) => ({ ...s, _origIdx: i })).filter(s => !s.completed);
+    const doneItems = _stSubTaskData.map((s, i) => ({ ...s, _origIdx: i })).filter(s => s.completed);
+    const sorted = [...activeItems, ...doneItems];
+    const activeCount = activeItems.length;
+    let activeIdx = 0;
+    sorted.forEach((sub) => {
+        const idx = sub._origIdx;
+        const isActive = !sub.completed;
+        const pIdx = isActive ? activeIdx++ : -1;
         const el = document.createElement('div');
         el.className = `sibling-row group ${sub.completed ? 'is-completed' : ''}`;
         el.draggable = true;
         el.dataset.stIdx = idx;
-        el.style.background = getPriorityColor(idx, total);
+        el.style.background = isActive ? getPriorityColor(pIdx, activeCount) : '#F9FAFB';
         el.innerHTML = `
             <span class="subtask-drag-handle" title="Drag to reorder">⠿</span>
-            <span class="priority-label">P${idx + 1}</span>
+            <span class="priority-label">${isActive ? 'P' + (pIdx + 1) : ''}</span>
             <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="_stSubTaskData[${idx}].completed = this.checked; _renderSubTaskList();"
                 class="rounded text-indigo-600 focus:ring-indigo-500 flex-shrink-0 w-4 h-4">
             <label class="flex-1 text-sm cursor-pointer select-none">${_escapeHtml(sub.title)}</label>
@@ -3296,27 +3637,20 @@ function _renderSubTaskList() {
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>`;
         list.appendChild(el);
-        // Wire up double-click-to-edit on standalone sub-task label
+        // Wire up double-click to open mini modal on standalone sub-task label
         const lbl = el.querySelector('label');
-        if (lbl) {
-            const capturedIdx = idx;
-            makeSubtaskEditable(lbl, (newTitle) => {
-                _stSubTaskData[capturedIdx].title = newTitle;
-                if (_stTaskId && sub.id && !sub.id.startsWith('new-')) {
-                    fetch(`/api/standalone-tasks/${encodeURIComponent(_stTaskId)}/sub-tasks/${encodeURIComponent(sub.id)}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: newTitle })
-                    }).then(r => { if (!r.ok) throw new Error('Save failed'); showToast('Title updated', 'success', 2000); })
-                      .catch(err => { console.error('Rename sub-task failed:', err); showToast('Could not rename', 'error'); });
-                }
-            });
+        if (lbl && _stTaskId && sub.id && !sub.id.startsWith('new-')) {
+            const capturedId = sub.id;
+            const capturedNotes = sub.notes || '';
+            lbl.ondblclick = () => openSubTaskMiniModal(capturedId, sub.title, capturedNotes, 'standalone', { taskId: _stTaskId });
+            lbl.title = 'Double-click to edit details';
         }
     });
     const count = _stSubTaskData.length;
     badge.textContent = count > 0 ? count : '';
     badge.classList.toggle('hidden', count === 0);
     // Init drag-reorder for standalone sub-tasks (reorders in-memory array)
-    if (total > 1) {
+    if (_stSubTaskData.length > 1) {
         initSubtaskDrag(list, (cont) => {
             const rows = [...cont.querySelectorAll('.sibling-row')];
             const newOrder = rows.map(r => parseInt(r.dataset.stIdx));

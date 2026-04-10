@@ -59,7 +59,8 @@ class BacklogRepository:
         return None
 
     def add_item(self, user_id: str, title: str, notes: str = "",
-                 priority: str = "", category: str = "") -> Dict[str, Any]:
+                 priority: str = "", category: str = "",
+                 start_date: str = "", due_date: str = "") -> Dict[str, Any]:
         data = self._load(user_id)
         item = {
             "id": str(uuid.uuid4())[:8],
@@ -67,6 +68,8 @@ class BacklogRepository:
             "notes": notes.strip(),
             "priority": priority.strip().lower() if priority else "",
             "category": category.strip(),
+            "start_date": start_date.strip() if start_date else "",
+            "due_date": due_date.strip() if due_date else "",
             "created_at": datetime.now().isoformat(),
         }
         data["items"].insert(0, item)  # newest first
@@ -77,7 +80,7 @@ class BacklogRepository:
         data = self._load(user_id)
         for i, item in enumerate(data["items"]):
             if item.get("id") == item_id:
-                for key in ("title", "notes", "priority", "category"):
+                for key in ("title", "notes", "priority", "category", "start_date", "due_date"):
                     if key in updates:
                         data["items"][i][key] = updates[key]
                 data["items"][i]["updated_at"] = datetime.now().isoformat()

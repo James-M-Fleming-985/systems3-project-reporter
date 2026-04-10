@@ -57,6 +57,8 @@ class BacklogItemCreate(BaseModel):
     notes: Optional[str] = ""
     priority: Optional[str] = ""
     category: Optional[str] = ""
+    start_date: Optional[str] = ""
+    due_date: Optional[str] = ""
 
 
 class BacklogItemUpdate(BaseModel):
@@ -64,6 +66,8 @@ class BacklogItemUpdate(BaseModel):
     notes: Optional[str] = None
     priority: Optional[str] = None
     category: Optional[str] = None
+    start_date: Optional[str] = None
+    due_date: Optional[str] = None
 
 
 class BacklogMoveRequest(BaseModel):
@@ -111,7 +115,8 @@ async def create_item(request: Request, body: BacklogItemCreate):
     if not body.title or not body.title.strip():
         raise HTTPException(status_code=400, detail="Title is required")
     item = _get_backlog_repo().add_item(
-        user_id, body.title, body.notes or "", body.priority or "", body.category or ""
+        user_id, body.title, body.notes or "", body.priority or "", body.category or "",
+        body.start_date or "", body.due_date or ""
     )
     return JSONResponse(content={"success": True, "item": item})
 
@@ -156,6 +161,8 @@ async def move_item(request: Request, item_id: str, body: BacklogMoveRequest):
 
     title = item["title"]
     notes = item.get("notes", "")
+    start_date = item.get("start_date", "")
+    due_date = item.get("due_date", "")
 
     try:
         if body.destination == "schedule_row":
@@ -165,12 +172,17 @@ async def move_item(request: Request, item_id: str, body: BacklogMoveRequest):
             table = sched_repo.get_table(body.project_name, body.table_id)
             if not table:
                 raise HTTPException(status_code=404, detail="Schedule table not found")
-            # Map title to first text/dropdown column
+            # Map title to first text/dropdown column, due_date to first date column
             row_data = {}
+            title_mapped = False
+            date_mapped = False
             for col in table.get("columns", []):
-                if col.get("type") in ("text", "dropdown"):
+                if not title_mapped and col.get("type") in ("text", "dropdown"):
                     row_data[col["id"]] = title
-                    break
+                    title_mapped = True
+                if not date_mapped and due_date and col.get("type") == "date":
+                    row_data[col["id"]] = due_date
+                    date_mapped = True
             row = sched_repo.add_row(body.project_name, body.table_id, row_data)
             if not row:
                 raise HTTPException(status_code=500, detail="Failed to create schedule row")
@@ -194,6 +206,8 @@ async def move_item(request: Request, item_id: str, body: BacklogMoveRequest):
                 project_code=body.project_code,
                 parent_milestone_id=body.milestone_id,
                 name=title,
+                target_date=due_date or "",
+                start_date=start_date or "",
             )
             resp = create_task(task_data)
             result = {"type": "milestone_subtask", "task_id": resp.get("task_id", "")}

@@ -407,6 +407,8 @@ class ScheduleRepository:
                                     data['tables'][i]['rows'][j]['sub_tasks'][k]['completed'] = updates['completed']
                                 if 'title' in updates:
                                     data['tables'][i]['rows'][j]['sub_tasks'][k]['title'] = updates['title']
+                                if 'notes' in updates:
+                                    data['tables'][i]['rows'][j]['sub_tasks'][k]['notes'] = updates['notes']
                                 data['tables'][i]['rows'][j]['updated_at'] = datetime.now().isoformat()
                                 return self.save_schedules(project_name, data)
 

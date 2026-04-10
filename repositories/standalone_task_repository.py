@@ -313,6 +313,22 @@ class StandaloneTaskRepository:
                     return True
         return False
 
+    def update_sub_task_notes(
+        self, user_id: str, task_id: str, sub_task_id: str, notes: str
+    ) -> bool:
+        """Update notes on a sub-task.  Returns True on success."""
+        data = self._load(user_id)
+        for task in data.get("tasks", []):
+            if task.get("id") != task_id:
+                continue
+            for sub in task.get("sub_tasks", []):
+                if sub.get("id") == sub_task_id:
+                    sub["notes"] = notes
+                    task["updated_at"] = datetime.now().isoformat()
+                    self._save(user_id, data)
+                    return True
+        return False
+
     def reorder_sub_tasks(self, user_id: str, task_id: str, ordered_ids: list) -> bool:
         """Reorder sub-tasks of a standalone task according to the given ID list."""
         data = self._load(user_id)
@@ -330,4 +346,22 @@ class StandaloneTaskRepository:
             task["updated_at"] = datetime.now().isoformat()
             self._save(user_id, data)
             return True
+        return False
+
+    def delete_sub_task(
+        self, user_id: str, task_id: str, sub_task_id: str
+    ) -> bool:
+        """Delete a sub-task from a standalone task.  Returns True on success."""
+        data = self._load(user_id)
+        for task in data.get("tasks", []):
+            if task.get("id") != task_id:
+                continue
+            original = len(task.get("sub_tasks", []))
+            task["sub_tasks"] = [
+                s for s in task.get("sub_tasks", []) if s.get("id") != sub_task_id
+            ]
+            if len(task["sub_tasks"]) < original:
+                task["updated_at"] = datetime.now().isoformat()
+                self._save(user_id, data)
+                return True
         return False

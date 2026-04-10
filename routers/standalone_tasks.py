@@ -85,6 +85,7 @@ class SubTaskBody(BaseModel):
 class SubTaskToggleBody(BaseModel):
     completed: Optional[bool] = None
     title: Optional[str] = None
+    notes: Optional[str] = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -218,6 +219,20 @@ async def toggle_sub_task(
         ok = repo.update_sub_task_title(user_id, task_id, sub_task_id, title)
         if not ok:
             raise HTTPException(status_code=404, detail="Sub-task not found")
+    if body.notes is not None:
+        ok = repo.update_sub_task_notes(user_id, task_id, sub_task_id, body.notes.strip())
+        if not ok:
+            raise HTTPException(status_code=404, detail="Sub-task not found")
+    return JSONResponse({"success": True})
+
+
+@router.delete("/api/standalone-tasks/{task_id}/sub-tasks/{sub_task_id}")
+async def delete_sub_task_item(request: Request, task_id: str, sub_task_id: str):
+    """Delete a sub-task from a standalone task."""
+    user_id = _require_user_id(request)
+    ok = _get_repo().delete_sub_task(user_id, task_id, sub_task_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Sub-task not found")
     return JSONResponse({"success": True})
 
 

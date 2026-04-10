@@ -43,10 +43,10 @@
     .bl-card {
         background: #fff; border-radius: 10px; padding: 12px 14px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #F3F4F6;
-        display: flex; align-items: flex-start; gap: 10px; transition: all 0.15s;
-        position: relative;
+        transition: all 0.15s; position: relative;
     }
     .bl-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #E5E7EB; }
+    .bl-card-row { display: flex; align-items: flex-start; gap: 10px; }
     .bl-card-body { flex: 1; min-width: 0; }
     .bl-card-title {
         font-size: 0.9rem; font-weight: 500; color: #111827; word-break: break-word;
@@ -69,16 +69,31 @@
         background: #F3F4F6; color: #6B7280;
     }
     .bl-card-actions {
-        display: flex; gap: 4px; flex-shrink: 0; opacity: 0.3; transition: opacity 0.15s;
+        display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
     }
     .bl-card:hover .bl-card-actions { opacity: 1; }
-    .bl-action-btn {
-        width: 30px; height: 30px; border: none; background: none; cursor: pointer;
-        border-radius: 6px; font-size: 0.8rem; transition: background 0.1s;
-        display: flex; align-items: center; justify-content: center;
+
+    /* Date row */
+    .bl-dates { margin-top: 8px; }
+    .bl-dates-toggle {
+        font-size: 0.75rem; color: #6B7280; cursor: pointer; border: none;
+        background: none; padding: 0; transition: color 0.15s;
     }
-    .bl-action-btn:hover { background: #F3F4F6; }
-    .bl-action-btn.danger:hover { background: #FEE2E2; }
+    .bl-dates-toggle:hover { color: #3B82F6; }
+    .bl-dates-row {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
+    }
+    .bl-dates-row label {
+        display: block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+        color: #9CA3AF; margin-bottom: 2px; letter-spacing: 0.03em;
+    }
+    .bl-dates-row input[type="date"] {
+        width: 100%; padding: 4px 6px; font-size: 0.8rem; border: 1px solid #d1d5db;
+        border-radius: 6px; color: #374151; background: #fff;
+    }
+    .bl-dates-row input[type="date"]:focus {
+        outline: none; border-color: #6366F1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+    }
 
     /* Empty state */
     .bl-empty {
@@ -88,51 +103,10 @@
     .bl-empty-title { font-size: 1.1rem; font-weight: 600; color: #6B7280; }
     .bl-empty-sub { font-size: 0.85rem; margin-top: 4px; }
 
-    /* Move modal */
-    .bl-move-backdrop {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
-        display: flex; align-items: flex-end; justify-content: center;
-    }
-    .bl-move-sheet {
-        background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 500px;
-        max-height: 80vh; overflow-y: auto; padding: 20px; animation: blSlideUp 0.2s ease-out;
-    }
-    @keyframes blSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .bl-move-title { font-size: 1rem; font-weight: 700; color: #111827; margin-bottom: 16px; }
-    .bl-move-subtitle { font-size: 0.8rem; color: #6B7280; margin-bottom: 8px; font-weight: 600; }
-    .bl-dest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-    .bl-dest-btn {
-        padding: 14px 12px; border-radius: 10px; border: 2px solid #E5E7EB;
-        background: #fff; cursor: pointer; text-align: center; transition: all 0.15s;
-    }
-    .bl-dest-btn:hover { border-color: #3B82F6; background: #EFF6FF; }
-    .bl-dest-btn.selected { border-color: #3B82F6; background: #EFF6FF; }
-    .bl-dest-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
-    .bl-dest-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
-    .bl-move-select {
-        width: 100%; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 8px;
-        font-size: 0.875rem; margin-bottom: 12px; background: #fff;
-    }
-    .bl-move-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-    .bl-move-cancel {
-        padding: 8px 18px; border-radius: 8px; border: 1px solid #E5E7EB;
-        background: #fff; cursor: pointer; font-weight: 500; font-size: 0.875rem;
-    }
-    .bl-move-confirm {
-        padding: 8px 18px; border-radius: 8px; border: none;
-        background: #3B82F6; color: #fff; cursor: pointer; font-weight: 600; font-size: 0.875rem;
-    }
-    .bl-move-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-    .bl-step { display: none; }
-    .bl-step.active { display: block; }
-    .bl-move-back { background: none; border: none; cursor: pointer; font-size: 0.8rem; color: #6B7280; padding: 4px 0; margin-bottom: 8px; }
-    .bl-move-back:hover { color: #3B82F6; }
     .bl-card-removing { transition: all 0.3s; opacity: 0; transform: translateX(60px); max-height: 0; padding: 0; margin: 0; overflow: hidden; }
 
     /* Priority picker in capture bar */
-    .bl-priority-picker {
-        display: flex; gap: 4px; align-items: center;
-    }
+    .bl-priority-picker { display: flex; gap: 4px; align-items: center; }
     .bl-pp-btn {
         width: 28px; height: 28px; border-radius: 6px; border: 1px solid #E5E7EB;
         background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: 700;
@@ -143,14 +117,42 @@
     .bl-pp-btn.active-medium { background: #FEF3C7; border-color: #FBBF24; color: #92400E; }
     .bl-pp-btn.active-low { background: #DBEAFE; border-color: #60A5FA; color: #1E40AF; }
 
+    /* ── Move modal (centered, matching schedule.html pattern) ── */
+    .bl-modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .bl-modal {
+        background: white; border-radius: 12px; padding: 24px;
+        width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .bl-modal h3 { margin-bottom: 16px; color: #1f2937; font-size: 1.125rem; font-weight: 600; }
+    .bl-form-group { margin-bottom: 16px; }
+    .bl-form-group label {
+        display: block; margin-bottom: 4px; font-weight: 500; color: #374151; font-size: 0.875rem;
+    }
+    .bl-form-group select, .bl-form-group input {
+        width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+        border-radius: 6px; font-size: 14px; background: #fff;
+    }
+    .bl-form-group select:disabled { background: #F9FAFB; color: #9CA3AF; cursor: not-allowed; }
+    .bl-form-group select:focus, .bl-form-group input:focus {
+        outline: none; border-color: #6366F1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+    }
+    .bl-modal-actions {
+        display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;
+    }
+
     /* Mobile responsive */
     @media (max-width: 640px) {
         .bl-container { padding: 8px; }
         .bl-capture { padding: 8px 12px; border-radius: 10px; }
         .bl-capture-input { font-size: 0.95rem; padding: 8px 0; }
         .bl-card-actions { opacity: 1; }
-        .bl-dest-grid { grid-template-columns: 1fr 1fr; }
-        .bl-move-sheet { border-radius: 12px 12px 0 0; }
+        .bl-modal { width: 95vw; max-width: none; border-radius: 12px; padding: 16px; }
+        .bl-modal-actions { flex-direction: column; }
+        .bl-modal-actions button { width: 100%; }
     }
 </style>
 {% endblock %}
@@ -184,23 +186,46 @@
         {% if items %}
         {% for item in items %}
         <div class="bl-card" data-id="{{ item.id }}" data-priority="{{ item.priority or '' }}">
-            <div class="bl-card-body">
-                <div class="bl-card-title" contenteditable="false" 
-                     ondblclick="this.contentEditable='true'; this.focus();"
-                     onblur="saveTitle(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">{{ item.title }}</div>
-                <div class="bl-card-meta">
-                    <span class="bl-time" title="{{ item.created_at }}">{{ item.created_at[:10] }}</span>
-                    {% if item.priority %}
-                    <span class="bl-priority bl-priority-{{ item.priority }}">{{ item.priority }}</span>
-                    {% endif %}
-                    {% if item.category %}
-                    <span class="bl-category">{{ item.category }}</span>
-                    {% endif %}
+            <div class="bl-card-row">
+                <div class="bl-card-body">
+                    <div class="bl-card-title" contenteditable="false"
+                         ondblclick="this.contentEditable='true'; this.focus();"
+                         onblur="saveTitle(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">{{ item.title }}</div>
+                    <div class="bl-card-meta">
+                        <span class="bl-time" title="{{ item.created_at }}">{{ item.created_at[:10] }}</span>
+                        {% if item.priority %}
+                        <span class="bl-priority bl-priority-{{ item.priority }}">{{ item.priority }}</span>
+                        {% endif %}
+                        {% if item.category %}
+                        <span class="bl-category">{{ item.category }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="bl-card-actions">
+                    <button class="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition" title="Move to..." onclick="openMoveModal('{{ item.id }}', '{{ item.title | e }}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                    <button class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition" title="Delete" onclick="deleteItem('{{ item.id }}', this)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                 </div>
             </div>
-            <div class="bl-card-actions">
-                <button class="bl-action-btn" title="Move to..." onclick="openMoveModal('{{ item.id }}', '{{ item.title | e }}')">📦</button>
-                <button class="bl-action-btn danger" title="Delete" onclick="deleteItem('{{ item.id }}', this)">🗑️</button>
+            <!-- Dates -->
+            <div class="bl-dates">
+                {% if item.start_date or item.due_date %}
+                <div class="bl-dates-row">
+                    <div>
+                        <label>Start Date</label>
+                        <input type="date" value="{{ item.start_date or '' }}" onchange="saveDate(this, 'start_date')">
+                    </div>
+                    <div>
+                        <label>Due Date</label>
+                        <input type="date" value="{{ item.due_date or '' }}" onchange="saveDate(this, 'due_date')">
+                    </div>
+                </div>
+                {% else %}
+                <button class="bl-dates-toggle" onclick="expandDates(this)">+ Add dates</button>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -214,74 +239,61 @@
     </div>
 </div>
 
-<!-- Move-to modal (bottom sheet) -->
-<div class="bl-move-backdrop" id="moveModal" style="display:none" onclick="if(event.target===this) closeMoveModal()">
-    <div class="bl-move-sheet">
-        <div class="bl-move-title" id="moveTitle">Move item</div>
+<!-- Move-to modal (centered, cascading selects) -->
+<div class="bl-modal-backdrop" id="moveModal" style="display:none" onclick="if(event.target===this) closeMoveModal()">
+    <div class="bl-modal">
+        <h3 id="moveTitle">Move item</h3>
 
-        <!-- Step 1: Pick destination type -->
-        <div class="bl-step active" id="moveStep1">
-            <div class="bl-move-subtitle">Where should this go?</div>
-            <div class="bl-dest-grid">
-                <button class="bl-dest-btn" onclick="selectDest('schedule_row')">
-                    <span class="bl-dest-icon">📅</span>
-                    <span class="bl-dest-label">Schedule Row</span>
-                </button>
-                <button class="bl-dest-btn" onclick="selectDest('schedule_subtask')">
-                    <span class="bl-dest-icon">📎</span>
-                    <span class="bl-dest-label">Schedule Sub-task</span>
-                </button>
-                <button class="bl-dest-btn" onclick="selectDest('milestone_subtask')">
-                    <span class="bl-dest-icon">🎯</span>
-                    <span class="bl-dest-label">Milestone Task</span>
-                </button>
-                <button class="bl-dest-btn" onclick="selectDest('risk')">
-                    <span class="bl-dest-icon">⚠️</span>
-                    <span class="bl-dest-label">Risk</span>
-                </button>
+        <div class="bl-form-group">
+            <label for="moveDestination">Destination</label>
+            <select id="moveDestination" onchange="onDestinationChanged()">
+                <option value="">-- Select destination type --</option>
+                <option value="schedule_row">Schedule Row</option>
+                <option value="schedule_subtask">Schedule Sub-task</option>
+                <option value="milestone_subtask">Milestone Task</option>
+                <option value="risk">Risk</option>
+            </select>
+        </div>
+
+        <div class="bl-form-group">
+            <label for="moveProgram">Program</label>
+            <select id="moveProgram" disabled onchange="onProgramChanged()">
+                <option value="">-- Select destination first --</option>
+            </select>
+        </div>
+
+        <div class="bl-form-group" id="moveTargetGroup" style="display:none">
+            <label for="moveTarget" id="moveTargetLabel">Table / Milestone</label>
+            <select id="moveTarget" disabled onchange="onTargetChanged()">
+                <option value="">-- Select program first --</option>
+            </select>
+        </div>
+
+        <div class="bl-form-group" id="moveRowGroup" style="display:none">
+            <label for="moveRow">Row</label>
+            <select id="moveRow" disabled>
+                <option value="">-- Select table first --</option>
+            </select>
+        </div>
+
+        <!-- Risk fields -->
+        <div id="moveRiskFields" style="display:none">
+            <div class="bl-form-group">
+                <label for="riskLikelihood">Likelihood (1–5)</label>
+                <input type="number" id="riskLikelihood" min="1" max="5" value="3">
+            </div>
+            <div class="bl-form-group">
+                <label for="riskImpact">Impact (1–5)</label>
+                <input type="number" id="riskImpact" min="1" max="5" value="3">
             </div>
         </div>
 
-        <!-- Step 2: Pick program -->
-        <div class="bl-step" id="moveStep2">
-            <button class="bl-move-back" onclick="goMoveStep(1)">← Back</button>
-            <div class="bl-move-subtitle">Select program</div>
-            <select class="bl-move-select" id="moveProgramSelect" onchange="onProgramSelected()">
-                <option value="">Choose a program...</option>
-            </select>
-        </div>
-
-        <!-- Step 3: Pick target (table / milestone) -->
-        <div class="bl-step" id="moveStep3">
-            <button class="bl-move-back" onclick="goMoveStep(2)">← Back</button>
-            <div class="bl-move-subtitle" id="moveStep3Label">Select target</div>
-            <select class="bl-move-select" id="moveTargetSelect" onchange="onTargetSelected()">
-                <option value="">Choose...</option>
-            </select>
-        </div>
-
-        <!-- Step 4: Pick row (schedule_subtask only) -->
-        <div class="bl-step" id="moveStep4">
-            <button class="bl-move-back" onclick="goMoveStep(3)">← Back</button>
-            <div class="bl-move-subtitle">Select row to add sub-task to</div>
-            <select class="bl-move-select" id="moveRowSelect">
-                <option value="">Choose a row...</option>
-            </select>
-        </div>
-
-        <!-- Risk extra fields -->
-        <div class="bl-step" id="moveStepRisk">
-            <button class="bl-move-back" onclick="goMoveStep(2)">← Back</button>
-            <div class="bl-move-subtitle">Risk details</div>
-            <label style="font-size:0.8rem;color:#6B7280;display:block;margin-bottom:4px">Likelihood (1-5)</label>
-            <input type="number" id="riskLikelihood" min="1" max="5" value="3" class="bl-move-select" style="margin-bottom:8px">
-            <label style="font-size:0.8rem;color:#6B7280;display:block;margin-bottom:4px">Impact (1-5)</label>
-            <input type="number" id="riskImpact" min="1" max="5" value="3" class="bl-move-select">
-        </div>
-
-        <div class="bl-move-actions">
-            <button class="bl-move-cancel" onclick="closeMoveModal()">Cancel</button>
-            <button class="bl-move-confirm" id="moveConfirmBtn" disabled onclick="confirmMove()">Move</button>
+        <div class="bl-modal-actions">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+                    onclick="closeMoveModal()">Cancel</button>
+            <button type="button" id="moveConfirmBtn" disabled
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                    onclick="confirmMove()">Move</button>
         </div>
     </div>
 </div>
@@ -292,10 +304,12 @@
 // ── State ──
 let currentFilter = 'all';
 let capturePriority = '';
-let moveState = {};
+let moveItemId = null;
 let cachedPrograms = null;
-let cachedTables = {};
-let cachedMilestones = {};
+
+// ── SVG icon strings ──
+const SVG_MOVE = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>';
+const SVG_DELETE = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
 
 // ── Time formatting ──
 function relTime(iso) {
@@ -306,8 +320,6 @@ function relTime(iso) {
     if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
     return d.toLocaleDateString();
 }
-
-// Update relative times on load
 document.querySelectorAll('.bl-time').forEach(el => {
     const iso = el.getAttribute('title');
     if (iso) el.textContent = relTime(iso);
@@ -325,11 +337,12 @@ function togglePriority(p) {
     });
 }
 
+function _esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 async function captureItem() {
     const input = document.getElementById('captureInput');
     const title = input.value.trim();
     if (!title) return;
-
     try {
         const resp = await fetch('/api/backlog/items', {
             method: 'POST',
@@ -343,43 +356,63 @@ async function captureItem() {
             document.querySelectorAll('.bl-pp-btn').forEach(b => b.className = 'bl-pp-btn');
             addCardToUI(data.item);
         }
-    } catch (err) {
-        console.error('Capture error:', err);
-    }
+    } catch (err) { console.error('Capture error:', err); }
 }
 
 function addCardToUI(item) {
-    // Remove empty state if present
     const empty = document.getElementById('emptyState');
     if (empty) empty.remove();
-
     const list = document.getElementById('backlogList');
     const card = document.createElement('div');
     card.className = 'bl-card';
     card.dataset.id = item.id;
     card.dataset.priority = item.priority || '';
-
-    const escapedTitle = item.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const et = _esc(item.title);
     const pBadge = item.priority ? `<span class="bl-priority bl-priority-${item.priority}">${item.priority}</span>` : '';
-
     card.innerHTML = `
-        <div class="bl-card-body">
-            <div class="bl-card-title" contenteditable="false"
-                 ondblclick="this.contentEditable='true'; this.focus();"
-                 onblur="saveTitle(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${escapedTitle}</div>
-            <div class="bl-card-meta">
-                <span class="bl-time">just now</span>
-                ${pBadge}
+        <div class="bl-card-row">
+            <div class="bl-card-body">
+                <div class="bl-card-title" contenteditable="false"
+                     ondblclick="this.contentEditable='true'; this.focus();"
+                     onblur="saveTitle(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${et}</div>
+                <div class="bl-card-meta">
+                    <span class="bl-time">just now</span>
+                    ${pBadge}
+                </div>
+            </div>
+            <div class="bl-card-actions">
+                <button class="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition" title="Move to..." onclick="openMoveModal('${item.id}', '${et.replace(/'/g,"\\'")}')">${SVG_MOVE}</button>
+                <button class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition" title="Delete" onclick="deleteItem('${item.id}', this)">${SVG_DELETE}</button>
             </div>
         </div>
-        <div class="bl-card-actions">
-            <button class="bl-action-btn" title="Move to..." onclick="openMoveModal('${item.id}', '${escapedTitle.replace(/'/g,"\\'")}')">📦</button>
-            <button class="bl-action-btn danger" title="Delete" onclick="deleteItem('${item.id}', this)">🗑️</button>
+        <div class="bl-dates">
+            <button class="bl-dates-toggle" onclick="expandDates(this)">+ Add dates</button>
         </div>`;
-
     list.prepend(card);
     applyFilter();
     updateCount();
+}
+
+// ── Dates ──
+function expandDates(btn) {
+    const datesDiv = btn.parentElement;
+    datesDiv.innerHTML = `
+        <div class="bl-dates-row">
+            <div><label>Start Date</label><input type="date" value="" onchange="saveDate(this, 'start_date')"></div>
+            <div><label>Due Date</label><input type="date" value="" onchange="saveDate(this, 'due_date')"></div>
+        </div>`;
+}
+
+async function saveDate(input, field) {
+    const card = input.closest('.bl-card');
+    const id = card.dataset.id;
+    try {
+        await fetch(`/api/backlog/items/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: input.value })
+        });
+    } catch (err) { console.error('Save date error:', err); }
 }
 
 // ── Inline edit ──
@@ -395,20 +428,15 @@ async function saveTitle(el) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: newTitle })
         });
-    } catch (err) {
-        console.error('Save error:', err);
-    }
+    } catch (err) { console.error('Save error:', err); }
 }
 
 // ── Delete ──
 async function deleteItem(id, btn) {
     const card = btn.closest('.bl-card');
     card.classList.add('bl-card-removing');
-    try {
-        await fetch(`/api/backlog/items/${id}`, { method: 'DELETE' });
-    } catch (err) {
-        console.error('Delete error:', err);
-    }
+    try { await fetch(`/api/backlog/items/${id}`, { method: 'DELETE' }); }
+    catch (err) { console.error('Delete error:', err); }
     setTimeout(() => { card.remove(); updateCount(); showEmptyIfNeeded(); }, 300);
 }
 
@@ -420,23 +448,18 @@ function setFilter(f) {
     });
     applyFilter();
 }
-
 function applyFilter() {
     document.querySelectorAll('.bl-card').forEach(c => {
         if (currentFilter === 'all') { c.style.display = ''; return; }
         c.style.display = c.dataset.priority === currentFilter ? '' : 'none';
     });
 }
-
 function updateCount() {
     const visible = document.querySelectorAll('.bl-card:not(.bl-card-removing)').length;
-    const el = document.getElementById('itemCount');
-    el.textContent = `${visible} item${visible !== 1 ? 's' : ''}`;
+    document.getElementById('itemCount').textContent = `${visible} item${visible !== 1 ? 's' : ''}`;
 }
-
 function showEmptyIfNeeded() {
-    const cards = document.querySelectorAll('.bl-card');
-    if (cards.length === 0) {
+    if (document.querySelectorAll('.bl-card').length === 0) {
         document.getElementById('backlogList').innerHTML = `
             <div class="bl-empty" id="emptyState">
                 <div class="bl-empty-icon">📋</div>
@@ -446,214 +469,212 @@ function showEmptyIfNeeded() {
     }
 }
 
-// ── Move modal ──
+// ══════════════════════════════════════════════════════════════════════════════
+// Move modal — single-form cascading selects (matching schedule copy-table UX)
+// ══════════════════════════════════════════════════════════════════════════════
+
 function openMoveModal(itemId, itemTitle) {
-    moveState = { itemId, itemTitle, dest: null, project: null, projectCode: null, tableId: null, rowId: null, milestoneId: null };
+    moveItemId = itemId;
     document.getElementById('moveTitle').textContent = `Move: ${itemTitle}`;
+    // Reset all selects
+    document.getElementById('moveDestination').value = '';
+    const progSel = document.getElementById('moveProgram');
+    progSel.innerHTML = '<option value="">-- Select destination first --</option>';
+    progSel.disabled = true;
+    document.getElementById('moveTargetGroup').style.display = 'none';
+    document.getElementById('moveRowGroup').style.display = 'none';
+    document.getElementById('moveRiskFields').style.display = 'none';
     document.getElementById('moveConfirmBtn').disabled = true;
-    goMoveStep(1);
     document.getElementById('moveModal').style.display = 'flex';
 }
 
 function closeMoveModal() {
     document.getElementById('moveModal').style.display = 'none';
-    moveState = {};
+    moveItemId = null;
 }
 
-function goMoveStep(n) {
-    document.querySelectorAll('.bl-step').forEach(s => s.classList.remove('active'));
-    const step = document.getElementById(n === 'risk' ? 'moveStepRisk' : `moveStep${n}`);
-    if (step) step.classList.add('active');
-    // Enable confirm only at final step
+async function onDestinationChanged() {
+    const dest = document.getElementById('moveDestination').value;
+    const progSel = document.getElementById('moveProgram');
+    const targetGrp = document.getElementById('moveTargetGroup');
+    const rowGrp = document.getElementById('moveRowGroup');
+    const riskFields = document.getElementById('moveRiskFields');
+
+    // Reset downstream
+    targetGrp.style.display = 'none';
+    rowGrp.style.display = 'none';
+    riskFields.style.display = 'none';
     document.getElementById('moveConfirmBtn').disabled = true;
-}
 
-function selectDest(dest) {
-    moveState.dest = dest;
-    document.querySelectorAll('.bl-dest-btn').forEach(b => b.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-    // Load programs then go to step 2
-    loadPrograms().then(() => goMoveStep(2));
-}
-
-async function loadPrograms() {
-    if (cachedPrograms) {
-        populateProgramSelect(cachedPrograms);
+    if (!dest) {
+        progSel.innerHTML = '<option value="">-- Select destination first --</option>';
+        progSel.disabled = true;
         return;
     }
-    try {
-        const resp = await fetch('/dashboard/api/projects?include_archived=false');
-        cachedPrograms = await resp.json();
-        populateProgramSelect(cachedPrograms);
-    } catch (err) {
-        console.error('Load programs error:', err);
-    }
-}
 
-function populateProgramSelect(programs) {
-    const sel = document.getElementById('moveProgramSelect');
-    sel.innerHTML = '<option value="">Choose a program...</option>';
-    (Array.isArray(programs) ? programs : []).forEach(p => {
-        const name = p.name || p;
-        const code = p.code || p.id || '';
+    // Load programs
+    progSel.disabled = false;
+    progSel.innerHTML = '<option value="">Loading...</option>';
+    if (!cachedPrograms) {
+        try {
+            const resp = await fetch('/dashboard/api/projects?include_archived=false');
+            cachedPrograms = await resp.json();
+        } catch (err) { console.error('Load programs error:', err); cachedPrograms = []; }
+    }
+    progSel.innerHTML = '<option value="">-- Select a program --</option>';
+    (Array.isArray(cachedPrograms) ? cachedPrograms : []).forEach(p => {
         const opt = document.createElement('option');
-        opt.value = name;
-        opt.dataset.code = code;
-        opt.textContent = name;
-        sel.appendChild(opt);
+        opt.value = p.name || p;
+        opt.dataset.code = p.code || p.id || '';
+        opt.textContent = p.name || p;
+        progSel.appendChild(opt);
     });
 }
 
-async function onProgramSelected() {
-    const sel = document.getElementById('moveProgramSelect');
-    const projName = sel.value;
-    const projCode = sel.selectedOptions[0]?.dataset.code || '';
-    if (!projName) return;
-    moveState.project = projName;
-    moveState.projectCode = projCode;
+async function onProgramChanged() {
+    const dest = document.getElementById('moveDestination').value;
+    const progSel = document.getElementById('moveProgram');
+    const projName = progSel.value;
+    const projCode = progSel.selectedOptions[0]?.dataset.code || '';
+    const targetGrp = document.getElementById('moveTargetGroup');
+    const targetSel = document.getElementById('moveTarget');
+    const rowGrp = document.getElementById('moveRowGroup');
+    const riskFields = document.getElementById('moveRiskFields');
 
-    if (moveState.dest === 'risk') {
-        // Risk doesn't need step 3 — go straight to risk fields
-        goMoveStep('risk');
+    rowGrp.style.display = 'none';
+    document.getElementById('moveConfirmBtn').disabled = true;
+
+    if (!projName) {
+        targetGrp.style.display = 'none';
+        riskFields.style.display = 'none';
+        return;
+    }
+
+    // Risk — no target needed, show risk fields and enable confirm
+    if (dest === 'risk') {
+        targetGrp.style.display = 'none';
+        riskFields.style.display = 'block';
         document.getElementById('moveConfirmBtn').disabled = false;
         return;
     }
 
-    if (moveState.dest === 'milestone_subtask') {
-        await loadMilestones(projCode || projName);
-        goMoveStep(3);
-        document.getElementById('moveStep3Label').textContent = 'Select milestone';
+    // Show target group
+    targetGrp.style.display = 'block';
+    riskFields.style.display = 'none';
+    targetSel.disabled = false;
+    targetSel.innerHTML = '<option value="">Loading...</option>';
+
+    if (dest === 'milestone_subtask') {
+        document.getElementById('moveTargetLabel').textContent = 'Milestone';
+        try {
+            const resp = await fetch(`/api/backlog/milestones/${encodeURIComponent(projCode || projName)}`);
+            const data = await resp.json();
+            targetSel.innerHTML = '<option value="">-- Select a milestone --</option>';
+            (data.milestones || []).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id || m.name;
+                opt.textContent = m.name;
+                targetSel.appendChild(opt);
+            });
+            if (targetSel.options.length <= 1) targetSel.innerHTML = '<option value="">No milestones found</option>';
+        } catch (err) { targetSel.innerHTML = '<option value="">Error loading milestones</option>'; }
+    } else {
+        // schedule_row or schedule_subtask — load tables
+        document.getElementById('moveTargetLabel').textContent = 'Schedule Table';
+        try {
+            const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projName)}/tables`);
+            const data = await resp.json();
+            const tables = data.tables || [];
+            targetSel.innerHTML = '<option value="">-- Select a table --</option>';
+            tables.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name + (t.rows ? ` (${t.rows.length} rows)` : '');
+                targetSel.appendChild(opt);
+            });
+        } catch (err) { targetSel.innerHTML = '<option value="">Error loading tables</option>'; }
+    }
+}
+
+async function onTargetChanged() {
+    const dest = document.getElementById('moveDestination').value;
+    const targetVal = document.getElementById('moveTarget').value;
+    const rowGrp = document.getElementById('moveRowGroup');
+    const rowSel = document.getElementById('moveRow');
+
+    if (!targetVal) {
+        rowGrp.style.display = 'none';
+        document.getElementById('moveConfirmBtn').disabled = true;
         return;
     }
 
-    // schedule_row or schedule_subtask — load tables
-    await loadTables(projName);
-    goMoveStep(3);
-    document.getElementById('moveStep3Label').textContent = 'Select schedule table';
-}
-
-async function loadTables(projName) {
-    const sel = document.getElementById('moveTargetSelect');
-    sel.innerHTML = '<option value="">Loading...</option>';
-    try {
-        const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projName)}/tables`);
-        const data = await resp.json();
-        const tables = data.tables || [];
-        cachedTables[projName] = tables;
-        sel.innerHTML = '<option value="">Choose a table...</option>';
-        tables.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = t.name + (t.row_count !== undefined ? ` (${t.rows ? t.rows.length : ''}  rows)` : '');
-            sel.appendChild(opt);
-        });
-    } catch (err) {
-        sel.innerHTML = '<option value="">Error loading tables</option>';
-    }
-}
-
-async function loadMilestones(projectCode) {
-    const sel = document.getElementById('moveTargetSelect');
-    sel.innerHTML = '<option value="">Loading...</option>';
-    try {
-        const resp = await fetch(`/api/backlog/milestones/${encodeURIComponent(projectCode)}`);
-        const data = await resp.json();
-        const milestones = data.milestones || [];
-        sel.innerHTML = '<option value="">Choose a milestone...</option>';
-        milestones.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id || m.name;
-            opt.textContent = m.name;
-            sel.appendChild(opt);
-        });
-        if (sel.options.length <= 1) {
-            sel.innerHTML = '<option value="">No milestones found</option>';
-        }
-    } catch (err) {
-        sel.innerHTML = '<option value="">Error loading milestones</option>';
-    }
-}
-
-function onTargetSelected() {
-    const val = document.getElementById('moveTargetSelect').value;
-    if (!val) return;
-
-    if (moveState.dest === 'milestone_subtask') {
-        moveState.milestoneId = val;
+    if (dest === 'milestone_subtask' || dest === 'schedule_row') {
+        rowGrp.style.display = 'none';
         document.getElementById('moveConfirmBtn').disabled = false;
         return;
     }
 
-    // schedule_row or schedule_subtask
-    moveState.tableId = val;
-
-    if (moveState.dest === 'schedule_row') {
-        document.getElementById('moveConfirmBtn').disabled = false;
-        return;
-    }
-
-    // schedule_subtask — need to pick a row
-    loadRows(moveState.project, val);
-    goMoveStep(4);
-}
-
-async function loadRows(projName, tableId) {
-    const sel = document.getElementById('moveRowSelect');
-    sel.innerHTML = '<option value="">Loading...</option>';
+    // schedule_subtask — load rows
+    rowGrp.style.display = 'block';
+    rowSel.disabled = false;
+    rowSel.innerHTML = '<option value="">Loading...</option>';
+    const projName = document.getElementById('moveProgram').value;
     try {
-        const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projName)}/tables/${tableId}`);
+        const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(projName)}/tables/${targetVal}`);
         const data = await resp.json();
         const table = data.table || data;
         const rows = table.rows || [];
         const cols = table.columns || [];
-        // Find first text column for display
         const textCol = cols.find(c => c.type === 'text' || c.type === 'dropdown');
-        sel.innerHTML = '<option value="">Choose a row...</option>';
+        rowSel.innerHTML = '<option value="">-- Select a row --</option>';
         rows.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.id;
-            const label = textCol ? (r.data?.[textCol.id] || 'Untitled') : (Object.values(r.data || {})[0] || 'Untitled');
-            opt.textContent = label;
-            sel.appendChild(opt);
+            opt.textContent = textCol ? (r.data?.[textCol.id] || 'Untitled') : (Object.values(r.data || {})[0] || 'Untitled');
+            rowSel.appendChild(opt);
         });
-    } catch (err) {
-        sel.innerHTML = '<option value="">Error loading rows</option>';
-    }
-    sel.onchange = () => {
-        if (sel.value) {
-            moveState.rowId = sel.value;
-            document.getElementById('moveConfirmBtn').disabled = false;
-        }
+    } catch (err) { rowSel.innerHTML = '<option value="">Error loading rows</option>'; }
+    rowSel.onchange = () => {
+        document.getElementById('moveConfirmBtn').disabled = !rowSel.value;
     };
 }
 
 async function confirmMove() {
     const btn = document.getElementById('moveConfirmBtn');
     btn.disabled = true;
+    const origText = btn.textContent;
     btn.textContent = 'Moving...';
 
-    const payload = { destination: moveState.dest };
-    if (moveState.project) payload.project_name = moveState.project;
-    if (moveState.projectCode) payload.project_code = moveState.projectCode;
-    if (moveState.tableId) payload.table_id = moveState.tableId;
-    if (moveState.rowId) payload.row_id = moveState.rowId;
-    if (moveState.milestoneId) payload.milestone_id = moveState.milestoneId;
-
-    if (moveState.dest === 'risk') {
+    const dest = document.getElementById('moveDestination').value;
+    const progSel = document.getElementById('moveProgram');
+    const payload = {
+        destination: dest,
+        project_name: progSel.value,
+        project_code: progSel.selectedOptions[0]?.dataset.code || '',
+    };
+    if (dest === 'schedule_row' || dest === 'schedule_subtask') {
+        payload.table_id = document.getElementById('moveTarget').value;
+    }
+    if (dest === 'schedule_subtask') {
+        payload.row_id = document.getElementById('moveRow').value;
+    }
+    if (dest === 'milestone_subtask') {
+        payload.milestone_id = document.getElementById('moveTarget').value;
+    }
+    if (dest === 'risk') {
         payload.likelihood = parseInt(document.getElementById('riskLikelihood').value) || 3;
         payload.impact = parseInt(document.getElementById('riskImpact').value) || 3;
     }
 
     try {
-        const resp = await fetch(`/api/backlog/items/${moveState.itemId}/move`, {
+        const resp = await fetch(`/api/backlog/items/${moveItemId}/move`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         const data = await resp.json();
         if (data.success) {
-            // Remove card with animation
-            const card = document.querySelector(`.bl-card[data-id="${moveState.itemId}"]`);
+            const card = document.querySelector(`.bl-card[data-id="${moveItemId}"]`);
             if (card) {
                 card.classList.add('bl-card-removing');
                 setTimeout(() => { card.remove(); updateCount(); showEmptyIfNeeded(); }, 300);
@@ -666,9 +687,8 @@ async function confirmMove() {
         console.error('Move error:', err);
         alert('Move failed: ' + err.message);
     }
-
     btn.disabled = false;
-    btn.textContent = 'Move';
+    btn.textContent = origText;
 }
 </script>
 {% endblock %}
