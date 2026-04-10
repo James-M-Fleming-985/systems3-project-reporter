@@ -1156,6 +1156,166 @@ from datetime import datetime
 # ONE-OFF: Merge Programs Endpoint (remove after use)
 # =============================================================================
 
+@router.get("/admin/merge-now", response_class=HTMLResponse)
+async def merge_now_get(request: Request):
+    """
+    ONE-OFF: Navigate to /dashboard/admin/merge-now to trigger the merge.
+    Merges AMP-P1 + EP-P1 into PD-P1 (Product Development).
+    Returns an HTML page with the result.
+    """
+    import json as json_mod
+    
+    source_codes = ["AMP-P1", "EP-P1"]
+    target_code = "PD-P1"
+    target_name = "Product Development"
+    
+    results = {"merged": [], "errors": [], "target_code": target_code}
+    
+    try:
+        projects = project_repo.load_all_projects()
+        
+        sources = [p for p in projects if p.project_code in source_codes]
+        if len(sources) != len(source_codes):
+            found = [p.project_code for p in sources]
+            missing = [c for c in source_codes if c not in found]
+            return HTMLResponse(f"<h1>Error</h1><p>Source projects not found: {missing}</p><p>Found: {found}</p><p>All projects: {[p.project_code for p in projects]}</p>")
+        
+        target = next((p for p in projects if p.project_code == target_code), None)
+        
+        all_milestones = []
+        for source in sources:
+            project_label = source.project_name
+            for ms in source.milestones:
+                ms_dict = {
+                    "id": ms.id,
+                    "name": ms.name,
+                    "target_date": str(ms.target_date) if ms.target_date else None,
+                    "status": ms.status,
+                    "completion_date": str(ms.completion_date) if ms.completion_date else None,
+                    "completion_percentage": ms.completion_percentage,
+                    "notes": ms.notes,
+                    "parent_project": ms.parent_project or project_label,
+                    "resources": ms.resources,
+                    "project": target_code
+                }
+                all_milestones.append(ms_dict)
+            results["merged"].append({
+                "source": source.project_code,
+                "name": source.project_name,
+                "milestones_count": len(source.milestones)
+            })
+        
+        all_risks = []
+        for source in sources:
+            for risk in (source.risks or []):
+                risk_dict = {
+                    "risk_id": risk.risk_id if hasattr(risk, 'risk_id') else str(risk.id) if hasattr(risk, 'id') else None,
+                    "description": risk.description if hasattr(risk, 'description') else "",
+                    "severity": risk.severity if hasattr(risk, 'severity') else "MEDIUM",
+                    "probability": risk.probability if hasattr(risk, 'probability') else "MEDIUM",
+                    "impact": risk.impact if hasattr(risk, 'impact') else "",
+                    "mitigation": risk.mitigation if hasattr(risk, 'mitigation') else "",
+                    "status": risk.status if hasattr(risk, 'status') else "OPEN",
+                    "category": risk.category if hasattr(risk, 'category') else "Technical",
+                }
+                all_risks.append(risk_dict)
+        
+        all_changes = []
+        for source in sources:
+            for change in (source.changes or []):
+                change_dict = {
+                    "change_id": change.change_id if hasattr(change, 'change_id') else "",
+                    "description": change.description if hasattr(change, 'description') else "",
+                    "status": change.status if hasattr(change, 'status') else "OPEN",
+                    "impact": change.impact if hasattr(change, 'impact') else "",
+                    "requested_date": str(change.requested_date) if hasattr(change, 'requested_date') and change.requested_date else None,
+                }
+                all_changes.append(change_dict)
+        
+        if target:
+            target_yaml_path = None
+            yaml_files = list(DATA_DIR.glob("**/*.yaml")) + list(DATA_DIR.glob("**/*.yml"))
+            for yf in yaml_files:
+                try:
+                    with open(yf, 'r') as f:
+                        d = yaml.safe_load(f)
+                    if d and isinstance(d, dict) and d.get('project_code') == target_code:
+                        target_yaml_path = yf
+                        break
+                except:
+                    continue
+            
+            if target_yaml_path:
+                with open(target_yaml_path, 'r') as f:
+                    target_data = yaml.safe_load(f)
+                
+                existing_milestones = target_data.get('milestones', [])
+                target_data['milestones'] = existing_milestones + all_milestones
+                target_data['risks'] = target_data.get('risks', []) + all_risks
+                target_data['changes'] = target_data.get('changes', []) + all_changes
+                target_data['project_name'] = target_name
+                
+                with open(target_yaml_path, 'w') as f:
+                    yaml.dump(target_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                    
+                results["target_file"] = str(target_yaml_path)
+            else:
+                return HTMLResponse(f"<h1>Error</h1><p>Target {target_code} exists but YAML not found</p>")
+        else:
+            target_dir_name = f"PROJECT-{target_code.replace('-', '_')}"
+            target_dir = DATA_DIR / target_dir_name
+            target_dir.mkdir(parents=True, exist_ok=True)
+            
+            start_dates = [s.start_date for s in sources if s.start_date]
+            earliest_start = min(start_dates) if start_dates else None
+            
+            target_data = {
+                "project_name": target_name,
+                "project_code": target_code,
+                "status": "IN_PROGRESS",
+                "start_date": str(earliest_start) if earliest_start else None,
+                "target_completion": None,
+                "completion_percentage": 0,
+                "milestones": all_milestones,
+                "risks": all_risks,
+                "changes": all_changes,
+            }
+            
+            target_yaml = target_dir / "project_status.yaml"
+            with open(target_yaml, 'w') as f:
+                yaml.dump(target_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            
+            results["target_file"] = str(target_yaml)
+        
+        for source in sources:
+            project_repo.set_project_archived(source.project_code, True)
+        
+        results["total_milestones"] = len(all_milestones)
+        results["total_risks"] = len(all_risks)
+        results["total_changes"] = len(all_changes)
+        results["success"] = True
+        
+        logger.info(f"✅ Merged {len(sources)} programs into {target_code}: {len(all_milestones)} milestones")
+        
+        html = f"""<html><body style="font-family:sans-serif;padding:2rem;">
+        <h1 style="color:green;">✅ Merge Complete!</h1>
+        <p>Merged into: <b>{target_name} ({target_code})</b></p>
+        <p>Total milestones: <b>{len(all_milestones)}</b></p>
+        <p>Total risks: <b>{len(all_risks)}</b></p>
+        <p>Total changes: <b>{len(all_changes)}</b></p>
+        <h3>Sources merged:</h3>
+        <ul>{''.join(f'<li>{m["name"]} ({m["source"]}): {m["milestones_count"]} milestones — archived</li>' for m in results["merged"])}</ul>
+        <p><a href="/dashboard/gantt?project={target_code}">→ View {target_name} Gantt</a></p>
+        <pre>{json_mod.dumps(results, indent=2)}</pre>
+        </body></html>"""
+        return HTMLResponse(html)
+        
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"❌ Merge error: {e}")
+        return HTMLResponse(f"<h1>Error</h1><pre>{tb}</pre>")
+
 @router.post("/api/admin/merge-programs")
 async def merge_programs(request: Request, body: dict = Body(...)):
     """
