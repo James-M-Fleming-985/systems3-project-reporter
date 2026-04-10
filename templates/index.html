@@ -268,6 +268,14 @@
         📊 Export to PowerPoint
     </button>
 </div>
+
+<!-- ONE-OFF Merge Button (remove after use) -->
+<div id="merge-section" class="mt-4 text-center">
+    <button id="merge-btn" onclick="runMerge()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow transition">
+        🔀 Merge AMP-P1 + EP-P1 → PD-P1
+    </button>
+    <div id="merge-result" class="mt-2 text-sm hidden"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -533,5 +541,40 @@ function updateSelectionDisplay() {
 document.addEventListener('DOMContentLoaded', function() {
     updateSelectionDisplay();
 });
+
+// ONE-OFF: Merge programs (remove after use)
+async function runMerge() {
+    const btn = document.getElementById('merge-btn');
+    const result = document.getElementById('merge-result');
+    btn.disabled = true;
+    btn.textContent = '⏳ Merging...';
+    result.classList.add('hidden');
+    try {
+        const resp = await fetch('/dashboard/api/admin/merge-programs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                source_codes: ['AMP-P1', 'EP-P1'],
+                target_code: 'PD-P1',
+                target_name: 'Product Development'
+            })
+        });
+        const data = await resp.json();
+        result.classList.remove('hidden');
+        if (resp.ok) {
+            result.innerHTML = '<span class="text-green-400 font-bold">✅ Merge complete! ' + (data.total_milestones || 0) + ' milestones merged. Reloading...</span>';
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            result.innerHTML = '<span class="text-red-400">❌ Error: ' + (data.detail || JSON.stringify(data)) + '</span>';
+            btn.disabled = false;
+            btn.textContent = '🔀 Merge AMP-P1 + EP-P1 → PD-P1';
+        }
+    } catch(e) {
+        result.classList.remove('hidden');
+        result.innerHTML = '<span class="text-red-400">❌ Network error: ' + e.message + '</span>';
+        btn.disabled = false;
+        btn.textContent = '🔀 Merge AMP-P1 + EP-P1 → PD-P1';
+    }
+}
 </script>
 {% endblock %}
