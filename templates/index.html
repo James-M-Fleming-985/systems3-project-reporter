@@ -272,7 +272,7 @@
 <!-- ONE-OFF Merge Button (remove after use) -->
 <div id="merge-section" class="mt-4 text-center">
     <button id="merge-btn" onclick="runMerge()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow transition">
-        🔀 Merge AMP-P1 + EP-P1 → PD-P1
+        🔀 Merge AMP-P1 → PD-P1 (Infrastructure Dev)
     </button>
     <div id="merge-result" class="mt-2 text-sm hidden"></div>
 </div>
@@ -563,13 +563,13 @@ async function runMerge() {
         } else {
             result.innerHTML = '<span class="text-red-400">❌ Error: ' + (data.detail || data.error || JSON.stringify(data)) + '</span><br><pre class="text-xs text-gray-400 mt-1">' + (data.log || []).join('\n') + '</pre>';
             btn.disabled = false;
-            btn.textContent = '🔀 Merge AMP-P1 + EP-P1 → PD-P1';
+            btn.textContent = '🔀 Merge AMP-P1 → PD-P1 (Infrastructure Dev)';
         }
     } catch(e) {
         result.classList.remove('hidden');
         result.innerHTML = '<span class="text-red-400">❌ Network error: ' + e.message + '</span>';
         btn.disabled = false;
-        btn.textContent = '🔀 Merge AMP-P1 + EP-P1 → PD-P1';
+        btn.textContent = '🔀 Merge AMP-P1 → PD-P1 (Infrastructure Dev)';
     }
 }
 </script>

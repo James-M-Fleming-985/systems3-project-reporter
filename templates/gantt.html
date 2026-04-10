@@ -561,14 +561,10 @@ function renderProjectRoadmap() {
         }
     });
     
-    // Sort groups alphabetically, tasks within each group by start date
+    // Sort groups alphabetically
     const sortedGroupNames = Object.keys(groupedTasks).sort();
-    sortedGroupNames.forEach(group => {
-        groupedTasks[group].sort((a, b) => new Date(a.Start) - new Date(b.Start));
-    });
     
-    // Build Y-axis categories with group headers and task labels
-    // Group header = "── GroupName ──", tasks = "  TaskName"
+    // Build Y-axis categories — ONE bar per project group (summary only)
     const yCategories = [];
     const traces = [];
     const annotations = [];
@@ -580,67 +576,9 @@ function renderProjectRoadmap() {
     reversedGroups.forEach((groupName, groupIdx) => {
         const tasks = groupedTasks[groupName];
         
-        // Add spacer between groups (except for the first group rendered)
-        if (groupIdx > 0) {
-            yCategories.push('');
-        }
+        yCategories.push(groupName);
         
-        // Group header
-        const headerLabel = `▸ ${groupName}`;
-        yCategories.push(headerLabel);
-        
-        // Tasks in this group (reversed so earliest appears at top within group)
-        const reversedTasks = [...tasks].reverse();
-        reversedTasks.forEach(task => {
-            const taskLabel = `   ${task.Task}`;
-            yCategories.push(taskLabel);
-            
-            let startStr = task.Start;
-            let finishStr = task.Finish;
-            const taskStart = new Date(startStr);
-            let taskFinish = new Date(finishStr);
-            
-            if (taskFinish <= taskStart) {
-                taskFinish = new Date(taskStart);
-                taskFinish.setDate(taskFinish.getDate() + 7);
-                finishStr = taskFinish.toISOString().split('T')[0];
-            }
-            
-            const pct = task.CompletionPct || 0;
-            
-            let barColor = '#9ca3af';
-            if (task.Status === 'COMPLETED') barColor = '#22c55e';
-            else if (task.Status === 'IN_PROGRESS') barColor = '#eab308';
-            
-            traces.push({
-                x: [startStr, finishStr],
-                y: [taskLabel, taskLabel],
-                mode: 'lines',
-                line: { width: 18, color: barColor },
-                opacity: 0.85,
-                name: task.Task,
-                showlegend: false,
-                hovertemplate:
-                    `<b>${escapeHtml(task.Task)}</b><br>` +
-                    `Group: ${escapeHtml(groupName)}<br>` +
-                    `Start: ${taskStart.toLocaleDateString()}<br>` +
-                    `End: ${taskFinish.toLocaleDateString()}<br>` +
-                    `Status: ${task.Status}<br>` +
-                    `Progress: ${pct}%<extra></extra>`
-            });
-            
-            annotations.push({
-                x: finishStr,
-                y: taskLabel,
-                text: `${pct}%`,
-                showarrow: false,
-                font: { size: 10, color: '#374151' },
-                xanchor: 'left',
-                xshift: 8
-            });
-        });
-        
-        // Add a span trace for the group header (covers full group date range)
+        // Calculate group date range from all milestones
         const groupStart = tasks.reduce((min, t) => {
             const d = new Date(t.Start);
             return d < min ? d : min;
@@ -650,24 +588,71 @@ function renderProjectRoadmap() {
             return d > max ? d : max;
         }, new Date('1970-01-01'));
         
+        // Calculate overall completion %
+        const totalPct = tasks.reduce((sum, t) => sum + (t.CompletionPct || 0), 0);
+        const avgPct = Math.round(totalPct / tasks.length);
+        
+        // Count statuses
+        const completed = tasks.filter(t => t.Status === 'COMPLETED').length;
+        const inProgress = tasks.filter(t => t.Status === 'IN_PROGRESS').length;
+        const total = tasks.length;
+        
+        // Color based on overall progress
+        let barColor = '#3b82f6'; // blue default
+        if (avgPct >= 100 || completed === total) barColor = '#22c55e'; // green
+        else if (avgPct > 0 || inProgress > 0) barColor = '#eab308'; // yellow
+        
+        const startStr = groupStart.toISOString().split('T')[0];
+        const endStr = groupEnd.toISOString().split('T')[0];
+        
+        // Single summary bar per project
         traces.push({
-            x: [groupStart.toISOString().split('T')[0], groupEnd.toISOString().split('T')[0]],
-            y: [headerLabel, headerLabel],
+            x: [startStr, endStr],
+            y: [groupName, groupName],
             mode: 'lines',
-            line: { width: 8, color: '#3b82f6' },
-            opacity: 0.3,
+            line: { width: 28, color: barColor },
+            opacity: 0.85,
             showlegend: false,
             hovertemplate:
                 `<b>${escapeHtml(groupName)}</b><br>` +
-                `${tasks.length} milestones<br>` +
-                `${groupStart.toLocaleDateString()} – ${groupEnd.toLocaleDateString()}<extra></extra>`
+                `${total} milestones<br>` +
+                `Completed: ${completed}/${total}<br>` +
+                `${groupStart.toLocaleDateString()} – ${groupEnd.toLocaleDateString()}<br>` +
+                `Progress: ${avgPct}%<extra></extra>`
+        });
+        
+        // Progress completion overlay (darker shade showing completed portion)
+        if (avgPct > 0 && avgPct < 100) {
+            const range = groupEnd.getTime() - groupStart.getTime();
+            const progressEnd = new Date(groupStart.getTime() + range * (avgPct / 100));
+            const progressEndStr = progressEnd.toISOString().split('T')[0];
+            traces.push({
+                x: [startStr, progressEndStr],
+                y: [groupName, groupName],
+                mode: 'lines',
+                line: { width: 28, color: barColor },
+                opacity: 1.0,
+                showlegend: false,
+                hoverinfo: 'skip'
+            });
+        }
+        
+        // Annotation with percentage and milestone count
+        annotations.push({
+            x: endStr,
+            y: groupName,
+            text: `${avgPct}% (${completed}/${total})`,
+            showarrow: false,
+            font: { size: 11, color: '#374151' },
+            xanchor: 'left',
+            xshift: 10
         });
     });
     
-    // Chart height
+    // Chart height — one row per project group
     const rowCount = yCategories.length;
-    const barHeight = rowCount <= 5 ? 50 : rowCount <= 15 ? 40 : 32;
-    const chartHeight = Math.max(300, (barHeight * rowCount) + 120);
+    const barHeight = rowCount <= 3 ? 60 : rowCount <= 8 ? 50 : 40;
+    const chartHeight = Math.max(250, (barHeight * rowCount) + 120);
     
     const layout = {
         title: null,

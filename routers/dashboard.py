@@ -1171,7 +1171,7 @@ async def do_merge(request: Request):
         logger.info(f"🔀 MERGE: {msg}")
         log_lines.append(msg)
     
-    source_codes = ["AMP-P1", "EP-P1"]
+    source_codes = ["AMP-P1"]  # EP-P1 already merged, only AMP-P1 remaining
     target_code = "PD-P1"
     target_name = "Product Development"
     
@@ -1181,6 +1181,7 @@ async def do_merge(request: Request):
         log(f"Found {len(yaml_files)} YAML files in {DATA_DIR}")
         
         # Step 2: Map project_code → YAML path + data
+        # IMPORTANT: Prefer the file with the MOST milestones for each project_code
         code_to_file = {}
         for yf in yaml_files:
             try:
@@ -1190,7 +1191,10 @@ async def do_merge(request: Request):
                     code = d['project_code']
                     ms_count = len(d.get('milestones', []))
                     log(f"  {yf.name}: project_code={code}, milestones={ms_count}, archived={d.get('archived', False)}")
-                    code_to_file[code] = {'path': yf, 'data': d}
+                    # Keep the file with the most milestones
+                    existing = code_to_file.get(code)
+                    if not existing or ms_count > len(existing['data'].get('milestones', [])):
+                        code_to_file[code] = {'path': yf, 'data': d}
             except Exception as e:
                 log(f"  Skip {yf.name}: {e}")
         
