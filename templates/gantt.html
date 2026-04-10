@@ -180,14 +180,59 @@
         border: 2px dashed #d1d5db;
     }
 
+    /* ── View Mode Toggle ── */
+    .view-toggle {
+        display: inline-flex;
+        border: 2px solid #d1d5db;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .view-toggle-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: white;
+        color: #6b7280;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .view-toggle-btn:not(:last-child) {
+        border-right: 1px solid #d1d5db;
+    }
+    .view-toggle-btn.active {
+        background: #3b82f6;
+        color: white;
+    }
+    .view-toggle-btn:hover:not(.active) {
+        background: #f3f4f6;
+    }
+
+    /* ── Project Group Filter (roadmap view) ── */
+    .group-filter-dropdown {
+        position: relative;
+        min-width: 280px;
+    }
+
+    /* ── Swim Lane Styles ── */
+    .swim-lane-separator {
+        border-top: 2px solid #e5e7eb;
+        margin: 0.25rem 0;
+    }
+
     /* ── Mobile responsive ── */
     @media (max-width: 640px) {
         .roadmap-controls { flex-direction: column; align-items: stretch; }
         .level-select { width: 100%; min-width: auto; }
         .project-dropdown { min-width: auto; width: 100%; }
+        .group-filter-dropdown { min-width: auto; width: 100%; }
         .dropdown-toggle { width: 100%; }
         .dropdown-menu { max-height: 50vh; }
         .selection-pills { flex-wrap: wrap; gap: 6px; }
+        .view-toggle { width: 100%; }
+        .view-toggle-btn { flex: 1; text-align: center; }
         /* Chart container: allow horizontal scroll */
         #ganttChart { overflow-x: auto; -webkit-overflow-scrolling: touch; min-height: 400px; }
         /* Legend wrap */
@@ -207,36 +252,66 @@
 <div class="bg-white rounded-lg shadow p-6">
     <!-- Controls Row - hidden during PPT export -->
     <div class="roadmap-controls mb-4" {% if ppt_export %}style="display: none;"{% endif %}>
-        <!-- Level Selector -->
-        <div>
-            <label class="text-sm font-medium text-gray-700 mr-2">Project Level:</label>
-            <select id="levelSelect" class="level-select" onchange="onLevelChange()">
-                <option value="">-- Select level --</option>
-                <!-- Options populated by JS -->
-            </select>
+        <!-- View Mode Toggle -->
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" id="btnProjectRoadmap" onclick="setViewMode('project')">Project Roadmap</button>
+            <button class="view-toggle-btn" id="btnLevelDetail" onclick="setViewMode('level')">Level Detail</button>
         </div>
-        
-        <!-- Project Dropdown -->
-        <div class="project-dropdown" id="projectDropdown">
-            <div class="dropdown-toggle" onclick="toggleDropdown()">
-                <span id="dropdownLabel">Select projects...</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+
+        <!-- Level Detail Controls (hidden in project roadmap mode) -->
+        <div id="levelDetailControls" style="display: none;" class="roadmap-controls">
+            <!-- Level Selector -->
+            <div>
+                <label class="text-sm font-medium text-gray-700 mr-2">Project Level:</label>
+                <select id="levelSelect" class="level-select" onchange="onLevelChange()">
+                    <option value="">-- Select level --</option>
+                </select>
             </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-                <div id="dropdownItems">
-                    <!-- Items populated by JS -->
+            
+            <!-- Project Dropdown -->
+            <div class="project-dropdown" id="projectDropdown">
+                <div class="dropdown-toggle" onclick="toggleDropdown()">
+                    <span id="dropdownLabel">Select projects...</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
-                <div class="dropdown-actions">
-                    <button class="btn-sm-secondary" onclick="selectAllProjects()">All</button>
-                    <button class="btn-sm-secondary" onclick="selectNoneProjects()">None</button>
-                    <button class="btn-sm-primary" onclick="applyAndClose()">Apply</button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div id="dropdownItems">
+                    </div>
+                    <div class="dropdown-actions">
+                        <button class="btn-sm-secondary" onclick="selectAllProjects()">All</button>
+                        <button class="btn-sm-secondary" onclick="selectNoneProjects()">None</button>
+                        <button class="btn-sm-primary" onclick="applyAndClose()">Apply</button>
+                    </div>
                 </div>
             </div>
+            
+            <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
         </div>
-        
-        <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
+
+        <!-- Project Roadmap Controls (shown in project roadmap mode) -->
+        <div id="projectRoadmapControls" class="roadmap-controls">
+            <!-- Project Group Filter -->
+            <div class="project-dropdown group-filter-dropdown" id="groupFilterDropdown">
+                <div class="dropdown-toggle" onclick="toggleGroupFilter()">
+                    <span id="groupFilterLabel">All project groups</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div class="dropdown-menu" id="groupFilterMenu">
+                    <div id="groupFilterItems">
+                    </div>
+                    <div class="dropdown-actions">
+                        <button class="btn-sm-secondary" onclick="selectAllGroups()">All</button>
+                        <button class="btn-sm-secondary" onclick="selectNoneGroups()">None</button>
+                        <button class="btn-sm-primary" onclick="applyGroupFilter()">Apply</button>
+                    </div>
+                </div>
+            </div>
+            <span class="text-sm text-gray-500" id="groupStatus">Showing all project groups</span>
+        </div>
         
         <!-- Export XML button -->
         <button onclick="exportXml()" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition inline-flex items-center gap-1.5 ml-auto" title="Export as MS Project XML">
@@ -288,51 +363,355 @@ const projectName = "{{ project.project_name }}";
 
 function exportXml() {
     window.location.href = `/api/export/xml/${encodeURIComponent(projectCode)}`;
-}const ganttData = {{ gantt_data | tojson }};
+}
 
-// State
+const ganttData = {{ gantt_data | tojson }};
+
+// ── State ──
+let viewMode = 'project';  // 'project' or 'level'
 let availableLevels = [];
 let selectedLevel = null;
-let levelItems = [];       // Tasks AT the selected level
-let selectedItems = new Set(); // Selected task names
+let levelItems = [];
+let selectedItems = new Set();
 
-// Initialize
+// Project Roadmap state
+let projectGroups = [];        // unique Resource values
+let selectedGroups = new Set(); // selected group names
+
+// ── Initialize ──
 document.addEventListener('DOMContentLoaded', async function() {
     detectAvailableLevels();
+    detectProjectGroups();
     await loadSavedSettings();
     populateLevelDropdown();
+    applyViewMode();
     
-    if (selectedLevel) {
-        buildLevelItems(selectedLevel);
-        renderDropdownItems();
-        renderRoadmap();
-    } else {
-        renderDropdownItems();
-        updateStatus();
-    }
-    
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('projectDropdown');
-        if (!dropdown.contains(e.target)) {
-            closeDropdown();
-        }
+        const groupDropdown = document.getElementById('groupFilterDropdown');
+        if (!dropdown.contains(e.target)) closeDropdown();
+        if (!groupDropdown.contains(e.target)) closeGroupFilter();
     });
 });
 
-function detectAvailableLevels() {
-    // Find unique OutlineLevel values >= 2
-    const levelSet = new Set();
-    
+// ══════════════════════════════════════════
+// VIEW MODE TOGGLE
+// ══════════════════════════════════════════
+
+function setViewMode(mode) {
+    viewMode = mode;
+    applyViewMode();
+    saveSettings();
+}
+
+function applyViewMode() {
+    const btnProject = document.getElementById('btnProjectRoadmap');
+    const btnLevel = document.getElementById('btnLevelDetail');
+    const levelControls = document.getElementById('levelDetailControls');
+    const projectControls = document.getElementById('projectRoadmapControls');
+
+    if (viewMode === 'project') {
+        btnProject.classList.add('active');
+        btnLevel.classList.remove('active');
+        levelControls.style.display = 'none';
+        projectControls.style.display = '';
+        renderGroupFilterItems();
+        renderProjectRoadmap();
+    } else {
+        btnLevel.classList.add('active');
+        btnProject.classList.remove('active');
+        levelControls.style.display = '';
+        projectControls.style.display = 'none';
+        
+        if (selectedLevel) {
+            buildLevelItems(selectedLevel);
+            renderDropdownItems();
+            renderRoadmap();
+        } else {
+            renderDropdownItems();
+            updateStatus();
+        }
+    }
+}
+
+// ══════════════════════════════════════════
+// PROJECT ROADMAP VIEW
+// ══════════════════════════════════════════
+
+function detectProjectGroups() {
+    const groupSet = new Set();
     ganttData.forEach(task => {
-        const ol = task.OutlineLevel;
-        if (ol && ol >= 2) {
-            levelSet.add(ol);
+        if (task.Resource) {
+            groupSet.add(task.Resource);
+        }
+    });
+    projectGroups = Array.from(groupSet).sort();
+    
+    // Default: all selected
+    if (selectedGroups.size === 0) {
+        selectedGroups = new Set(projectGroups);
+    }
+}
+
+function toggleGroupFilter() {
+    const toggle = document.querySelector('#groupFilterDropdown .dropdown-toggle');
+    const menu = document.getElementById('groupFilterMenu');
+    toggle.classList.toggle('open');
+    menu.classList.toggle('show');
+}
+
+function closeGroupFilter() {
+    const toggle = document.querySelector('#groupFilterDropdown .dropdown-toggle');
+    const menu = document.getElementById('groupFilterMenu');
+    if (toggle) toggle.classList.remove('open');
+    if (menu) menu.classList.remove('show');
+}
+
+function renderGroupFilterItems() {
+    const container = document.getElementById('groupFilterItems');
+    
+    if (projectGroups.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No project groups found</div>';
+        updateGroupStatus();
+        return;
+    }
+    
+    container.innerHTML = projectGroups.map(group => {
+        const checked = selectedGroups.has(group) ? 'checked' : '';
+        const escapedName = group.replace(/'/g, "\\'");
+        const count = ganttData.filter(t => t.Resource === group).length;
+        return `
+            <label class="dropdown-item">
+                <input type="checkbox" ${checked} onchange="toggleGroup('${escapedName}', this.checked)">
+                <span class="item-name">${escapeHtml(group)}</span>
+                <span class="item-count">${count}</span>
+            </label>
+        `;
+    }).join('');
+    
+    updateGroupStatus();
+}
+
+function toggleGroup(name, checked) {
+    if (checked) selectedGroups.add(name);
+    else selectedGroups.delete(name);
+    updateGroupStatus();
+}
+
+function selectAllGroups() {
+    selectedGroups = new Set(projectGroups);
+    renderGroupFilterItems();
+}
+
+function selectNoneGroups() {
+    selectedGroups.clear();
+    renderGroupFilterItems();
+}
+
+function applyGroupFilter() {
+    closeGroupFilter();
+    saveSettings();
+    renderProjectRoadmap();
+}
+
+function updateGroupStatus() {
+    const label = document.getElementById('groupFilterLabel');
+    const status = document.getElementById('groupStatus');
+    const count = selectedGroups.size;
+    const total = projectGroups.length;
+    
+    if (count === 0) {
+        label.textContent = 'Select project groups...';
+        status.textContent = 'No groups selected';
+    } else if (count === total) {
+        label.textContent = `All project groups (${total})`;
+        status.textContent = `Showing all ${total} project groups`;
+    } else {
+        label.textContent = `${count} of ${total} groups`;
+        status.textContent = `Showing ${count} of ${total} project groups`;
+    }
+}
+
+function renderProjectRoadmap() {
+    const chartDiv = document.getElementById('roadmapChart');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (selectedGroups.size === 0 || projectGroups.length === 0) {
+        emptyState.style.display = 'block';
+        if (projectGroups.length === 0) {
+            emptyState.querySelector('h3').textContent = 'No Project Groups Found';
+            emptyState.querySelector('p').textContent = 'This program has no milestones with project group data';
+        } else {
+            emptyState.querySelector('h3').textContent = 'Select Project Groups';
+            emptyState.querySelector('p').textContent = 'Choose which project groups to display on the roadmap';
+        }
+        Plotly.purge(chartDiv);
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Group tasks by Resource (parent_project), filter to selected groups
+    const groupedTasks = {};
+    ganttData.forEach(task => {
+        if (task.Resource && selectedGroups.has(task.Resource)) {
+            if (!groupedTasks[task.Resource]) groupedTasks[task.Resource] = [];
+            groupedTasks[task.Resource].push(task);
         }
     });
     
+    // Sort groups alphabetically, tasks within each group by start date
+    const sortedGroupNames = Object.keys(groupedTasks).sort();
+    sortedGroupNames.forEach(group => {
+        groupedTasks[group].sort((a, b) => new Date(a.Start) - new Date(b.Start));
+    });
+    
+    // Build Y-axis categories with group headers and task labels
+    // Group header = "── GroupName ──", tasks = "  TaskName"
+    const yCategories = [];
+    const traces = [];
+    const annotations = [];
+    const shapes = [];
+    
+    // Build from bottom-up (Plotly reverses Y)
+    const reversedGroups = [...sortedGroupNames].reverse();
+    
+    reversedGroups.forEach((groupName, groupIdx) => {
+        const tasks = groupedTasks[groupName];
+        
+        // Add spacer between groups (except for the first group rendered)
+        if (groupIdx > 0) {
+            yCategories.push('');
+        }
+        
+        // Group header
+        const headerLabel = `▸ ${groupName}`;
+        yCategories.push(headerLabel);
+        
+        // Tasks in this group (reversed so earliest appears at top within group)
+        const reversedTasks = [...tasks].reverse();
+        reversedTasks.forEach(task => {
+            const taskLabel = `   ${task.Task}`;
+            yCategories.push(taskLabel);
+            
+            let startStr = task.Start;
+            let finishStr = task.Finish;
+            const taskStart = new Date(startStr);
+            let taskFinish = new Date(finishStr);
+            
+            if (taskFinish <= taskStart) {
+                taskFinish = new Date(taskStart);
+                taskFinish.setDate(taskFinish.getDate() + 7);
+                finishStr = taskFinish.toISOString().split('T')[0];
+            }
+            
+            const pct = task.CompletionPct || 0;
+            
+            let barColor = '#9ca3af';
+            if (task.Status === 'COMPLETED') barColor = '#22c55e';
+            else if (task.Status === 'IN_PROGRESS') barColor = '#eab308';
+            
+            traces.push({
+                x: [startStr, finishStr],
+                y: [taskLabel, taskLabel],
+                mode: 'lines',
+                line: { width: 18, color: barColor },
+                opacity: 0.85,
+                name: task.Task,
+                showlegend: false,
+                hovertemplate:
+                    `<b>${escapeHtml(task.Task)}</b><br>` +
+                    `Group: ${escapeHtml(groupName)}<br>` +
+                    `Start: ${taskStart.toLocaleDateString()}<br>` +
+                    `End: ${taskFinish.toLocaleDateString()}<br>` +
+                    `Status: ${task.Status}<br>` +
+                    `Progress: ${pct}%<extra></extra>`
+            });
+            
+            annotations.push({
+                x: finishStr,
+                y: taskLabel,
+                text: `${pct}%`,
+                showarrow: false,
+                font: { size: 10, color: '#374151' },
+                xanchor: 'left',
+                xshift: 8
+            });
+        });
+        
+        // Add a span trace for the group header (covers full group date range)
+        const groupStart = tasks.reduce((min, t) => {
+            const d = new Date(t.Start);
+            return d < min ? d : min;
+        }, new Date('9999-12-31'));
+        const groupEnd = tasks.reduce((max, t) => {
+            const d = new Date(t.Finish);
+            return d > max ? d : max;
+        }, new Date('1970-01-01'));
+        
+        traces.push({
+            x: [groupStart.toISOString().split('T')[0], groupEnd.toISOString().split('T')[0]],
+            y: [headerLabel, headerLabel],
+            mode: 'lines',
+            line: { width: 8, color: '#3b82f6' },
+            opacity: 0.3,
+            showlegend: false,
+            hovertemplate:
+                `<b>${escapeHtml(groupName)}</b><br>` +
+                `${tasks.length} milestones<br>` +
+                `${groupStart.toLocaleDateString()} – ${groupEnd.toLocaleDateString()}<extra></extra>`
+        });
+    });
+    
+    // Chart height
+    const rowCount = yCategories.length;
+    const barHeight = rowCount <= 5 ? 50 : rowCount <= 15 ? 40 : 32;
+    const chartHeight = Math.max(300, (barHeight * rowCount) + 120);
+    
+    const layout = {
+        title: null,
+        xaxis: {
+            title: { text: 'Timeline', font: { size: 12 } },
+            type: 'date',
+            tickformat: '%b %Y',
+            showgrid: true,
+            gridcolor: '#e5e7eb'
+        },
+        yaxis: {
+            automargin: true,
+            type: 'category',
+            categoryorder: 'array',
+            categoryarray: yCategories,
+            showgrid: false,
+            tickfont: { size: 11 }
+        },
+        height: chartHeight,
+        margin: { l: 280, r: 80, t: 20, b: 60 },
+        hovermode: 'closest',
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        annotations: annotations,
+        shapes: shapes
+    };
+    
+    Plotly.newPlot(chartDiv, traces, layout, {
+        responsive: true,
+        displayModeBar: false
+    });
+}
+
+// ══════════════════════════════════════════
+// LEVEL DETAIL VIEW (original behavior)
+// ══════════════════════════════════════════
+
+function detectAvailableLevels() {
+    const levelSet = new Set();
+    ganttData.forEach(task => {
+        const ol = task.OutlineLevel;
+        if (ol && ol >= 2) levelSet.add(ol);
+    });
     availableLevels = Array.from(levelSet).sort((a, b) => a - b);
-    console.log('📊 Available levels (from OutlineLevel):', availableLevels);
 }
 
 function populateLevelDropdown() {
@@ -347,7 +726,6 @@ function populateLevelDropdown() {
     select.innerHTML = '<option value="">-- Select level --</option>' +
         availableLevels.map(lvl => {
             const selected = (selectedLevel === lvl) ? 'selected' : '';
-            // Count items at this level
             const count = ganttData.filter(t => t.OutlineLevel === lvl).length;
             return `<option value="${lvl}" ${selected}>Level ${lvl} (${count} items)</option>`;
         }).join('');
@@ -364,7 +742,6 @@ function onLevelChange() {
     
     if (selectedLevel) {
         buildLevelItems(selectedLevel);
-        // Select all by default
         selectedItems = new Set(levelItems.map(t => t.Task));
     } else {
         levelItems = [];
@@ -377,13 +754,8 @@ function onLevelChange() {
 }
 
 function buildLevelItems(level) {
-    // Get all tasks AT the selected outline level
     levelItems = ganttData.filter(task => task.OutlineLevel === level);
-    
-    // Sort by start date
     levelItems.sort((a, b) => new Date(a.Start) - new Date(b.Start));
-    
-    console.log(`📋 Level ${level}: Found ${levelItems.length} items`);
 }
 
 async function loadSavedSettings() {
@@ -391,18 +763,31 @@ async function loadSavedSettings() {
         const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
         const settings = await response.json();
         
-        // Load saved level
+        // Load view mode
+        if (settings.view_mode && (settings.view_mode === 'project' || settings.view_mode === 'level')) {
+            viewMode = settings.view_mode;
+        }
+        
+        // Load saved level (for level detail view)
         if (settings.selected_level && availableLevels.includes(settings.selected_level)) {
             selectedLevel = settings.selected_level;
             buildLevelItems(selectedLevel);
         }
         
-        // Load saved selections
+        // Load saved level selections
         if (selectedLevel && settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
             const validNames = new Set(levelItems.map(t => t.Task));
             selectedItems = new Set(settings.selected_groups.filter(g => validNames.has(g)));
         } else if (selectedLevel) {
             selectedItems = new Set(levelItems.map(t => t.Task));
+        }
+        
+        // Load saved project group selections (for project roadmap view)
+        if (settings.selected_project_groups && settings.selected_project_groups.length > 0) {
+            const validGroups = new Set(projectGroups);
+            selectedGroups = new Set(settings.selected_project_groups.filter(g => validGroups.has(g)));
+        } else {
+            selectedGroups = new Set(projectGroups);
         }
     } catch (error) {
         console.log('No saved settings');
@@ -410,15 +795,17 @@ async function loadSavedSettings() {
 }
 
 function toggleDropdown() {
-    const toggle = document.querySelector('.dropdown-toggle');
+    const toggle = document.querySelector('#projectDropdown .dropdown-toggle');
     const menu = document.getElementById('dropdownMenu');
     toggle.classList.toggle('open');
     menu.classList.toggle('show');
 }
 
 function closeDropdown() {
-    document.querySelector('.dropdown-toggle').classList.remove('open');
-    document.getElementById('dropdownMenu').classList.remove('show');
+    const toggle = document.querySelector('#projectDropdown .dropdown-toggle');
+    const menu = document.getElementById('dropdownMenu');
+    if (toggle) toggle.classList.remove('open');
+    if (menu) menu.classList.remove('show');
 }
 
 function renderDropdownItems() {
@@ -478,11 +865,8 @@ function updateStatus() {
 }
 
 function toggleProject(name, checked) {
-    if (checked) {
-        selectedItems.add(name);
-    } else {
-        selectedItems.delete(name);
-    }
+    if (checked) selectedItems.add(name);
+    else selectedItems.delete(name);
     updateStatus();
 }
 
@@ -504,7 +888,6 @@ function applyAndClose() {
 }
 
 function renderPills() {
-    // Pills removed per user request — dropdown already shows selections
     const container = document.getElementById('selectionPills');
     container.innerHTML = '';
 }
@@ -523,9 +906,11 @@ async function saveSettings() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                view_mode: viewMode,
                 selected_level: selectedLevel,
                 selected_groups: Array.from(selectedItems),
-                show_all: selectedItems.size === levelItems.length
+                show_all: selectedItems.size === levelItems.length,
+                selected_project_groups: Array.from(selectedGroups)
             })
         });
     } catch (error) {
@@ -539,23 +924,20 @@ function renderRoadmap() {
     
     if (!selectedLevel || selectedItems.size === 0) {
         emptyState.style.display = 'block';
+        emptyState.querySelector('h3').textContent = 'Select Project Level and Projects';
+        emptyState.querySelector('p').textContent = 'Choose a project level to see available projects, then select which ones to display';
         Plotly.purge(chartDiv);
         return;
     }
     
     emptyState.style.display = 'none';
     
-    // Get selected items sorted by start date (earliest first)
     const selected = levelItems
         .filter(t => selectedItems.has(t.Task))
         .sort((a, b) => new Date(a.Start) - new Date(b.Start));
     
-    // Build Gantt using one scatter trace per task (line from start to finish)
-    // This approach uses date strings on x-axis and category strings on y-axis
-    // which Plotly handles reliably without any base/duration conversion issues
     const traces = [];
     const annotations = [];
-    // Reversed so earliest-start appears at top of chart
     const taskNames = selected.map(t => t.Task).reverse();
 
     selected.forEach(task => {
@@ -565,25 +947,18 @@ function renderRoadmap() {
         const taskStart = new Date(startStr);
         let taskFinish = new Date(finishStr);
         
-        // Ensure minimum visible duration (7 days) for milestones
         if (taskFinish <= taskStart) {
             taskFinish = new Date(taskStart);
             taskFinish.setDate(taskFinish.getDate() + 7);
             finishStr = taskFinish.toISOString().split('T')[0];
         }
         
-        // Completion percentage from task data
         const pct = task.CompletionPct || 0;
         
-        // Color by status
-        let barColor = '#9ca3af'; // gray - not started
-        if (task.Status === 'COMPLETED') {
-            barColor = '#22c55e'; // green
-        } else if (task.Status === 'IN_PROGRESS') {
-            barColor = '#eab308'; // yellow
-        }
+        let barColor = '#9ca3af';
+        if (task.Status === 'COMPLETED') barColor = '#22c55e';
+        else if (task.Status === 'IN_PROGRESS') barColor = '#eab308';
         
-        // Each task is a thick horizontal line from start to finish
         traces.push({
             x: [startStr, finishStr],
             y: [task.Task, task.Task],
@@ -600,7 +975,6 @@ function renderRoadmap() {
                 `Progress: ${pct}%<extra></extra>`
         });
         
-        // Add percentage annotation at the end of the bar
         annotations.push({
             x: finishStr,
             y: task.Task,
@@ -612,7 +986,6 @@ function renderRoadmap() {
         });
     });
     
-    // Chart height
     const rowCount = selected.length;
     const barHeight = rowCount <= 3 ? 60 : rowCount <= 8 ? 45 : 35;
     const chartHeight = Math.max(250, (barHeight * rowCount) + 120);
