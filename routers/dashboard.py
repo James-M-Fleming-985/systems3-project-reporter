@@ -1150,3 +1150,177 @@ async def save_roadmap_settings(project_code: str, settings: dict = Body(...)):
 
 
 from datetime import datetime
+
+
+# =============================================================================
+# ONE-OFF: Merge Programs Endpoint (remove after use)
+# =============================================================================
+
+@router.post("/api/admin/merge-programs")
+async def merge_programs(request: Request, body: dict = Body(...)):
+    """
+    ONE-OFF admin endpoint: Merge two source programs into a target program.
+    The source programs' milestones get tagged with parent_project and moved
+    into the target. Sources are then archived.
+    
+    Body: {
+        "source_codes": ["AMP-P1", "EP-P1"],
+        "target_code": "PD-P1",
+        "target_name": "Product Development"
+    }
+    """
+    import shutil
+    
+    source_codes = body.get("source_codes", [])
+    target_code = body.get("target_code")
+    target_name = body.get("target_name")
+    
+    if not source_codes or not target_code or not target_name:
+        return JSONResponse({"error": "source_codes, target_code, target_name required"}, status_code=400)
+    
+    results = {"merged": [], "errors": [], "target_code": target_code}
+    
+    try:
+        # Load all projects
+        projects = project_repo.load_all_projects()
+        
+        # Find source projects
+        sources = [p for p in projects if p.project_code in source_codes]
+        if len(sources) != len(source_codes):
+            found = [p.project_code for p in sources]
+            missing = [c for c in source_codes if c not in found]
+            return JSONResponse({"error": f"Source projects not found: {missing}"}, status_code=404)
+        
+        # Check if target already exists
+        target = next((p for p in projects if p.project_code == target_code), None)
+        
+        # Build merged milestones
+        all_milestones = []
+        for source in sources:
+            project_label = source.project_name
+            for ms in source.milestones:
+                ms_dict = {
+                    "id": ms.id,
+                    "name": ms.name,
+                    "target_date": str(ms.target_date) if ms.target_date else None,
+                    "status": ms.status,
+                    "completion_date": str(ms.completion_date) if ms.completion_date else None,
+                    "completion_percentage": ms.completion_percentage,
+                    "notes": ms.notes,
+                    "parent_project": ms.parent_project or project_label,
+                    "resources": ms.resources,
+                    "project": target_code
+                }
+                all_milestones.append(ms_dict)
+            results["merged"].append({
+                "source": source.project_code,
+                "name": source.project_name,
+                "milestones_count": len(source.milestones)
+            })
+        
+        # Build target YAML
+        target_dir_name = f"PROJECT-{target_code.replace('-', '_')}"
+        target_dir = DATA_DIR / target_dir_name
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Merge risks from sources
+        all_risks = []
+        for source in sources:
+            for risk in (source.risks or []):
+                risk_dict = {
+                    "risk_id": risk.risk_id if hasattr(risk, 'risk_id') else str(risk.id) if hasattr(risk, 'id') else None,
+                    "description": risk.description if hasattr(risk, 'description') else "",
+                    "severity": risk.severity if hasattr(risk, 'severity') else "MEDIUM",
+                    "probability": risk.probability if hasattr(risk, 'probability') else "MEDIUM",
+                    "impact": risk.impact if hasattr(risk, 'impact') else "",
+                    "mitigation": risk.mitigation if hasattr(risk, 'mitigation') else "",
+                    "status": risk.status if hasattr(risk, 'status') else "OPEN",
+                    "category": risk.category if hasattr(risk, 'category') else "Technical",
+                }
+                all_risks.append(risk_dict)
+        
+        # Merge changes from sources
+        all_changes = []
+        for source in sources:
+            for change in (source.changes or []):
+                change_dict = {
+                    "change_id": change.change_id if hasattr(change, 'change_id') else "",
+                    "description": change.description if hasattr(change, 'description') else "",
+                    "status": change.status if hasattr(change, 'status') else "OPEN",
+                    "impact": change.impact if hasattr(change, 'impact') else "",
+                    "requested_date": str(change.requested_date) if hasattr(change, 'requested_date') and change.requested_date else None,
+                }
+                all_changes.append(change_dict)
+        
+        # If target exists, merge into it (preserve existing milestones)
+        if target:
+            target_yaml_path = None
+            yaml_files = list(DATA_DIR.glob("**/*.yaml")) + list(DATA_DIR.glob("**/*.yml"))
+            for yf in yaml_files:
+                try:
+                    with open(yf, 'r') as f:
+                        d = yaml.safe_load(f)
+                    if d and isinstance(d, dict) and d.get('project_code') == target_code:
+                        target_yaml_path = yf
+                        break
+                except:
+                    continue
+            
+            if target_yaml_path:
+                with open(target_yaml_path, 'r') as f:
+                    target_data = yaml.safe_load(f)
+                
+                existing_milestones = target_data.get('milestones', [])
+                target_data['milestones'] = existing_milestones + all_milestones
+                target_data['risks'] = target_data.get('risks', []) + all_risks
+                target_data['changes'] = target_data.get('changes', []) + all_changes
+                target_data['project_name'] = target_name
+                
+                with open(target_yaml_path, 'w') as f:
+                    yaml.dump(target_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                    
+                results["target_file"] = str(target_yaml_path)
+            else:
+                return JSONResponse({"error": f"Target {target_code} exists as project but YAML file not found"}, status_code=500)
+        else:
+            # Create new target
+            # Use earliest start date from sources
+            start_dates = [s.start_date for s in sources if s.start_date]
+            earliest_start = min(start_dates) if start_dates else None
+            
+            target_data = {
+                "project_name": target_name,
+                "project_code": target_code,
+                "status": "IN_PROGRESS",
+                "start_date": str(earliest_start) if earliest_start else None,
+                "target_completion": None,
+                "completion_percentage": 0,
+                "milestones": all_milestones,
+                "risks": all_risks,
+                "changes": all_changes,
+            }
+            
+            target_yaml = target_dir / "project_status.yaml"
+            with open(target_yaml, 'w') as f:
+                yaml.dump(target_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            
+            results["target_file"] = str(target_yaml)
+        
+        # Archive source projects
+        for source in sources:
+            archived = project_repo.set_project_archived(source.project_code, True)
+            results["merged"][-1 if source == sources[-1] else 0]["archived"] = archived
+        
+        results["total_milestones"] = len(all_milestones)
+        results["total_risks"] = len(all_risks)
+        results["total_changes"] = len(all_changes)
+        results["success"] = True
+        
+        logger.info(f"✅ Merged {len(sources)} programs into {target_code}: {len(all_milestones)} milestones, {len(all_risks)} risks, {len(all_changes)} changes")
+        return results
+        
+    except Exception as e:
+        logger.error(f"❌ Merge error: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
