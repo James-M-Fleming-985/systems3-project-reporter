@@ -403,7 +403,7 @@
 <!-- Filters & Legend -->
 <div class="bg-white rounded-lg shadow p-4 mb-6">
     <!-- Mobile filter toggle button -->
-    <button id="filterToggleBtn" onclick="document.getElementById('filterPanel').classList.toggle('open')" class="hidden items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg w-full justify-center mb-3 tap-target">
+    <button id="filterToggleBtn" onclick="document.getElementById('filterPanel').classList.toggle('open')" class="hidden items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg w-full justify-center mb-3 tap-target" title="Toggle filters and legend panel">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
         Filters & Legend
     </button>
@@ -465,7 +465,7 @@
 
 <!-- Add Standalone Task Button -->
 <div class="flex justify-end mb-3">
-    <button onclick="openNewStandaloneTaskModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-sm font-semibold rounded-lg shadow transition">
+    <button onclick="openNewStandaloneTaskModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-sm font-semibold rounded-lg shadow transition" title="Add a new standalone task">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Add Task
     </button>
@@ -484,7 +484,7 @@
             <h3 id="clvTitle">List View</h3>
             <div class="flex items-center gap-3">
                 <span id="clvCount" class="text-sm text-gray-500"></span>
-                <button onclick="openNewStandaloneTaskModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                <button onclick="openNewStandaloneTaskModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition" title="Add a new standalone task">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                     Add Task
                 </button>
@@ -531,7 +531,7 @@
                 <p class="text-xs uppercase tracking-wider opacity-80" id="stModalTypeLabel">New Task</p>
                 <h3 class="text-lg font-bold mt-0.5" id="stModalHeading">Create Standalone Task</h3>
             </div>
-            <button onclick="closeStandaloneTaskModal()" class="text-white/80 hover:text-white transition tap-target">
+            <button onclick="closeStandaloneTaskModal()" class="text-white/80 hover:text-white transition tap-target" title="Close task form">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -605,7 +605,7 @@
 
             <!-- Recurrence (collapsible) -->
             <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button type="button" onclick="toggleRecurrenceSection()" class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition">
+                <button type="button" onclick="toggleRecurrenceSection()" class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition" title="Toggle recurrence options">
                     <span class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Recurrence
@@ -635,7 +635,7 @@
 
             <!-- Sub-tasks -->
             <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button type="button" onclick="toggleSubTaskSection()" class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition">
+                <button type="button" onclick="toggleSubTaskSection()" class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition" title="Toggle sub-tasks section">
                     <span class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                         Sub-tasks / Checklist
@@ -647,7 +647,7 @@
                     <div class="flex gap-2">
                         <input id="stSubTaskInput" type="text" placeholder="Add a sub-task..." class="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500" autocomplete="off"
                             onkeydown="if(event.key==='Enter'){event.preventDefault();addSubTaskToForm();}">
-                        <button type="button" onclick="addSubTaskToForm()" class="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">+ Add</button>
+                        <button type="button" onclick="addSubTaskToForm()" class="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition" title="Add a sub-task">+ Add</button>
                     </div>
                     <div id="stSubTaskList" class="space-y-1"></div>
                 </div>
@@ -657,14 +657,14 @@
         <!-- Footer -->
         <div class="px-6 py-3 bg-gray-50 border-t rounded-b-xl flex justify-between items-center gap-3">
             <div>
-                <button id="stDeleteBtn" class="hidden px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition inline-flex items-center gap-1.5" onclick="deleteStandaloneTask()">
+                <button id="stDeleteBtn" class="hidden px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition inline-flex items-center gap-1.5" onclick="deleteStandaloneTask()" title="Delete this task">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     Delete
                 </button>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="closeStandaloneTaskModal()" class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm">Cancel</button>
-                <button id="stSaveBtn" onclick="submitStandaloneTaskForm()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition inline-flex items-center gap-1.5">
+                <button onclick="closeStandaloneTaskModal()" class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm" title="Cancel and close">Cancel</button>
+                <button id="stSaveBtn" onclick="submitStandaloneTaskForm()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition inline-flex items-center gap-1.5" title="Save task">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     <span id="stSaveBtnLabel">Save Task</span>
                 </button>
@@ -678,7 +678,7 @@
     <div class="relative top-20 mx-auto p-0 border w-[440px] shadow-xl rounded-xl bg-white" style="max-width: 95vw;">
         <div class="px-5 py-3 bg-indigo-600 text-white rounded-t-xl flex items-center justify-between">
             <h3 class="text-sm font-bold" id="stMiniTitle">Sub-Task Detail</h3>
-            <button onclick="closeSubTaskMiniModal()" class="text-white hover:bg-white/20 rounded-lg p-1 transition">
+            <button onclick="closeSubTaskMiniModal()" class="text-white hover:bg-white/20 rounded-lg p-1 transition" title="Close sub-task editor">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -731,7 +731,7 @@
                     <p class="text-xs uppercase tracking-wider opacity-80" id="eventModalType">Milestone</p>
                     <h3 class="text-lg font-bold mt-1" id="eventModalTitle">Event Title</h3>
                 </div>
-                <button id="closeEventModal" class="text-white/80 hover:text-white transition tap-target flex items-center justify-center">
+                <button id="closeEventModal" class="text-white/80 hover:text-white transition tap-target flex items-center justify-center" title="Close event details">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>

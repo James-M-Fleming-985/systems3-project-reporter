@@ -105,7 +105,7 @@
             <h2 class="text-3xl font-bold text-gray-800 mb-1">💬 Feedback</h2>
             <p class="text-gray-600">Report bugs, suggest features, or share improvements</p>
         </div>
-        <button onclick="toggleNewForm()" id="btnNewFeedback" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2 shadow">
+        <button onclick="toggleNewForm()" id="btnNewFeedback" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2 shadow" title="Submit new feedback">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             New Feedback
         </button>
@@ -146,8 +146,8 @@
         <textarea id="fbDescription" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Provide more details..."></textarea>
     </div>
     <div class="flex items-center justify-end gap-3">
-        <button onclick="toggleNewForm()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Cancel</button>
-        <button onclick="submitFeedback()" id="btnSubmit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit</button>
+        <button onclick="toggleNewForm()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800" title="Cancel feedback submission">Cancel</button>
+        <button onclick="submitFeedback()" id="btnSubmit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition" title="Submit feedback">Submit</button>
     </div>
 </div>
 
@@ -177,12 +177,12 @@
 
 <!-- Filter Tabs -->
 <div class="bg-white rounded-t-lg shadow-sm border-b flex items-center gap-1 px-4">
-    <button class="tab-btn active" data-status="all" onclick="filterByStatus('all', this)">All</button>
-    <button class="tab-btn" data-status="new" onclick="filterByStatus('new', this)">New</button>
-    <button class="tab-btn" data-status="reviewed" onclick="filterByStatus('reviewed', this)">Reviewed</button>
-    <button class="tab-btn" data-status="in-progress" onclick="filterByStatus('in-progress', this)">In Progress</button>
-    <button class="tab-btn" data-status="resolved" onclick="filterByStatus('resolved', this)">Resolved</button>
-    <button class="tab-btn" data-status="closed" onclick="filterByStatus('closed', this)">Closed</button>
+    <button class="tab-btn active" data-status="all" onclick="filterByStatus('all', this)" title="Show all feedback">All</button>
+    <button class="tab-btn" data-status="new" onclick="filterByStatus('new', this)" title="Show new feedback only">New</button>
+    <button class="tab-btn" data-status="reviewed" onclick="filterByStatus('reviewed', this)" title="Show reviewed feedback">Reviewed</button>
+    <button class="tab-btn" data-status="in-progress" onclick="filterByStatus('in-progress', this)" title="Show in-progress feedback">In Progress</button>
+    <button class="tab-btn" data-status="resolved" onclick="filterByStatus('resolved', this)" title="Show resolved feedback">Resolved</button>
+    <button class="tab-btn" data-status="closed" onclick="filterByStatus('closed', this)" title="Show closed feedback">Closed</button>
 </div>
 
 <!-- Loading -->
@@ -199,7 +199,7 @@
     <div class="text-5xl mb-4">📝</div>
     <h3 class="text-xl font-bold text-gray-700 mb-2">No feedback yet</h3>
     <p class="text-gray-500 mb-4">Be the first to submit feedback or a feature request!</p>
-    <button onclick="toggleNewForm()" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit Feedback</button>
+    <button onclick="toggleNewForm()" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition" title="Submit new feedback">Submit Feedback</button>
 </div>
 
 {% endblock %}

@@ -612,10 +612,10 @@
     <!-- Toolbar -->
     <div class="doc-toolbar">
         <div class="toolbar-left">
-            <button class="toolbar-btn primary" onclick="openUploadModal()">
+            <button class="toolbar-btn primary" onclick="openUploadModal()" title="Upload a new document">
                 <span>📤</span> Upload
             </button>
-            <button class="toolbar-btn" onclick="createFolder()">
+            <button class="toolbar-btn" onclick="createFolder()" title="Create a new folder">
                 <span>📁</span> New Folder
             </button>
         </div>
@@ -691,7 +691,7 @@
     <div class="modal">
         <div class="modal-header">
             <h3 class="modal-title" id="uploadModalTitle">Upload Document</h3>
-            <button class="modal-close" onclick="closeUploadModal()">✕</button>
+            <button class="modal-close" onclick="closeUploadModal()" title="Close upload dialog">✕</button>
         </div>
         <div class="modal-body">
             <form id="uploadForm" onsubmit="submitUpload(event)">
@@ -739,8 +739,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="toolbar-btn" onclick="closeUploadModal()">Cancel</button>
-            <button type="button" class="toolbar-btn primary" id="uploadBtn" onclick="submitUpload(event)" disabled>
+            <button type="button" class="toolbar-btn" onclick="closeUploadModal()" title="Cancel upload">Cancel</button>
+            <button type="button" class="toolbar-btn primary" id="uploadBtn" onclick="submitUpload(event)" disabled title="Upload selected file">
                 📤 Upload
             </button>
         </div>
@@ -752,13 +752,13 @@
     <div class="modal">
         <div class="modal-header">
             <h3 class="modal-title">Document Details</h3>
-            <button class="modal-close" onclick="closeDetailsModal()">✕</button>
+            <button class="modal-close" onclick="closeDetailsModal()" title="Close document details">✕</button>
         </div>
         <div class="modal-body" id="detailsContent">
             <!-- Populated by JS -->
         </div>
         <div class="modal-footer">
-            <button type="button" class="toolbar-btn" onclick="closeDetailsModal()">Close</button>
+            <button type="button" class="toolbar-btn" onclick="closeDetailsModal()" title="Close document details">Close</button>
         </div>
     </div>
 </div>

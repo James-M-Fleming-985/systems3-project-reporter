@@ -139,6 +139,70 @@ def get_template_context(request: Request, **kwargs):
 # Initialize repository (lazy load to avoid startup failures)
 project_repo = None
 
+
+def _run_amp_merge_if_needed(data_dir):
+    """ONE-OFF: Merge AMP-P1 milestones into PD-P1 at startup if not already done."""
+    import yaml as _yaml
+    
+    # Find all YAML files, prefer file with most milestones per project_code
+    yaml_files = list(data_dir.glob("**/*.yaml")) + list(data_dir.glob("**/*.yml"))
+    code_to_file = {}
+    for yf in yaml_files:
+        try:
+            with open(yf, 'r', encoding='utf-8') as f:
+                d = _yaml.safe_load(f)
+            if d and isinstance(d, dict) and 'project_code' in d:
+                code = d['project_code']
+                ms_count = len(d.get('milestones', []))
+                existing = code_to_file.get(code)
+                if not existing or ms_count > len(existing['data'].get('milestones', [])):
+                    code_to_file[code] = {'path': yf, 'data': d}
+        except Exception:
+            continue
+    
+    if 'PD-P1' not in code_to_file or 'AMP-P1' not in code_to_file:
+        logger.info("AMP merge: PD-P1 or AMP-P1 not found, skipping")
+        return
+    
+    target = code_to_file['PD-P1']
+    source = code_to_file['AMP-P1']
+    target_ms_count = len(target['data'].get('milestones', []))
+    source_ms_count = len(source['data'].get('milestones', []))
+    
+    # Only merge if PD-P1 has < 200 milestones (AMP-P1 has 187, so after merge ~275)
+    if target_ms_count >= 200:
+        logger.info(f"AMP merge: PD-P1 already has {target_ms_count} milestones, skipping")
+        return
+    
+    if source_ms_count == 0:
+        logger.info("AMP merge: AMP-P1 source has 0 milestones, skipping")
+        return
+    
+    logger.info(f"AMP merge: Merging {source_ms_count} milestones from AMP-P1 into PD-P1 ({target_ms_count} existing)")
+    
+    # Tag source milestones with parent_project
+    src_name = source['data'].get('project_name', 'Infrastructure Development')
+    for ms in source['data'].get('milestones', []):
+        if not ms.get('parent_project'):
+            ms['parent_project'] = src_name
+        ms['project'] = 'PD-P1'
+    
+    # Merge into target
+    target['data']['milestones'] = target['data'].get('milestones', []) + source['data'].get('milestones', [])
+    target['data']['risks'] = target['data'].get('risks', []) + source['data'].get('risks', [])
+    target['data']['changes'] = target['data'].get('changes', []) + source['data'].get('changes', [])
+    target['data']['project_name'] = 'Product Development'
+    
+    with open(target['path'], 'w', encoding='utf-8') as f:
+        _yaml.dump(target['data'], f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    
+    # Verify
+    with open(target['path'], 'r', encoding='utf-8') as f:
+        verify = _yaml.safe_load(f)
+    final_count = len(verify.get('milestones', []))
+    logger.info(f"AMP merge: DONE — PD-P1 now has {final_count} milestones (was {target_ms_count})")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup"""
@@ -170,6 +234,12 @@ async def startup_event():
             logger.info("Milestone flag migration: nothing to backfill.")
     except Exception as e:
         logger.warning(f"Milestone flag migration warning (non-fatal): {e}")
+    
+    # ONE-OFF: Merge AMP-P1 milestones into PD-P1 (remove after confirmed)
+    try:
+        _run_amp_merge_if_needed(DATA_DIR)
+    except Exception as e:
+        logger.warning(f"AMP-P1 merge warning (non-fatal): {e}")
     
     try:
         project_repo = ProjectRepository(data_dir=DATA_DIR)
@@ -618,6 +688,14 @@ try:
     logger.info("✅ Compliance (GDPR/Security) feature enabled")
 except ImportError as e:
     logger.warning(f"⚠️  Compliance feature disabled: {e}")
+
+# Financial Governance & Strategic Intelligence router has: /api/financial/*
+try:
+    from routers import financial
+    app.include_router(financial.router, tags=["financial"])
+    logger.info("✅ Financial Governance feature enabled")
+except ImportError as e:
+    logger.warning(f"⚠️  Financial Governance feature disabled: {e}")
 
 
 if __name__ == "__main__":

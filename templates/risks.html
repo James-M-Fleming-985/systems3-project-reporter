@@ -121,6 +121,25 @@
     </div>
 </div>
 
+<!-- Risk Category Filter -->
+<div class="flex items-center gap-4 mb-4 bg-gray-50 rounded-lg px-4 py-3">
+    <span class="text-sm font-medium text-gray-600">Filter:</span>
+    <select id="riskCategoryFilter" onchange="filterRisksByCategory()" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white" title="Filter risks by category (delivery or financial)">
+        <option value="all">All Categories</option>
+        <option value="delivery">Delivery Risks</option>
+        <option value="financial">Financial Risks</option>
+    </select>
+    <span id="riskFilterCount" class="text-xs text-gray-500"></span>
+</div>
+
+<!-- Financial Risks Section (loaded dynamically) -->
+<div id="financialRisksSection" class="mb-4 hidden">
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+        <h4 class="text-sm font-semibold text-amber-800 mb-2">⚠️ Financial Risks (Auto-Generated)</h4>
+        <div id="financialRisksList" class="space-y-2"></div>
+    </div>
+</div>
+
 <!-- Risk Table -->
 {% if standalone_risks or risk_data.total > 0 %}
 <div id="risksContent" class="bg-white rounded-lg shadow overflow-hidden">
@@ -935,5 +954,82 @@ if (urlParams.get('expand') === 'true') {
         console.log('📋 Auto-expanded all risk details for screenshot');
     }, 500);
 }
+
+// --- Financial Risk Integration ---
+async function loadFinancialRisks() {
+    try {
+        const res = await fetch('/api/financial/risks');
+        if (!res.ok) return;
+        const json = await res.json();
+        const risks = json.data || [];
+        if (risks.length === 0) return;
+
+        const section = document.getElementById('financialRisksSection');
+        const list = document.getElementById('financialRisksList');
+        section.classList.remove('hidden');
+
+        const severityColors = {
+            critical: 'bg-red-100 text-red-800 border-red-300',
+            high: 'bg-orange-100 text-orange-800 border-orange-300',
+            medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+            low: 'bg-blue-100 text-blue-800 border-blue-300',
+        };
+
+        list.innerHTML = risks.map(r => `
+            <div class="flex items-start gap-3 p-3 bg-white rounded border ${severityColors[r.severity] || 'border-gray-200'}" data-risk-category="financial">
+                <span class="px-2 py-0.5 rounded text-xs font-bold ${severityColors[r.severity] || ''}">${(r.severity || 'medium').toUpperCase()}</span>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-800">${escapeHtmlRisk(r.description)}</p>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                        <span>Type: ${r.risk_type || '—'}</span>
+                        <span>Program: ${r.program_id || 'Portfolio'}</span>
+                        <span>Trigger: ${r.trigger_metric || '—'} (${r.trigger_variance_pct != null ? r.trigger_variance_pct.toFixed(1) + '%' : '—'})</span>
+                    </div>
+                    ${r.mitigation ? `<p class="text-xs text-gray-600 mt-1"><strong>Mitigation:</strong> ${escapeHtmlRisk(r.mitigation)}</p>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        // Financial risk API not available — skip silently
+    }
+}
+
+function escapeHtmlRisk(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function filterRisksByCategory() {
+    const filter = document.getElementById('riskCategoryFilter').value;
+    const deliveryRows = document.querySelectorAll('#risksTable tbody tr');
+    const financialSection = document.getElementById('financialRisksSection');
+    let shown = 0;
+
+    if (filter === 'financial') {
+        deliveryRows.forEach(row => row.classList.add('hidden'));
+        if (financialSection) financialSection.classList.remove('hidden');
+        shown = document.querySelectorAll('[data-risk-category="financial"]').length;
+    } else if (filter === 'delivery') {
+        deliveryRows.forEach(row => row.classList.remove('hidden'));
+        if (financialSection) financialSection.classList.add('hidden');
+        shown = deliveryRows.length / 2; // account for detail rows
+    } else {
+        deliveryRows.forEach(row => row.classList.remove('hidden'));
+        if (financialSection && document.querySelectorAll('[data-risk-category="financial"]').length > 0) {
+            financialSection.classList.remove('hidden');
+        }
+        shown = null;
+    }
+
+    const countEl = document.getElementById('riskFilterCount');
+    if (countEl) {
+        countEl.textContent = shown != null ? `(${Math.round(shown)} shown)` : '';
+    }
+}
+
+// Load financial risks on page ready
+loadFinancialRisks();
 </script>
 {% endblock %}

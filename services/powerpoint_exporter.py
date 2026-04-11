@@ -131,6 +131,9 @@ class PowerPointExporter:
         if all_changes:
             self._add_changes_slide_app_format(prs, all_changes)
         
+        # 6. Financial slides (if financial data exists)
+        self._add_financial_slides(prs)
+        
         # Save to BytesIO
         buffer = BytesIO()
         try:
@@ -676,3 +679,140 @@ class PowerPointExporter:
                 for col in range(cols):
                     table.cell(idx, col).fill.solid()
                     table.cell(idx, col).fill.fore_color.rgb = RGBColor(249, 250, 251)
+
+    # ------------------------------------------------------------------
+    # Financial Slides (FGSI integration)
+    # ------------------------------------------------------------------
+
+    def _add_financial_slides(self, prs):
+        """Add financial summary slides if financial data exists."""
+        try:
+            from repositories.financial_repository import FinancialRepository
+            repo = FinancialRepository()
+            summary = repo.get_financial_summary()
+
+            if not summary or (summary.get("total_revenue_target", 0) == 0
+                               and summary.get("total_cost_budget", 0) == 0):
+                logger.info("No financial data — skipping financial slides")
+                return
+
+            self._add_financial_kpi_slide(prs, summary)
+            self._add_financial_risk_slide(prs, repo)
+            logger.info("Financial slides added to PowerPoint export")
+
+        except ImportError:
+            logger.debug("Financial repository not available — skipping financial slides")
+        except Exception as exc:
+            logger.warning(f"Could not generate financial slides: {exc}")
+
+    def _add_financial_kpi_slide(self, prs, summary):
+        """Financial KPI summary slide."""
+        slide_layout = prs.slide_layouts[6]
+        slide = prs.slides.add_slide(slide_layout)
+
+        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(9), Inches(0.6))
+        p = txBox.text_frame.paragraphs[0]
+        p.text = "Financial Governance Summary"
+        p.font.size = Pt(24)
+        p.font.bold = True
+        p.font.color.rgb = RGBColor(31, 41, 55)
+
+        kpi_data = [
+            ("Revenue",
+             "\u00a3{:,.0f}".format(summary.get("total_revenue_actual", 0)),
+             "Target: \u00a3{:,.0f}".format(summary.get("total_revenue_target", 0)),
+             "{:+.1f}%".format(summary.get("revenue_variance_pct", 0))),
+            ("Cost",
+             "\u00a3{:,.0f}".format(summary.get("total_cost_actual", 0)),
+             "Budget: \u00a3{:,.0f}".format(summary.get("total_cost_budget", 0)),
+             "{:+.1f}%".format(summary.get("cost_variance_pct", 0))),
+            ("Margin",
+             "{:.1f}%".format(summary.get("actual_margin", 0) or 0),
+             "Target: {:.1f}%".format(summary.get("target_margin", 0) or 0),
+             "On Track" if summary.get("on_track", True) else "Off Track"),
+            ("Risk Score",
+             str(summary.get("financial_risk_score", 0) or 0),
+             "{} programs".format(summary.get("program_count", 0)),
+             ""),
+        ]
+
+        kpi_rows = len(kpi_data) + 1
+        kpi_cols = 4
+        tbl_shape = slide.shapes.add_table(
+            kpi_rows, kpi_cols, Inches(0.5), Inches(1.2),
+            Inches(9), Inches(0.5 * kpi_rows))
+        tbl = tbl_shape.table
+        tbl.columns[0].width = Inches(2)
+        tbl.columns[1].width = Inches(2.5)
+        tbl.columns[2].width = Inches(2.5)
+        tbl.columns[3].width = Inches(2)
+
+        for i, h in enumerate(["Metric", "Actual", "Target/Budget", "Variance"]):
+            cell = tbl.cell(0, i)
+            cell.text = h
+            cell.text_frame.paragraphs[0].font.size = Pt(10)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(59, 130, 246)
+
+        for ri, (metric, actual, target, variance) in enumerate(kpi_data):
+            for ci, val in enumerate([metric, actual, target, variance]):
+                cell = tbl.cell(ri + 1, ci)
+                cell.text = val
+                cell.text_frame.paragraphs[0].font.size = Pt(10)
+                cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(55, 65, 81)
+                if ci == 0:
+                    cell.text_frame.paragraphs[0].font.bold = True
+
+    def _add_financial_risk_slide(self, prs, repo):
+        """Financial risks summary slide."""
+        fin_risks = repo.list_financial_risks(status="OPEN")
+        if not fin_risks:
+            return
+
+        slide_layout = prs.slide_layouts[6]
+        slide = prs.slides.add_slide(slide_layout)
+
+        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(9), Inches(0.6))
+        p = txBox.text_frame.paragraphs[0]
+        p.text = "Financial Risks ({} Open)".format(len(fin_risks))
+        p.font.size = Pt(24)
+        p.font.bold = True
+        p.font.color.rgb = RGBColor(31, 41, 55)
+
+        fr_rows = min(len(fin_risks), 10) + 1
+        fr_cols = 5
+        fr_shape = slide.shapes.add_table(
+            fr_rows, fr_cols, Inches(0.5), Inches(1.2),
+            Inches(9), Inches(0.5 * fr_rows))
+        fr_tbl = fr_shape.table
+        fr_tbl.columns[0].width = Inches(1.2)
+        fr_tbl.columns[1].width = Inches(3.5)
+        fr_tbl.columns[2].width = Inches(1)
+        fr_tbl.columns[3].width = Inches(1.5)
+        fr_tbl.columns[4].width = Inches(1.8)
+
+        for i, h in enumerate(["Type", "Description", "Severity", "Program", "Mitigation"]):
+            cell = fr_tbl.cell(0, i)
+            cell.text = h
+            cell.text_frame.paragraphs[0].font.size = Pt(9)
+            cell.text_frame.paragraphs[0].font.bold = True
+            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(220, 38, 38)
+
+        for ri, risk in enumerate(fin_risks[:10]):
+            vals = [
+                (risk.get("risk_type", "") or "").replace("_", " ").title(),
+                (risk.get("description", "") or "")[:80],
+                (risk.get("severity", "") or "").upper(),
+                risk.get("program_id") or "Portfolio",
+                (risk.get("mitigation", "") or "")[:60],
+            ]
+            for ci, val in enumerate(vals):
+                cell = fr_tbl.cell(ri + 1, ci)
+                cell.text = val
+                cell.text_frame.paragraphs[0].font.size = Pt(8)
+                cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(75, 85, 99)
+                cell.text_frame.word_wrap = True

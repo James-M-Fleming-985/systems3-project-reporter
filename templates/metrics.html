@@ -131,7 +131,7 @@
         <div>
             <h3 class="text-lg font-bold text-yellow-800 mb-2">No Program Selected</h3>
             <p class="text-yellow-700 mb-3">Please select a program from the Portfolio Dashboard to view its metrics.</p>
-            <a href="/dashboard" class="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition">
+            <a href="/dashboard" class="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition" title="Return to Portfolio Dashboard">
                 Go to Portfolio Dashboard
             </a>
         </div>
@@ -153,7 +153,7 @@
                     <p class="text-sm text-blue-700">Last Updated: <span id="lastUpdated"></span></p>
                 </div>
             </div>
-            <a href="/dashboard" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+            <a href="/dashboard" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm" title="Switch to a different program">
                 Change Program
             </a>
         </div>
@@ -167,7 +167,7 @@
                 <p class="text-sm text-gray-500">Drag to reorder, resize from corners. All widgets persist across sessions.</p>
             </div>
             <div class="flex space-x-2">
-                <button id="addWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm flex items-center gap-1">
+                <button id="addWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm flex items-center gap-1" title="Add a new metrics widget">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Add Widget
                 </button>
@@ -196,7 +196,7 @@
         <div class="relative top-10 mx-auto p-6 border w-[600px] shadow-lg rounded-lg bg-white" style="resize: both; overflow: auto; min-width: 320px; min-height: 300px; max-width: 95vw; max-height: 90vh;">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Add Metric Widget</h3>
-                <button id="closeWidgetModalBtn" class="text-gray-500 hover:text-gray-700">
+                <button id="closeWidgetModalBtn" class="text-gray-500 hover:text-gray-700" title="Close widget picker">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -242,8 +242,8 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-6">
-                <button id="cancelWidgetBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">Cancel</button>
-                <button id="confirmAddWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Add Widget</button>
+                <button id="cancelWidgetBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition" title="Cancel adding widget">Cancel</button>
+                <button id="confirmAddWidgetBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition" title="Confirm and add widget">Add Widget</button>
             </div>
         </div>
     </div>
@@ -253,13 +253,13 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-800">Custom Program Metrics</h3>
             <div class="flex space-x-2">
-                <button id="exportMetricsBtn" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
+                <button id="exportMetricsBtn" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" title="Export metrics to file">
                     📥 Export
                 </button>
-                <button id="importMetricsBtn" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm">
+                <button id="importMetricsBtn" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm" title="Import metrics from file">
                     📤 Import
                 </button>
-                <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+                <button id="addMetricBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm" title="Add a new custom metric">
                     + Add Metric
                 </button>
             </div>
@@ -430,11 +430,11 @@
                         <select id="deleteSeriesSelect" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer">
                             <option value="">🗑️ Delete Series...</option>
                         </select>
-                        <button id="deleteSeriesBtn" class="ml-1 px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 hidden">
+                        <button id="deleteSeriesBtn" class="ml-1 px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 hidden" title="Delete selected data series">
                             Delete
                         </button>
                     </div>
-                    <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <button id="closeTrendChartBtn" class="text-gray-500 hover:text-gray-700 cursor-pointer" title="Close trend chart">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>

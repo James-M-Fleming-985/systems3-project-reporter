@@ -1,0 +1,1058 @@
+# ====================================================================================
+# FINANCIAL GOVERNANCE & STRATEGIC INTELLIGENCE PROGRAM — IMPLEMENTATION PLAN
+# ====================================================================================
+# Date: 2026-04-11
+# Priority: Strategic — Overarching Financial Intelligence Layer
+# Owner: James-M-Fleming-985
+# ====================================================================================
+
+project_name: "Financial Governance & Strategic Intelligence"
+project_code: FGSI-001
+status: Active
+start_date: '2026-04-14'
+target_completion: '2026-07-11'
+completion_percentage: 0
+
+milestones:
+
+  # ================================================================================
+  # PHASE 1: Foundation — Encryption, Data Models, Program Financial Metadata
+  # ================================================================================
+  - id: null
+    name: 'Phase 1: Foundation — Encryption, Data Models, Financial Metadata'
+    start_date: '2026-04-14'
+    target_date: '2026-04-25'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Establish core infrastructure: GDPR-compliant field-level encryption service,
+      financial data models (YAML-based), program contribution type classification
+      (direct vs indirect revenue), and financial repository layer.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Implement field-level encryption service (Fernet/AES-256)"
+    start_date: '2026-04-14'
+    target_date: '2026-04-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Security. Create services/encryption_service.py with encrypt/decrypt
+      for client names and financial data. Fernet symmetric encryption with key from
+      environment variable. Must be transparent to repository layer — encrypt on write,
+      decrypt on read. GDPR compliance requirement.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Security"
+    project: FGSI-001
+
+  - id: null
+    name: "Create financial data models (Pydantic + YAML schema)"
+    start_date: '2026-04-14'
+    target_date: '2026-04-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Data Models. Define models for: FinancialTarget (revenue, cost, margin
+      targets per period), FinancialActual (recorded actuals per period), ResourceCost
+      (per-program resource cost tracking), ProgramFinancialProfile (contribution_type:
+      direct_revenue | indirect_revenue_impact, revenue_streams, cost_centres).
+      All models must support field-level encryption for sensitive fields.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Data Models"
+    project: FGSI-001
+
+  - id: null
+    name: "Add contribution_type field to program YAML schema"
+    start_date: '2026-04-16'
+    target_date: '2026-04-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Data Models. Extend existing program YAML with financial metadata:
+      contribution_type (direct_revenue | indirect_revenue_impact), revenue_streams
+      list, cost_centres list. Must be backward-compatible — existing programs without
+      this field default to direct_revenue.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Data Models"
+    project: FGSI-001
+
+  - id: null
+    name: "Create financial repository (YAML-based CRUD)"
+    start_date: '2026-04-18'
+    target_date: '2026-04-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track C: Persistence. Create repositories/financial_repository.py following
+      existing repository pattern (project_repository.py). Store financial data in
+      users/{user_id}/financial/ directory. Support per-program and portfolio-level
+      data. Integrate encryption service for sensitive fields on read/write.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "C: Persistence"
+    project: FGSI-001
+
+  - id: null
+    name: "Write unit tests for encryption service and financial models"
+    start_date: '2026-04-22'
+    target_date: '2026-04-25'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track D: Testing. Test encryption round-trip, key rotation support,
+      model validation, YAML serialisation/deserialisation, repository CRUD
+      operations. Minimum 90% coverage on new code.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "D: Testing"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 1 Foundation Complete"
+    start_date: '2026-04-25'
+    target_date: '2026-04-25'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Encryption service operational with GDPR compliance,
+      all financial data models defined and tested, program contribution_type
+      field integrated, financial repository with encrypted CRUD working,
+      unit tests passing at 90%+ coverage.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    parent_project: "Phase 1: Foundation — Encryption, Data Models, Financial Metadata"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 2: Targets, Actuals & Resource Costs
+  # ================================================================================
+  - id: null
+    name: 'Phase 2: Targets, Actuals & Resource Costs'
+    start_date: '2026-04-28'
+    target_date: '2026-05-09'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      User sets financial targets (revenue, cost, margin) per period. System records
+      actuals. Resource cost tracking per program. Manual CSV/YAML upload for bulk
+      data entry. No governance scheduler — user-driven data entry.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Build financial targets CRUD API endpoints"
+    start_date: '2026-04-28'
+    target_date: '2026-04-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: API. Create routers/financial.py with endpoints: POST /api/financial/targets
+      (create/update targets), GET /api/financial/targets (retrieve by period/program),
+      DELETE /api/financial/targets/{id}. Targets include: revenue_target, cost_budget,
+      margin_target, period (monthly/quarterly/annual), program_id (optional, null=portfolio).
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: API"
+    project: FGSI-001
+
+  - id: null
+    name: "Build financial actuals CRUD API endpoints"
+    start_date: '2026-04-30'
+    target_date: '2026-05-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: API. Endpoints: POST /api/financial/actuals (record actuals),
+      GET /api/financial/actuals (retrieve by period/program), PUT /api/financial/actuals/{id}.
+      Actuals include: actual_revenue, actual_cost, actual_margin, period, program_id,
+      recorded_date, notes. On save, trigger forecast recalculation if forecast engine exists.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: API"
+    project: FGSI-001
+
+  - id: null
+    name: "Build resource cost tracking API endpoints"
+    start_date: '2026-05-02'
+    target_date: '2026-05-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: API. Endpoints: POST /api/financial/resource-costs (record costs),
+      GET /api/financial/resource-costs (by program/period). Resource costs include:
+      resource_name, cost_amount, cost_type (labour/tools/infrastructure/external),
+      program_id, period, billable_hours (optional). Per-program aggregation endpoint
+      for dashboard consumption.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: API"
+    project: FGSI-001
+
+  - id: null
+    name: "Implement CSV/YAML bulk import for financial data"
+    start_date: '2026-05-05'
+    target_date: '2026-05-07'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Import. POST /api/financial/import endpoint accepting CSV or YAML
+      file upload. Validate data format, map columns, report errors. Support bulk
+      import of targets, actuals, and resource costs. No governance scheduler —
+      user manually uploads data as needed.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Import"
+    project: FGSI-001
+
+  - id: null
+    name: "Write integration tests for financial CRUD and import"
+    start_date: '2026-05-07'
+    target_date: '2026-05-09'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track D: Testing. Test all CRUD endpoints, validation edge cases, CSV parsing,
+      YAML parsing, encryption of sensitive fields in transit, error handling for
+      malformed uploads. Test forecast trigger on actuals save.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "D: Testing"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 2 Financial Data Entry Complete"
+    start_date: '2026-05-09'
+    target_date: '2026-05-09'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Users can set targets, record actuals, track resource costs
+      per program. CSV/YAML bulk import functional. All data encrypted at rest.
+      Integration tests passing. Forecast trigger wired (stub if Phase 3 not started).
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 2: Targets, Actuals & Resource Costs"
+    parent_project: "Phase 2: Targets, Actuals & Resource Costs"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 3: Forecast Engine & Financial Risk Engine
+  # ================================================================================
+  - id: null
+    name: 'Phase 3: Forecast Engine & Financial Risk Engine'
+    start_date: '2026-05-12'
+    target_date: '2026-05-23'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      AI/ML recommendation engine that reads user-set targets, analyses actuals
+      trajectory, and provides forecasts + risk assessments. User sets targets,
+      system recommends corrective actions. Builds on existing risk scoring
+      (likelihood x impact) pattern.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Build trajectory analysis engine (actuals vs targets)"
+    start_date: '2026-05-12'
+    target_date: '2026-05-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Engine. Create services/forecast_engine.py. Compare actuals trajectory
+      against target timeline. Calculate run rate, burn rate, variance analysis.
+      Determine if current trajectory hits or misses target. Output: on_track boolean,
+      variance_pct, projected_end_value, confidence_interval.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Engine"
+    project: FGSI-001
+
+  - id: null
+    name: "Implement time-series forecast (linear regression + weighted moving avg)"
+    start_date: '2026-05-14'
+    target_date: '2026-05-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Engine. Project financial metrics forward based on historical actuals.
+      Use simple ML models initially (scikit-learn linear regression, weighted moving
+      average). Generate 3-month, 6-month, 12-month forecasts with confidence bands.
+      On-demand generation triggered when actuals are saved.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Engine"
+    project: FGSI-001
+
+  - id: null
+    name: "Build financial risk scoring engine"
+    start_date: '2026-05-16'
+    target_date: '2026-05-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Risk. Extend existing risk scoring pattern (likelihood x impact).
+      Financial risk factors: budget overrun probability, revenue shortfall risk,
+      resource utilisation risk, margin erosion risk. Auto-generate risk entries
+      when variance exceeds configurable thresholds. Integrate with existing
+      risk repository for unified risk view.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Risk"
+    project: FGSI-001
+
+  - id: null
+    name: "Create forecast and risk API endpoints"
+    start_date: '2026-05-19'
+    target_date: '2026-05-21'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: API. GET /api/financial/forecast (by program/portfolio, period range),
+      GET /api/financial/risks (financial risk summary), POST /api/financial/forecast/refresh
+      (trigger recalculation). Return forecast data with confidence intervals, risk
+      scores with recommended actions.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: API"
+    project: FGSI-001
+
+  - id: null
+    name: "Write tests for forecast accuracy and risk threshold triggers"
+    start_date: '2026-05-21'
+    target_date: '2026-05-23'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track D: Testing. Test forecast calculation accuracy with known data sets,
+      risk threshold triggers, confidence interval generation, edge cases (no data,
+      single data point, negative values). Validate risk entries auto-generate correctly.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "D: Testing"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 3 Forecast & Risk Engine Complete"
+    start_date: '2026-05-23'
+    target_date: '2026-05-23'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Trajectory analysis compares actuals to targets accurately.
+      Forecasts generated with confidence intervals. Financial risks auto-generated
+      when variance thresholds exceeded. Risk scores integrate with existing risk
+      system. All tests passing.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 3: Forecast Engine & Financial Risk Engine"
+    parent_project: "Phase 3: Forecast Engine & Financial Risk Engine"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 4: Strategic Lever Framework & Indirect Impact Attribution
+  # ================================================================================
+  - id: null
+    name: 'Phase 4: Strategic Lever Framework & Impact Attribution'
+    start_date: '2026-05-26'
+    target_date: '2026-06-06'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      AI/ML engine that recommends strategic levers based on trajectory analysis.
+      Quantifies indirect program impacts (marketing, communications) on financial
+      outcomes. User provides initial impact attribution percentages, engine refines
+      over time with data.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Build strategic lever recommendation engine"
+    start_date: '2026-05-26'
+    target_date: '2026-05-28'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Engine. Create services/strategic_lever_engine.py. Analyse variance
+      between targets and trajectory. Generate ranked recommendations: cost reduction
+      opportunities, revenue acceleration tactics, resource reallocation suggestions,
+      risk mitigation actions. Each lever has estimated_impact, confidence, effort_level.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 4: Strategic Lever Framework & Impact Attribution"
+    parent_project: "Phase 4: Strategic Lever Framework & Impact Attribution"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Engine"
+    project: FGSI-001
+
+  - id: null
+    name: "Implement indirect impact attribution model"
+    start_date: '2026-05-28'
+    target_date: '2026-06-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Attribution. Programs with contribution_type=indirect_revenue_impact
+      (e.g. marketing, communications) need quantified impact on financial trajectory.
+      Start with manual percentage assignment per indirect program — user sets initial
+      attribution (e.g. "Marketing contributes 15% to revenue growth"). Engine tracks
+      correlation between indirect program activity and financial outcomes over time,
+      refining attribution weights with data.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 4: Strategic Lever Framework & Impact Attribution"
+    parent_project: "Phase 4: Strategic Lever Framework & Impact Attribution"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Attribution"
+    project: FGSI-001
+
+  - id: null
+    name: "Create strategic lever and attribution API endpoints"
+    start_date: '2026-06-02'
+    target_date: '2026-06-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: API. GET /api/financial/levers (recommendations ranked by impact),
+      GET /api/financial/attribution (program impact breakdown), POST /api/financial/attribution
+      (set/update manual attribution percentages), GET /api/financial/attribution/history
+      (track attribution changes over time).
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 4: Strategic Lever Framework & Impact Attribution"
+    parent_project: "Phase 4: Strategic Lever Framework & Impact Attribution"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: API"
+    project: FGSI-001
+
+  - id: null
+    name: "Write tests for lever recommendations and attribution accuracy"
+    start_date: '2026-06-04'
+    target_date: '2026-06-06'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track D: Testing. Test lever generation with various variance scenarios,
+      attribution percentage validation (must sum to <=100%), attribution history
+      tracking, edge cases (no indirect programs, single program portfolio).
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 4: Strategic Lever Framework & Impact Attribution"
+    parent_project: "Phase 4: Strategic Lever Framework & Impact Attribution"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "D: Testing"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 4 Strategic Intelligence Complete"
+    start_date: '2026-06-06'
+    target_date: '2026-06-06'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Strategic lever engine generates actionable recommendations.
+      Indirect program impact attribution model operational with manual percentage
+      input. Attribution tracking over time working. API endpoints tested and
+      returning correct data.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 4: Strategic Lever Framework & Impact Attribution"
+    parent_project: "Phase 4: Strategic Lever Framework & Impact Attribution"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 5: Financial Dashboard — Portfolio Toggle + Drill-Down
+  # ================================================================================
+  - id: null
+    name: 'Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down'
+    start_date: '2026-06-09'
+    target_date: '2026-06-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Financial view is a toggle on the existing portfolio dashboard (index.html),
+      NOT a separate page. Segmented control switches between Portfolio Overview
+      and Financial Intelligence views. Drill-down: Portfolio financials → Program
+      financials → Project financials. Uses GridStack for draggable widgets,
+      Plotly.js for charts.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Add segmented toggle control to portfolio dashboard (index.html)"
+    start_date: '2026-06-09'
+    target_date: '2026-06-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Frontend. Add Portfolio | Financial toggle to index.html header area.
+      When Financial selected, replace portfolio summary grid with financial dashboard.
+      Preserve program selector context. Use consistent UI pattern with existing app.
+      Toggle state persisted in localStorage.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Frontend"
+    project: FGSI-001
+
+  - id: null
+    name: "Build portfolio-level financial KPI cards (GridStack widgets)"
+    start_date: '2026-06-11'
+    target_date: '2026-06-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Frontend. KPI cards showing: Total Revenue (actual vs target),
+      Total Cost (actual vs budget), Margin (actual vs target), Forecast accuracy,
+      Resource utilisation rate, Financial risk score. Use GridStack draggable
+      layout matching metrics.html pattern. Each card has value + trend indicator.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Frontend"
+    project: FGSI-001
+
+  - id: null
+    name: "Build financial charts (trajectory, forecast, contribution breakdown)"
+    start_date: '2026-06-13'
+    target_date: '2026-06-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Frontend. Plotly.js charts: (1) Revenue trajectory — actuals line +
+      target line + forecast with confidence band, (2) Cost breakdown by program
+      — stacked bar chart, (3) Program contribution — pie/donut chart showing
+      direct vs indirect revenue attribution, (4) Strategic levers — horizontal
+      bar chart ranked by estimated impact. All charts interactive with drill-down.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Frontend"
+    project: FGSI-001
+
+  - id: null
+    name: "Implement drill-down navigation (portfolio → program → project)"
+    start_date: '2026-06-16'
+    target_date: '2026-06-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Frontend. Click program card/chart segment to drill into program-level
+      financials. Click project within program to see project-level costs. Breadcrumb
+      navigation: Portfolio > Program Name > Project Name. Each level shows relevant
+      KPIs and charts scoped to that entity.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Frontend"
+    project: FGSI-001
+
+  - id: null
+    name: "Implement lazy loading and caching for financial dashboard"
+    start_date: '2026-06-18'
+    target_date: '2026-06-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Performance. Financial data only loads when toggle activated. Cache
+      API responses in memory (same pattern as calendar cache). Skeleton loaders
+      while charts render. Debounce drill-down navigation to prevent rapid-fire API calls.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Performance"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 5 Financial Dashboard Complete"
+    start_date: '2026-06-20'
+    target_date: '2026-06-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Portfolio dashboard toggle switches to financial view seamlessly.
+      KPI cards display real-time financial data. Charts render with interactivity.
+      Drill-down navigation works at all 3 levels. Lazy loading prevents performance
+      degradation. Layout persisted via GridStack/localStorage.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    parent_project: "Phase 5: Financial Dashboard — Portfolio Toggle & Drill-Down"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 6: Cross-Program Integration & Contribution Tagging
+  # ================================================================================
+  - id: null
+    name: 'Phase 6: Cross-Program Integration & Contribution Tagging'
+    start_date: '2026-06-23'
+    target_date: '2026-07-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Integrate financial intelligence across all existing program views. Tag programs
+      with financial contribution type. Surface financial health indicators on existing
+      program cards. Cross-program comparison and portfolio-wide impact analysis.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Add financial health indicators to program cards on portfolio dashboard"
+    start_date: '2026-06-23'
+    target_date: '2026-06-25'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Integration. Extend existing program cards in index.html with:
+      financial health badge (green/amber/red), contribution type label (Direct/Indirect),
+      key financial metric (revenue or cost variance). Non-intrusive — additional
+      line below existing card content, only visible when financial data exists.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Integration"
+    project: FGSI-001
+
+  - id: null
+    name: "Build cross-program financial comparison view"
+    start_date: '2026-06-25'
+    target_date: '2026-06-27'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: Integration. Comparison table/chart showing all programs side by side:
+      revenue contribution, cost efficiency, ROI, resource utilisation. Sortable and
+      filterable. Helps identify underperforming programs and resource reallocation
+      opportunities. Available as a widget in the financial dashboard view.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: Integration"
+    project: FGSI-001
+
+  - id: null
+    name: "Integrate financial risks with existing risk dashboard"
+    start_date: '2026-06-27'
+    target_date: '2026-06-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track B: Risk Integration. Financial risks appear alongside project/program
+      risks in existing risk views. Financial risk category filter. Combined risk
+      scoring that considers both delivery risks and financial risks. Unified
+      risk export in reports.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "B: Risk Integration"
+    project: FGSI-001
+
+  - id: null
+    name: "Add financial section to PowerPoint export"
+    start_date: '2026-06-30'
+    target_date: '2026-07-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track C: Reporting. Extend existing PowerPoint export with financial summary
+      slides: portfolio financial KPIs, revenue trajectory chart, program contribution
+      breakdown, strategic lever recommendations, financial risk summary. Match
+      existing slide template styling.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "C: Reporting"
+    project: FGSI-001
+
+  - id: null
+    name: "Write end-to-end integration tests for cross-program financial flows"
+    start_date: '2026-07-02'
+    target_date: '2026-07-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track D: Testing. E2E tests: set targets → record actuals → verify forecast →
+      check risk generation → verify dashboard renders → test drill-down → test
+      cross-program comparison → test PowerPoint export with financial data.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "D: Testing"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 6 Cross-Program Integration Complete"
+    start_date: '2026-07-04'
+    target_date: '2026-07-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: Financial health visible on program cards. Cross-program
+      comparison operational. Financial risks integrated with risk dashboard.
+      PowerPoint exports include financial slides. E2E tests passing across
+      full financial data flow.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 6: Cross-Program Integration & Contribution Tagging"
+    parent_project: "Phase 6: Cross-Program Integration & Contribution Tagging"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  # ================================================================================
+  # PHASE 7: Tooltips, Help Guide & UX Polish
+  # ================================================================================
+  - id: null
+    name: 'Phase 7: Tooltips, Help Guide & UX Polish'
+    start_date: '2026-07-07'
+    target_date: '2026-07-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      App-wide UX improvements: tooltips on every button and UI element, in-app
+      help guide/dropdown for navigation assistance, accessibility review,
+      responsive design verification. Applies to ALL features, not just financial.
+    outline_level: 2
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: FGSI-001
+
+  - id: null
+    name: "Add tooltips to all buttons and UI elements across templates"
+    start_date: '2026-07-07'
+    target_date: '2026-07-09'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: UX. Systematic audit of all templates (base.html, index.html,
+      calendar.html, gantt.html, milestones.html, metrics.html, risks.html,
+      changes.html, schedule.html, documents.html, feedback.html, ppt_editor.html).
+      Add title attributes and/or Tailwind tooltip components to every interactive
+      element explaining its function to the user.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 7: Tooltips, Help Guide & UX Polish"
+    parent_project: "Phase 7: Tooltips, Help Guide & UX Polish"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: UX"
+    project: FGSI-001
+
+  - id: null
+    name: "Build in-app help guide / help dropdown in navigation"
+    start_date: '2026-07-09'
+    target_date: '2026-07-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Track A: UX. Add help icon (?) to base.html navigation bar. On click, show
+      dropdown/modal with: navigation overview, feature descriptions, quick-start
+      guide, keyboard shortcuts (if any), link to documentation. Content should be
+      contextual — show help relevant to current page. Removable later if not needed.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 7: Tooltips, Help Guide & UX Polish"
+    parent_project: "Phase 7: Tooltips, Help Guide & UX Polish"
+    is_true_milestone: false
+    owner: "AI"
+    resources: "A: UX"
+    project: FGSI-001
+
+  - id: null
+    name: "MILESTONE: Phase 7 UX Polish Complete — Program Ready"
+    start_date: '2026-07-11'
+    target_date: '2026-07-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: >
+      Gate criteria: All buttons and UI elements have descriptive tooltips.
+      Help guide accessible from navigation. Financial dashboard fully integrated
+      with portfolio view. All 7 phases complete. Full regression test pass.
+      Program ready for production deployment.
+    outline_level: 3
+    parent_levels:
+      '1': "Financial Governance & Strategic Intelligence"
+      '2': "Phase 7: Tooltips, Help Guide & UX Polish"
+    parent_project: "Phase 7: Tooltips, Help Guide & UX Polish"
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: FGSI-001
+
+# ====================================================================================
+# RISKS
+# ====================================================================================
+risks:
+  - risk_id: "RISK-FGSI-001"
+    description: "YAML storage may be too slow for large financial time-series datasets"
+    severity: "MEDIUM"
+    probability: "MEDIUM"
+    impact: "Dashboard latency above acceptable thresholds (>2s load time)"
+    mitigation: "Migration path to SQLite pre-planned. Implement caching layer from Phase 5. Monitor response times."
+    status: "OPEN"
+
+  - risk_id: "RISK-FGSI-002"
+    description: "Encryption key management complexity for multi-user deployment"
+    severity: "HIGH"
+    probability: "LOW"
+    impact: "Data loss if encryption key is lost or rotated incorrectly"
+    mitigation: "Environment variable key storage. Key rotation procedure documented. Backup encryption in place."
+    status: "OPEN"
+
+  - risk_id: "RISK-FGSI-003"
+    description: "Indirect impact attribution accuracy may be insufficient with manual percentages"
+    severity: "MEDIUM"
+    probability: "MEDIUM"
+    impact: "Misleading financial recommendations for indirect programs"
+    mitigation: "Start with manual attribution, build correlation tracking to validate/refine over time. Clear UI labelling of confidence levels."
+    status: "OPEN"
+
+  - risk_id: "RISK-FGSI-004"
+    description: "Financial dashboard toggle may impact existing portfolio dashboard performance"
+    severity: "LOW"
+    probability: "LOW"
+    impact: "Slower page load for users who don't use financial features"
+    mitigation: "Lazy loading — financial data and charts only initialise when toggle activated. No impact on default portfolio view."
+    status: "OPEN"
+
+# ====================================================================================
+# CHANGES
+# ====================================================================================
+changes: []

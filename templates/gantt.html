@@ -254,8 +254,8 @@
     <div class="roadmap-controls mb-4" {% if ppt_export %}style="display: none;"{% endif %}>
         <!-- View Mode Toggle -->
         <div class="view-toggle">
-            <button class="view-toggle-btn active" id="btnProjectRoadmap" onclick="setViewMode('project')">Project Roadmap</button>
-            <button class="view-toggle-btn" id="btnLevelDetail" onclick="setViewMode('level')">Level Detail</button>
+            <button class="view-toggle-btn active" id="btnProjectRoadmap" onclick="setViewMode('project')" title="Switch to project roadmap view">Project Roadmap</button>
+            <button class="view-toggle-btn" id="btnLevelDetail" onclick="setViewMode('level')" title="Switch to level detail view">Level Detail</button>
         </div>
 
         <!-- Level Detail Controls (hidden in project roadmap mode) -->
@@ -280,9 +280,9 @@
                     <div id="dropdownItems">
                     </div>
                     <div class="dropdown-actions">
-                        <button class="btn-sm-secondary" onclick="selectAllProjects()">All</button>
-                        <button class="btn-sm-secondary" onclick="selectNoneProjects()">None</button>
-                        <button class="btn-sm-primary" onclick="applyAndClose()">Apply</button>
+                        <button class="btn-sm-secondary" onclick="selectAllProjects()" title="Select all projects">All</button>
+                        <button class="btn-sm-secondary" onclick="selectNoneProjects()" title="Deselect all projects">None</button>
+                        <button class="btn-sm-primary" onclick="applyAndClose()" title="Apply project selection">Apply</button>
                     </div>
                 </div>
             </div>
@@ -304,9 +304,9 @@
                     <div id="groupFilterItems">
                     </div>
                     <div class="dropdown-actions">
-                        <button class="btn-sm-secondary" onclick="selectAllGroups()">All</button>
-                        <button class="btn-sm-secondary" onclick="selectNoneGroups()">None</button>
-                        <button class="btn-sm-primary" onclick="applyGroupFilter()">Apply</button>
+                        <button class="btn-sm-secondary" onclick="selectAllGroups()" title="Select all project groups">All</button>
+                        <button class="btn-sm-secondary" onclick="selectNoneGroups()" title="Deselect all project groups">None</button>
+                        <button class="btn-sm-primary" onclick="applyGroupFilter()" title="Apply group filter">Apply</button>
                     </div>
                 </div>
             </div>

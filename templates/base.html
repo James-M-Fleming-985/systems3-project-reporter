@@ -214,11 +214,11 @@
             <div class="container mx-auto px-4 py-2">
                 <div class="flex items-center justify-between">
                     <!-- Mobile hamburger button -->
-                    <button onclick="openMobileNav()" class="mobile-menu-btn items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition mr-2" aria-label="Open menu">
+                    <button onclick="openMobileNav()" class="mobile-menu-btn items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition mr-2" aria-label="Open menu" title="Open navigation menu">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <!-- Logo and brand -->
-                    <a href="/" class="flex items-center space-x-3 hover:opacity-90 transition">
+                    <a href="/" class="flex items-center space-x-3 hover:opacity-90 transition" title="Go to homepage">
                         <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-lg">S³</span>
                         </div>
@@ -252,19 +252,107 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Help Guide -->
+                                <div class="relative" id="helpGuideContainer">
+                                    <button onclick="toggleHelpGuide()" class="relative p-1.5 rounded-full hover:bg-white/10 transition" title="Help & quick-start guide">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </button>
+                                    <div id="helpGuideDropdown" class="hidden absolute right-0 top-full mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden" style="max-height:520px">
+                                        <div class="px-4 py-3 bg-blue-50 border-b flex items-center justify-between">
+                                            <h4 class="font-bold text-blue-800 text-sm">📖 Quick-Start Guide</h4>
+                                            <button onclick="toggleHelpGuide()" class="text-gray-400 hover:text-gray-600" title="Close help guide">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="overflow-y-auto" style="max-height:440px">
+                                            <div class="p-4 space-y-3">
+                                                <div class="text-sm text-gray-600 mb-2">Welcome to <strong>Systems³ Project Reporter</strong>. Here's a quick overview of each feature:</div>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📊</span> Portfolio Dashboard
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Your home view. See all programs at a glance with RAG status, progress bars, and health indicators. Toggle to Financial Intelligence for KPIs and forecasts.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📈</span> Gantt Chart
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Visual project roadmap. Switch between Project Roadmap (cross-program timeline) and Level Detail (drill into WBS levels). Filter by project group.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📍</span> Milestones
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Track key deliverables using kanban board, weekly, or monthly views. Drag cards between status columns. Schedule changes auto-generate change records.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📏</span> Metrics
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Build custom KPI dashboards with cards, donuts, bar charts, and line charts. Drag to reorder, resize from corners. Add custom metrics and track trends over time.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">⚠️</span> Risks
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Log and manage delivery risks. Financial risks are auto-generated when budget or revenue variance exceeds thresholds. Filter between delivery and financial categories.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">🔄</span> Changes
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Change log for schedule and scope changes. Records are auto-created when milestone dates shift. Approve or reject changes with full audit trail.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📋</span> Schedule Tables
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Flexible tables for maintenance schedules, H&S checks, document reviews. Custom columns with dropdowns, statuses, dates, and priorities. Export to PDF or PowerPoint slides.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📄</span> Documents
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Centralised document management organised by category. Upload, version, and search across all project documents. Supports PDF, Word, Excel, PowerPoint, and images.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📅</span> Calendar
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Cross-program calendar showing milestones, actions, and standalone tasks. Create recurring tasks with sub-task checklists. Switch between month, week, day, and list views.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">💰</span> Financial Intelligence
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">Set revenue and cost targets, log actuals, and track variance. AI-powered forecasts, risk detection, and strategic lever recommendations. Compare programs side-by-side.</p>
+                                                </details>
+                                                <details class="group">
+                                                    <summary class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800 hover:text-blue-600 py-1.5">
+                                                        <span class="text-base">📊</span> PowerPoint Export
+                                                    </summary>
+                                                    <p class="text-xs text-gray-600 pl-7 pb-2">One-click export generates a stakeholder-ready presentation including Gantt charts, milestones, changes, risk registers, and financial KPIs.</p>
+                                                </details>
+                                            </div>
+                                            <div class="px-4 py-3 bg-gray-50 border-t text-xs text-gray-500">
+                                                <strong>Tip:</strong> Hover over any button for a tooltip describing its function.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="flex items-center space-x-2">
                                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
                                         {{ user.full_name[0] | upper }}
                                     </div>
                                     <span class="text-sm font-medium desktop-user-name">{{ user.full_name }}</span>
                                 </div>
-                                <a href="/logout" class="text-blue-200 hover:text-white text-sm transition desktop-signout">
+                                <a href="/logout" class="text-blue-200 hover:text-white text-sm transition desktop-signout" title="Sign out of your account">
                                     Sign out
                                 </a>
                             </div>
                         {% else %}
-                            <a href="/login" class="text-sm hover:text-blue-200 transition">Sign in</a>
-                            <a href="/register" class="px-3 py-1.5 bg-white text-blue-700 text-sm font-medium rounded hover:bg-blue-50 transition">
+                            <a href="/login" class="text-sm hover:text-blue-200 transition" title="Sign in to your account">Sign in</a>
+                            <a href="/register" class="px-3 py-1.5 bg-white text-blue-700 text-sm font-medium rounded hover:bg-blue-50 transition" title="Create a new account">
                                 Get Started
                             </a>
                         {% endif %}
@@ -278,13 +366,13 @@
             <div class="flex items-center justify-between py-2">
                 <!-- Primary navigation (hidden on mobile, shown on desktop) -->
                 <div class="desktop-nav items-center space-x-1">
-                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}">
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}" title="Portfolio Dashboard">
                         📊 Portfolio
                     </a>
-                    <a href="/calendar" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/calendar' in request.url.path %}bg-white/15{% endif %}">
+                    <a href="/calendar" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/calendar' in request.url.path %}bg-white/15{% endif %}" title="Cross-program calendar">
                         📅 Calendar
                     </a>
-                    <a href="/backlog" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/backlog' in request.url.path %}bg-white/15{% endif %}">
+                    <a href="/backlog" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/backlog' in request.url.path %}bg-white/15{% endif %}" title="Backlog board">
                         📋 Backlog
                     </a>
                     
@@ -317,7 +405,8 @@
                     </div>
                     {% endfor %}
                     <a href="/feedback" 
-                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/feedback' in request.url.path %}bg-white/15{% endif %}">
+                       class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/feedback' in request.url.path %}bg-white/15{% endif %}"
+                       title="Submit feedback or feature requests">
                         💬 Feedback
                     </a>
                 </div>
@@ -326,22 +415,26 @@
                 <div class="desktop-actions items-center space-x-2">
 
                     <a href="/powerpoint-export{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1">
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-500 hover:bg-blue-400 transition flex items-center space-x-1"
+                       title="Export to PowerPoint">
                         <span>📊</span><span>Export</span>
                     </a>
                     <a href="/upload{{ '?project=' + request.query_params.get('project') if request.query_params.get('project') else '' }}" 
-                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-green-500 hover:bg-green-400 transition flex items-center space-x-1">
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-green-500 hover:bg-green-400 transition flex items-center space-x-1"
+                       title="Upload MS Project file">
                         <span>📤</span><span>Upload</span>
                     </a>
                     {% if user %}
                     <a href="/subscription" 
-                       class="px-3 py-1.5 rounded-md text-sm font-medium border border-blue-400 hover:bg-white/10 transition">
+                       class="px-3 py-1.5 rounded-md text-sm font-medium border border-blue-400 hover:bg-white/10 transition"
+                       title="Account & subscription settings">
                         ⚙️ Account
                     </a>
                     {% endif %}
                     {% if user and user.is_admin %}
                     <a href="/admin" 
-                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-500 transition {% if '/admin' in request.url.path %}ring-2 ring-white{% endif %}">
+                       class="px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-500 transition {% if '/admin' in request.url.path %}ring-2 ring-white{% endif %}"
+                       title="Admin console">
                         🛡️ Admin
                     </a>
                     {% endif %}
@@ -361,7 +454,7 @@
                     </div>
                     <span class="text-white font-bold">Systems³</span>
                 </div>
-                <button onclick="closeMobileNav()" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white rounded-lg" aria-label="Close menu">
+                <button onclick="closeMobileNav()" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white rounded-lg" aria-label="Close menu" title="Close navigation menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -432,7 +525,7 @@
         <div id="fbWidgetForm" class="hidden absolute bottom-16 right-0 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style="animation:slideIn 0.2s ease-out">
             <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
                 <h4 class="font-bold text-sm">Quick Feedback</h4>
-                <button onclick="toggleFeedbackWidget()" class="text-white/70 hover:text-white">
+                <button onclick="toggleFeedbackWidget()" class="text-white/70 hover:text-white" title="Close feedback form">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -452,7 +545,7 @@
                     </select>
                 </div>
                 <textarea id="widgetDesc" rows="2" placeholder="Details (optional)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:ring-2 focus:ring-blue-500"></textarea>
-                <button onclick="submitWidgetFeedback()" id="widgetSubmitBtn" class="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Submit</button>
+                <button onclick="submitWidgetFeedback()" id="widgetSubmitBtn" class="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition" title="Submit quick feedback">Submit</button>
             </div>
         </div>
     </div>
@@ -515,7 +608,7 @@
     <div id="cookieConsent" class="hidden fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 z-50 shadow-lg border-t border-gray-700">
         <div class="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <p class="text-sm text-gray-300">This application uses a single essential cookie for authentication. No tracking cookies are used. <a href="/privacy" class="text-blue-400 hover:underline">Learn more</a></p>
-            <button onclick="acceptCookies()" class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex-shrink-0">Accept</button>
+            <button onclick="acceptCookies()" class="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex-shrink-0" title="Accept cookie policy">Accept</button>
         </div>
     </div>
 
@@ -537,7 +630,18 @@
                 document.getElementById('notifDropdown')?.classList.add('hidden');
                 notifDropdownOpen = false;
             }
+            // Close help guide on outside click
+            const helpContainer = document.getElementById('helpGuideContainer');
+            if (helpContainer && !helpContainer.contains(e.target)) {
+                document.getElementById('helpGuideDropdown')?.classList.add('hidden');
+            }
         });
+
+        // ── Help Guide Logic ──────────────────────────────
+        function toggleHelpGuide() {
+            const dd = document.getElementById('helpGuideDropdown');
+            dd.classList.toggle('hidden');
+        }
 
         async function loadNotifDropdown() {
             try {

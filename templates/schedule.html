@@ -567,7 +567,7 @@
     {% for table in tables %}
     <button class="schedule-tab {% if loop.first %}active{% endif %}" 
             data-table-id="{{ table.id }}"
-            onclick="switchTab('{{ table.id }}')">
+            onclick="switchTab('{{ table.id }}')" title="Switch to {{ table.name }} table">
         {{ table.name }}
     </button>
     {% endfor %}
@@ -597,11 +597,11 @@
                 </div>
                 <div class="toolbar-actions flex items-center gap-2">
                     <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition"
-                            onclick="addRow('{{ table.id }}')">
+                            onclick="addRow('{{ table.id }}')" title="Add a new row">
                         + <span class="btn-label">Add </span>Row
                     </button>
                     <button class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
-                            onclick="showColumnModal('{{ table.id }}')">
+                            onclick="showColumnModal('{{ table.id }}')" title="Add a new column">
                         + <span class="btn-label">Add </span>Col
                     </button>
                     <div class="toolbar-divider border-l pl-2 ml-2">
@@ -760,7 +760,7 @@
         <h3 class="text-xl font-semibold">No Schedule Tables Yet</h3>
         <p class="mb-4">Create your first schedule table to track work outside main project scope.</p>
         <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                onclick="showCreateTableModal()">
+                onclick="showCreateTableModal()" title="Create new schedule table">
             + Create First Table
         </button>
     </div>
@@ -903,7 +903,7 @@
                 <div id="dropdownOptionsList" class="space-y-2">
                     <!-- Dropdown options will be rendered here -->
                 </div>
-                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addDropdownOptionRow('', '')">
+                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addDropdownOptionRow('', '')" title="Add a dropdown option">
                     + Add Option
                 </button>
             </div>
@@ -914,7 +914,7 @@
                 <div id="statusOptionsList" class="space-y-2">
                     <!-- Status options will be rendered here -->
                 </div>
-                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addStatusOption()">
+                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addStatusOption()" title="Add a status option">
                     + Add Status Option
                 </button>
             </div>
@@ -925,7 +925,7 @@
                 <div id="priorityOptionsList" class="space-y-2">
                     <!-- Priority options will be rendered here -->
                 </div>
-                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addPriorityOption()">
+                <button type="button" class="mt-2 text-sm text-blue-600 hover:text-blue-800" onclick="addPriorityOption()" title="Add a priority option">
                     + Add Priority Option
                 </button>
             </div>

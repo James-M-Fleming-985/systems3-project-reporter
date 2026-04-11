@@ -37,11 +37,100 @@
 </style>
 {% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<!-- GridStack for Financial Dashboard KPI widgets -->
+<link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-extra.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
+<style>
+    /* GridStack financial widget styles */
+    #financialKPIGrid .grid-stack-item-content {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;
+        display: flex; flex-direction: column;
+    }
+    #financialKPIGrid .gs-widget-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.5rem 0.75rem; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+        cursor: move; user-select: none; min-height: 36px;
+    }
+    #financialKPIGrid .gs-widget-header .widget-title { font-size: 0.8rem; font-weight: 600; color: #374151; }
+    #financialKPIGrid .gs-widget-body {
+        flex: 1; padding: 0.75rem; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+    }
+    #financialKPIGrid .gs-widget-body .kpi-value { font-size: 2.5rem; font-weight: 700; color: #111827; }
+    #financialKPIGrid .gs-widget-body .kpi-detail { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+    .grid-stack-placeholder > .placeholder-content {
+        border: 2px dashed #3b82f6 !important; border-radius: 0.5rem;
+        background: rgba(59, 130, 246, 0.05) !important;
+    }
+    /* Toggle button styles */
+    .view-toggle { display: inline-flex; border-radius: 0.5rem; overflow: hidden; border: 1px solid #d1d5db; }
+    .view-toggle button { padding: 0.375rem 1rem; font-size: 0.875rem; font-weight: 500; transition: all 0.15s; border: none; cursor: pointer; }
+    .view-toggle button.active { background: #3B82F6; color: white; }
+    .view-toggle button:not(.active) { background: white; color: #6b7280; }
+    .view-toggle button:not(.active):hover { background: #f3f4f6; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2" id="dashboardPageTitle">📊 Portfolio Dashboard</h2>
-    <p class="text-gray-600" id="dashboardPageSubtitle">Select a program to view detailed metrics, milestones, and reports</p>
+<div class="mb-8 flex items-center justify-between flex-wrap gap-4">
+    <div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2" id="dashboardPageTitle">📊 Portfolio Dashboard</h2>
+        <p class="text-gray-600" id="dashboardPageSubtitle">Select a program to view detailed metrics, milestones, and reports</p>
+    </div>
+    <!-- Financial Intelligence Toggle -->
+    <div class="view-toggle" id="dashboardViewToggle">
+        <button class="active" onclick="switchDashboardView('portfolio')" id="togglePortfolio" title="View portfolio overview with program cards and delivery metrics">Portfolio Overview</button>
+        <button onclick="switchDashboardView('financial')" id="toggleFinancial" title="View financial intelligence dashboard with KPIs, forecasts, and strategic levers">Financial Intelligence</button>
+    </div>
 </div>
+
+<!-- ============== FINANCIAL INTELLIGENCE VIEW (hidden by default) ============== -->
+<div id="financialView" class="hidden">
+    <!-- Breadcrumb Navigation -->
+    <div id="financialBreadcrumb"></div>
+
+    <!-- KPI Grid (GridStack) -->
+    <div id="financialKPIGrid" class="grid-stack mb-6" style="min-height: 200px;"></div>
+
+    <!-- Charts Row 1: Revenue Trajectory + Cost Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div id="revenueTrajectoryChart" style="height: 360px;"></div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div id="costBreakdownChart" style="height: 360px;"></div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Contribution + Strategic Levers Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div id="contributionChart" style="height: 360px;"></div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div id="leverChart" style="height: 360px;"></div>
+        </div>
+    </div>
+
+    <!-- Strategic Lever Recommendations -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 Strategic Lever Recommendations</h3>
+        <div id="leversList"></div>
+    </div>
+
+    <!-- Cross-Program Comparison -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Program Comparison</h3>
+        <div id="comparisonTable"></div>
+    </div>
+</div>
+
+<!-- ============== PORTFOLIO OVERVIEW (default view) ============== -->
+<div id="portfolioView">
 
 <!-- Program Selection Notice -->
 <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
@@ -187,6 +276,12 @@
                 <p class="text-xs text-gray-500">Start: {{ project.start_date }}</p>
                 <p class="text-xs text-gray-500">Target: {{ project.target_completion }}</p>
             </div>
+            
+            <!-- Financial Health Indicator (populated dynamically) -->
+            <div class="financial-health-indicator hidden mt-3 pt-3 border-t border-gray-100"
+                 data-program-code="{{ project.project_code }}"
+                 title="Financial health based on revenue and cost variance">
+            </div>
         </div>
     </div>
     {% endfor %}
@@ -276,6 +371,7 @@
     </button>
     <div id="merge-result" class="mt-2 text-sm hidden"></div>
 </div>
+</div><!-- end #portfolioView -->
 {% endblock %}
 
 {% block scripts %}
@@ -540,7 +636,75 @@ function updateSelectionDisplay() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateSelectionDisplay();
+    // Restore financial view toggle state from localStorage
+    const savedView = localStorage.getItem('fgsi_dashboard_view');
+    if (savedView === 'financial') {
+        switchDashboardView('financial');
+    }
+    // Load financial health indicators on program cards
+    loadProgramFinancialHealth();
 });
+
+// Dashboard View Toggle
+function switchDashboardView(view) {
+    const portfolioView = document.getElementById('portfolioView');
+    const financialView = document.getElementById('financialView');
+    const togglePortfolio = document.getElementById('togglePortfolio');
+    const toggleFinancial = document.getElementById('toggleFinancial');
+
+    if (view === 'financial') {
+        portfolioView.classList.add('hidden');
+        financialView.classList.remove('hidden');
+        togglePortfolio.classList.remove('active');
+        toggleFinancial.classList.add('active');
+        localStorage.setItem('fgsi_dashboard_view', 'financial');
+        initFinancialDashboard();
+        renderComparisonTable();
+    } else {
+        portfolioView.classList.remove('hidden');
+        financialView.classList.add('hidden');
+        togglePortfolio.classList.add('active');
+        toggleFinancial.classList.remove('active');
+        localStorage.setItem('fgsi_dashboard_view', 'portfolio');
+    }
+}
+
+// Load financial health indicators onto program cards
+async function loadProgramFinancialHealth() {
+    try {
+        const res = await fetch('/api/financial/summary');
+        if (!res.ok) return;
+        const json = await res.json();
+        const summaries = json.data?.program_summaries || [];
+        if (summaries.length === 0) return;
+
+        document.querySelectorAll('.financial-health-indicator').forEach(el => {
+            const code = el.dataset.programCode;
+            const match = summaries.find(s => s.program_id === code);
+            if (!match) return;
+
+            const varPct = match.variance_pct || 0;
+            let badgeColor, badgeIcon;
+            if (varPct >= -5) { badgeColor = 'bg-green-100 text-green-700'; badgeIcon = '●'; }
+            else if (varPct >= -15) { badgeColor = 'bg-yellow-100 text-yellow-700'; badgeIcon = '●'; }
+            else { badgeColor = 'bg-red-100 text-red-700'; badgeIcon = '●'; }
+
+            const typeLabel = match.contribution_type === 'indirect_revenue_impact' ? 'Indirect' : 'Direct';
+            const typeBadge = match.contribution_type === 'indirect_revenue_impact'
+                ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700';
+
+            el.innerHTML = `
+                <div class="flex items-center justify-between text-xs">
+                    <span class="px-1.5 py-0.5 rounded ${typeBadge} font-medium">${typeLabel}</span>
+                    <span class="px-1.5 py-0.5 rounded ${badgeColor} font-medium">${badgeIcon} ${varPct >= 0 ? '+' : ''}${varPct.toFixed(1)}%</span>
+                </div>
+            `;
+            el.classList.remove('hidden');
+        });
+    } catch (e) {
+        // Silently skip if financial API not available
+    }
+}
 
 // ONE-OFF: Merge programs (remove after use)
 async function runMerge() {
@@ -573,4 +737,5 @@ async function runMerge() {
     }
 }
 </script>
+<script src="/static/js/financial_dashboard.js"></script>
 {% endblock %}

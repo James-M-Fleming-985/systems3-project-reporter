@@ -1,0 +1,1078 @@
+# ====================================================================================
+# FEATURE REQUIREMENTS INDEX: Financial Governance & Strategic Intelligence
+# ====================================================================================
+# FEATURE ID: FEATURE-FGSI-001
+# VERSION: 1.0.0
+# LAST UPDATED: 2026-04-11
+# OWNER: James-M-Fleming-985
+# ====================================================================================
+# This feature defines the overarching financial intelligence layer for the Systems3
+# Project Reporter application. It enhances the existing portfolio management system
+# with financial targets, actuals tracking, forecasting, strategic recommendations,
+# and GDPR-compliant encrypted storage — all integrated as a toggle on the existing
+# portfolio dashboard rather than a separate application section.
+# ====================================================================================
+
+metadata:
+  requirement_id: "FEATURE-FGSI-001"
+  requirement_name: "Financial Governance & Strategic Intelligence"
+  feature_id: "FEATURE-FGSI-001"
+  feature_name: "Financial Governance & Strategic Intelligence"
+  feature_code: "FGSI"
+  version: "1.0.0"
+  status: "Active"
+  created_date: "2026-04-11"
+  last_modified: "2026-04-11"
+  owner: "James-M-Fleming-985"
+  priority: "MUST HAVE"
+  target_date: "2026-07-11"
+
+  traceability:
+    parent_system: "SYSTEM-WEB-001"
+    parent_system_file: "SYSTEM_REQUIREMENTS_WEB.yaml"
+    parent_system_requirements:
+      - "SYS-REQ-WEB-001: Multi-program portfolio management"
+      - "SYS-REQ-WEB-002: Program discovery and YAML-based configuration"
+      - "SYS-REQ-WEB-003: Dashboard and reporting capabilities"
+
+    derivation_rationale: |
+      The existing portfolio management system tracks delivery progress (milestones,
+      risks, changes, schedules) but lacks financial intelligence. This feature adds
+      an overarching financial layer that sits OVER the entire portfolio, enabling the
+      user to set financial targets, track actuals, receive AI/ML-driven forecasts and
+      strategic recommendations, and quantify the financial impact of both direct and
+      indirect revenue programs. This directly extends SYS-REQ-WEB-001 (portfolio
+      management) and SYS-REQ-WEB-003 (dashboard/reporting) with financial capabilities.
+
+# ====================================================================================
+# FEATURE OVERVIEW
+# ====================================================================================
+
+overview:
+  description: |
+    Financial Governance & Strategic Intelligence is an overarching financial layer
+    that enhances the Systems3 Project Reporter with:
+    
+    1. Financial target setting — user defines revenue, cost, and margin targets per
+       period (monthly/quarterly/annual) at portfolio and program levels
+    2. Actuals tracking — recorded financial actuals compared against targets
+    3. Resource cost tracking — per-program resource costs (labour, tools, infrastructure)
+    4. AI/ML forecast engine — trajectory analysis comparing actuals to targets,
+       time-series forecasting with confidence intervals
+    5. Financial risk engine — auto-generates risks when variance thresholds exceeded,
+       integrates with existing risk scoring (likelihood × impact)
+    6. Strategic lever recommendations — AI-driven suggestions for corrective actions
+       based on trajectory analysis
+    7. Indirect impact attribution — quantifies how indirect programs (marketing,
+       communications) contribute to financial outcomes
+    8. Financial dashboard — toggle on existing portfolio dashboard with drill-down:
+       Portfolio → Program → Project
+    9. GDPR-compliant encryption — field-level encryption for client names and
+       financial data using Fernet/AES-256
+    
+    KEY PRINCIPLE: The user sets targets. The system reads targets, analyses actuals
+    trajectory, and provides AI/ML recommendations. Strategic levers are system
+    recommendations, not user inputs.
+    
+    ARCHITECTURE: This is an enhancement and integration into the existing app
+    structure — NOT a restructuring. All new features integrate with existing
+    patterns (repository pattern, Jinja2 templates, Plotly.js charts, GridStack
+    widgets, YAML/JSON file storage).
+
+  business_value:
+    - "Financial visibility across entire portfolio — revenue, costs, margins at every level"
+    - "AI-driven forecasting identifies trajectory problems before they become crises"
+    - "Strategic lever recommendations provide actionable guidance for corrective action"
+    - "Indirect impact attribution quantifies marketing/communications ROI"
+    - "Resource cost tracking enables cost optimisation across programs"
+    - "GDPR compliance protects sensitive financial and client data"
+    - "Unified view — financial intelligence alongside delivery progress in one app"
+
+  user_story: |
+    As a portfolio manager,
+    I want to set financial targets and track actuals across all my programs,
+    So that I can receive AI-driven forecasts, risk alerts, and strategic
+    recommendations to keep my portfolio financially on track.
+
+  acceptance_criteria:
+    - "AC-01: User can set revenue, cost, and margin targets at portfolio and program levels"
+    - "AC-02: User can record financial actuals and system calculates variance against targets"
+    - "AC-03: User can track resource costs per program with cost type classification"
+    - "AC-04: System generates time-series forecasts with confidence intervals when actuals are saved"
+    - "AC-05: System auto-generates financial risks when variance exceeds configurable thresholds"
+    - "AC-06: System recommends ranked strategic levers based on trajectory analysis"
+    - "AC-07: User can assign impact attribution percentages to indirect programs"
+    - "AC-08: Financial dashboard is accessible via toggle on portfolio dashboard"
+    - "AC-09: Drill-down works at three levels: Portfolio → Program → Project"
+    - "AC-10: Client names and financial data are encrypted at rest (GDPR compliance)"
+    - "AC-11: CSV/YAML bulk import available for financial data"
+    - "AC-12: Financial data included in PowerPoint export"
+    - "AC-13: All UI buttons and elements have descriptive tooltips"
+    - "AC-14: In-app help guide accessible from navigation bar"
+    - "AC-15: Financial risks appear in existing risk views alongside delivery risks"
+
+# ====================================================================================
+# SHARED INTERFACES
+# ====================================================================================
+
+shared_interfaces:
+  response_structure: "FastAPI JSON response — existing app pattern"
+
+  parent_system_reference:
+    file: "SYSTEM_REQUIREMENTS_WEB.yaml"
+    section: "shared_interfaces"
+
+  implementation_requirement: |
+    All financial API endpoints follow the existing router pattern used throughout
+    the application (routers/*.py). Responses use standard JSON with consistent
+    error handling matching existing endpoints. No new response framework — integrate
+    with current patterns.
+
+    Pattern:
+      - Success: {"status": "success", "data": {...}}
+      - Error: HTTPException with appropriate status code
+      - Validation: Pydantic models for request/response
+
+  verification:
+    - "All financial endpoints return consistent JSON response format"
+    - "Error responses match existing application error handling pattern"
+    - "Pydantic models validate all request payloads"
+
+# ====================================================================================
+# FEATURE REQUIREMENTS
+# ====================================================================================
+
+requirements:
+
+  # --- ENCRYPTION & SECURITY ---
+  - id: "FEAT-REQ-001"
+    title: "Field-Level Encryption Service"
+    description: |
+      Implement a field-level encryption service using Fernet (AES-256) symmetric
+      encryption. The service must transparently encrypt sensitive fields (client names,
+      financial amounts, notes containing financial data) on write and decrypt on read.
+      Encryption key sourced from environment variable FGSI_ENCRYPTION_KEY.
+      Must support key rotation without data loss.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Encryption/decryption round-trip preserves data integrity"
+      - "Key loaded from FGSI_ENCRYPTION_KEY environment variable"
+      - "Key rotation procedure documented and tested"
+      - "Encrypted data is base64-encoded for YAML storage compatibility"
+      - "Missing key raises clear error at startup, not silently fails"
+    traces_to:
+      acceptance_criteria: ["AC-10"]
+    output_artifacts:
+      - path: "services/encryption_service.py"
+        description: "Encryption service with encrypt/decrypt/rotate methods"
+      - path: "tests/test_encryption_service.py"
+        description: "Unit tests for encryption round-trip, key rotation, error cases"
+
+  # --- DATA MODELS ---
+  - id: "FEAT-REQ-002"
+    title: "Financial Data Models"
+    description: |
+      Define Pydantic models for all financial entities:
+      - FinancialTarget: revenue_target, cost_budget, margin_target, period
+        (monthly/quarterly/annual), program_id (null=portfolio), target_date
+      - FinancialActual: actual_revenue, actual_cost, actual_margin, period,
+        program_id, recorded_date, notes
+      - ResourceCost: resource_name, cost_amount, cost_type (labour/tools/
+        infrastructure/external), program_id, period, billable_hours (optional)
+      - ProgramFinancialProfile: program_id, contribution_type (direct_revenue |
+        indirect_revenue_impact), revenue_streams[], cost_centres[], impact_attribution_pct
+      All models must flag sensitive fields for encryption.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "All models validate with Pydantic"
+      - "Sensitive fields marked for encryption"
+      - "Models serialise to/from YAML correctly"
+      - "contribution_type defaults to direct_revenue for backward compatibility"
+    traces_to:
+      acceptance_criteria: ["AC-01", "AC-02", "AC-03", "AC-07"]
+    output_artifacts:
+      - path: "models/financial_models.py"
+        description: "Pydantic models for all financial entities"
+      - path: "tests/test_financial_models.py"
+        description: "Unit tests for model validation, serialisation, defaults"
+
+  # --- REPOSITORY ---
+  - id: "FEAT-REQ-003"
+    title: "Financial Repository (YAML-Based CRUD)"
+    description: |
+      Create a financial repository following the existing repository pattern
+      (project_repository.py). Store financial data in users/{user_id}/financial/
+      directory with sub-directories: targets/, actuals/, resource_costs/, profiles/.
+      Integrate encryption service for sensitive fields on read/write.
+      Support per-program and portfolio-level queries.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "CRUD operations for targets, actuals, resource costs, profiles"
+      - "Data stored in users/{user_id}/financial/ directory"
+      - "Sensitive fields encrypted at rest"
+      - "Per-program and portfolio-level queries supported"
+      - "Follows existing repository pattern (constructor, file I/O, error handling)"
+    traces_to:
+      acceptance_criteria: ["AC-01", "AC-02", "AC-03", "AC-10"]
+    output_artifacts:
+      - path: "repositories/financial_repository.py"
+        description: "Financial data CRUD with encryption integration"
+      - path: "tests/test_financial_repository.py"
+        description: "Repository tests with encryption verification"
+
+  # --- TARGETS & ACTUALS API ---
+  - id: "FEAT-REQ-004"
+    title: "Financial Targets CRUD API"
+    description: |
+      API endpoints for managing financial targets:
+      - POST /api/financial/targets — create/update targets
+      - GET /api/financial/targets — retrieve by period, program, date range
+      - DELETE /api/financial/targets/{target_id}
+      Targets include: revenue_target, cost_budget, margin_target, period
+      (monthly/quarterly/annual), program_id (null=portfolio level).
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Create, read, update, delete targets via API"
+      - "Filter by period, program, date range"
+      - "Portfolio-level targets (program_id=null) supported"
+      - "Validation rejects invalid periods and negative amounts"
+    traces_to:
+      acceptance_criteria: ["AC-01"]
+    output_artifacts:
+      - path: "routers/financial.py"
+        description: "Financial API router with target endpoints"
+      - path: "tests/test_financial_targets_api.py"
+        description: "API tests for targets CRUD and validation"
+
+  - id: "FEAT-REQ-005"
+    title: "Financial Actuals CRUD API"
+    description: |
+      API endpoints for recording financial actuals:
+      - POST /api/financial/actuals — record actuals
+      - GET /api/financial/actuals — retrieve by period, program, date range
+      - PUT /api/financial/actuals/{actual_id} — update recorded actual
+      On save, trigger forecast recalculation (if forecast engine available).
+      Calculate variance against targets automatically.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Create, read, update actuals via API"
+      - "Variance calculated automatically against matching target"
+      - "Forecast recalculation triggered on save"
+      - "Variance percentage and absolute values returned in response"
+    traces_to:
+      acceptance_criteria: ["AC-02", "AC-04"]
+    output_artifacts:
+      - path: "routers/financial.py"
+        description: "Actuals endpoints added to financial router"
+      - path: "tests/test_financial_actuals_api.py"
+        description: "API tests for actuals CRUD, variance calculation, forecast trigger"
+
+  - id: "FEAT-REQ-006"
+    title: "Resource Cost Tracking API"
+    description: |
+      API endpoints for tracking resource costs per program:
+      - POST /api/financial/resource-costs — record resource cost
+      - GET /api/financial/resource-costs — retrieve by program, period, cost type
+      - GET /api/financial/resource-costs/summary — aggregated costs per program
+      Resource costs include: resource_name, cost_amount, cost_type (labour/tools/
+      infrastructure/external), program_id, period, billable_hours.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Record and retrieve resource costs per program"
+      - "Filter by cost type, program, period"
+      - "Aggregation endpoint returns summary per program"
+      - "Cost types validated against allowed values"
+    traces_to:
+      acceptance_criteria: ["AC-03"]
+    output_artifacts:
+      - path: "routers/financial.py"
+        description: "Resource cost endpoints added to financial router"
+      - path: "tests/test_resource_costs_api.py"
+        description: "API tests for resource cost CRUD and aggregation"
+
+  - id: "FEAT-REQ-007"
+    title: "CSV/YAML Bulk Import for Financial Data"
+    description: |
+      Import endpoint accepting CSV or YAML file upload for bulk data entry:
+      - POST /api/financial/import — accept file, validate, import
+      Support import of targets, actuals, and resource costs.
+      Validate format, map columns, report row-level errors.
+      No governance scheduler — user manually uploads when needed.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "CSV and YAML file formats supported"
+      - "Column mapping validation with clear error messages"
+      - "Partial import (valid rows imported, invalid rows reported)"
+      - "Import summary returned with success/failure counts"
+    traces_to:
+      acceptance_criteria: ["AC-11"]
+    output_artifacts:
+      - path: "routers/financial.py"
+        description: "Import endpoint added to financial router"
+      - path: "tests/test_financial_import.py"
+        description: "Import tests with valid/invalid CSV and YAML files"
+      - path: "test_data/sample_financial_import.csv"
+        description: "Sample CSV for import testing"
+      - path: "test_data/sample_financial_import.yaml"
+        description: "Sample YAML for import testing"
+
+  # --- FORECAST ENGINE ---
+  - id: "FEAT-REQ-008"
+    title: "Trajectory Analysis Engine"
+    description: |
+      Service that compares actuals trajectory against target timeline:
+      - Calculate run rate and burn rate from actuals history
+      - Determine if current trajectory hits or misses target
+      - Generate variance analysis (absolute and percentage)
+      - Output: on_track boolean, variance_pct, projected_end_value, confidence_interval
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Correctly identifies on-track vs off-track trajectories"
+      - "Run rate calculated from actuals history"
+      - "Variance analysis accurate to 2 decimal places"
+      - "Handles edge cases: no data, single data point, negative values"
+    traces_to:
+      acceptance_criteria: ["AC-04"]
+    output_artifacts:
+      - path: "services/forecast_engine.py"
+        description: "Trajectory analysis with run rate and variance calculation"
+      - path: "tests/test_trajectory_analysis.py"
+        description: "Tests with known data sets verifying accuracy"
+
+  - id: "FEAT-REQ-009"
+    title: "Time-Series Forecast Generation"
+    description: |
+      Forecast financial metrics forward based on historical actuals:
+      - Linear regression and weighted moving average models
+      - Generate 3-month, 6-month, 12-month forecasts
+      - Confidence bands (68% and 95% intervals)
+      - On-demand generation triggered when actuals are saved
+      - API: GET /api/financial/forecast, POST /api/financial/forecast/refresh
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Forecasts generated with confidence intervals"
+      - "Multiple forecast horizons supported (3/6/12 month)"
+      - "Forecast recalculates when new actuals saved"
+      - "Minimum 3 data points required for forecast (graceful handling of insufficient data)"
+    traces_to:
+      acceptance_criteria: ["AC-04"]
+    output_artifacts:
+      - path: "services/forecast_engine.py"
+        description: "Forecast generation added to engine"
+      - path: "tests/test_forecast_engine.py"
+        description: "Forecast accuracy tests with synthetic time-series"
+
+  # --- FINANCIAL RISK ---
+  - id: "FEAT-REQ-010"
+    title: "Financial Risk Engine"
+    description: |
+      Auto-generate financial risk entries when variance exceeds thresholds:
+      - Budget overrun risk (cost actual > cost budget by configurable %)
+      - Revenue shortfall risk (revenue actual < revenue target by configurable %)
+      - Margin erosion risk (margin falling below target)
+      - Resource utilisation risk (costs growing faster than revenue)
+      Integrate with existing risk repository and scoring pattern (likelihood × impact).
+      Financial risks appear alongside delivery risks in unified risk view.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Risks auto-generated when variance exceeds configurable thresholds"
+      - "Risk scores use existing likelihood × impact pattern"
+      - "Financial risks stored in existing risk repository"
+      - "Financial risk category filterable in risk views"
+      - "Thresholds configurable per user/program"
+    traces_to:
+      acceptance_criteria: ["AC-05", "AC-15"]
+    output_artifacts:
+      - path: "services/financial_risk_engine.py"
+        description: "Risk generation with configurable thresholds"
+      - path: "tests/test_financial_risk_engine.py"
+        description: "Tests for threshold triggers, risk scoring, integration"
+
+  # --- STRATEGIC LEVERS ---
+  - id: "FEAT-REQ-011"
+    title: "Strategic Lever Recommendation Engine"
+    description: |
+      AI-driven engine that analyses variance between targets and trajectory, then
+      generates ranked recommendations:
+      - Cost reduction opportunities
+      - Revenue acceleration tactics
+      - Resource reallocation suggestions
+      - Risk mitigation actions
+      Each lever includes: description, estimated_impact, confidence, effort_level,
+      affected_programs, recommended_timeline.
+      API: GET /api/financial/levers
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Levers generated based on current variance and trajectory"
+      - "Ranked by estimated impact (descending)"
+      - "Each lever has effort_level classification (low/medium/high)"
+      - "Handles portfolio with no variance (returns empty recommendations)"
+    traces_to:
+      acceptance_criteria: ["AC-06"]
+    output_artifacts:
+      - path: "services/strategic_lever_engine.py"
+        description: "Lever recommendation engine with ranking"
+      - path: "tests/test_strategic_lever_engine.py"
+        description: "Tests for lever generation with various variance scenarios"
+
+  # --- IMPACT ATTRIBUTION ---
+  - id: "FEAT-REQ-012"
+    title: "Indirect Impact Attribution Model"
+    description: |
+      Allow user to assign impact attribution percentages to indirect programs
+      (contribution_type=indirect_revenue_impact). Track attribution changes over time.
+      Engine correlates indirect program activity with financial outcomes to validate/
+      refine attribution weights.
+      API: POST /api/financial/attribution (set percentages),
+           GET /api/financial/attribution (current + history)
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "User can set attribution percentage per indirect program"
+      - "Attribution percentages validated (0-100%, total <=100%)"
+      - "Attribution history tracked over time"
+      - "Engine provides data-backed confidence score for each attribution"
+    traces_to:
+      acceptance_criteria: ["AC-07"]
+    output_artifacts:
+      - path: "services/impact_attribution.py"
+        description: "Attribution model with manual input and correlation tracking"
+      - path: "tests/test_impact_attribution.py"
+        description: "Tests for percentage validation, history tracking, correlation"
+
+  # --- FINANCIAL DASHBOARD ---
+  - id: "FEAT-REQ-013"
+    title: "Portfolio Dashboard Financial Toggle"
+    description: |
+      Add segmented toggle control to portfolio dashboard (index.html) that switches
+      between Portfolio Overview and Financial Intelligence views. Financial view
+      replaces portfolio summary grid with financial dashboard. Toggle state persisted
+      in localStorage. Program selector context preserved across toggle.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Toggle visible on portfolio dashboard header"
+      - "Switching views is seamless (no page reload)"
+      - "Toggle state persisted in localStorage"
+      - "Program context maintained when switching"
+      - "Default view remains Portfolio Overview (financial opt-in)"
+    traces_to:
+      acceptance_criteria: ["AC-08"]
+    output_artifacts:
+      - path: "templates/index.html"
+        description: "Modified portfolio dashboard with financial toggle"
+      - path: "static/js/financial_dashboard.js"
+        description: "Financial dashboard JavaScript (data fetching, chart rendering)"
+
+  - id: "FEAT-REQ-014"
+    title: "Financial KPI Cards (GridStack Widgets)"
+    description: |
+      Draggable KPI cards in financial dashboard view showing:
+      - Total Revenue (actual vs target with variance indicator)
+      - Total Cost (actual vs budget with variance indicator)
+      - Margin (actual vs target percentage)
+      - Forecast accuracy score
+      - Resource utilisation rate
+      - Financial risk score (aggregate)
+      Use GridStack layout matching metrics.html pattern. Layout persisted in localStorage.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "6 KPI cards rendered with real-time data"
+      - "Cards are draggable and resizable (GridStack)"
+      - "Layout persisted across sessions"
+      - "Variance indicators (green/amber/red) based on threshold"
+    traces_to:
+      acceptance_criteria: ["AC-08"]
+    output_artifacts:
+      - path: "templates/index.html"
+        description: "GridStack widget containers in financial view section"
+      - path: "static/js/financial_dashboard.js"
+        description: "Widget initialization and data binding"
+
+  - id: "FEAT-REQ-015"
+    title: "Financial Charts (Plotly.js)"
+    description: |
+      Interactive Plotly.js charts in financial dashboard:
+      1. Revenue Trajectory — actuals line + target line + forecast with confidence band
+      2. Cost Breakdown by Program — stacked bar chart
+      3. Program Contribution — donut chart (direct vs indirect revenue attribution)
+      4. Strategic Levers — horizontal bar chart ranked by estimated impact
+      All charts interactive with drill-down on click.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "4 chart types rendered with live data from financial API"
+      - "Charts are interactive (hover tooltips, click drill-down)"
+      - "Responsive layout within GridStack containers"
+      - "Charts update when data changes (no manual refresh required)"
+    traces_to:
+      acceptance_criteria: ["AC-08", "AC-09"]
+    output_artifacts:
+      - path: "static/js/financial_dashboard.js"
+        description: "Plotly.js chart rendering functions"
+
+  - id: "FEAT-REQ-016"
+    title: "Drill-Down Navigation (Portfolio → Program → Project)"
+    description: |
+      Click program card or chart segment to drill into program-level financials.
+      Click project within program to see project-level costs. Breadcrumb navigation:
+      Portfolio > Program Name > Project Name. Each level shows relevant KPIs and
+      charts scoped to that entity.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Click on program drills into program-level financials"
+      - "Click on project drills into project-level costs"
+      - "Breadcrumb navigation shows current drill-down path"
+      - "Back navigation returns to previous level"
+      - "All charts and KPIs scoped to selected entity"
+    traces_to:
+      acceptance_criteria: ["AC-09"]
+    output_artifacts:
+      - path: "static/js/financial_dashboard.js"
+        description: "Drill-down navigation and breadcrumb rendering"
+      - path: "templates/index.html"
+        description: "Breadcrumb HTML container"
+
+  # --- CROSS-PROGRAM INTEGRATION ---
+  - id: "FEAT-REQ-017"
+    title: "Financial Health Indicators on Program Cards"
+    description: |
+      Extend existing program cards in portfolio dashboard with:
+      - Financial health badge (green/amber/red based on variance thresholds)
+      - Contribution type label (Direct Revenue / Indirect Impact)
+      - Key financial metric (revenue or cost variance percentage)
+      Non-intrusive — additional line below existing card content, only visible
+      when financial data exists for that program.
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Health badge reflects actual financial status"
+      - "Contribution type label visible on card"
+      - "Badge only appears when financial data exists"
+      - "Existing card layout and functionality unaffected"
+    traces_to:
+      acceptance_criteria: ["AC-08"]
+    output_artifacts:
+      - path: "templates/index.html"
+        description: "Program card financial health indicator HTML"
+
+  - id: "FEAT-REQ-018"
+    title: "Cross-Program Financial Comparison View"
+    description: |
+      Comparison table/chart showing all programs side by side:
+      - Revenue contribution, cost efficiency, ROI, resource utilisation
+      - Sortable and filterable
+      - Available as a widget in the financial dashboard view
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "All programs displayed in comparison view"
+      - "Sortable by each financial metric"
+      - "Filterable by contribution type"
+    traces_to:
+      acceptance_criteria: ["AC-08", "AC-09"]
+    output_artifacts:
+      - path: "static/js/financial_dashboard.js"
+        description: "Cross-program comparison widget"
+
+  - id: "FEAT-REQ-019"
+    title: "Financial Risk Integration with Risk Dashboard"
+    description: |
+      Financial risks appear alongside project/program risks in existing risk views.
+      Financial risk category filter added. Combined risk scoring considers both
+      delivery risks and financial risks. Unified risk export in reports.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Financial risks visible in existing risk views"
+      - "Category filter distinguishes financial from delivery risks"
+      - "Combined risk score available at program level"
+      - "PowerPoint export includes financial risks"
+    traces_to:
+      acceptance_criteria: ["AC-15", "AC-12"]
+    output_artifacts:
+      - path: "routers/risks.py"
+        description: "Modified to include financial risk category filter"
+      - path: "templates/risks.html"
+        description: "Financial risk category in filter UI"
+
+  - id: "FEAT-REQ-020"
+    title: "Financial Section in PowerPoint Export"
+    description: |
+      Extend existing PowerPoint export with financial summary slides:
+      - Portfolio financial KPIs slide
+      - Revenue trajectory chart slide
+      - Program contribution breakdown slide
+      - Strategic lever recommendations slide
+      - Financial risk summary slide
+      Match existing slide template styling.
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Financial slides generated in PowerPoint export"
+      - "Charts rendered as images in slides"
+      - "Styling matches existing slide templates"
+      - "Financial slides only included when financial data exists"
+    traces_to:
+      acceptance_criteria: ["AC-12"]
+    output_artifacts:
+      - path: "services/pptx_generator.py"
+        description: "Financial slide generation added to PowerPoint service"
+      - path: "tests/test_pptx_financial.py"
+        description: "Tests for financial slide generation"
+
+  # --- UX: TOOLTIPS & HELP ---
+  - id: "FEAT-REQ-021"
+    title: "App-Wide Tooltips"
+    description: |
+      Add descriptive tooltips to every interactive button and UI element across
+      ALL templates. Tooltips explain the function of each element to the user.
+      Implementation: title attributes and/or Tailwind CSS tooltip components.
+      Templates to audit: base.html, index.html, calendar.html, gantt.html,
+      milestones.html, metrics.html, risks.html, changes.html, schedule.html,
+      documents.html, feedback.html, ppt_editor.html, and all new financial UI.
+    priority: "MUST HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Every button has a descriptive tooltip"
+      - "Every icon-only action has a tooltip explaining its function"
+      - "Tooltips are concise and action-oriented"
+      - "No tooltip exceeds 60 characters"
+    traces_to:
+      acceptance_criteria: ["AC-13"]
+    output_artifacts:
+      - path: "templates/*.html"
+        description: "All template files with tooltips added to interactive elements"
+
+  - id: "FEAT-REQ-022"
+    title: "In-App Help Guide / Help Dropdown"
+    description: |
+      Add help icon (?) to base.html navigation bar. On click, show dropdown/modal
+      with: navigation overview, feature descriptions, quick-start guide. Content is
+      contextual — shows help relevant to current page. Removable later if not needed.
+    priority: "SHOULD HAVE"
+    status: "Active"
+    acceptance_criteria:
+      - "Help icon visible in navigation bar"
+      - "Dropdown shows contextual help content"
+      - "Navigation overview explains each tab's purpose"
+      - "Help content is accurate and maintained"
+    traces_to:
+      acceptance_criteria: ["AC-14"]
+    output_artifacts:
+      - path: "templates/base.html"
+        description: "Help icon and dropdown in navigation"
+      - path: "static/js/help_guide.js"
+        description: "Contextual help content and rendering logic"
+
+# ====================================================================================
+# INTEGRATION POINTS
+# ====================================================================================
+
+integration:
+  upstream_dependencies:
+    - "Existing program discovery (PROJECT-* YAML directories)"
+    - "Existing risk repository and scoring pattern"
+    - "Existing PowerPoint export service"
+    - "Existing auth middleware (JWT + user isolation)"
+    - "Existing repository pattern (project_repository.py)"
+
+  downstream_consumers:
+    - "Portfolio dashboard (index.html) — financial toggle"
+    - "Risk dashboard (risks.html) — financial risk display"
+    - "PowerPoint export — financial slides"
+    - "Calendar — financial milestone events (future)"
+
+  shared_components:
+    - "models/ — existing model patterns"
+    - "repositories/ — existing repository pattern"
+    - "routers/ — existing FastAPI router pattern"
+    - "services/ — existing service pattern"
+    - "templates/ — existing Jinja2 template pattern"
+    - "static/ — existing static asset pattern"
+
+  existing_patterns_to_follow:
+    - pattern: "Repository pattern"
+      reference: "repositories/project_repository.py"
+      description: "YAML file I/O with user isolation, constructor takes data_dir"
+
+    - pattern: "Router pattern"
+      reference: "routers/calendar.py"
+      description: "FastAPI router with auth dependency, Pydantic models, JSON responses"
+
+    - pattern: "GridStack widgets"
+      reference: "templates/metrics.html"
+      description: "Draggable chart widgets with Plotly.js, layout persistence"
+
+    - pattern: "Risk scoring"
+      reference: "repositories/risk_repository.py"
+      description: "Likelihood × impact matrix, severity levels"
+
+    - pattern: "View toggle"
+      reference: "templates/gantt.html"
+      description: "Segmented control for switching views"
+
+# ====================================================================================
+# IMPLEMENTATION NOTES
+# ====================================================================================
+
+implementation:
+  architecture_constraints:
+    - "YAML/JSON file-based storage (no database) — existing app pattern"
+    - "Jinja2 server-rendered templates — no SPA framework"
+    - "Vanilla JavaScript + Tailwind CSS — no React/Vue/Alpine"
+    - "FastAPI backend — existing router/middleware stack"
+    - "Railway deployment with persistent volumes"
+    - "DO NOT restructure existing app — enhance and integrate"
+
+  dependencies:
+    - "cryptography (Fernet encryption) — add to requirements.txt"
+    - "scikit-learn (forecast models) — add to requirements.txt"
+    - "numpy (statistical calculations) — likely already present"
+
+  testing_approach:
+    - "Unit tests for encryption service, models, repository"
+    - "Integration tests for API endpoints with auth"
+    - "E2E tests for full financial data flow (set target → record actual → verify forecast → check risk → verify dashboard)"
+    - "Frontend manual testing for toggle, charts, drill-down"
+
+# ====================================================================================
+# TESTING STRATEGY
+# ====================================================================================
+
+testing:
+  unit_tests:
+    location: "tests/unit/"
+    coverage_target: "90%"
+    scope:
+      - "Encryption service (round-trip, key rotation, error cases)"
+      - "Financial models (validation, serialisation, defaults)"
+      - "Financial repository (CRUD, encryption, user isolation)"
+      - "Forecast engine (accuracy with known data)"
+      - "Risk engine (threshold triggers, scoring)"
+      - "Strategic lever engine (recommendation generation)"
+      - "Impact attribution (percentage validation, history)"
+
+  integration_tests:
+    location: "tests/integration/"
+    scenarios:
+      - "Financial CRUD endpoints with authentication"
+      - "CSV/YAML import with validation"
+      - "Forecast trigger on actuals save"
+      - "Risk auto-generation on variance threshold"
+      - "Financial risk integration with risk dashboard"
+      - "PowerPoint export with financial slides"
+
+  e2e_tests:
+    location: "tests/e2e/"
+    scenarios:
+      - "Complete financial workflow: targets → actuals → forecast → risk → dashboard → export"
+      - "Multi-program portfolio with direct and indirect programs"
+      - "Drill-down navigation across all levels"
+      - "Bulk import and data validation"
+
+# ====================================================================================
+# FEATURE-LEVEL VERIFICATION
+# ====================================================================================
+
+feature_level_verification:
+  required: true
+  description: |
+    After all phases complete, verify the integrated feature satisfies all
+    acceptance criteria. Generate verification artifacts for user review.
+
+  artifacts:
+    location: "FEATURE-FGSI-001/verification/"
+    required_files:
+      - name: "feature_requirements_verification.yaml"
+        description: "Maps each requirement to implementation evidence"
+        contents:
+          - "FEAT-REQ-001 through FEAT-REQ-022 status"
+          - "AC-01 through AC-15 verification results"
+          - "Output artifact existence confirmation"
+
+      - name: "feature_test_pyramid.yaml"
+        description: "Test coverage summary"
+        contents:
+          - "Unit test count and coverage percentage"
+          - "Integration test count and pass rate"
+          - "E2E test count and pass rate"
+
+      - name: "feature_traceability_matrix.yaml"
+        description: "Complete traceability from requirements to implementation"
+        contents:
+          - "Requirement → acceptance criteria mapping"
+          - "Acceptance criteria → test mapping"
+          - "Requirement → output artifact mapping"
+
+  quality_gates:
+    - gate: "All 22 requirements have corresponding output artifacts"
+      required: true
+
+    - gate: "All 15 acceptance criteria verified"
+      required: true
+
+    - gate: "Unit test coverage >= 90%"
+      required: true
+
+    - gate: "All integration tests pass"
+      required: true
+
+    - gate: "E2E test for complete financial workflow passes"
+      required: true
+
+    - gate: "Encryption verified — no plaintext financial data in YAML files"
+      required: true
+
+    - gate: "No regression in existing app functionality"
+      required: true
+
+# ====================================================================================
+# PRODUCTION INTEGRATION
+# ====================================================================================
+
+production_integration:
+  target_router_file: "routers/financial.py"
+  app_entry_point: "main.py"
+  import_alias: "FinancialRouter"
+  endpoint_prefix: "/api/financial"
+  health_endpoint: true
+
+  pydantic_models:
+    - name: "FinancialTargetRequest"
+      fields:
+        - name: "revenue_target"
+          type: "float"
+          default: "..."
+          description: "Target revenue amount for the period"
+        - name: "cost_budget"
+          type: "float"
+          default: "..."
+          description: "Budget cost limit for the period"
+        - name: "margin_target"
+          type: "float"
+          default: "None"
+          description: "Target margin percentage (0-100)"
+        - name: "period"
+          type: "str"
+          default: "..."
+          description: "Period type: monthly, quarterly, annual"
+        - name: "program_id"
+          type: "Optional[str]"
+          default: "None"
+          description: "Program ID or null for portfolio-level target"
+
+    - name: "FinancialActualRequest"
+      fields:
+        - name: "actual_revenue"
+          type: "float"
+          default: "..."
+          description: "Recorded revenue amount"
+        - name: "actual_cost"
+          type: "float"
+          default: "..."
+          description: "Recorded cost amount"
+        - name: "period"
+          type: "str"
+          default: "..."
+          description: "Period: monthly, quarterly, annual"
+        - name: "program_id"
+          type: "Optional[str]"
+          default: "None"
+          description: "Program ID or null for portfolio level"
+        - name: "notes"
+          type: "Optional[str]"
+          default: "None"
+          description: "Notes about this actual entry"
+
+    - name: "ResourceCostRequest"
+      fields:
+        - name: "resource_name"
+          type: "str"
+          default: "..."
+          description: "Name of the resource"
+        - name: "cost_amount"
+          type: "float"
+          default: "..."
+          description: "Cost amount"
+        - name: "cost_type"
+          type: "str"
+          default: "..."
+          description: "Type: labour, tools, infrastructure, external"
+        - name: "program_id"
+          type: "str"
+          default: "..."
+          description: "Program ID this cost belongs to"
+        - name: "period"
+          type: "str"
+          default: "..."
+          description: "Period: monthly, quarterly, annual"
+
+  operations:
+    - name: "create_target"
+      http_method: "post"
+      path: "/targets"
+      description: "Create or update a financial target"
+      request_model: "FinancialTargetRequest"
+
+    - name: "get_targets"
+      http_method: "get"
+      path: "/targets"
+      description: "Retrieve financial targets by period and program"
+
+    - name: "delete_target"
+      http_method: "delete"
+      path: "/targets/{target_id}"
+      description: "Delete a financial target"
+
+    - name: "record_actual"
+      http_method: "post"
+      path: "/actuals"
+      description: "Record financial actuals"
+      request_model: "FinancialActualRequest"
+
+    - name: "get_actuals"
+      http_method: "get"
+      path: "/actuals"
+      description: "Retrieve financial actuals by period and program"
+
+    - name: "record_resource_cost"
+      http_method: "post"
+      path: "/resource-costs"
+      description: "Record a resource cost entry"
+      request_model: "ResourceCostRequest"
+
+    - name: "get_resource_costs"
+      http_method: "get"
+      path: "/resource-costs"
+      description: "Retrieve resource costs by program and period"
+
+    - name: "get_resource_cost_summary"
+      http_method: "get"
+      path: "/resource-costs/summary"
+      description: "Aggregated resource cost summary per program"
+
+    - name: "import_financial_data"
+      http_method: "post"
+      path: "/import"
+      description: "Bulk import financial data from CSV/YAML"
+
+    - name: "get_forecast"
+      http_method: "get"
+      path: "/forecast"
+      description: "Get financial forecast with confidence intervals"
+
+    - name: "refresh_forecast"
+      http_method: "post"
+      path: "/forecast/refresh"
+      description: "Trigger forecast recalculation"
+
+    - name: "get_financial_risks"
+      http_method: "get"
+      path: "/risks"
+      description: "Get financial risk summary"
+
+    - name: "get_levers"
+      http_method: "get"
+      path: "/levers"
+      description: "Get strategic lever recommendations ranked by impact"
+
+    - name: "set_attribution"
+      http_method: "post"
+      path: "/attribution"
+      description: "Set impact attribution percentages for indirect programs"
+
+    - name: "get_attribution"
+      http_method: "get"
+      path: "/attribution"
+      description: "Get current attribution percentages and history"
+
+# ====================================================================================
+# FRONTEND INTEGRATION
+# ====================================================================================
+
+frontend_integration:
+  frontend_type: "jinja2-alpinejs"
+  nav_label: "Financial"
+  nav_icon: "trending-up"
+  api_prefix: "/api/financial"
+
+  jinja2_alpinejs:
+    dashboard_template: "templates/index.html"
+    dashboard_js: "static/js/financial_dashboard.js"
+    view_name: "financial"
+
+  description: |
+    The financial dashboard is NOT a separate page. It is a toggle view on the
+    existing portfolio dashboard (templates/index.html). When activated:
+    1. Portfolio summary grid is hidden
+    2. Financial GridStack dashboard is shown
+    3. All data loaded via /api/financial/* endpoints
+    4. Toggle state persisted in localStorage
+    
+    Implementation uses the same Jinja2 + Vanilla JS + Tailwind pattern as the
+    rest of the application. GridStack for draggable widget layout. Plotly.js for
+    charts. No Alpine.js, React, or Vue.
+
+# ====================================================================================
+# DATA PIPELINE
+# ====================================================================================
+
+data_pipeline:
+  producer_type: "new_producer"
+
+  new_producer:
+    type: "endpoint"
+    description: |
+      Financial data is manually entered by the user through:
+      1. Individual CRUD endpoints (targets, actuals, resource costs)
+      2. Bulk CSV/YAML import endpoint
+      No automated data production — user-driven data entry only.
+      Forecast recalculation triggers automatically when actuals are saved.
+
+  backfill:
+    enabled: false
+    description: "No backfill needed — greenfield financial data"
+
+# ====================================================================================
+# RUNTIME DEPENDENCIES
+# ====================================================================================
+
+runtime_dependencies:
+  database:
+    required: false
+    description: "YAML file storage — no database required initially"
+
+  cache:
+    required: false
+    description: "In-memory cache for financial dashboard API responses (same pattern as calendar)"
+
+  external_services:
+    - name: "Encryption Key"
+      env_var: "FGSI_ENCRYPTION_KEY"
+      required: true
+      description: "Fernet encryption key for GDPR-compliant field-level encryption"
+
+  injection_pattern: |
+    Financial router depends on:
+    - FinancialRepository (instantiated with user data directory)
+    - EncryptionService (instantiated with FGSI_ENCRYPTION_KEY)
+    - ForecastEngine (stateless service)
+    - FinancialRiskEngine (depends on existing risk repository)
+    - StrategicLeverEngine (stateless service)
+    
+    All services instantiated in router module, following existing patterns in
+    routers/calendar.py and routers/milestones.py.
