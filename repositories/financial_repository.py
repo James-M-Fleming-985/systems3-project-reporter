@@ -400,6 +400,13 @@ class FinancialRepository:
             "actual_margin": actual_margin,
             "revenue_variance_pct": round(rev_var, 2),
             "cost_variance_pct": round(cost_var, 2),
+            "net_profit": round(total_rev_actual - total_cost_actual, 2),
+            "net_profit_target": round(total_rev_target - total_cost_budget, 2),
+            "profit_margin": actual_margin,
+            "profit_variance_pct": round(
+                ((total_rev_actual - total_cost_actual) - (total_rev_target - total_cost_budget))
+                / (total_rev_target - total_cost_budget) * 100, 2
+            ) if (total_rev_target - total_cost_budget) != 0 else 0,
             "financial_risk_score": risk_score,
             "on_track": rev_var >= -5 and cost_var <= 5,
             "program_count": len(program_ids),

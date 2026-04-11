@@ -115,12 +115,20 @@ function renderKPICards() {
             gs: { x: 8, y: 0, w: 4, h: 2 },
         },
         {
+            id: 'kpi-profit',
+            title: 'Net Profit',
+            value: formatCurrency(s.net_profit),
+            detail: s.profit_margin != null ? `Margin: ${s.profit_margin.toFixed(1)}%` : '',
+            variance: s.profit_variance_pct,
+            gs: { x: 0, y: 2, w: 4, h: 2 },
+        },
+        {
             id: 'kpi-forecast',
             title: 'Forecast Accuracy',
             value: s.forecast_accuracy != null ? s.forecast_accuracy.toFixed(0) + '%' : '—',
             detail: 'Model confidence',
             variance: null,
-            gs: { x: 0, y: 2, w: 4, h: 2 },
+            gs: { x: 0, y: 4, w: 4, h: 2 },
         },
         {
             id: 'kpi-resource',
@@ -128,7 +136,7 @@ function renderKPICards() {
             value: s.resource_utilisation != null ? s.resource_utilisation.toFixed(1) + '%' : '—',
             detail: 'Cost / Revenue ratio',
             variance: null,
-            gs: { x: 4, y: 2, w: 4, h: 2 },
+            gs: { x: 4, y: 4, w: 4, h: 2 },
         },
         {
             id: 'kpi-risk',
@@ -136,7 +144,7 @@ function renderKPICards() {
             value: s.financial_risk_score != null ? s.financial_risk_score.toString() : '0',
             detail: `${(FinancialDashboard.data.risks || []).length} open risk(s)`,
             variance: null,
-            gs: { x: 8, y: 2, w: 4, h: 2 },
+            gs: { x: 8, y: 4, w: 4, h: 2 },
         },
     ];
 
@@ -203,26 +211,91 @@ async function renderRevenueTrajectoryChart() {
     const { targets, actuals } = await fetchTargetsAndActuals(FinancialDashboard.currentProgramId);
     const forecasts = FinancialDashboard.data.forecasts || [];
 
+    // --- Aggregate by period with per-program breakdown ---
+    function aggregateByPeriod(records, revenueField, costField) {
+        const byDate = {};
+        records.forEach(r => {
+            const d = r.period_start;
+            if (!byDate[d]) byDate[d] = { total_revenue: 0, total_cost: 0, programs: {} };
+            const pid = r.program_id || 'portfolio';
+            if (!byDate[d].programs[pid]) byDate[d].programs[pid] = { revenue: 0, cost: 0 };
+            byDate[d].programs[pid].revenue += r[revenueField] || 0;
+            byDate[d].programs[pid].cost += r[costField] || 0;
+            byDate[d].total_revenue += r[revenueField] || 0;
+            byDate[d].total_cost += r[costField] || 0;
+        });
+        return Object.entries(byDate).sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([date, v]) => ({ date, ...v }));
+    }
+
+    const aggTargets = aggregateByPeriod(targets, 'revenue_target', 'cost_budget');
+    const aggActuals = aggregateByPeriod(actuals, 'actual_revenue', 'actual_cost');
+
+    function buildHoverText(agg, label) {
+        return agg.map(a => {
+            const lines = [`<b>${label}: ${formatCurrency(a.total_revenue)}</b>`];
+            Object.entries(a.programs).forEach(([pid, v]) => {
+                lines.push(`  ${pid}: ${formatCurrency(v.revenue)}`);
+            });
+            if (a.total_cost > 0) {
+                const profit = a.total_revenue - a.total_cost;
+                lines.push(`Cost: ${formatCurrency(a.total_cost)}`);
+                lines.push(`Profit: ${formatCurrency(profit)}`);
+            }
+            return lines.join('<br>');
+        });
+    }
+
     // Build traces
     const targetTrace = {
-        x: targets.map(t => t.period_start),
-        y: targets.map(t => t.revenue_target),
+        x: aggTargets.map(a => a.date),
+        y: aggTargets.map(a => a.total_revenue),
         name: 'Target',
         mode: 'lines+markers',
         line: { color: '#9CA3AF', dash: 'dash', width: 2 },
         marker: { size: 6 },
+        text: buildHoverText(aggTargets, 'Target Revenue'),
+        hoverinfo: 'text',
     };
 
     const actualTrace = {
-        x: actuals.map(a => a.period_start),
-        y: actuals.map(a => a.actual_revenue),
-        name: 'Actual',
+        x: aggActuals.map(a => a.date),
+        y: aggActuals.map(a => a.total_revenue),
+        name: 'Actual Revenue',
         mode: 'lines+markers',
         line: { color: '#3B82F6', width: 3 },
         marker: { size: 8 },
+        text: buildHoverText(aggActuals, 'Actual Revenue'),
+        hoverinfo: 'text',
     };
 
-    const traces = [targetTrace, actualTrace];
+    // Profit trace (actuals revenue minus costs)
+    const profitTrace = {
+        x: aggActuals.map(a => a.date),
+        y: aggActuals.map(a => a.total_revenue - a.total_cost),
+        name: 'Profit',
+        mode: 'lines+markers',
+        line: { color: '#10B981', width: 2 },
+        marker: { size: 5, symbol: 'diamond' },
+        text: aggActuals.map(a => {
+            const profit = a.total_revenue - a.total_cost;
+            const margin = a.total_revenue > 0 ? ((profit / a.total_revenue) * 100).toFixed(1) : 0;
+            return `<b>Profit: ${formatCurrency(profit)}</b><br>Margin: ${margin}%`;
+        }),
+        hoverinfo: 'text',
+    };
+
+    // Target profit trace (target revenue minus cost budget)
+    const targetProfitTrace = {
+        x: aggTargets.map(a => a.date),
+        y: aggTargets.map(a => a.total_revenue - a.total_cost),
+        name: 'Target Profit',
+        mode: 'lines',
+        line: { color: '#6EE7B7', dash: 'dash', width: 1.5 },
+        hoverinfo: 'skip',
+    };
+
+    const traces = [targetTrace, actualTrace, targetProfitTrace, profitTrace];
 
     // Add forecast with confidence band
     const revForecasts = forecasts.filter(f => f.metric === 'revenue' && f.forecast_points?.length > 0);
@@ -257,13 +330,14 @@ async function renderRevenueTrajectoryChart() {
     }
 
     Plotly.newPlot(chartEl, traces, {
-        title: 'Revenue Trajectory',
+        title: 'Revenue & Profit Trajectory',
         xaxis: { title: 'Period' },
-        yaxis: { title: 'Revenue (£)', tickformat: ',.0f' },
+        yaxis: { title: 'Amount (£)', tickformat: ',.0f' },
         legend: { orientation: 'h', y: -0.2 },
         margin: { t: 40, b: 60, l: 80, r: 20 },
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
+        hovermode: 'x unified',
     }, { responsive: true });
 
     // Drill-down on click
