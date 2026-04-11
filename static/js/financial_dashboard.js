@@ -714,3 +714,49 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// ======================================================================
+// Financial Data Upload
+// ======================================================================
+
+async function uploadFinancialData() {
+    const fileInput = document.getElementById('importFile');
+    const dataType = document.getElementById('importDataType').value;
+    const resultDiv = document.getElementById('importResult');
+
+    if (!fileInput.files.length) {
+        resultDiv.className = 'mt-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm';
+        resultDiv.textContent = 'Please select a file first.';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    resultDiv.className = 'mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm';
+    resultDiv.textContent = 'Uploading...';
+
+    try {
+        const resp = await fetch(`/api/financial/import?data_type=${encodeURIComponent(dataType)}`, {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await resp.json();
+
+        if (resp.ok && result.status === 'success') {
+            const d = result.data;
+            resultDiv.className = 'mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm';
+            resultDiv.innerHTML = `<strong>✅ Import complete:</strong> ${d.imported} of ${d.total_rows} rows imported.`
+                + (d.errors?.length ? `<br><span class="text-red-600">${d.errors.length} error(s) — check console for details.</span>` : '');
+            if (d.errors?.length) console.warn('Import errors:', d.errors);
+            // Refresh dashboard
+            refreshDashboard();
+        } else {
+            resultDiv.className = 'mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm';
+            resultDiv.textContent = '❌ ' + (result.detail || result.message || 'Import failed');
+        }
+    } catch (err) {
+        resultDiv.className = 'mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm';
+        resultDiv.textContent = '❌ Network error: ' + err.message;
+    }
+}

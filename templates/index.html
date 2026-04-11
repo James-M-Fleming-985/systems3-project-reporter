@@ -123,6 +123,31 @@
         <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Program Comparison</h3>
         <div id="comparisonTable"></div>
     </div>
+
+    <!-- Financial Data Import -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">📥 Import Financial Data</h3>
+        <p class="text-sm text-gray-600 mb-4">Upload a CSV file to import targets, actuals, or resource costs. The CSV must include columns matching the data type (e.g. <code>revenue_target, cost_budget, period, period_start, program_id</code> for targets).</p>
+        <div class="flex flex-wrap items-end gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data Type</label>
+                <select id="importDataType" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="targets">Targets (trajectory)</option>
+                    <option value="actuals">Actuals (recorded)</option>
+                    <option value="resource_costs">Resource Costs</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">CSV File</label>
+                <input type="file" id="importFile" accept=".csv,.yaml,.yml" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+            </div>
+            <button onclick="uploadFinancialData()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                Upload
+            </button>
+        </div>
+        <div id="importResult" class="mt-3 hidden"></div>
+    </div>
 </div>
 
 <!-- ============== PORTFOLIO OVERVIEW (default view) ============== -->
