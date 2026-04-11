@@ -737,8 +737,10 @@ async function uploadFinancialData() {
     resultDiv.textContent = 'Uploading...';
 
     try {
+        const csrfToken = document.getElementById('csrfToken')?.value || '';
         const resp = await fetch(`/api/financial/import?data_type=${encodeURIComponent(dataType)}`, {
             method: 'POST',
+            headers: { 'x-csrf-token': csrfToken },
             body: formData,
         });
         const result = await resp.json();

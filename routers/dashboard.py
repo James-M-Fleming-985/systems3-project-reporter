@@ -119,7 +119,8 @@ async def home(request: Request):
         "total_risks": total_risks,
         "total_changes": total_changes,
         "build_version": BUILD_VERSION,
-        "user": user
+        "user": user,
+        "csrf_token": getattr(request.state, 'csrf_token', ''),
     }
     
     return templates.TemplateResponse("index.html", context)
