@@ -712,6 +712,195 @@ function escapeHtml(str) {
 }
 
 // ======================================================================
+// Financial Data Entry Modal
+// ======================================================================
+
+let entryType = 'actual'; // 'actual' or 'target'
+
+function openFinancialEntryModal() {
+    const modal = document.getElementById('financialEntryModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Default period to current month
+    const now = new Date();
+    const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    document.getElementById('entryPeriod').value = monthStr;
+
+    // Reset fields
+    document.getElementById('entryRevenue').value = '';
+    document.getElementById('entryCost').value = '';
+    document.getElementById('entryNotes').value = '';
+    document.getElementById('entryFormResult').textContent = '';
+    document.getElementById('entryProgram').value = '';
+    document.getElementById('entryProgramCustom').classList.add('hidden');
+    updateProfitPreview();
+
+    // Populate program dropdown with known programs
+    populateProgramDropdown();
+
+    setEntryType('actual');
+}
+
+function closeFinancialEntryModal() {
+    const modal = document.getElementById('financialEntryModal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function setEntryType(type) {
+    entryType = type;
+    const actualBtn = document.getElementById('entryTypeActual');
+    const targetBtn = document.getElementById('entryTypeTarget');
+    const revLabel = document.getElementById('entryRevenueLabel');
+    const costLabel = document.getElementById('entryCostLabel');
+    const title = document.getElementById('entryModalTitle');
+
+    if (type === 'actual') {
+        actualBtn.classList.add('active');
+        targetBtn.classList.remove('active');
+        revLabel.textContent = 'Income (£)';
+        costLabel.textContent = 'Costs (£)';
+        title.textContent = '📝 Record Actual Financial Data';
+    } else {
+        targetBtn.classList.add('active');
+        actualBtn.classList.remove('active');
+        revLabel.textContent = 'Revenue Target (£)';
+        costLabel.textContent = 'Cost Budget (£)';
+        title.textContent = '🎯 Set Financial Target';
+    }
+}
+
+function populateProgramDropdown() {
+    const select = document.getElementById('entryProgram');
+    const summaries = FinancialDashboard.data.summary?.program_summaries || [];
+    const knownIds = new Set(['consultancy', 'products_and_services']);
+
+    // Add programs from summary data
+    summaries.forEach(s => knownIds.add(s.program_id));
+
+    // Rebuild options (keep first empty + last custom)
+    const options = ['<option value="">— select program —</option>'];
+    knownIds.forEach(pid => {
+        const label = pid.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        options.push(`<option value="${escapeHtml(pid)}">${escapeHtml(label)}</option>`);
+    });
+    options.push('<option value="__custom__">+ Add new program...</option>');
+    select.innerHTML = options.join('');
+
+    // Handle custom program toggle
+    select.onchange = function() {
+        const custom = document.getElementById('entryProgramCustom');
+        if (this.value === '__custom__') {
+            custom.classList.remove('hidden');
+            custom.focus();
+        } else {
+            custom.classList.add('hidden');
+        }
+    };
+}
+
+function updateProfitPreview() {
+    const rev = parseFloat(document.getElementById('entryRevenue').value) || 0;
+    const cost = parseFloat(document.getElementById('entryCost').value) || 0;
+    const profit = rev - cost;
+    const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : '0';
+    document.getElementById('entryProfitPreview').textContent = formatCurrency(profit);
+    document.getElementById('entryMarginPreview').textContent = margin + '%';
+
+    const profitEl = document.getElementById('entryProfitPreview');
+    profitEl.className = `font-semibold ${profit >= 0 ? 'text-green-700' : 'text-red-700'}`;
+}
+
+// Attach live profit calculation
+document.addEventListener('DOMContentLoaded', () => {
+    const revInput = document.getElementById('entryRevenue');
+    const costInput = document.getElementById('entryCost');
+    if (revInput) revInput.addEventListener('input', updateProfitPreview);
+    if (costInput) costInput.addEventListener('input', updateProfitPreview);
+});
+
+async function submitFinancialEntry() {
+    const resultEl = document.getElementById('entryFormResult');
+    const submitBtn = document.getElementById('entrySubmitBtn');
+
+    // Gather values
+    let programId = document.getElementById('entryProgram').value;
+    if (programId === '__custom__') {
+        programId = document.getElementById('entryProgramCustom').value.trim().toLowerCase().replace(/\s+/g, '_');
+    }
+    const periodVal = document.getElementById('entryPeriod').value; // "2026-04"
+    const revenue = parseFloat(document.getElementById('entryRevenue').value);
+    const cost = parseFloat(document.getElementById('entryCost').value);
+    const notes = document.getElementById('entryNotes').value.trim();
+
+    // Validate
+    if (!programId) { resultEl.textContent = '⚠️ Select a program'; resultEl.className = 'text-sm text-red-600'; return; }
+    if (!periodVal) { resultEl.textContent = '⚠️ Select a month'; resultEl.className = 'text-sm text-red-600'; return; }
+    if (isNaN(revenue) || revenue < 0) { resultEl.textContent = '⚠️ Enter a valid income amount'; resultEl.className = 'text-sm text-red-600'; return; }
+    if (isNaN(cost) || cost < 0) { resultEl.textContent = '⚠️ Enter a valid cost amount'; resultEl.className = 'text-sm text-red-600'; return; }
+
+    const periodStart = periodVal + '-01'; // "2026-04-01"
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
+
+    let endpoint, body;
+    if (entryType === 'actual') {
+        endpoint = '/api/financial/actuals';
+        body = {
+            actual_revenue: revenue,
+            actual_cost: cost,
+            period: 'monthly',
+            period_start: periodStart,
+            program_id: programId,
+            notes: notes || undefined,
+        };
+    } else {
+        endpoint = '/api/financial/targets';
+        body = {
+            revenue_target: revenue,
+            cost_budget: cost,
+            period: 'monthly',
+            period_start: periodStart,
+            program_id: programId,
+        };
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    resultEl.textContent = '';
+
+    try {
+        const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+            body: JSON.stringify(body),
+        });
+        const result = await resp.json();
+
+        if (resp.ok && result.status === 'success') {
+            resultEl.textContent = '✅ Saved successfully';
+            resultEl.className = 'text-sm text-green-600';
+
+            // Refresh dashboard in background
+            refreshDashboard();
+
+            // Close modal after brief delay
+            setTimeout(() => closeFinancialEntryModal(), 1200);
+        } else {
+            resultEl.textContent = '❌ ' + (result.detail || 'Failed to save');
+            resultEl.className = 'text-sm text-red-600';
+        }
+    } catch (err) {
+        resultEl.textContent = '❌ Network error: ' + err.message;
+        resultEl.className = 'text-sm text-red-600';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save';
+    }
+}
+
+// ======================================================================
 // Financial Data Upload
 // ======================================================================
 

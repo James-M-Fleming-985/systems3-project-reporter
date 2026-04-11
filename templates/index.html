@@ -89,8 +89,14 @@
 
 <!-- ============== FINANCIAL INTELLIGENCE VIEW (hidden by default) ============== -->
 <div id="financialView" class="hidden">
-    <!-- Breadcrumb Navigation -->
-    <div id="financialBreadcrumb"></div>
+    <!-- Breadcrumb Navigation + Record Data Button -->
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div id="financialBreadcrumb"></div>
+        <button onclick="openFinancialEntryModal()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm" title="Open form to record monthly income, costs, or set revenue targets">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Record Financial Data
+        </button>
+    </div>
 
     <!-- KPI Grid (GridStack) -->
     <div id="financialKPIGrid" class="grid-stack mb-6" style="min-height: 200px;"></div>
@@ -166,6 +172,96 @@
             </button>
         </div>
         <div id="importResult" class="mt-3 hidden"></div>
+    </div>
+</div>
+
+<!-- ============== FINANCIAL DATA ENTRY MODAL ============== -->
+<div id="financialEntryModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onclick="closeFinancialEntryModal()"></div>
+    <!-- Modal -->
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg relative" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800" id="entryModalTitle">📝 Record Financial Data</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Enter monthly income and costs for a program</p>
+                </div>
+                <button onclick="closeFinancialEntryModal()" class="text-gray-400 hover:text-gray-600 transition p-1" title="Close">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <!-- Entry Type Toggle -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">What are you recording?</label>
+                    <div class="view-toggle w-full">
+                        <button class="active flex-1" id="entryTypeActual" onclick="setEntryType('actual')">Actual (what happened)</button>
+                        <button class="flex-1" id="entryTypeTarget" onclick="setEntryType('target')">Target (goal)</button>
+                    </div>
+                </div>
+                <!-- Program -->
+                <div>
+                    <label for="entryProgram" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                    <select id="entryProgram" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">— select program —</option>
+                        <option value="consultancy">Consultancy</option>
+                        <option value="products_and_services">Products & Services</option>
+                        <option value="__custom__">+ Add new program...</option>
+                    </select>
+                    <input type="text" id="entryProgramCustom" class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2 focus:ring-2 focus:ring-blue-500" placeholder="Enter new program name (e.g. apps)"/>
+                </div>
+                <!-- Period -->
+                <div>
+                    <label for="entryPeriod" class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <input type="month" id="entryPeriod" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"/>
+                </div>
+                <!-- Revenue / Income -->
+                <div>
+                    <label for="entryRevenue" class="block text-sm font-medium text-gray-700 mb-1" id="entryRevenueLabel">Income (£)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-400 text-sm">£</span>
+                        <input type="number" id="entryRevenue" min="0" step="0.01" class="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" placeholder="0.00"/>
+                    </div>
+                </div>
+                <!-- Costs -->
+                <div>
+                    <label for="entryCost" class="block text-sm font-medium text-gray-700 mb-1" id="entryCostLabel">Costs (£)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-400 text-sm">£</span>
+                        <input type="number" id="entryCost" min="0" step="0.01" class="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" placeholder="0.00"/>
+                    </div>
+                </div>
+                <!-- Calculated Profit (read-only) -->
+                <div class="bg-gray-50 rounded-lg px-3 py-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">Net Profit</span>
+                        <span class="font-semibold text-gray-800" id="entryProfitPreview">£0.00</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs mt-1">
+                        <span class="text-gray-500">Margin</span>
+                        <span class="font-medium text-gray-600" id="entryMarginPreview">0%</span>
+                    </div>
+                </div>
+                <!-- Notes -->
+                <div>
+                    <label for="entryNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <input type="text" id="entryNotes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" placeholder="e.g. New client signed, product launch"/>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div id="entryFormResult" class="text-sm"></div>
+                <div class="flex gap-3">
+                    <button onclick="closeFinancialEntryModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+                    <button onclick="submitFinancialEntry()" id="entrySubmitBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
