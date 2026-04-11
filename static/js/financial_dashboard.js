@@ -715,9 +715,7 @@ function escapeHtml(str) {
 // Financial Data Entry Modal
 // ======================================================================
 
-let entryType = 'actual'; // 'actual' or 'target'
-
-function openFinancialEntryModal() {
+async function openFinancialEntryModal() {
     const modal = document.getElementById('financialEntryModal');
     if (!modal) return;
     modal.classList.remove('hidden');
@@ -728,19 +726,12 @@ function openFinancialEntryModal() {
     const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     document.getElementById('entryPeriod').value = monthStr;
 
-    // Reset fields
-    document.getElementById('entryRevenue').value = '';
-    document.getElementById('entryCost').value = '';
+    // Reset
     document.getElementById('entryNotes').value = '';
     document.getElementById('entryFormResult').textContent = '';
-    document.getElementById('entryProgram').value = '';
-    document.getElementById('entryProgramCustom').classList.add('hidden');
-    updateProfitPreview();
 
-    // Populate program dropdown with known programs
-    populateProgramDropdown();
-
-    setEntryType('actual');
+    // Fetch all programs (active + archived) from portfolio manager
+    await populateProgramRows();
 }
 
 function closeFinancialEntryModal() {
@@ -749,155 +740,155 @@ function closeFinancialEntryModal() {
     document.body.style.overflow = '';
 }
 
-function setEntryType(type) {
-    entryType = type;
-    const actualBtn = document.getElementById('entryTypeActual');
-    const targetBtn = document.getElementById('entryTypeTarget');
-    const revLabel = document.getElementById('entryRevenueLabel');
-    const costLabel = document.getElementById('entryCostLabel');
-    const title = document.getElementById('entryModalTitle');
+async function populateProgramRows() {
+    const container = document.getElementById('entryProgramRows');
+    container.innerHTML = '<div class="text-sm text-gray-400 py-4 text-center">Loading programs…</div>';
 
-    if (type === 'actual') {
-        actualBtn.classList.add('active');
-        targetBtn.classList.remove('active');
-        revLabel.textContent = 'Income (£)';
-        costLabel.textContent = 'Costs (£)';
-        title.textContent = '📝 Record Actual Financial Data';
-    } else {
-        targetBtn.classList.add('active');
-        actualBtn.classList.remove('active');
-        revLabel.textContent = 'Revenue Target (£)';
-        costLabel.textContent = 'Cost Budget (£)';
-        title.textContent = '🎯 Set Financial Target';
+    try {
+        const resp = await fetch('/api/projects?include_archived=true');
+        const programs = await resp.json();
+
+        if (!programs.length) {
+            container.innerHTML = '<div class="text-sm text-gray-500 py-4 text-center">No programs found. Create a program first.</div>';
+            return;
+        }
+
+        container.innerHTML = programs.map(p => {
+            const pid = escapeHtml(p.code || p.id);
+            const label = escapeHtml(p.name);
+            const archivedBadge = p.archived ? ' <span class="text-xs text-gray-400">(archived)</span>' : '';
+            return `
+                <div class="grid grid-cols-12 gap-2 items-center bg-gray-50 rounded-lg px-3 py-2" data-program-id="${pid}">
+                    <div class="col-span-4 text-sm font-medium text-gray-700 truncate" title="${label}">${label}${archivedBadge}</div>
+                    <div class="col-span-3">
+                        <div class="relative">
+                            <span class="absolute left-2 top-1.5 text-gray-400 text-xs">£</span>
+                            <input type="number" min="0" step="0.01" class="entry-revenue w-full border border-gray-300 rounded pl-5 pr-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-blue-500" placeholder="0.00" oninput="updateEntryTotals()"/>
+                        </div>
+                    </div>
+                    <div class="col-span-3">
+                        <div class="relative">
+                            <span class="absolute left-2 top-1.5 text-gray-400 text-xs">£</span>
+                            <input type="number" min="0" step="0.01" class="entry-cost w-full border border-gray-300 rounded pl-5 pr-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-blue-500" placeholder="0.00" oninput="updateEntryTotals()"/>
+                        </div>
+                    </div>
+                    <div class="col-span-2 text-sm text-right font-medium entry-profit text-gray-400">£0</div>
+                </div>`;
+        }).join('');
+
+        updateEntryTotals();
+    } catch (err) {
+        container.innerHTML = `<div class="text-sm text-red-500 py-4 text-center">Failed to load programs: ${escapeHtml(err.message)}</div>`;
     }
 }
 
-function populateProgramDropdown() {
-    const select = document.getElementById('entryProgram');
-    const summaries = FinancialDashboard.data.summary?.program_summaries || [];
-    const knownIds = new Set(['consultancy', 'products_and_services']);
+function updateEntryTotals() {
+    const rows = document.querySelectorAll('#entryProgramRows [data-program-id]');
+    let totalRev = 0, totalCost = 0;
 
-    // Add programs from summary data
-    summaries.forEach(s => knownIds.add(s.program_id));
+    rows.forEach(row => {
+        const rev = parseFloat(row.querySelector('.entry-revenue').value) || 0;
+        const cost = parseFloat(row.querySelector('.entry-cost').value) || 0;
+        const profit = rev - cost;
+        totalRev += rev;
+        totalCost += cost;
 
-    // Rebuild options (keep first empty + last custom)
-    const options = ['<option value="">— select program —</option>'];
-    knownIds.forEach(pid => {
-        const label = pid.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        options.push(`<option value="${escapeHtml(pid)}">${escapeHtml(label)}</option>`);
+        const profitEl = row.querySelector('.entry-profit');
+        profitEl.textContent = formatCurrency(profit);
+        profitEl.className = `col-span-2 text-sm text-right font-medium entry-profit ${profit > 0 ? 'text-green-700' : profit < 0 ? 'text-red-700' : 'text-gray-400'}`;
     });
-    options.push('<option value="__custom__">+ Add new program...</option>');
-    select.innerHTML = options.join('');
 
-    // Handle custom program toggle
-    select.onchange = function() {
-        const custom = document.getElementById('entryProgramCustom');
-        if (this.value === '__custom__') {
-            custom.classList.remove('hidden');
-            custom.focus();
-        } else {
-            custom.classList.add('hidden');
-        }
-    };
+    const totalProfit = totalRev - totalCost;
+    const margin = totalRev > 0 ? ((totalProfit / totalRev) * 100).toFixed(1) : '0';
+
+    document.getElementById('entryTotalRevenue').textContent = formatCurrency(totalRev);
+    document.getElementById('entryTotalCost').textContent = formatCurrency(totalCost);
+
+    const totalProfitEl = document.getElementById('entryTotalProfit');
+    totalProfitEl.textContent = formatCurrency(totalProfit);
+    totalProfitEl.className = `col-span-2 text-right ${totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`;
+
+    document.getElementById('entryTotalMargin').textContent = `Margin: ${margin}%`;
 }
-
-function updateProfitPreview() {
-    const rev = parseFloat(document.getElementById('entryRevenue').value) || 0;
-    const cost = parseFloat(document.getElementById('entryCost').value) || 0;
-    const profit = rev - cost;
-    const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : '0';
-    document.getElementById('entryProfitPreview').textContent = formatCurrency(profit);
-    document.getElementById('entryMarginPreview').textContent = margin + '%';
-
-    const profitEl = document.getElementById('entryProfitPreview');
-    profitEl.className = `font-semibold ${profit >= 0 ? 'text-green-700' : 'text-red-700'}`;
-}
-
-// Attach live profit calculation
-document.addEventListener('DOMContentLoaded', () => {
-    const revInput = document.getElementById('entryRevenue');
-    const costInput = document.getElementById('entryCost');
-    if (revInput) revInput.addEventListener('input', updateProfitPreview);
-    if (costInput) costInput.addEventListener('input', updateProfitPreview);
-});
 
 async function submitFinancialEntry() {
     const resultEl = document.getElementById('entryFormResult');
     const submitBtn = document.getElementById('entrySubmitBtn');
-
-    // Gather values
-    let programId = document.getElementById('entryProgram').value;
-    if (programId === '__custom__') {
-        programId = document.getElementById('entryProgramCustom').value.trim().toLowerCase().replace(/\s+/g, '_');
-    }
-    const periodVal = document.getElementById('entryPeriod').value; // "2026-04"
-    const revenue = parseFloat(document.getElementById('entryRevenue').value);
-    const cost = parseFloat(document.getElementById('entryCost').value);
+    const periodVal = document.getElementById('entryPeriod').value;
     const notes = document.getElementById('entryNotes').value.trim();
 
-    // Validate
-    if (!programId) { resultEl.textContent = '⚠️ Select a program'; resultEl.className = 'text-sm text-red-600'; return; }
-    if (!periodVal) { resultEl.textContent = '⚠️ Select a month'; resultEl.className = 'text-sm text-red-600'; return; }
-    if (isNaN(revenue) || revenue < 0) { resultEl.textContent = '⚠️ Enter a valid income amount'; resultEl.className = 'text-sm text-red-600'; return; }
-    if (isNaN(cost) || cost < 0) { resultEl.textContent = '⚠️ Enter a valid cost amount'; resultEl.className = 'text-sm text-red-600'; return; }
-
-    const periodStart = periodVal + '-01'; // "2026-04-01"
-    const csrfToken = document.getElementById('csrfToken')?.value || '';
-
-    let endpoint, body;
-    if (entryType === 'actual') {
-        endpoint = '/api/financial/actuals';
-        body = {
-            actual_revenue: revenue,
-            actual_cost: cost,
-            period: 'monthly',
-            period_start: periodStart,
-            program_id: programId,
-            notes: notes || undefined,
-        };
-    } else {
-        endpoint = '/api/financial/targets';
-        body = {
-            revenue_target: revenue,
-            cost_budget: cost,
-            period: 'monthly',
-            period_start: periodStart,
-            program_id: programId,
-        };
+    if (!periodVal) {
+        resultEl.textContent = '⚠️ Select a month';
+        resultEl.className = 'text-sm text-red-600';
+        return;
     }
+
+    // Collect rows with any non-zero values
+    const rows = document.querySelectorAll('#entryProgramRows [data-program-id]');
+    const entries = [];
+    rows.forEach(row => {
+        const programId = row.dataset.programId;
+        const rev = parseFloat(row.querySelector('.entry-revenue').value) || 0;
+        const cost = parseFloat(row.querySelector('.entry-cost').value) || 0;
+        if (rev > 0 || cost > 0) {
+            entries.push({ programId, revenue: rev, cost });
+        }
+    });
+
+    if (!entries.length) {
+        resultEl.textContent = '⚠️ Enter income or costs for at least one program';
+        resultEl.className = 'text-sm text-red-600';
+        return;
+    }
+
+    const periodStart = periodVal + '-01';
+    const csrfToken = document.getElementById('csrfToken')?.value || '';
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
     resultEl.textContent = '';
 
-    try {
-        const resp = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
-            body: JSON.stringify(body),
-        });
-        const result = await resp.json();
+    let savedCount = 0;
+    const errors = [];
 
-        if (resp.ok && result.status === 'success') {
-            resultEl.textContent = '✅ Saved successfully';
-            resultEl.className = 'text-sm text-green-600';
-
-            // Refresh dashboard in background
-            refreshDashboard();
-
-            // Close modal after brief delay
-            setTimeout(() => closeFinancialEntryModal(), 1200);
-        } else {
-            resultEl.textContent = '❌ ' + (result.detail || 'Failed to save');
-            resultEl.className = 'text-sm text-red-600';
+    for (const entry of entries) {
+        try {
+            const resp = await fetch('/api/financial/actuals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+                body: JSON.stringify({
+                    actual_revenue: entry.revenue,
+                    actual_cost: entry.cost,
+                    period: 'monthly',
+                    period_start: periodStart,
+                    program_id: entry.programId,
+                    notes: notes || undefined,
+                }),
+            });
+            const result = await resp.json();
+            if (resp.ok && result.status === 'success') {
+                savedCount++;
+            } else {
+                errors.push(`${entry.programId}: ${result.detail || 'failed'}`);
+            }
+        } catch (err) {
+            errors.push(`${entry.programId}: ${err.message}`);
         }
-    } catch (err) {
-        resultEl.textContent = '❌ Network error: ' + err.message;
-        resultEl.className = 'text-sm text-red-600';
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Save';
     }
+
+    if (errors.length === 0) {
+        resultEl.textContent = `✅ Saved ${savedCount} program${savedCount > 1 ? 's' : ''} successfully`;
+        resultEl.className = 'text-sm text-green-600';
+        refreshDashboard();
+        setTimeout(() => closeFinancialEntryModal(), 1200);
+    } else {
+        resultEl.textContent = `⚠️ ${savedCount} saved, ${errors.length} failed`;
+        resultEl.className = 'text-sm text-red-600';
+        if (savedCount > 0) refreshDashboard();
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save All';
 }
 
 // ======================================================================
