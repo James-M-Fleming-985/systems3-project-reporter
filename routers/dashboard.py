@@ -952,7 +952,7 @@ async def changes_table_preview(
 
 
 @router.get("/api/projects")
-async def get_projects(include_archived: bool = False):
+async def get_projects(request: Request, include_archived: bool = False):
     """
     API endpoint to get list of all projects
     Used by upload forms to populate program dropdown
@@ -961,7 +961,9 @@ async def get_projects(include_archived: bool = False):
     Query param include_archived=true to include archived programs
     """
     try:
-        projects = project_repo.load_all_projects()
+        from middleware.project_context import _get_user_repo
+        user_repo = _get_user_repo(request)
+        projects = user_repo.load_all_projects()
         if not include_archived:
             projects = [p for p in projects if not getattr(p, 'archived', False)]
         logger.info(f"📋 API /api/projects returning {len(projects)} projects (include_archived={include_archived})")
