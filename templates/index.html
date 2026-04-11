@@ -98,20 +98,36 @@
     <!-- Charts Row 1: Revenue Trajectory + Cost Breakdown -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
-            <div id="revenueTrajectoryChart" style="height: 360px;"></div>
+            <div class="flex items-center justify-between mb-1">
+                <h4 class="text-sm font-semibold text-gray-700">Revenue & Profit Trajectory</h4>
+                <span class="text-gray-400 cursor-help" title="Shows your target revenue trajectory (dashed grey) vs actual revenue (blue) and profit (green). Hover any point for a per-program breakdown. The forecast line appears after 3+ months of actuals data.">ℹ️</span>
+            </div>
+            <div id="revenueTrajectoryChart" style="height: 340px;"></div>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
-            <div id="costBreakdownChart" style="height: 360px;"></div>
+            <div class="flex items-center justify-between mb-1">
+                <h4 class="text-sm font-semibold text-gray-700">Cost by Program</h4>
+                <span class="text-gray-400 cursor-help" title="Compares actual spend (bars) against budget (markers) for each program. Green = within budget, amber = 5-10% over, red = 10%+ over budget.">ℹ️</span>
+            </div>
+            <div id="costBreakdownChart" style="height: 340px;"></div>
         </div>
     </div>
 
     <!-- Charts Row 2: Contribution + Strategic Levers Chart -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
-            <div id="contributionChart" style="height: 360px;"></div>
+            <div class="flex items-center justify-between mb-1">
+                <h4 class="text-sm font-semibold text-gray-700">Program Contribution</h4>
+                <span class="text-gray-400 cursor-help" title="Shows what percentage of total revenue each program contributes. Blue = direct revenue programs, purple = indirect revenue impact programs.">ℹ️</span>
+            </div>
+            <div id="contributionChart" style="height: 340px;"></div>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
-            <div id="leverChart" style="height: 360px;"></div>
+            <div class="flex items-center justify-between mb-1">
+                <h4 class="text-sm font-semibold text-gray-700">Strategic Levers by Impact</h4>
+                <span class="text-gray-400 cursor-help" title="Ranked corrective actions recommended by the intelligence engine. Longer bars = higher estimated financial impact. These appear when the system detects you are drifting off trajectory.">ℹ️</span>
+            </div>
+            <div id="leverChart" style="height: 340px;"></div>
         </div>
     </div>
 

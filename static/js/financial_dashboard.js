@@ -330,15 +330,14 @@ async function renderRevenueTrajectoryChart() {
     }
 
     Plotly.newPlot(chartEl, traces, {
-        title: 'Revenue & Profit Trajectory',
         xaxis: { title: 'Period' },
         yaxis: { title: 'Amount (£)', tickformat: ',.0f' },
         legend: { orientation: 'h', y: -0.2 },
-        margin: { t: 40, b: 60, l: 80, r: 20 },
+        margin: { t: 10, b: 60, l: 80, r: 20 },
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
         hovermode: 'x unified',
-    }, { responsive: true });
+    }, { responsive: true, displayModeBar: false });
 
     // Drill-down on click
     chartEl.on('plotly_click', function (data) {
@@ -386,14 +385,13 @@ function renderCostBreakdownChart() {
     };
 
     Plotly.newPlot(chartEl, [trace, budgetTrace], {
-        title: 'Cost by Program',
         xaxis: { title: 'Program' },
         yaxis: { title: 'Cost (£)', tickformat: ',.0f' },
         showlegend: false,
-        margin: { t: 40, b: 80, l: 80, r: 20 },
+        margin: { t: 10, b: 80, l: 80, r: 20 },
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
-    }, { responsive: true });
+    }, { responsive: true, displayModeBar: false });
 
     // Drill-down on bar click
     chartEl.on('plotly_click', function (data) {
@@ -440,11 +438,10 @@ function renderContributionChart() {
         textinfo: 'label+percent',
         textposition: 'outside',
     }], {
-        title: 'Program Contribution',
         showlegend: false,
-        margin: { t: 40, b: 20, l: 20, r: 20 },
+        margin: { t: 10, b: 20, l: 20, r: 20 },
         paper_bgcolor: 'transparent',
-    }, { responsive: true });
+    }, { responsive: true, displayModeBar: false });
 }
 
 function renderLeverChart() {
@@ -473,13 +470,12 @@ function renderLeverChart() {
         text: levers.map(l => `£${l.estimated_impact.toLocaleString()}`),
         textposition: 'outside',
     }], {
-        title: 'Strategic Levers by Impact',
         xaxis: { title: 'Estimated Impact (£)', tickformat: ',.0f' },
         yaxis: { automargin: true },
-        margin: { t: 40, b: 40, l: 200, r: 80 },
+        margin: { t: 10, b: 40, l: 200, r: 80 },
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
-    }, { responsive: true });
+    }, { responsive: true, displayModeBar: false });
 }
 
 // ======================================================================
