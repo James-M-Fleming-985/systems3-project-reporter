@@ -340,10 +340,26 @@ class FinancialRepository:
     # Financial Summary (aggregation)
     # ------------------------------------------------------------------
 
-    def get_financial_summary(self, program_id: Optional[str] = None) -> dict:
-        """Build aggregated financial summary for dashboard KPIs."""
+    def get_financial_summary(self, program_id: Optional[str] = None,
+                              period_start: Optional[str] = None,
+                              period_end: Optional[str] = None) -> dict:
+        """Build aggregated financial summary for dashboard KPIs.
+        
+        Args:
+            program_id: Filter to a specific program
+            period_start: ISO date string (e.g. '2026-04-01') — include records on or after
+            period_end: ISO date string (e.g. '2027-03-31') — include records on or before
+        """
         targets = self.list_targets(program_id=program_id)
         actuals = self.list_actuals(program_id=program_id)
+
+        # Apply date-range filtering
+        if period_start:
+            targets = [t for t in targets if t.get("period_start", "") >= period_start]
+            actuals = [a for a in actuals if a.get("period_start", "") >= period_start]
+        if period_end:
+            targets = [t for t in targets if t.get("period_start", "") <= period_end]
+            actuals = [a for a in actuals if a.get("period_start", "") <= period_end]
 
         total_rev_target = sum(t.get("revenue_target", 0) for t in targets)
         total_cost_budget = sum(t.get("cost_budget", 0) for t in targets)

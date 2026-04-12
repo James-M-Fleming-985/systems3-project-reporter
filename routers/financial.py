@@ -304,12 +304,18 @@ async def refresh_risks(request: Request, program_id: Optional[str] = Query(None
 async def list_levers(
     request: Request,
     program_id: Optional[str] = Query(None),
+    period_start: Optional[str] = Query(None),
+    period_end: Optional[str] = Query(None),
 ):
     repo = _get_repo(_user_id_from_request(request))
     try:
         from services.strategic_lever_engine import StrategicLeverEngine
         engine = StrategicLeverEngine(repo)
-        levers = engine.generate_levers(program_id=program_id)
+        levers = engine.generate_levers(
+            program_id=program_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
         return JSONResponse(content={"status": "success", "data": levers})
     except ImportError:
         return JSONResponse(content={"status": "success", "data": [], "message": "Strategic lever engine not available"})
@@ -326,9 +332,15 @@ async def list_levers(
 async def financial_summary(
     request: Request,
     program_id: Optional[str] = Query(None),
+    period_start: Optional[str] = Query(None),
+    period_end: Optional[str] = Query(None),
 ):
     repo = _get_repo(_user_id_from_request(request))
-    summary = repo.get_financial_summary(program_id=program_id)
+    summary = repo.get_financial_summary(
+        program_id=program_id,
+        period_start=period_start,
+        period_end=period_end,
+    )
     return JSONResponse(content={"status": "success", "data": summary})
 
 

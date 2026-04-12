@@ -18,14 +18,20 @@ class StrategicLeverEngine:
     def __init__(self, financial_repo):
         self.repo = financial_repo
 
-    def generate_levers(self, program_id: Optional[str] = None) -> List[dict]:
+    def generate_levers(self, program_id: Optional[str] = None,
+                        period_start: Optional[str] = None,
+                        period_end: Optional[str] = None) -> List[dict]:
         """
         Analyse current financial state and generate strategic lever recommendations.
         Returns list of lever dicts ranked by estimated_impact descending.
         """
         levers = []
 
-        summary = self.repo.get_financial_summary(program_id=program_id)
+        summary = self.repo.get_financial_summary(
+            program_id=program_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
         if not summary:
             return levers
 
@@ -171,6 +177,20 @@ class StrategicLeverEngine:
 
         # Sort by estimated_impact descending
         levers.sort(key=lambda l: l.get("estimated_impact", 0), reverse=True)
+
+        # Sanity cap: limit impacts to annualised revenue target to prevent
+        # decade-scale sums producing unrealistic recommendations.
+        annual_cap = total_rev_target if total_rev_target > 0 else total_cost_budget
+        if annual_cap > 0:
+            for lever in levers:
+                if lever["estimated_impact"] > annual_cap:
+                    lever["estimated_impact"] = round(annual_cap, 2)
+
+        # Data maturity: if no actuals recorded, reduce confidence and flag
+        if total_rev_actual == 0 and total_cost_actual == 0:
+            for lever in levers:
+                lever["confidence"] = round(lever["confidence"] * 0.5, 2)
+                lever["description"] = "[Limited data] " + lever["description"]
 
         return levers
 

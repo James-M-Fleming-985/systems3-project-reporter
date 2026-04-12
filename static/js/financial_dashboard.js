@@ -33,13 +33,23 @@ function initFinancialDashboard() {
 // ======================================================================
 
 async function fetchFinancialSummary(programId) {
-    const params = programId ? `?program_id=${encodeURIComponent(programId)}` : '';
+    // Build query params with rolling 12-month date range
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 12, 0);
+    const periodStart = startDate.toISOString().slice(0, 10);
+    const periodEnd = endDate.toISOString().slice(0, 10);
+
+    const qp = new URLSearchParams({ period_start: periodStart, period_end: periodEnd });
+    if (programId) qp.set('program_id', programId);
+    const qs = '?' + qp.toString();
+
     try {
         const [summaryRes, forecastRes, riskRes, leverRes] = await Promise.all([
-            fetch(`/api/financial/summary${params}`),
-            fetch(`/api/financial/forecast${params}`),
-            fetch(`/api/financial/risks${params}`),
-            fetch(`/api/financial/levers${params}`),
+            fetch(`/api/financial/summary${qs}`),
+            fetch(`/api/financial/forecast${qs}`),
+            fetch(`/api/financial/risks${qs}`),
+            fetch(`/api/financial/levers${qs}`),
         ]);
 
         const summary = await summaryRes.json();
@@ -407,9 +417,14 @@ function renderContributionChart() {
 
     const summaries = FinancialDashboard.data.summary?.program_summaries || [];
     if (summaries.length === 0) {
-        chartEl.innerHTML = '<p class="text-gray-400 text-sm text-center p-4">No contribution data available</p>';
+        chartEl.innerHTML = '<p class="text-gray-400 text-sm text-center p-4">No program data available yet. Record monthly financials to see contributions.</p>';
         return;
     }
+
+    // Use actuals if available, otherwise fall back to targets
+    const hasActuals = summaries.some(s => (s.revenue_actual || 0) > 0 || (s.cost_actual || 0) > 0);
+    const valueKey = hasActuals ? 'revenue_actual' : 'revenue_target';
+    const suffix = hasActuals ? '' : ' (Target)';
 
     const direct = summaries.filter(s => s.contribution_type === 'direct_revenue');
     const indirect = summaries.filter(s => s.contribution_type === 'indirect_revenue_impact');
@@ -419,15 +434,26 @@ function renderContributionChart() {
     const colors = [];
 
     direct.forEach(s => {
-        labels.push(s.program_id + ' (Direct)');
-        values.push(s.revenue_actual || 0);
-        colors.push('#3B82F6');
+        const val = s[valueKey] || 0;
+        if (val > 0) {
+            labels.push(s.program_id + ' (Direct)' + suffix);
+            values.push(val);
+            colors.push('#3B82F6');
+        }
     });
     indirect.forEach(s => {
-        labels.push(s.program_id + ' (Indirect)');
-        values.push(s.revenue_actual || 0);
-        colors.push('#8B5CF6');
+        const val = s[valueKey] || 0;
+        if (val > 0) {
+            labels.push(s.program_id + ' (Indirect)' + suffix);
+            values.push(val);
+            colors.push('#8B5CF6');
+        }
     });
+
+    if (values.length === 0) {
+        chartEl.innerHTML = '<p class="text-gray-400 text-sm text-center p-4">No revenue data recorded yet. Record monthly financials to see contributions.</p>';
+        return;
+    }
 
     Plotly.newPlot(chartEl, [{
         labels: labels,
@@ -746,10 +772,18 @@ async function populateProgramRows() {
 
     try {
         const resp = await fetch('/api/projects?include_archived=true');
+        if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({}));
+            const msg = resp.status === 401
+                ? 'Session expired — please refresh the page and log in again.'
+                : `Error loading programs (${resp.status}): ${errBody.detail || 'unknown'}`;
+            container.innerHTML = `<div class="text-sm text-red-500 py-4 text-center">${escapeHtml(msg)}</div>`;
+            return;
+        }
         const programs = await resp.json();
 
-        if (!programs.length) {
-            container.innerHTML = '<div class="text-sm text-gray-500 py-4 text-center">No programs found. Create a program first.</div>';
+        if (!Array.isArray(programs) || programs.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-500 py-4 text-center">No programs found. Create a program in the Portfolio dashboard first.</div>';
             return;
         }
 
