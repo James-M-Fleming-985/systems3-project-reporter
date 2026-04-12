@@ -517,7 +517,7 @@ async function onDestinationChanged() {
     progSel.innerHTML = '<option value="">Loading...</option>';
     if (!cachedPrograms) {
         try {
-            const resp = await fetch('/dashboard/api/projects?include_archived=false');
+            const resp = await fetch('/dashboard/projects?include_archived=false');
             cachedPrograms = await resp.json();
         } catch (err) { console.error('Load programs error:', err); cachedPrograms = []; }
     }

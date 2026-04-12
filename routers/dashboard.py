@@ -951,11 +951,11 @@ async def changes_table_preview(
     )
 
 
-@router.get("/api/projects")
+@router.get("/projects")
 async def get_projects(request: Request, include_archived: bool = False):
     """
-    API endpoint to get list of all projects
-    Used by upload forms to populate program dropdown
+    API endpoint to get list of all projects (mounted at /dashboard/projects)
+    Used by upload forms and financial modal to populate program lists
     
     Returns both project_code (for API lookups) and project_name (for display)
     Query param include_archived=true to include archived programs
@@ -966,11 +966,11 @@ async def get_projects(request: Request, include_archived: bool = False):
         projects = user_repo.load_all_projects()
         if not include_archived:
             projects = [p for p in projects if not getattr(p, 'archived', False)]
-        logger.info(f"📋 API /api/projects returning {len(projects)} projects (include_archived={include_archived})")
+        logger.info(f"📋 API /dashboard/projects returning {len(projects)} projects (include_archived={include_archived})")
         # Return both code and name - code is used for schedule lookups
         return [{"name": p.project_name, "code": p.project_code, "id": p.project_code, "archived": getattr(p, 'archived', False)} for p in projects]
     except Exception as e:
-        logger.error(f"❌ Error in /api/projects: {e}")
+        logger.error(f"❌ Error in /dashboard/projects: {e}")
         import traceback
         logger.error(traceback.format_exc())
         # Return empty list instead of crashing

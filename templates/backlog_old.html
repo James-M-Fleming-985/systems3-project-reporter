@@ -482,7 +482,7 @@ async function loadPrograms() {
         return;
     }
     try {
-        const resp = await fetch('/dashboard/api/projects?include_archived=false');
+        const resp = await fetch('/dashboard/projects?include_archived=false');
         cachedPrograms = await resp.json();
         populateProgramSelect(cachedPrograms);
     } catch (err) {

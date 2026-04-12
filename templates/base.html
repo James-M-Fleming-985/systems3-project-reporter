@@ -743,7 +743,7 @@
         async function getNavPrograms() {
             if (_navPrograms) return _navPrograms;
             try {
-                const r = await fetch('/dashboard/api/projects');
+                const r = await fetch('/dashboard/projects');
                 _navPrograms = r.ok ? await r.json() : [];
             } catch(e) { _navPrograms = []; }
             return _navPrograms;

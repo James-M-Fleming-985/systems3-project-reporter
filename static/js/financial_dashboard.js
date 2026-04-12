@@ -771,7 +771,7 @@ async function populateProgramRows() {
     container.innerHTML = '<div class="text-sm text-gray-400 py-4 text-center">Loading programs…</div>';
 
     try {
-        const resp = await fetch('/api/projects?include_archived=true');
+        const resp = await fetch('/dashboard/projects?include_archived=true');
         if (!resp.ok) {
             const errBody = await resp.json().catch(() => ({}));
             const msg = resp.status === 401

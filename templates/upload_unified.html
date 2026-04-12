@@ -971,7 +971,7 @@ async function populateProgramDropdown() {
         console.log('🔶 Selected program from storage:', selectedProgram);
         
         // Fetch all projects from API
-        const apiUrl = '/dashboard/api/projects';
+        const apiUrl = '/dashboard/projects';
         console.log('🔶 Fetching from:', apiUrl);
         const response = await fetch(apiUrl);
         console.log('🔶 Response status:', response.status);
@@ -2478,7 +2478,7 @@ async function populateScheduleProgramDropdown() {
     
     try {
         // Fetch all projects from API
-        const apiUrl = '/dashboard/api/projects';
+        const apiUrl = '/dashboard/projects';
         console.log('🔷 Fetching from:', apiUrl);
         const response = await fetch(apiUrl);
         console.log('🔷 Response status:', response.status);

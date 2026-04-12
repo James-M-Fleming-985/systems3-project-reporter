@@ -100,6 +100,26 @@ async def delete_target(target_id: str, request: Request):
     return JSONResponse(content={"status": "success", "message": "Target deleted"})
 
 
+@router.delete("/targets")
+async def delete_targets_by_program(
+    request: Request,
+    program_id: str = Query(..., description="Delete all targets for this program_id"),
+):
+    """Delete all targets for a given program_id. Used to clear old/renamed program data."""
+    repo = _get_repo(_user_id_from_request(request))
+    targets = repo.list_targets(program_id=program_id)
+    if not targets:
+        raise HTTPException(404, f"No targets found for program_id '{program_id}'")
+    deleted_count = 0
+    for t in targets:
+        if repo.delete_target(t.get("id")):
+            deleted_count += 1
+    return JSONResponse(content={
+        "status": "success",
+        "message": f"Deleted {deleted_count} targets for program '{program_id}'",
+    })
+
+
 # ======================================================================
 # Financial Actuals
 # ======================================================================
@@ -516,7 +536,7 @@ def _validate_import_row(row: dict, data_type: str):
     else:
         required = []
 
-    missing = [f for f in required if not row.get(f)]
+    missing = [f for f in required if row.get(f) is None or (isinstance(row.get(f), str) and row.get(f).strip() == "")]
     if missing:
         raise ValueError(f"Missing required fields: {', '.join(missing)}")
 
