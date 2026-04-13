@@ -146,6 +146,15 @@ async def create_program_without_xml(
         
         logger.info(f"✅ Created program: {request.project_name} at {yaml_path}")
         
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+        
         return JSONResponse({
             'success': True,
             'message': f'Program "{request.project_name}" created successfully',
@@ -889,6 +898,15 @@ async def confirm_upload(
         
         logger.info(f"Project {project_code} saved successfully")
         
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+        
         return JSONResponse({
             'success': True,
             'message': f'Project {project_code} updated successfully',
@@ -992,6 +1010,15 @@ async def update_change_reason(
         
         with open(yaml_path, 'w') as f:
             yaml.dump(project_dict, f, default_flow_style=False, sort_keys=False)
+        
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
         
         return JSONResponse({
             'success': True,

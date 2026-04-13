@@ -720,6 +720,15 @@ async def clear_project_changes(project_code: str):
     
     logger.info(f"Cleared {old_count} changes for project {project_code}")
     
+    # Invalidate caches after data change
+    try:
+        from repositories.project_repository import invalidate_project_cache
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_project_cache()
+        invalidate_calendar_cache()
+    except Exception:
+        pass
+    
     return {"success": True, "cleared": old_count}
 
 
@@ -760,6 +769,15 @@ async def delete_single_change(project_code: str, change_id: str):
         yaml.dump(project_data, f, default_flow_style=False, sort_keys=False)
     
     logger.info(f"Deleted change {change_id} from project {project_code}")
+    
+    # Invalidate caches after data change
+    try:
+        from repositories.project_repository import invalidate_project_cache
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_project_cache()
+        invalidate_calendar_cache()
+    except Exception:
+        pass
     
     return {"success": True, "deleted": change_id}
 
@@ -1005,6 +1023,12 @@ async def archive_program(project_code: str, request: Request):
             verify_project = verify_repo.get_project_by_code(project_code)
             verified = getattr(verify_project, 'archived', False) if verify_project else False
             logger.info(f"📦 Program {project_code} archived (verified={verified})")
+            # Invalidate calendar cache (project cache already invalidated by set_project_archived)
+            try:
+                from routers.calendar import invalidate_calendar_cache
+                invalidate_calendar_cache()
+            except Exception:
+                pass
             return {"success": True, "message": f"Program {project_code} archived", "verified": verified}
         else:
             logger.warning(f"⚠️ Archive {project_code}: project not found in user_repo or global repo")
@@ -1036,6 +1060,12 @@ async def unarchive_program(project_code: str, request: Request):
         
         if success:
             logger.info(f"📂 Program {project_code} unarchived")
+            # Invalidate calendar cache (project cache already invalidated by set_project_archived)
+            try:
+                from routers.calendar import invalidate_calendar_cache
+                invalidate_calendar_cache()
+            except Exception:
+                pass
             return {"success": True, "message": f"Program {project_code} unarchived"}
         else:
             return JSONResponse(
@@ -1278,6 +1308,14 @@ async def do_merge(request: Request):
             "log": log_lines
         }
         log(f"DONE: {json_mod.dumps(result)}")
+        # Invalidate caches after merge
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
         return result
         
     except Exception as e:

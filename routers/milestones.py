@@ -182,6 +182,15 @@ def create_milestone(data: MilestoneCreate):
         else:
             logger.info(f"✅ Created milestone '{base_name}' in {data.project_code}")
 
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+
         return JSONResponse({
             'success': True,
             'message': f"Milestone '{base_name}' created" + (f" ({count} occurrences)" if count > 1 else ""),
@@ -254,6 +263,15 @@ def create_task(data: TaskCreate):
             os.fsync(f.fileno())
 
         logger.info(f"✅ Created task '{data.name}' under '{parent.get('name')}' in {data.project_code}")
+
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
 
         return JSONResponse({
             'success': True,
@@ -795,9 +813,11 @@ def update_milestone(data: MilestoneUpdate, request: Request):
             f"in project {project_code} | target_date={new_target_date}"
         )
         
-        # Invalidate calendar cache so next fetch returns fresh data
+        # Invalidate caches so next fetch returns fresh data
         try:
+            from repositories.project_repository import invalidate_project_cache
             from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
             invalidate_calendar_cache()
         except Exception:
             pass
@@ -1501,6 +1521,16 @@ def reorder_milestone_siblings(code: str, data: SiblingReorderRequest):
             yaml.dump(project_data, f, default_flow_style=False, allow_unicode=True)
 
         logger.info(f"✅ Reordered {len(reordered)} sibling milestones for project {code}")
+
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+
         return JSONResponse(content={"success": True})
 
     except HTTPException:
@@ -1631,6 +1661,15 @@ def update_task_status(data: TaskStatusUpdate):
         with open(yaml_path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
 
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+
         return JSONResponse({
             'success': True,
             'message': 'Task status updated successfully',
@@ -1689,6 +1728,15 @@ async def delete_milestone(project_code: str, milestone_id: str):
         with open(yaml_path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(project_data, f, default_flow_style=False, allow_unicode=True)
         
+        # Invalidate caches after data change
+        try:
+            from repositories.project_repository import invalidate_project_cache
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_project_cache()
+            invalidate_calendar_cache()
+        except Exception:
+            pass
+
         return JSONResponse({
             'success': True,
             'message': f"Milestone '{removed_name}' deleted",

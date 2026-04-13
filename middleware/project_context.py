@@ -86,9 +86,9 @@ def get_selected_project(request: Request):
     if not project_code:
         return None
     
-    # Get user-scoped repository
+    # Get user-scoped repository - use direct file lookup to avoid loading all projects
     repo = _get_user_repo(request)
-    project = repo.get_project_by_code(project_code)
+    project = repo.get_project_by_code_direct(project_code)
     
     if not project:
         logger.error(f"❌ Project {project_code} not found in repository")

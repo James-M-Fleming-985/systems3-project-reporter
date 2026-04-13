@@ -7,14 +7,51 @@ SECURITY: Now supports user-based data isolation.
 - Regular users can only see projects in their isolated user directory
 
 PRIVACY: Resource names are anonymized at load time to prevent PII exposure.
+
+PERFORMANCE: Module-level TTL cache avoids re-reading all YAML files from disk
+on every request. Cache is keyed by (data_dir, user_id, is_admin) and expires
+after PROJECT_CACHE_TTL seconds. Call invalidate_project_cache() after any
+write operation that modifies project YAML files.
 """
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Tuple
 import yaml
 import os
 import re
+import time
+import logging
 
 from models import Project
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Project cache — avoids re-reading all YAML files from disk on every request.
+# Keyed by (str(data_dir), user_id, is_admin) so each user context has its own
+# cache entry.  TTL keeps data fresh without requiring explicit invalidation on
+# every possible write path (though we do invalidate on known write paths too).
+# ---------------------------------------------------------------------------
+_project_cache: Dict[Tuple, Any] = {}  # key → {"projects": [...], "timestamp": float}
+PROJECT_CACHE_TTL = 30  # seconds
+
+
+def _cache_key(data_dir: Path, user_id: str = None, is_admin: bool = False) -> Tuple:
+    return (str(data_dir), user_id or "", is_admin)
+
+
+def invalidate_project_cache(data_dir: Path = None, user_id: str = None, is_admin: bool = False):
+    """Clear the project cache.
+    
+    If data_dir is provided, only that specific cache entry is cleared.
+    If data_dir is None, ALL cache entries are cleared (safest after bulk writes).
+    """
+    if data_dir is not None:
+        key = _cache_key(data_dir, user_id, is_admin)
+        _project_cache.pop(key, None)
+        logger.debug(f"🗑️ Project cache invalidated for {key}")
+    else:
+        _project_cache.clear()
+        logger.debug("🗑️ Project cache fully cleared")
 
 
 def _is_project_file(yaml_file: Path) -> bool:
@@ -144,12 +181,32 @@ class ProjectRepository:
     def load_all_projects(self) -> List[Project]:
         """Load all projects from YAML files in data directory.
         
+        Uses a TTL-based in-memory cache to avoid re-reading all files from
+        disk on every request.  The cache is keyed by (data_dir, user_id,
+        is_admin) so each user context has its own cached result.
+        
         Deduplicates by project_code — if multiple YAML files contain the same
         project_code (e.g. global + user-scoped copies), only the first found
         is kept. This prevents duplicate calendar events and stale-data bugs.
         """
+        # Check cache
+        key = _cache_key(self.data_dir, self.user_id, self.is_admin)
+        now = time.time()
+        cached = _project_cache.get(key)
+        if cached and (now - cached["timestamp"]) < PROJECT_CACHE_TTL:
+            logger.debug(f"✅ Project cache HIT for {key} ({len(cached['projects'])} projects)")
+            return list(cached["projects"])  # return copy of list (not internal ref)
+        
+        projects = self._load_all_projects_from_disk()
+        
+        # Store in cache
+        _project_cache[key] = {"projects": projects, "timestamp": now}
+        return list(projects)
+    
+    def _load_all_projects_from_disk(self) -> List[Project]:
+        """Internal: actually read all project YAML files from disk."""
         projects = []
-        seen_codes = set()  # Deduplicate by project_code
+        seen_codes = set()
         
         if not self.data_dir.exists():
             return projects
@@ -222,8 +279,7 @@ class ProjectRepository:
                     # keep only the first one found. This prevents duplicate calendar
                     # events when files exist in both global and user-scoped directories.
                     if project.project_code in seen_codes:
-                        import logging
-                        logging.warning(
+                        logger.warning(
                             f"⚠️ Skipping duplicate project_code '{project.project_code}' "
                             f"from {yaml_file}"
                         )
@@ -232,21 +288,83 @@ class ProjectRepository:
                     
                     projects.append(project)
             except Exception as e:
-                import logging
-                logging.error(f"Error loading {yaml_file.name}: {e}")
+                logger.error(f"Error loading {yaml_file.name}: {e}")
                 continue
         
-        import logging
-        logging.info(f"✅ Loaded {len(projects)} projects from {self.data_dir}")
+        logger.info(f"✅ Loaded {len(projects)} projects from {self.data_dir}")
         return projects
     
     def get_project_by_code(self, project_code: str) -> Optional[Project]:
-        """Get a specific project by its project code"""
+        """Get a specific project by its project code (uses cache)"""
         projects = self.load_all_projects()
         for project in projects:
             if project.project_code == project_code:
                 return project
         return None
+    
+    def get_project_by_code_direct(self, project_code: str) -> Optional[Project]:
+        """Get a single project by code without loading all projects.
+        
+        Searches for a YAML file matching the project_code via glob.
+        Falls back to load_all_projects() if the direct lookup finds nothing.
+        This avoids reading every YAML file when only one project is needed
+        (e.g. when switching tabs to Gantt/Milestones/Changes).
+        """
+        if not self.data_dir.exists():
+            return None
+        
+        anonymizer = ResourceAnonymizer()
+        
+        # Try common naming patterns for project files
+        candidates = []
+        for pattern in [f"**/{project_code}*.yaml", f"**/{project_code}*.yml"]:
+            candidates.extend(self.data_dir.glob(pattern))
+        
+        for yaml_file in candidates:
+            if not _is_project_file(yaml_file):
+                continue
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if not data or not isinstance(data, dict):
+                    continue
+                if data.get('project_code') != project_code:
+                    continue
+                
+                # Apply same anonymization as load_all_projects
+                if 'milestones' in data:
+                    for milestone in data['milestones']:
+                        if 'parent_project' not in milestone:
+                            milestone['parent_project'] = None
+                        if 'resources' not in milestone:
+                            milestone['resources'] = None
+                        elif milestone['resources']:
+                            milestone['resources'] = anonymizer.anonymize_list(milestone['resources'])
+                if 'risks' in data:
+                    for risk in data['risks']:
+                        if 'id' in risk and 'risk_id' not in risk:
+                            risk['risk_id'] = risk.pop('id')
+                        if 'impact' not in risk:
+                            sev = risk.get('severity', 'MEDIUM')
+                            prob = risk.get('probability', 'MEDIUM')
+                            risk['impact'] = f"{sev} severity, {prob} probability"
+                        if 'owner' in risk and risk['owner']:
+                            risk['owner'] = anonymizer.anonymize(risk['owner'])
+                if 'changes' in data:
+                    for change in data['changes']:
+                        if 'id' in change and 'change_id' not in change:
+                            change['change_id'] = change.pop('id')
+                
+                project = Project(**data)
+                logger.debug(f"✅ Direct lookup found {project_code} in {yaml_file}")
+                return project
+            except Exception as e:
+                logger.warning(f"Direct lookup error for {yaml_file}: {e}")
+                continue
+        
+        # Fallback: use cached load_all_projects
+        logger.debug(f"Direct lookup miss for {project_code}, falling back to load_all_projects")
+        return self.get_project_by_code(project_code)
     
     def get_project_by_name(self, project_name: str) -> Optional[Project]:
         """Get a specific project by its project name"""
@@ -300,9 +418,6 @@ class ProjectRepository:
         Returns:
             True if successful, False if project not found
         """
-        import logging
-        logger = logging.getLogger(__name__)
-        
         if not self.data_dir.exists():
             logger.warning(f"set_project_archived: data_dir {self.data_dir} does not exist")
             return False
@@ -337,6 +452,7 @@ class ProjectRepository:
                 verified = verify.get('archived') == archived
                 
                 logger.info(f"{'📦' if archived else '📂'} Project {project_code} {'archived' if archived else 'unarchived'} in {yaml_file} (write verified={verified})")
+                invalidate_project_cache()
                 return True
                 
             except Exception as e:

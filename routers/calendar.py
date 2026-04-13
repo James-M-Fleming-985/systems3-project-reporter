@@ -42,7 +42,7 @@ DATA_DIR = Path(os.getenv("DATA_STORAGE_PATH", str(BASE_DIR / "mock_data")))
 
 # Simple in-memory cache for calendar events (avoids re-reading all YAML/JSON on every request)
 _calendar_cache: Dict[str, Any] = {"events": None, "timestamp": 0.0}
-CALENDAR_CACHE_TTL = 60  # seconds
+CALENDAR_CACHE_TTL = 300  # seconds (5 minutes)
 
 
 def invalidate_calendar_cache():
@@ -534,14 +534,6 @@ async def get_calendar_events(request: Request):
                                         'dateField': col_header,
                                         'notes': row.get('notes', ''),
                                         'sub_tasks': row.get('sub_tasks', []),
-                                        'allData': {
-                                            col_lookup.get(k, {}).get('header', k): str(v) 
-                                            for k, v in row_data.items() if v
-                                        },
-                                        'allDataById': {
-                                            k: {'header': col_lookup.get(k, {}).get('header', k), 'value': str(v), 'type': col_lookup.get(k, {}).get('type', 'text')}
-                                            for k, v in row_data.items() if v
-                                        }
                                     }
                                 }
                                 events.append(event)
@@ -880,3 +872,68 @@ async def get_calendar_events(request: Request):
         import traceback
         logger.error(traceback.format_exc())
         return JSONResponse(content={"events": [], "total": 0, "error": str(e)})
+
+
+@router.get("/api/calendar/schedule-event-detail")
+async def schedule_event_detail(
+    program: str,
+    tableId: str,
+    rowId: str,
+):
+    """
+    Fetch full row data for a single schedule event on demand.
+    Returns allData and allDataById for the event modal's editable fields.
+    """
+    try:
+        schedules_dir = DATA_DIR / "schedules"
+        if not schedules_dir.exists():
+            return JSONResponse({"allData": {}, "allDataById": {}})
+
+        # Find the schedule file for this program
+        for schedule_file in schedules_dir.glob("*.yaml"):
+            try:
+                with open(schedule_file, 'r') as f:
+                    data = yaml.safe_load(f) or {}
+
+                sched_program = data.get('project_name', schedule_file.stem.replace('_schedules', ''))
+                sched_code = data.get('project_code', '')
+                sched_file_id = schedule_file.stem.replace('_schedules', '')
+
+                # Match by program name, code, or file stem
+                if program not in (sched_program, sched_code, sched_file_id):
+                    continue
+
+                for table in data.get('tables', []):
+                    if table.get('id', '') != tableId:
+                        continue
+
+                    columns = table.get('columns', [])
+                    col_lookup = {c.get('id'): c for c in columns}
+
+                    for row in table.get('rows', []):
+                        if row.get('id', '') != rowId:
+                            continue
+
+                        row_data = row.get('data', {})
+                        all_data = {
+                            col_lookup.get(k, {}).get('header', k): str(v)
+                            for k, v in row_data.items() if v
+                        }
+                        all_data_by_id = {
+                            k: {
+                                'header': col_lookup.get(k, {}).get('header', k),
+                                'value': str(v),
+                                'type': col_lookup.get(k, {}).get('type', 'text')
+                            }
+                            for k, v in row_data.items() if v
+                        }
+                        return JSONResponse({"allData": all_data, "allDataById": all_data_by_id})
+
+            except Exception:
+                continue
+
+        return JSONResponse({"allData": {}, "allDataById": {}})
+
+    except Exception as e:
+        logger.error(f"Error fetching schedule event detail: {e}")
+        return JSONResponse({"allData": {}, "allDataById": {}}, status_code=500)
