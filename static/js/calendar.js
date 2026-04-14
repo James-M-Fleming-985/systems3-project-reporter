@@ -1311,7 +1311,7 @@ async function _loadScheduleAllFields(program, tableId, rowId) {
         return;
     }
     try {
-        const resp = await fetch(`/calendar/api/calendar/schedule-event-detail?program=${encodeURIComponent(program)}&tableId=${encodeURIComponent(tableId)}&rowId=${encodeURIComponent(rowId)}`);
+        const resp = await fetch(`/api/calendar/schedule-event-detail?program=${encodeURIComponent(program)}&tableId=${encodeURIComponent(tableId)}&rowId=${encodeURIComponent(rowId)}`);
         if (!resp.ok) throw new Error('Failed to load');
         const data = await resp.json();
         const allDataById = data.allDataById || {};

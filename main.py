@@ -29,7 +29,7 @@ def get_git_hash():
         logger.warning(f"Could not get git hash: {e}")
         return "no-git"
 
-BUILD_VERSION = f"1.0.327-{get_git_hash()}"  # Add Documents tab with SharePoint-like version control
+BUILD_VERSION = f"1.0.328-{get_git_hash()}"  # Performance optimization + calendar fixes
 
 
 # Setup logging
