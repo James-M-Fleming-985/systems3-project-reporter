@@ -1797,9 +1797,14 @@ async function onMiniMoveTableChange() {
         const resp = await fetch(`/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}`);
         const table = await resp.json();
         const rows = table.rows || [];
+        const cols = table.columns || [];
+        const titleKeywords = ['task', 'activity', 'item', 'name', 'description', 'action'];
+        const titleCol = cols.find(c => c.type === 'text' && titleKeywords.some(k => (c.header || '').toLowerCase().includes(k)))
+                       || cols.find(c => c.type === 'text');
+        const titleColId = titleCol ? titleCol.id : null;
         rowSel.innerHTML = '<option value="">Select row…</option>' +
             rows.map(r => {
-                const label = r.columns?.[0]?.value || r.id;
+                const label = (titleColId && r.data?.[titleColId]) || r.id;
                 return `<option value="${r.id}">${String(label).replace(/</g, '&lt;')}</option>`;
             }).join('');
         rowSel.classList.remove('hidden');
