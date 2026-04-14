@@ -29,7 +29,7 @@ def get_git_hash():
         logger.warning(f"Could not get git hash: {e}")
         return "no-git"
 
-BUILD_VERSION = f"1.0.331-{get_git_hash()}"  # Fix list order fetch timing
+BUILD_VERSION = f"1.0.332-{get_git_hash()}"  # Sub-task copy feature + preserve notes
 
 
 # Setup logging

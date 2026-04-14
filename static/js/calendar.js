@@ -1739,7 +1739,8 @@ function closeSubTaskMiniModal() {
 }
 
 async function onMiniMoveDestChange() {
-    const dest = document.getElementById('stMiniMoveDest').value;
+    const rawDest = document.getElementById('stMiniMoveDest').value;
+    const dest = rawDest.replace('copy_', ''); // Normalize: copy_schedule → schedule
     const progSel = document.getElementById('stMiniMoveProgram');
     const tableSel = document.getElementById('stMiniMoveTable');
     const rowSel = document.getElementById('stMiniMoveRow');
@@ -1814,6 +1815,8 @@ async function saveSubTaskMiniModal() {
     const title = document.getElementById('stMiniTitleInput').value.trim();
     const notes = document.getElementById('stMiniNotes').value.trim();
     const moveDest = document.getElementById('stMiniMoveDest').value;
+    const isCopy = moveDest.startsWith('copy_');
+    const destType = moveDest.replace('copy_', ''); // normalize
     const csrfToken = document.getElementById('csrfToken')?.value || '';
     const saveBtn = document.getElementById('stMiniSaveBtn');
     saveBtn.disabled = true;
@@ -1858,8 +1861,8 @@ async function saveSubTaskMiniModal() {
             row.dataset.stNotes = notes;
         }
 
-        // 2. Handle move if requested
-        if (moveDest === 'schedule') {
+        // 2. Handle move/copy if requested
+        if (destType === 'schedule') {
             const destProg = document.getElementById('stMiniMoveProgram').value;
             const destTable = document.getElementById('stMiniMoveTable').value;
             const destRow = document.getElementById('stMiniMoveRow').value;
@@ -1868,59 +1871,61 @@ async function saveSubTaskMiniModal() {
                 saveBtn.disabled = false;
                 return;
             }
-            // Create on destination
+            // Create on destination (include notes)
             const addResp = await fetch(
                 `/dashboard/api/schedule/${encodeURIComponent(destProg)}/tables/${encodeURIComponent(destTable)}/rows/${encodeURIComponent(destRow)}/sub-tasks`,
                 { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
-                  body: JSON.stringify({ title }) }
+                  body: JSON.stringify({ title, notes }) }
             );
             if (!addResp.ok) throw new Error('Failed to create on destination');
 
-            // Delete from source
-            if (ctx.source === 'schedule') {
-                await fetch(
-                    `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
-                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
-                );
-            } else if (ctx.source === 'standalone') {
-                await fetch(
-                    `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
-                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
-                );
+            if (!isCopy) {
+                // Delete from source (move only)
+                if (ctx.source === 'schedule') {
+                    await fetch(
+                        `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                        { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                    );
+                } else if (ctx.source === 'standalone') {
+                    await fetch(
+                        `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                        { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                    );
+                }
+                if (row) row.remove();
             }
-            // Remove from DOM
-            if (row) row.remove();
-            showToast(`Moved "${title}" to schedule row`, 'success');
-        } else if (moveDest === 'standalone') {
+            showToast(`${isCopy ? 'Copied' : 'Moved'} "${title}" to schedule row`, 'success');
+        } else if (destType === 'standalone') {
             const destTask = document.getElementById('stMiniMoveTask').value;
             if (!destTask) {
                 showToast('Please select a destination task', 'error');
                 saveBtn.disabled = false;
                 return;
             }
-            // Create on destination
+            // Create on destination (include notes)
             const addResp = await fetch(
                 `/api/standalone-tasks/${encodeURIComponent(destTask)}/sub-tasks`,
                 { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
-                  body: JSON.stringify({ title }) }
+                  body: JSON.stringify({ title, notes }) }
             );
             if (!addResp.ok) throw new Error('Failed to create on destination');
 
-            // Delete from source
-            if (ctx.source === 'schedule') {
-                await fetch(
-                    `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
-                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
-                );
-            } else if (ctx.source === 'standalone') {
-                await fetch(
-                    `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
-                    { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
-                );
+            if (!isCopy) {
+                // Delete from source (move only)
+                if (ctx.source === 'schedule') {
+                    await fetch(
+                        `/dashboard/api/schedule/${encodeURIComponent(ctx.program)}/tables/${encodeURIComponent(ctx.tableId)}/rows/${encodeURIComponent(ctx.rowId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                        { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                    );
+                } else if (ctx.source === 'standalone') {
+                    await fetch(
+                        `/api/standalone-tasks/${encodeURIComponent(ctx.taskId)}/sub-tasks/${encodeURIComponent(ctx.stId)}`,
+                        { method: 'DELETE', headers: { 'x-csrf-token': csrfToken } }
+                    );
+                }
+                if (row) row.remove();
             }
-            // Remove from DOM
-            if (row) row.remove();
-            showToast(`Moved "${title}" to standalone task`, 'success');
+            showToast(`${isCopy ? 'Copied' : 'Moved'} "${title}" to standalone task`, 'success');
         } else {
             showToast('Sub-task updated', 'success');
         }

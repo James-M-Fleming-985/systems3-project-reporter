@@ -692,12 +692,18 @@
                 <textarea id="stMiniNotes" rows="3" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add notes…"></textarea>
             </div>
             <div class="border-t pt-4">
-                <label class="text-xs text-gray-500 uppercase font-semibold block mb-2">Move to another object</label>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-2">Move / Copy to another object</label>
                 <div class="space-y-2">
                     <select id="stMiniMoveDest" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" onchange="onMiniMoveDestChange()">
-                        <option value="">— Don't move —</option>
-                        <option value="schedule">Schedule Row</option>
-                        <option value="standalone">Standalone Task</option>
+                        <option value="">— Don't move or copy —</option>
+                        <optgroup label="Move (removes original)">
+                            <option value="schedule">Move to Schedule Row</option>
+                            <option value="standalone">Move to Standalone Task</option>
+                        </optgroup>
+                        <optgroup label="Copy (keeps original)">
+                            <option value="copy_schedule">Copy to Schedule Row</option>
+                            <option value="copy_standalone">Copy to Standalone Task</option>
+                        </optgroup>
                     </select>
                     <select id="stMiniMoveProgram" class="hidden w-full px-3 py-2 text-sm border border-gray-300 rounded-lg" onchange="onMiniMoveProgramChange()">
                         <option value="">Select program…</option>
