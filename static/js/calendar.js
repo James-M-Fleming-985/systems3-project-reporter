@@ -194,11 +194,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         _migrateLocalStorageAcknowledged();
         _migrateLocalStorageListOrder();
 
-        // Fetch server-synced list order + events hash in parallel
-        fetch('/api/calendar/list-order', { cache: 'no-store' })
-            .then(r => r.json())
-            .then(d => { if (d.order && Object.keys(d.order).length) _serverListOrder = d.order; })
-            .catch(() => {});
+        // Fetch server-synced list order (must complete before rendering)
+        try {
+            const orderResp = await fetch('/api/calendar/list-order', { cache: 'no-store' });
+            const orderData = await orderResp.json();
+            if (orderData.order && Object.keys(orderData.order).length) _serverListOrder = orderData.order;
+        } catch (e) { /* use empty order */ }
+
+        // Events hash for polling (fire-and-forget — not needed until later)
         fetch('/api/calendar/events-hash', { cache: 'no-store' })
             .then(r => r.json())
             .then(d => { _calendarEventsHash = d.hash; })
