@@ -370,9 +370,12 @@ async def add_schedule_sub_task(project_name: str, table_id: str, row_id: str, r
     title = (body.get('title') or '').strip()
     if not title:
         raise HTTPException(status_code=400, detail="Sub-task title is required")
-    sub_task = schedule_repo.add_sub_task(project_name, table_id, row_id, title)
+    notes = (body.get('notes') or '').strip()
+    sub_task = schedule_repo.add_sub_task(project_name, table_id, row_id, title, notes=notes)
     if not sub_task:
         raise HTTPException(status_code=404, detail="Row not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True, "sub_task": sub_task})
 
 
@@ -393,6 +396,8 @@ async def update_schedule_sub_task(project_name: str, table_id: str, row_id: str
     success = schedule_repo.update_sub_task(project_name, table_id, row_id, sub_task_id, updates)
     if not success:
         raise HTTPException(status_code=404, detail="Sub-task not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 
@@ -402,6 +407,8 @@ async def delete_schedule_sub_task(project_name: str, table_id: str, row_id: str
     success = schedule_repo.delete_sub_task(project_name, table_id, row_id, sub_task_id)
     if not success:
         raise HTTPException(status_code=404, detail="Sub-task not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 

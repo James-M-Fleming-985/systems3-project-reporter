@@ -369,7 +369,7 @@ class ScheduleRepository:
                         return row.get('sub_tasks', [])
         return None
 
-    def add_sub_task(self, project_name: str, table_id: str, row_id: str, title: str) -> Optional[Dict[str, Any]]:
+    def add_sub_task(self, project_name: str, table_id: str, row_id: str, title: str, notes: str = '') -> Optional[Dict[str, Any]]:
         """Add a sub-task to a schedule row."""
         data = self.get_schedules(project_name)
 
@@ -383,6 +383,8 @@ class ScheduleRepository:
                             'completed': False,
                             'created_at': datetime.now().isoformat()
                         }
+                        if notes:
+                            sub_task['notes'] = notes
                         if 'sub_tasks' not in data['tables'][i]['rows'][j]:
                             data['tables'][i]['rows'][j]['sub_tasks'] = []
                         data['tables'][i]['rows'][j]['sub_tasks'].append(sub_task)

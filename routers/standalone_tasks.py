@@ -80,6 +80,7 @@ class RescheduleBody(BaseModel):
 
 class SubTaskBody(BaseModel):
     title: str
+    notes: Optional[str] = None
 
 
 class SubTaskToggleBody(BaseModel):
@@ -192,9 +193,10 @@ async def add_sub_task(request: Request, task_id: str, body: SubTaskBody):
     user_id = _require_user_id(request)
     if not body.title.strip():
         raise HTTPException(status_code=422, detail="title is required")
-    sub = _get_repo().add_sub_task(user_id, task_id, body.title)
+    sub = _get_repo().add_sub_task(user_id, task_id, body.title, notes=(body.notes or '').strip())
     if not sub:
         raise HTTPException(status_code=404, detail="Task not found")
+    invalidate_calendar_cache()
     return JSONResponse({"success": True, "sub_task": sub}, status_code=201)
 
 
@@ -223,6 +225,7 @@ async def toggle_sub_task(
         ok = repo.update_sub_task_notes(user_id, task_id, sub_task_id, body.notes.strip())
         if not ok:
             raise HTTPException(status_code=404, detail="Sub-task not found")
+    invalidate_calendar_cache()
     return JSONResponse({"success": True})
 
 
@@ -233,6 +236,7 @@ async def delete_sub_task_item(request: Request, task_id: str, sub_task_id: str)
     ok = _get_repo().delete_sub_task(user_id, task_id, sub_task_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Sub-task not found")
+    invalidate_calendar_cache()
     return JSONResponse({"success": True})
 
 

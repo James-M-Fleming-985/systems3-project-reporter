@@ -275,7 +275,7 @@ class StandaloneTaskRepository:
         logger.info(f"🗑️ Deleted {deleted} standalone task(s) for user {user_id}")
         return deleted
 
-    def add_sub_task(self, user_id: str, task_id: str, title: str) -> Optional[Dict[str, Any]]:
+    def add_sub_task(self, user_id: str, task_id: str, title: str, notes: str = '') -> Optional[Dict[str, Any]]:
         """Add a sub-task checklist item.  Returns the new sub-task dict or None."""
         data = self._load(user_id)
         for task in data.get("tasks", []):
@@ -287,6 +287,8 @@ class StandaloneTaskRepository:
                 "completed": False,
                 "created_at": datetime.now().isoformat(),
             }
+            if notes:
+                sub["notes"] = notes
             task.setdefault("sub_tasks", []).append(sub)
             task["updated_at"] = datetime.now().isoformat()
             self._save(user_id, data)
