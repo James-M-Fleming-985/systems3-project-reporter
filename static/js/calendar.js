@@ -2,6 +2,54 @@ let calendarInstance = null;
 let allEvents = [];
 let filteredEvents = [];
 let currentEventData = null; // Store current event for actions
+let _calendarEventsHash = null; // For auto-refresh polling
+let _calendarPollInterval = null;
+
+// ── One-time migration: move localStorage acknowledged list to server ───────
+function _migrateLocalStorageAcknowledged() {
+    try {
+        const raw = localStorage.getItem('calendarAcknowledged');
+        if (!raw) return;
+        const acked = JSON.parse(raw);
+        if (!Array.isArray(acked) || acked.length === 0) return;
+        // Send each to server in one batch-style fire-and-forget
+        acked.forEach(eventId => {
+            fetch('/api/calendar/acknowledge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId })
+            }).catch(() => {});
+        });
+        localStorage.removeItem('calendarAcknowledged');
+        console.log(`📅 Migrated ${acked.length} acknowledged events to server`);
+    } catch (e) { /* ignore */ }
+}
+
+// ── Auto-refresh: poll for server-side changes every 60s ────────────────────
+function _startCalendarPolling() {
+    if (_calendarPollInterval) return;
+    _calendarPollInterval = setInterval(async () => {
+        try {
+            const resp = await fetch('/api/calendar/events-hash', { cache: 'no-store' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (_calendarEventsHash !== null && data.hash !== _calendarEventsHash) {
+                console.log('📅 Calendar data changed on server — refreshing');
+                reloadCalendarEvents();
+            }
+            _calendarEventsHash = data.hash;
+        } catch (e) { /* ignore polling errors */ }
+    }, 60000);
+}
+
+function _stopCalendarPolling() {
+    if (_calendarPollInterval) {
+        clearInterval(_calendarPollInterval);
+        _calendarPollInterval = null;
+    }
+}
+
+window.addEventListener('beforeunload', _stopCalendarPolling);
 
 // ── Priority gradient for draggable sub-item lists ──────────────────────────
 // Pastel red (#F4A0A0) at top (high priority) → pastel green (#A0D8A0) at bottom (low priority)
@@ -123,14 +171,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         const data = await resp.json();
         allEvents = data.events || [];
         
-        // Filter out previously acknowledged change/metric events (stored in localStorage)
-        try {
-            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
-            if (acked.length) {
-                const ackedSet = new Set(acked);
-                allEvents = allEvents.filter(e => !ackedSet.has(e.id));
-            }
-        } catch (e) { /* ignore */ }
+        // Acknowledged events are now filtered server-side per user.
+        // Migrate any legacy localStorage acknowledged list to server (one-time).
+        _migrateLocalStorageAcknowledged();
+
+        // Capture initial events hash for auto-refresh polling
+        fetch('/api/calendar/events-hash', { cache: 'no-store' })
+            .then(r => r.json())
+            .then(d => { _calendarEventsHash = d.hash; })
+            .catch(() => {});
         
         console.log(`📅 Calendar: Loaded ${allEvents.length} events`);
         
@@ -447,6 +496,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         updateStats();
+
+        // Start polling for server-side changes (auto-refresh every 60s)
+        _startCalendarPolling();
         
     } catch (error) {
         console.error('📅 Calendar error:', error);
@@ -620,14 +672,7 @@ async function reloadCalendarEvents() {
             console.log(`  → ${e.title}: start=${e.start}, targetDate=${e.extendedProps?.targetDate}`);
         });
         
-        // Re-apply localStorage acknowledged filter
-        try {
-            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
-            if (acked.length) {
-                const ackedSet = new Set(acked);
-                allEvents = allEvents.filter(e => !ackedSet.has(e.id));
-            }
-        } catch (e) { /* ignore */ }
+        // Acknowledged events are filtered server-side — no client-side filter needed
         refreshCalendar();
     } catch (err) {
         console.error('reloadCalendarEvents error:', err);
@@ -934,8 +979,7 @@ function showEventModal(event) {
                 </div>
             </div>
         `;
-        // Fetch all-fields data on demand
-        _loadScheduleAllFields(ep.program || ep.programCode, ep.tableId, ep.rowId);
+        // NOTE: _loadScheduleAllFields is called AFTER innerHTML injection below
     } else if (type === 'metric_target') {
         detailsHtml = `
             <div class="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg">
@@ -1046,6 +1090,11 @@ function showEventModal(event) {
     
     document.getElementById('eventModalBody').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
+
+    // Fetch all-fields data on demand (MUST be after innerHTML injection so DOM element exists)
+    if (type === 'schedule') {
+        _loadScheduleAllFields(ep.program || ep.programCode, ep.tableId, ep.rowId);
+    }
 
     // Initialize drag-reorder for schedule sub-tasks
     if (type === 'schedule') {
@@ -1862,16 +1911,12 @@ function acknowledgeCalendarEvent() {
     if (!currentEventData || !currentEventData.eventId) return;
     const eventId = currentEventData.eventId;
 
-    // Persist to localStorage so refresh doesn't bring it back during this session
-    try {
-        const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
-        if (!acked.includes(eventId)) {
-            acked.push(eventId);
-            // Cap list at 500 to avoid unbounded growth
-            if (acked.length > 500) acked.splice(0, acked.length - 500);
-            localStorage.setItem('calendarAcknowledged', JSON.stringify(acked));
-        }
-    } catch (e) { /* ignore localStorage errors */ }
+    // Persist acknowledgment server-side (syncs across devices)
+    fetch('/api/calendar/acknowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId })
+    }).catch(err => console.error('Acknowledge failed:', err));
 
     // Remove from in-memory list and re-render
     allEvents = allEvents.filter(e => e.id !== eventId);
@@ -2606,13 +2651,12 @@ async function clvQuickDone(btn) {
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
         } else if (eventType === 'change' || eventType === 'metric_target') {
-            // Client-side acknowledgment via localStorage
-            const acked = JSON.parse(localStorage.getItem('calendarAcknowledged') || '[]');
-            if (!acked.includes(eventId)) {
-                acked.push(eventId);
-                if (acked.length > 500) acked.splice(0, acked.length - 500);
-                localStorage.setItem('calendarAcknowledged', JSON.stringify(acked));
-            }
+            // Server-side acknowledgment (syncs across devices)
+            await fetch('/api/calendar/acknowledge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId })
+            });
         }
 
         // Remove from in-memory events + FullCalendar

@@ -97,6 +97,13 @@ async def get_calendar_events(request: Request):
     now = time.time()
     if _calendar_cache["events"] is not None and (now - _calendar_cache["timestamp"]) < CALENDAR_CACHE_TTL:
         cached = _calendar_cache["events"]
+        # Apply per-user acknowledge filter
+        user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+        if user_id:
+            ack_list = _load_acknowledged(user_id)
+            if ack_list:
+                ack_set = set(ack_list)
+                cached = [e for e in cached if e.get('id') not in ack_set]
         response = JSONResponse(content={"events": cached, "total": len(cached)})
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
@@ -859,9 +866,17 @@ async def get_calendar_events(request: Request):
         logger.info(f"📅 Calendar: returning {len(events)} events from {len(projects)} programs"
                     f" (filtered {len(archived_identifiers)} archived identifiers, {completed_count} completed)")
 
-        # Update cache
+        # Update cache (stores ALL events, per-user filtering is applied on read)
         _calendar_cache["events"] = events
         _calendar_cache["timestamp"] = time.time()
+
+        # Apply per-user acknowledge filter before returning
+        user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+        if user_id:
+            ack_list = _load_acknowledged(user_id)
+            if ack_list:
+                ack_set = set(ack_list)
+                events = [e for e in events if e.get('id') not in ack_set]
 
         response = JSONResponse(content={"events": events, "total": len(events)})
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -937,3 +952,92 @@ async def schedule_event_detail(
     except Exception as e:
         logger.error(f"Error fetching schedule event detail: {e}")
         return JSONResponse({"allData": {}, "allDataById": {}}, status_code=500)
+
+
+# --- Server-side calendar acknowledge (replaces localStorage per-device storage) ---
+
+def _get_ack_file(user_id: str) -> Path:
+    """Return the path to a user's calendar acknowledged events file."""
+    return DATA_DIR / "users" / user_id / "calendar_acknowledged.yaml"
+
+
+def _load_acknowledged(user_id: str) -> list:
+    """Load acknowledged event IDs for a user."""
+    ack_file = _get_ack_file(user_id)
+    if not ack_file.exists():
+        return []
+    try:
+        with open(ack_file, 'r') as f:
+            data = yaml.safe_load(f) or {}
+        return data.get('acknowledged', [])
+    except Exception:
+        return []
+
+
+def _save_acknowledged(user_id: str, ack_list: list):
+    """Save acknowledged event IDs for a user."""
+    ack_file = _get_ack_file(user_id)
+    ack_file.parent.mkdir(parents=True, exist_ok=True)
+    # Cap at 500 to avoid unbounded growth
+    if len(ack_list) > 500:
+        ack_list = ack_list[-500:]
+    with open(ack_file, 'w') as f:
+        yaml.safe_dump({'acknowledged': ack_list}, f)
+
+
+@router.get("/api/calendar/acknowledged")
+async def get_acknowledged(request: Request):
+    """Get list of acknowledged calendar event IDs for current user."""
+    user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+    if not user_id:
+        return JSONResponse({"acknowledged": []})
+    ack_list = _load_acknowledged(user_id)
+    return JSONResponse({"acknowledged": ack_list})
+
+
+@router.post("/api/calendar/acknowledge")
+async def acknowledge_event(request: Request):
+    """Acknowledge a calendar event (server-side, syncs across devices)."""
+    user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    try:
+        body = await request.json()
+        event_id = body.get('eventId')
+        if not event_id or not isinstance(event_id, str):
+            raise HTTPException(status_code=400, detail="eventId is required")
+        ack_list = _load_acknowledged(user_id)
+        if event_id not in ack_list:
+            ack_list.append(event_id)
+            _save_acknowledged(user_id, ack_list)
+        return JSONResponse({"status": "ok"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error acknowledging event: {e}")
+        raise HTTPException(status_code=500, detail="Failed to acknowledge event")
+
+
+@router.get("/api/calendar/events-hash")
+async def get_events_hash(request: Request):
+    """
+    Lightweight endpoint returning a hash of the current events data.
+    Clients poll this to detect server-side changes without downloading all events.
+    """
+    import hashlib
+    now = time.time()
+    if _calendar_cache["events"] is not None and (now - _calendar_cache["timestamp"]) < CALENDAR_CACHE_TTL:
+        events = _calendar_cache["events"]
+    else:
+        # Don't recompute — just return the cache timestamp so client can compare
+        events = None
+    
+    if events is not None:
+        # Hash based on event count + first/last event IDs + total count
+        ids = [e.get('id', '') for e in events]
+        hash_input = f"{len(events)}:{','.join(ids[:5])}:{','.join(ids[-5:])}"
+        h = hashlib.md5(hash_input.encode()).hexdigest()[:12]
+    else:
+        h = "nocache"
+    
+    return JSONResponse({"hash": h, "ts": _calendar_cache["timestamp"]})

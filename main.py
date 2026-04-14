@@ -29,7 +29,7 @@ def get_git_hash():
         logger.warning(f"Could not get git hash: {e}")
         return "no-git"
 
-BUILD_VERSION = f"1.0.328-{get_git_hash()}"  # Performance optimization + calendar fixes
+BUILD_VERSION = f"1.0.329-{get_git_hash()}"  # Fix calendar spinner + cross-device sync
 
 
 # Setup logging

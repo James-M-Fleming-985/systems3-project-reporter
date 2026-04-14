@@ -84,7 +84,8 @@ class ChartFormatterService:
                     'ProjectCode': project.project_code,
                     'ProjectName': project.project_name,
                     'OutlineLevel': getattr(milestone, 'outline_level', None),
-                    'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone)
+                    'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone),
+                    'MilestoneId': getattr(milestone, 'id', None) or ''
                 })
         
         return tasks
