@@ -418,5 +418,5 @@
      data-project-code="{{ project.project_code }}"
      data-project-name="{{ project.project_name }}"
      data-gantt-data='{{ gantt_data | tojson }}'></div>
-<script src="/static/js/gantt.js"></script>
+<script src="/static/js/gantt.js?v={{ build_version }}"></script>
 {% endblock %}

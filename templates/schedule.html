@@ -965,5 +965,5 @@
 <div id="schedule-data-bridge" style="display:none"
      data-project-name="{{ clean_name }}"
      data-tables-data='{{ schedule_data | tojson }}'></div>
-<script src="/static/js/schedule.js"></script>
+<script src="/static/js/schedule.js?v={{ build_version }}"></script>
 {% endblock %}
