@@ -4,8 +4,26 @@ let filteredEvents = [];
 let currentEventData = null; // Store current event for actions
 let _calendarEventsHash = null; // For auto-refresh polling
 let _calendarPollInterval = null;
+let _serverListOrder = {}; // Server-synced list sort order
 
-// ── One-time migration: move localStorage acknowledged list to server ───────
+// ── One-time migration: move localStorage lists to server ────────────────────
+function _migrateLocalStorageListOrder() {
+    try {
+        const raw = localStorage.getItem('calendarListOrder');
+        if (!raw) return;
+        const order = JSON.parse(raw);
+        if (!order || typeof order !== 'object' || Object.keys(order).length === 0) return;
+        fetch('/api/calendar/list-order', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order })
+        }).catch(() => {});
+        localStorage.removeItem('calendarListOrder');
+        _serverListOrder = order;
+        console.log(`📅 Migrated list order (${Object.keys(order).length} entries) to server`);
+    } catch (e) { /* ignore */ }
+}
+
 function _migrateLocalStorageAcknowledged() {
     try {
         const raw = localStorage.getItem('calendarAcknowledged');
@@ -172,10 +190,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         allEvents = data.events || [];
         
         // Acknowledged events are now filtered server-side per user.
-        // Migrate any legacy localStorage acknowledged list to server (one-time).
+        // Migrate any legacy localStorage data to server (one-time).
         _migrateLocalStorageAcknowledged();
+        _migrateLocalStorageListOrder();
 
-        // Capture initial events hash for auto-refresh polling
+        // Fetch server-synced list order + events hash in parallel
+        fetch('/api/calendar/list-order', { cache: 'no-store' })
+            .then(r => r.json())
+            .then(d => { if (d.order && Object.keys(d.order).length) _serverListOrder = d.order; })
+            .catch(() => {});
         fetch('/api/calendar/events-hash', { cache: 'no-store' })
             .then(r => r.json())
             .then(d => { _calendarEventsHash = d.hash; })
@@ -2209,10 +2232,16 @@ let clvDragSrcIdx = null;
 let clvDragSrcDate = null;
 
 function getListSortOrder() {
-    try { return JSON.parse(localStorage.getItem('calendarListOrder') || '{}'); } catch { return {}; }
+    return _serverListOrder;
 }
 function saveListSortOrder(orderMap) {
-    localStorage.setItem('calendarListOrder', JSON.stringify(orderMap));
+    _serverListOrder = orderMap;
+    // Persist to server (fire-and-forget) — syncs across devices
+    fetch('/api/calendar/list-order', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: orderMap })
+    }).catch(err => console.error('Save list order failed:', err));
 }
 
 function renderCustomListView() {

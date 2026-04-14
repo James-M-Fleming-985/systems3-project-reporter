@@ -1041,3 +1041,71 @@ async def get_events_hash(request: Request):
         h = "nocache"
     
     return JSONResponse({"hash": h, "ts": _calendar_cache["timestamp"]})
+
+
+# --- Server-side calendar list order (replaces localStorage per-device ordering) ---
+
+def _get_list_order_file(user_id: str) -> Path:
+    """Return the path to a user's calendar list order file."""
+    return DATA_DIR / "users" / user_id / "calendar_list_order.yaml"
+
+
+def _load_list_order(user_id: str) -> dict:
+    """Load list sort order for a user."""
+    order_file = _get_list_order_file(user_id)
+    if not order_file.exists():
+        return {}
+    try:
+        with open(order_file, 'r') as f:
+            data = yaml.safe_load(f) or {}
+        return data.get('order', {})
+    except Exception:
+        return {}
+
+
+def _save_list_order(user_id: str, order_map: dict):
+    """Save list sort order for a user."""
+    order_file = _get_list_order_file(user_id)
+    order_file.parent.mkdir(parents=True, exist_ok=True)
+    # Cap at 2000 entries to avoid unbounded growth
+    if len(order_map) > 2000:
+        # Keep entries with lowest sort indices
+        sorted_items = sorted(order_map.items(), key=lambda x: x[1])
+        order_map = dict(sorted_items[:2000])
+    with open(order_file, 'w') as f:
+        yaml.safe_dump({'order': order_map}, f)
+
+
+@router.get("/api/calendar/list-order")
+async def get_list_order(request: Request):
+    """Get the user's calendar list sort order."""
+    user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+    if not user_id:
+        return JSONResponse({"order": {}})
+    order_map = _load_list_order(user_id)
+    return JSONResponse({"order": order_map})
+
+
+@router.put("/api/calendar/list-order")
+async def save_list_order(request: Request):
+    """Save the user's calendar list sort order (syncs across devices)."""
+    user_id = getattr(request.state, 'user_id', None) if hasattr(request, 'state') else None
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    try:
+        body = await request.json()
+        order_map = body.get('order')
+        if not isinstance(order_map, dict):
+            raise HTTPException(status_code=400, detail="order must be an object")
+        # Validate: keys must be strings, values must be numbers
+        clean_order = {}
+        for k, v in order_map.items():
+            if isinstance(k, str) and isinstance(v, (int, float)):
+                clean_order[k] = int(v)
+        _save_list_order(user_id, clean_order)
+        return JSONResponse({"status": "ok"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving list order: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save list order")
