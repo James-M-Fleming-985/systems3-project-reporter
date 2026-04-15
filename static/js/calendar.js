@@ -1394,6 +1394,7 @@ async function _loadScheduleAllFields(program, tableId, rowId) {
             container.innerHTML = '<p class="text-sm text-gray-400 italic">No fields</p>';
             return;
         }
+        container.className = 'py-1';
         container.innerHTML = '<div class="space-y-3">' + Object.entries(allDataById).map(([colId, col]) => {
             const isDate = col.type === 'date' || /^\d{4}-\d{2}-\d{2}/.test(col.value || '');
             const safeVal = (col.value || '').replace(/"/g, '&quot;');
