@@ -904,15 +904,13 @@ function showEventModal(event) {
             </div>
             ${ep.level3Parent ? `<div class="level3-parent-banner"><span style="opacity:0.6;font-size:0.7rem;">▸ LEVEL 3</span>${ep.level3Parent}</div>` : ''}
             ${ep.parentProject ? `<div class="p-3 bg-blue-50 rounded-lg"><p class="text-xs text-blue-600 uppercase font-semibold">Project Group</p><p class="text-sm font-medium text-blue-800">${ep.parentProject}</p></div>` : ''}
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Resources</label>
-                    <input type="text" id="calEditResources" value="${(ep.resources || '').replace(/"/g, '&quot;')}" placeholder="e.g., Alice; Bob" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Owner</label>
-                    <input type="text" id="calEditOwner" value="${(ep.owner || ms.owner || '').replace(/"/g, '&quot;')}" placeholder="e.g., Jane Smith" class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Resources</label>
+                <input type="text" id="calEditResources" value="${(ep.resources || '').replace(/"/g, '&quot;')}" placeholder="e.g., Alice; Bob" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Owner</label>
+                <input type="text" id="calEditOwner" value="${(ep.owner || ms.owner || '').replace(/"/g, '&quot;')}" placeholder="e.g., Jane Smith" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
                 <label class="text-xs text-gray-500 uppercase font-semibold block mb-1">Notes</label>
@@ -1396,15 +1394,15 @@ async function _loadScheduleAllFields(program, tableId, rowId) {
             container.innerHTML = '<p class="text-sm text-gray-400 italic">No fields</p>';
             return;
         }
-        container.innerHTML = '<div class="space-y-2">' + Object.entries(allDataById).map(([colId, col]) => {
+        container.innerHTML = '<div class="space-y-3">' + Object.entries(allDataById).map(([colId, col]) => {
             const isDate = col.type === 'date' || /^\d{4}-\d{2}-\d{2}/.test(col.value || '');
             const safeVal = (col.value || '').replace(/"/g, '&quot;');
             const inputType = isDate ? 'date' : 'text';
             const inputVal = isDate ? (col.value || '').split('T')[0] : safeVal;
-            return `<div class="flex items-center gap-3 text-sm">
-                <label class="text-gray-500 flex-shrink-0 w-1/3 text-xs uppercase font-semibold">${col.header}</label>
+            return `<div>
+                <label class="text-gray-500 text-xs uppercase font-semibold block mb-1">${col.header}</label>
                 <input type="${inputType}" data-col-id="${colId}" data-orig-value="${safeVal}" value="${inputVal}"
-                       class="schedFieldInput flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                       class="schedFieldInput w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
             </div>`;
         }).join('') + '</div>';
     } catch (e) {
