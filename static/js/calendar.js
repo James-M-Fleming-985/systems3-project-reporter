@@ -285,36 +285,24 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const ep = info.event.extendedProps || {};
                 const newDate = info.event.startStr.split('T')[0];
 
+                // ── Optimistic: FullCalendar already moved the element visually ──
+                // Update in-memory immediately so filters/stats reflect the move
+                const memIdx = allEvents.findIndex(e => e.id === info.event.id);
+                if (memIdx !== -1) allEvents[memIdx].start = newDate;
+
                 // ── Schedule item drag ──
                 if (ep.type === 'schedule') {
                     const { program: prog, tableId, rowId, dateColId } = ep;
                     if (!prog || !tableId || !rowId || !dateColId) { info.revert(); return; }
-                    try {
-                        const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 15000);
-                        const resp = await fetch(
-                            `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
-                            {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                                body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }),
-                                signal: controller.signal
-                            }
-                        );
-                        clearTimeout(timeout);
-                        if (!resp.ok) throw new Error(`Server ${resp.status}`);
-                        const result = await resp.json();
-                        if (!result.success) throw new Error('Update failed');
-                        const idx = allEvents.findIndex(e => e.id === info.event.id);
-                        if (idx !== -1) allEvents[idx].start = newDate;
-                        showToast('✓ Rescheduled', 'success');
-                        await reloadCalendarEvents();
-                    } catch (err) {
-                        console.error('eventDrop error:', err);
-                        info.revert();
-                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : 'Could not reschedule — please try again';
-                        showToast(msg, 'error');
-                    }
+                    showToast('✓ Rescheduled', 'success');
+                    _fcPersistDrop(info, () => fetch(
+                        `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                            body: JSON.stringify({ date_col_id: dateColId, new_date: newDate })
+                        }
+                    ));
                     return;
                 }
 
@@ -322,23 +310,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (ep.type === 'milestone') {
                     const ms = ep.milestone || {};
                     const projectCode = ep.programCode || ms.project;
-                    console.log('eventDrop milestone context:', {
-                        eventId: info.event.id, programCode: ep.programCode,
-                        program: ep.program, msProject: ms.project,
-                        resolvedCode: projectCode, msName: ms.name, msId: ms.id
-                    });
                     if (!projectCode || !ms.name) {
-                        console.warn('Milestone drag missing data:', { projectCode, msName: ms.name, ep });
                         info.revert();
                         showToast('Missing project code or milestone name', 'error');
                         return;
                     }
-                    try {
-                        const payload = {
+                    showToast('✓ Milestone rescheduled', 'success');
+                    _fcPersistDrop(info, () => fetch('/milestones/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
                             project_code: projectCode,
                             milestone: {
-                                id: ms.id || ms.name,
-                                name: ms.name,
+                                id: ms.id || ms.name, name: ms.name,
                                 target_date: newDate,
                                 start_date: ep.startDate || ms.start_date || '',
                                 status: ep.status || ms.status || 'NOT_STARTED',
@@ -351,37 +335,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 parent_levels: ms.parent_levels
                             },
                             confirmed_date_change: false
-                        };
-                        console.log('Milestone drag payload:', JSON.stringify(payload, null, 2));
-                        const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 15000);
-                        const resp = await fetch('/milestones/update', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeout);
-                        if (!resp.ok) {
-                            const err = await resp.json().catch(() => ({}));
-                            console.error('eventDrop 404 detail:', err, '| sent project_code:', projectCode, '| milestone:', ms.name);
-                            throw new Error(err.detail || `Server ${resp.status}`);
-                        }
-                        // Update in-memory events and reload from server
-                        const idx = allEvents.findIndex(e => e.id === info.event.id);
-                        if (idx !== -1) allEvents[idx].start = newDate;
-                        showToast('✓ Milestone rescheduled', 'success');
-                        await reloadCalendarEvents();
-                    } catch (err) {
-                        console.error('eventDrop milestone error:', err);
-                        info.revert();
-                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
-                        showToast('Could not reschedule milestone — ' + msg, 'error');
-                    }
+                        })
+                    }));
                     return;
                 }
 
-                // ── Other event types: revert ──
                 // ── Risk review drag ──
                 if (ep.type === 'risk_review') {
                     const riskId = ep.riskId;
@@ -391,33 +349,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                         showToast('Missing risk details for reschedule', 'error');
                         return;
                     }
-                    try {
-                        const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 15000);
-                        const resp = await fetch(
-                            `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
-                            {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ new_date: newDate }),
-                                signal: controller.signal
-                            }
-                        );
-                        clearTimeout(timeout);
-                        if (!resp.ok) {
-                            const err = await resp.json().catch(() => ({}));
-                            throw new Error(err.detail || `Server ${resp.status}`);
+                    showToast('✓ Risk review rescheduled', 'success');
+                    _fcPersistDrop(info, () => fetch(
+                        `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ new_date: newDate })
                         }
-                        const idx = allEvents.findIndex(e => e.id === info.event.id);
-                        if (idx !== -1) allEvents[idx].start = newDate;
-                        showToast('✓ Risk review rescheduled', 'success');
-                        await reloadCalendarEvents();
-                    } catch (err) {
-                        console.error('eventDrop risk error:', err);
-                        info.revert();
-                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
-                        showToast('Could not reschedule risk review — ' + msg, 'error');
-                    }
+                    ));
                     return;
                 }
 
@@ -425,39 +365,20 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (ep.type === 'standalone') {
                     const taskId = ep.taskId;
                     if (!taskId) { info.revert(); return; }
-                    try {
-                        const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 15000);
-                        // Compute new start and end dates preserving the task's duration
-                        const oldStart = info.oldEvent.startStr.split('T')[0];
-                        const oldEnd = (info.oldEvent.endStr || info.oldEvent.startStr).split('T')[0];
-                        const newStart = info.event.startStr.split('T')[0];
-                        const dayDelta = Math.round((new Date(newStart) - new Date(oldStart)) / 86400000);
-                        const newEnd = new Date(new Date(oldEnd).getTime() + dayDelta * 86400000).toISOString().split('T')[0];
-                        const resp = await fetch(
-                            `/api/standalone-tasks/${encodeURIComponent(taskId)}/reschedule`,
-                            {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                                body: JSON.stringify({ new_due_date: newEnd, new_start_date: newStart }),
-                                signal: controller.signal
-                            }
-                        );
-                        clearTimeout(timeout);
-                        if (!resp.ok) {
-                            const err = await resp.json().catch(() => ({}));
-                            throw new Error(err.detail || `Server ${resp.status}`);
+                    const oldStart = info.oldEvent.startStr.split('T')[0];
+                    const oldEnd = (info.oldEvent.endStr || info.oldEvent.startStr).split('T')[0];
+                    const newStart = info.event.startStr.split('T')[0];
+                    const dayDelta = Math.round((new Date(newStart) - new Date(oldStart)) / 86400000);
+                    const newEnd = new Date(new Date(oldEnd).getTime() + dayDelta * 86400000).toISOString().split('T')[0];
+                    showToast('✓ Task rescheduled', 'success');
+                    _fcPersistDrop(info, () => fetch(
+                        `/api/standalone-tasks/${encodeURIComponent(taskId)}/reschedule`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
+                            body: JSON.stringify({ new_due_date: newEnd, new_start_date: newStart })
                         }
-                        const idx = allEvents.findIndex(e => e.id === info.event.id);
-                        if (idx !== -1) allEvents[idx].start = newDate;
-                        showToast('✓ Task rescheduled', 'success');
-                        await reloadCalendarEvents();
-                    } catch (err) {
-                        console.error('eventDrop standalone error:', err);
-                        info.revert();
-                        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
-                        showToast('Could not reschedule task — ' + msg, 'error');
-                    }
+                    ));
                     return;
                 }
 
@@ -624,6 +545,26 @@ function pickTypeColor(type, color, dot, pop) {
     refreshCalendar();
 }
 
+/** Background persist for FullCalendar eventDrop; reverts on failure */
+async function _fcPersistDrop(info, fetchFn) {
+    try {
+        const resp = await Promise.race([
+            fetchFn(),
+            new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('timeout'), { name: 'AbortError' })), 15000))
+        ]);
+        if (!resp.ok) throw new Error(`Server ${resp.status}`);
+        _scheduleDeferredSync();
+    } catch (err) {
+        console.error('eventDrop persist error:', err);
+        // Revert the in-memory update
+        const memIdx = allEvents.findIndex(e => e.id === info.event.id);
+        if (memIdx !== -1) allEvents[memIdx].start = info.oldEvent.startStr.split('T')[0];
+        info.revert();
+        const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : 'Could not reschedule — please try again';
+        showToast(msg, 'error');
+    }
+}
+
 function applyFilters() {
     const showMilestones = document.getElementById('filterMilestones').checked;
     const showChanges = document.getElementById('filterChanges').checked;
@@ -676,10 +617,14 @@ function refreshCalendar() {
         calendarInstance.refetchEvents();
     }
     
-    // Update custom list view if active
+    // Update custom list view if active (but not during a drag)
     const clv = document.getElementById('customListView');
     if (clv && clv.classList.contains('active')) {
-        renderCustomListView();
+        if (_clvDragInProgress) {
+            _clvRenderQueued = true;
+        } else {
+            renderCustomListView();
+        }
     }
     
     updateStats();
@@ -703,6 +648,24 @@ async function reloadCalendarEvents() {
     } catch (err) {
         console.error('reloadCalendarEvents error:', err);
     }
+}
+
+/** Background sync: fetches fresh events but skips list re-render if data already correct locally */
+function syncEventsQuietly() {
+    fetch('/api/calendar/events', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+            allEvents = data.events || [];
+            applyFilters();
+            if (calendarInstance) calendarInstance.refetchEvents();
+            // Only re-render list if no drag in progress
+            if (!_clvDragInProgress) {
+                const clv = document.getElementById('customListView');
+                if (clv && clv.classList.contains('active')) renderCustomListView();
+            }
+            updateStats();
+        })
+        .catch(err => console.error('syncEventsQuietly error:', err));
 }
 
 function updateStats() {
@@ -1326,7 +1289,8 @@ async function updateTaskStatus(checkbox) {
             // Reorder: move completed items to bottom
             reorderSubTaskRows(document.getElementById('siblingTasksContainer'));
             showToast(shouldComplete ? 'Task marked complete ✓' : 'Task reopened', 'success');
-            reloadCalendarEvents();
+            refreshCalendar();
+            _scheduleDeferredSync();
         }
 
     } catch (error) {
@@ -1372,7 +1336,8 @@ function showMilestoneAchieved(milestoneName) {
     // After a short celebration, close and refresh
     setTimeout(() => {
         closeEventModal();
-        reloadCalendarEvents();
+        refreshCalendar();
+        _scheduleDeferredSync(500);
         showToast(`🎉 "${milestoneName}" complete!`, 'success', 5000);
     }, 2800);
 }
@@ -1426,9 +1391,18 @@ async function markScheduleDone() {
         return;
     }
     const { scheduleProgram, tableId, rowId, eventId } = currentEventData;
-    const btn = document.getElementById('schedDoneBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
+    // ── Optimistic: remove immediately and close modal ──
+    allEvents = allEvents.filter(e => e.id !== eventId);
+    if (calendarInstance) {
+        const fcEvent = calendarInstance.getEventById(eventId);
+        if (fcEvent) fcEvent.remove();
+    }
+    closeEventModal();
+    showToast('✓ Schedule item marked complete', 'success');
+    applyFilters();
+
+    // ── Persist in background ──
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
@@ -1438,19 +1412,13 @@ async function markScheduleDone() {
         );
         clearTimeout(timeout);
         if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
-        const result = await resp.json();
-        if (!result.success) throw new Error('Update failed');
-
-        // Remove from the in-memory event list and reload from server
-        allEvents = allEvents.filter(e => e.id !== eventId);
-        closeEventModal();
-        showToast('✓ Schedule item marked complete', 'success');
-        await reloadCalendarEvents();
+        _scheduleDeferredSync();
     } catch (err) {
         console.error('markScheduleDone error:', err);
         const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : 'Could not mark as done — please try again';
         showToast(msg, 'error');
-        if (btn) { btn.disabled = false; btn.textContent = 'Done'; }
+        // Revert: re-fetch all events
+        await reloadCalendarEvents();
     }
 }
 
@@ -1470,26 +1438,27 @@ async function saveScheduleFromCalendar() {
         const newDate = document.getElementById('schedEditDueDate')?.value || '';
         const origDate = currentEventData._origDueDate || '';
 
+        // Build parallel save promises (independent operations run concurrently)
+        const saves = [];
+        const abortCtrl = new AbortController();
+        const abortTimer = setTimeout(() => abortCtrl.abort(), 15000);
+
         // 1. Save notes
-        const ctrl1 = new AbortController();
-        const t1 = setTimeout(() => ctrl1.abort(), 15000);
-        const notesResp = await fetch(
-            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/notes`,
-            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ notes: newNotes }), signal: ctrl1.signal }
+        saves.push(
+            fetch(
+                `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/notes`,
+                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ notes: newNotes }), signal: abortCtrl.signal }
+            ).then(r => { if (!r.ok) throw new Error('Failed to save notes'); })
         );
-        clearTimeout(t1);
-        if (!notesResp.ok) throw new Error('Failed to save notes');
 
         // 2. Reschedule date if changed
         if (newDate && newDate !== origDate && dateColId) {
-            const ctrl2 = new AbortController();
-            const t2 = setTimeout(() => ctrl2.abort(), 15000);
-            const dateResp = await fetch(
-                `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
-                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }), signal: ctrl2.signal }
+            saves.push(
+                fetch(
+                    `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
+                    { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ date_col_id: dateColId, new_date: newDate }), signal: abortCtrl.signal }
+                ).then(r => { if (!r.ok) throw new Error('Failed to update date'); })
             );
-            clearTimeout(t2);
-            if (!dateResp.ok) throw new Error('Failed to update date');
         }
 
         // 3. Save any changed "All Fields" cell values
@@ -1504,19 +1473,27 @@ async function saveScheduleFromCalendar() {
             }
         });
         if (Object.keys(cellUpdates).length > 0) {
-            const ctrl3 = new AbortController();
-            const t3 = setTimeout(() => ctrl3.abort(), 15000);
-            const cellResp = await fetch(
-                `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/cells`,
-                { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ updates: cellUpdates }), signal: ctrl3.signal }
+            saves.push(
+                fetch(
+                    `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/cells`,
+                    { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken }, body: JSON.stringify({ updates: cellUpdates }), signal: abortCtrl.signal }
+                ).then(r => { if (!r.ok) throw new Error('Failed to update fields'); })
             );
-            clearTimeout(t3);
-            if (!cellResp.ok) throw new Error('Failed to update fields');
         }
+
+        await Promise.all(saves);
+        clearTimeout(abortTimer);
 
         closeEventModal();
         showToast('Schedule item saved', 'success');
-        await reloadCalendarEvents();
+
+        // Optimistic: update in-memory event then deferred sync
+        const evtIdx = allEvents.findIndex(e => e.id === currentEventData.eventId);
+        if (evtIdx !== -1) {
+            if (newDate && newDate !== origDate) allEvents[evtIdx].start = newDate;
+        }
+        refreshCalendar();
+        _scheduleDeferredSync();
 
         // Navigate calendar to the new date so the user sees the pill
         if (newDate && newDate !== origDate && calendarInstance) {
@@ -2039,7 +2016,12 @@ async function markRiskMitigated() {
         }
         closeEventModal();
         showToast('✓ Risk marked as mitigated — removed from calendar', 'success');
-        await reloadCalendarEvents();
+        // Optimistic: remove from local events + deferred sync
+        if (currentEventData?.eventId) {
+            allEvents = allEvents.filter(e => e.id !== currentEventData.eventId);
+        }
+        refreshCalendar();
+        _scheduleDeferredSync();
     } catch (err) {
         console.error('markRiskMitigated error:', err);
         showToast('Could not update risk: ' + err.message, 'error');
@@ -2075,7 +2057,13 @@ async function rescheduleRiskFromModal() {
         }
         closeEventModal();
         showToast('✓ Risk review rescheduled', 'success');
-        await reloadCalendarEvents();
+        // Optimistic: update in-memory event + deferred sync
+        if (eventId) {
+            const evtIdx = allEvents.findIndex(e => e.id === eventId);
+            if (evtIdx !== -1) allEvents[evtIdx].start = newDate;
+        }
+        refreshCalendar();
+        _scheduleDeferredSync();
         if (calendarInstance) calendarInstance.gotoDate(newDate);
     } catch (err) {
         console.error('rescheduleRiskFromModal error:', err);
@@ -2166,8 +2154,25 @@ async function saveEventFromCalendar() {
         closeEventModal();
         showToast('Milestone saved successfully', 'success');
         
-        // Reload events from server (completed milestones get filtered out server-side)
-        await reloadCalendarEvents();
+        // Optimistic: update in-memory events + deferred sync
+        // Completed milestones should be removed from calendar
+        if (newStatus === 'COMPLETED') {
+            allEvents = allEvents.filter(e => {
+                const mid = e.extendedProps?.milestone;
+                return !(e.extendedProps?.type === 'milestone' && mid && mid.id === milestone.id && e.extendedProps?.programCode === projectCode);
+            });
+        } else {
+            // Update matching milestone events in-place
+            allEvents.forEach(e => {
+                const mid = e.extendedProps?.milestone;
+                if (e.extendedProps?.type === 'milestone' && mid && mid.id === milestone.id && e.extendedProps?.programCode === projectCode) {
+                    if (e.id.startsWith('milestone-start-')) e.start = newStartDate || e.start;
+                    if (e.id.startsWith('milestone-end-')) e.start = newTargetDate || e.start;
+                }
+            });
+        }
+        refreshCalendar();
+        _scheduleDeferredSync();
         
         // Navigate to the new date so the user sees the pill at its updated position
         if (newTargetDate && calendarInstance) {
@@ -2242,6 +2247,19 @@ function formatDate(dateStr) {
 // ── Custom List View ───────────────────────────────────────────────────
 let clvDragSrcIdx = null;
 let clvDragSrcDate = null;
+let _clvDragInProgress = false;
+let _clvRenderQueued = false;
+let _deferredSyncTimer = null;
+
+/** Schedule a deferred background sync (debounced). Optimistic UI stays stable
+ *  for the delay period; the 60s polling catches any remaining drift. */
+function _scheduleDeferredSync(delayMs = 3000) {
+    if (_deferredSyncTimer) clearTimeout(_deferredSyncTimer);
+    _deferredSyncTimer = setTimeout(() => {
+        _deferredSyncTimer = null;
+        syncEventsQuietly();
+    }, delayMs);
+}
 
 function getListSortOrder() {
     return _serverListOrder;
@@ -2398,11 +2416,13 @@ function clvInitDrag(container) {
         row.addEventListener('dragstart', (e) => {
             clvDragSrcIdx = parseInt(row.dataset.idx);
             clvDragSrcDate = row.dataset.date;
+            _clvDragInProgress = true;
             row.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', row.dataset.idx);
         });
         row.addEventListener('dragend', () => {
+            _clvDragInProgress = false;
             row.classList.remove('dragging');
             container.querySelectorAll('.clv-row').forEach(r => {
                 r.classList.remove('drag-over-top', 'drag-over-bottom');
@@ -2410,6 +2430,11 @@ function clvInitDrag(container) {
             container.querySelectorAll('.clv-group-label').forEach(l => {
                 l.classList.remove('drag-over-day');
             });
+            // Flush queued re-render if a background sync completed during the drag
+            if (_clvRenderQueued) {
+                _clvRenderQueued = false;
+                renderCustomListView();
+            }
         });
         row.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -2507,13 +2532,34 @@ async function clvCrossDayMove(eventId, eventType, newDate) {
     if (!evt) { showToast('Event not found', 'error'); return; }
     const ep = evt.extendedProps || {};
 
+    // ── Optimistic UI: move the item immediately ──
+    const oldDate = evt.start;
+    const oldEnd = evt.end || evt.start;
+    const dayDelta = Math.round((new Date(newDate) - new Date(oldDate.split('T')[0])) / 86400000);
+    const newEnd = new Date(new Date(oldEnd.split('T')[0]).getTime() + dayDelta * 86400000).toISOString().split('T')[0];
+    const idx = allEvents.findIndex(e => e.id === eventId);
+    if (idx !== -1) {
+        allEvents[idx].start = newDate;
+        allEvents[idx].end = newEnd;
+    }
+    refreshCalendar();
+    showToast('✓ Rescheduled', 'success');
+
+    // ── Fire API in background (no await) ──
+    _clvPersistReschedule(eventId, eventType, ep, newDate, oldDate);
+}
+
+/** Persist a reschedule to the server; revert optimistic update on failure */
+async function _clvPersistReschedule(eventId, eventType, ep, newDate, oldDate) {
     try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 15000);
+        let resp;
+
         if (eventType === 'schedule') {
             const { program: prog, tableId, rowId, dateColId } = ep;
             if (!prog || !tableId || !rowId || !dateColId) throw new Error('Missing schedule data');
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 15000);
-            const resp = await fetch(
+            resp = await fetch(
                 `/dashboard/api/schedule/${encodeURIComponent(prog)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}/reschedule`,
                 {
                     method: 'PATCH',
@@ -2522,25 +2568,35 @@ async function clvCrossDayMove(eventId, eventType, newDate) {
                     signal: ctrl.signal
                 }
             );
-            clearTimeout(t);
-            if (!resp.ok) throw new Error(`Server ${resp.status}`);
-            showToast('✓ Rescheduled', 'success');
-
         } else if (eventType === 'milestone') {
             const ms = ep.milestone || {};
             const projectCode = ep.programCode || ms.project;
             if (!projectCode || !ms.name) throw new Error('Missing milestone data');
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 15000);
-            const resp = await fetch('/milestones/update', {
+            // Determine which end was dragged and shift both dates to preserve duration
+            const isStartEvent = eventId.startsWith('milestone-start-');
+            const curStart = (ep.startDate || ms.start_date || '').split('T')[0];
+            const curTarget = (ep.targetDate || ms.target_date || '').split('T')[0];
+            let newStart, newTarget;
+            if (isStartEvent) {
+                newStart = newDate;
+                // Shift target by the same delta to preserve duration
+                const delta = curStart ? Math.round((new Date(newDate) - new Date(curStart)) / 86400000) : 0;
+                newTarget = curTarget ? new Date(new Date(curTarget).getTime() + delta * 86400000).toISOString().split('T')[0] : newDate;
+            } else {
+                newTarget = newDate;
+                // Shift start by the same delta to preserve duration
+                const delta = curTarget ? Math.round((new Date(newDate) - new Date(curTarget)) / 86400000) : 0;
+                newStart = curStart ? new Date(new Date(curStart).getTime() + delta * 86400000).toISOString().split('T')[0] : newDate;
+            }
+            resp = await fetch('/milestones/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_code: projectCode,
                     milestone: {
                         id: ms.id || ms.name, name: ms.name,
-                        target_date: newDate,
-                        start_date: ep.startDate || ms.start_date || '',
+                        target_date: newTarget,
+                        start_date: newStart,
                         status: ep.status || ms.status || 'NOT_STARTED',
                         completion_percentage: ep.completionPct || 0,
                         notes: ep.notes || '',
@@ -2554,17 +2610,11 @@ async function clvCrossDayMove(eventId, eventType, newDate) {
                 }),
                 signal: ctrl.signal
             });
-            clearTimeout(t);
-            if (!resp.ok) throw new Error(`Server ${resp.status}`);
-            showToast('✓ Milestone rescheduled', 'success');
-
         } else if (eventType === 'risk_review') {
             const riskId = ep.riskId;
             const riskProgram = ep.program;
             if (!riskId || !riskProgram) throw new Error('Missing risk data');
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 15000);
-            const resp = await fetch(
+            resp = await fetch(
                 `/risks/reschedule/${encodeURIComponent(riskProgram)}/${encodeURIComponent(riskId)}`,
                 {
                     method: 'PATCH',
@@ -2573,36 +2623,37 @@ async function clvCrossDayMove(eventId, eventType, newDate) {
                     signal: ctrl.signal
                 }
             );
-            clearTimeout(t);
-            if (!resp.ok) throw new Error(`Server ${resp.status}`);
-            showToast('✓ Risk review rescheduled', 'success');
-
         } else if (eventType === 'standalone') {
             const taskId = ep.taskId;
             if (!taskId) throw new Error('Missing standalone task data');
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 15000);
-            const resp = await fetch(
+            // Calculate day delta to shift both start and due dates (preserving duration)
+            const oldStartStr = (oldDate || '').split('T')[0];
+            const oldDueStr = (ep.due_date || oldDate || '').split('T')[0];
+            const delta = Math.round((new Date(newDate) - new Date(oldStartStr)) / 86400000);
+            const shiftedDue = new Date(new Date(oldDueStr).getTime() + delta * 86400000).toISOString().split('T')[0];
+            resp = await fetch(
                 `/api/standalone-tasks/${encodeURIComponent(taskId)}/reschedule`,
                 {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.getElementById('csrfToken')?.value || '' },
-                    body: JSON.stringify({ new_due_date: newDate }),
+                    body: JSON.stringify({ new_due_date: shiftedDue, new_start_date: newDate }),
                     signal: ctrl.signal
                 }
             );
-            clearTimeout(t);
-            if (!resp.ok) throw new Error(`Server ${resp.status}`);
-            showToast('✓ Task rescheduled', 'success');
         }
 
-        // Update in-memory and reload
-        const idx = allEvents.findIndex(e => e.id === eventId);
-        if (idx !== -1) allEvents[idx].start = newDate;
-        await reloadCalendarEvents();
+        clearTimeout(t);
+        if (!resp || !resp.ok) throw new Error(`Server ${resp?.status || 'error'}`);
+
+        // Deferred background sync — lets optimistic UI settle before refetching
+        _scheduleDeferredSync();
 
     } catch (err) {
-        console.error('clvCrossDayMove error:', err);
+        console.error('_clvPersistReschedule error:', err);
+        // ── Revert optimistic update ──
+        const idx = allEvents.findIndex(e => e.id === eventId);
+        if (idx !== -1) allEvents[idx].start = oldDate;
+        refreshCalendar();
         const msg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
         showToast('Could not reschedule — ' + msg, 'error');
     }
@@ -2623,6 +2674,41 @@ async function clvQuickDone(btn) {
     }
     const ep = evt.extendedProps || {};
 
+    // ── Optimistic UI: remove immediately ──
+    const removedEvt = { ...evt };
+    allEvents = allEvents.filter(e => e.id !== eventId);
+    if (calendarInstance) {
+        const fcEvent = calendarInstance.getEventById(eventId);
+        if (fcEvent) fcEvent.remove();
+    }
+    applyFilters();
+
+    // Animate row removal
+    const row = btn.closest('.clv-row');
+    if (row) {
+        row.style.transition = 'opacity 0.2s, transform 0.2s';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(30px)';
+        setTimeout(() => {
+            row.remove();
+            const countEl = document.getElementById('clvCount');
+            const remaining = document.querySelectorAll('#clvBody .clv-row').length;
+            if (countEl) countEl.textContent = `${remaining} item${remaining !== 1 ? 's' : ''}`;
+            if (remaining === 0) {
+                document.getElementById('clvBody').innerHTML = '<div class="clv-empty">No events this month matching current filters</div>';
+            }
+        }, 220);
+    }
+
+    const doneMsg = { milestone: 'Milestone completed', schedule: 'Schedule item done', risk_review: 'Risk mitigated', change: 'Change acknowledged', metric_target: 'Metric acknowledged', standalone: 'Task completed' };
+    showToast(`✓ ${doneMsg[eventType] || 'Done'}`, 'success');
+
+    // ── Fire API in background ──
+    _clvPersistDone(eventId, eventType, ep, removedEvt);
+}
+
+/** Persist a done/complete action to the server; revert optimistic removal on failure */
+async function _clvPersistDone(eventId, eventType, ep, removedEvt) {
     try {
         if (eventType === 'milestone') {
             const ms = ep.milestone || {};
@@ -2692,7 +2778,6 @@ async function clvQuickDone(btn) {
             if (!resp.ok) throw new Error(`Server ${resp.status}`);
 
         } else if (eventType === 'change' || eventType === 'metric_target') {
-            // Server-side acknowledgment (syncs across devices)
             await fetch('/api/calendar/acknowledge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2700,45 +2785,16 @@ async function clvQuickDone(btn) {
             });
         }
 
-        // Remove from in-memory events + FullCalendar
-        allEvents = allEvents.filter(e => e.id !== eventId);
-        if (calendarInstance) {
-            const fcEvent = calendarInstance.getEventById(eventId);
-            if (fcEvent) fcEvent.remove();
-        }
-        applyFilters();
+        // Deferred background sync to pick up server-side side-effects
+        _scheduleDeferredSync();
 
-        // Remove the row with animation
-        const row = btn.closest('.clv-row');
-        if (row) {
-            row.style.transition = 'opacity 0.2s, transform 0.2s';
-            row.style.opacity = '0';
-            row.style.transform = 'translateX(30px)';
-            setTimeout(() => {
-                row.remove();
-                // Update count
-                const countEl = document.getElementById('clvCount');
-                const remaining = document.querySelectorAll('#clvBody .clv-row').length;
-                if (countEl) countEl.textContent = `${remaining} item${remaining !== 1 ? 's' : ''}`;
-                if (remaining === 0) {
-                    document.getElementById('clvBody').innerHTML = '<div class="clv-empty">No events this month matching current filters</div>';
-                }
-            }, 220);
-        }
-
-        const doneMsg = { milestone: 'Milestone completed', schedule: 'Schedule item done', risk_review: 'Risk mitigated', change: 'Change acknowledged', metric_target: 'Metric acknowledged', standalone: 'Task completed' };
-        showToast(`✓ ${doneMsg[eventType] || 'Done'}`, 'success');
-
-        // Reload from server for server-persisted types
-        if (['milestone', 'schedule', 'risk_review', 'standalone'].includes(eventType)) {
-            await reloadCalendarEvents();
-        }
     } catch (err) {
-        console.error('clvQuickDone error:', err);
+        console.error('_clvPersistDone error:', err);
+        // ── Revert: re-add the event ──
+        allEvents.push(removedEvt);
+        refreshCalendar();
         const errMsg = err.name === 'AbortError' ? 'Request timed out — server may be restarting' : err.message;
         showToast('Could not complete: ' + errMsg, 'error');
-        btn.disabled = false;
-        btn.textContent = { milestone: 'Done ✓', schedule: 'Done ✓', risk_review: 'Mitigated ✓', change: 'Ack ✓', metric_target: 'Ack ✓' }[eventType] || 'Done ✓';
     }
 }
 
@@ -3053,7 +3109,9 @@ async function submitStandaloneTaskForm() {
         closeStandaloneTaskModal();
         const count = result.tasks ? result.tasks.length : 1;
         showToast(count > 1 ? `✓ Created ${count} recurring tasks` : '✓ Task saved', 'success');
-        await reloadCalendarEvents();
+        // Deferred sync picks up the new/updated task(s)
+        refreshCalendar();
+        _scheduleDeferredSync(500);  // shorter delay for creates/edits so the new item appears quickly
     } catch (err) {
         console.error('submitStandaloneTaskForm error:', err);
         errEl.textContent = 'Save failed: ' + err.message;
@@ -3094,7 +3152,10 @@ async function _doDeleteStandaloneTask(taskId, queryString) {
         const result = await resp.json();
         closeStandaloneTaskModal();
         showToast(`🗑️ Deleted ${result.deleted || 1} task${(result.deleted || 1) > 1 ? 's' : ''}`, 'success');
-        await reloadCalendarEvents();
+        // Optimistic: remove from local events + deferred sync
+        allEvents = allEvents.filter(e => !(e.extendedProps?.type === 'standalone' && e.extendedProps?.taskId === taskId));
+        refreshCalendar();
+        _scheduleDeferredSync();
     } catch (err) {
         console.error('deleteStandaloneTask error:', err);
         showToast('Could not delete: ' + err.message, 'error');
