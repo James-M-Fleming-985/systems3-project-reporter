@@ -1390,6 +1390,7 @@ async function markScheduleDone() {
         showToast('Cannot determine schedule item to complete', 'error');
         return;
     }
+    if (!confirm('Mark this schedule item as complete? This cannot be undone from the calendar.')) return;
     const { scheduleProgram, tableId, rowId, eventId } = currentEventData;
 
     // ── Optimistic: remove immediately and close modal ──
@@ -1427,7 +1428,7 @@ async function saveScheduleFromCalendar() {
         showToast('Cannot determine schedule item to save', 'error');
         return;
     }
-    const { scheduleProgram, tableId, rowId, dateColId } = currentEventData;
+    const { scheduleProgram, tableId, rowId, dateColId, eventId } = currentEventData;
     const csrfToken = document.getElementById('csrfToken')?.value || '';
     const btn = document.getElementById('schedSaveBtn');
     const saveBtnOriginal = btn ? btn.innerHTML : '';
@@ -1488,7 +1489,7 @@ async function saveScheduleFromCalendar() {
         showToast('Schedule item saved', 'success');
 
         // Optimistic: update in-memory event then deferred sync
-        const evtIdx = allEvents.findIndex(e => e.id === currentEventData.eventId);
+        const evtIdx = allEvents.findIndex(e => e.id === eventId);
         if (evtIdx !== -1) {
             if (newDate && newDate !== origDate) allEvents[evtIdx].start = newDate;
         }
@@ -1985,7 +1986,7 @@ async function markRiskMitigated() {
         showToast('No risk event selected', 'info');
         return;
     }
-    const { riskId, riskProgram } = currentEventData;
+    const { riskId, riskProgram, eventId } = currentEventData;
     if (!riskId || !riskProgram) {
         showToast('Missing risk details', 'error');
         return;
@@ -2017,8 +2018,8 @@ async function markRiskMitigated() {
         closeEventModal();
         showToast('✓ Risk marked as mitigated — removed from calendar', 'success');
         // Optimistic: remove from local events + deferred sync
-        if (currentEventData?.eventId) {
-            allEvents = allEvents.filter(e => e.id !== currentEventData.eventId);
+        if (eventId) {
+            allEvents = allEvents.filter(e => e.id !== eventId);
         }
         refreshCalendar();
         _scheduleDeferredSync();
@@ -2662,6 +2663,7 @@ async function _clvPersistReschedule(eventId, eventType, ep, newDate, oldDate) {
 async function clvQuickDone(btn) {
     const eventId = btn.dataset.eventId;
     const eventType = btn.dataset.eventType;
+    if (!confirm('Mark this item as done?')) return;
     btn.disabled = true;
     btn.textContent = 'Saving…';
 
