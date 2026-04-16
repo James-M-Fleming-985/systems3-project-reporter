@@ -249,6 +249,14 @@ class ScheduleRepository:
                 if 'description' in updates:
                     data['tables'][i]['description'] = updates['description']
                 if 'columns' in updates:
+                    new_col_ids = {c.get('id') for c in updates['columns']}
+                    old_col_ids = {c.get('id') for c in data['tables'][i].get('columns', [])}
+                    removed_col_ids = old_col_ids - new_col_ids
+                    if removed_col_ids:
+                        for row in data['tables'][i].get('rows', []):
+                            row_data = row.get('data', {})
+                            for rid in removed_col_ids:
+                                row_data.pop(rid, None)
                     data['tables'][i]['columns'] = updates['columns']
                 if 'rows' in updates:
                     data['tables'][i]['rows'] = updates['rows']

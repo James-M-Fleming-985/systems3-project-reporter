@@ -757,6 +757,7 @@ function showEventModal(event) {
     const saveBtn = document.getElementById('saveEventBtn');
     const schedDoneBtn = document.getElementById('schedDoneBtn');
     const schedSaveBtn = document.getElementById('schedSaveBtn');
+    const schedDeleteBtn = document.getElementById('schedDeleteBtn');
     const acknowledgeBtn = document.getElementById('acknowledgeBtn');
 
     const isMilestone = ep.type === 'milestone' && ep.milestone;
@@ -765,6 +766,7 @@ function showEventModal(event) {
     const showDone = ep.type === 'schedule' && !!ep.rowId;
     schedDoneBtn.classList.toggle('hidden', !showDone);
     schedSaveBtn.classList.toggle('hidden', !showDone);
+    schedDeleteBtn.classList.toggle('hidden', !showDone);
     if (showDone) {
         // Always reset button state so a previous "Saving…" doesn't persist
         schedDoneBtn.disabled = false;
@@ -1420,6 +1422,54 @@ async function markScheduleDone() {
         showToast(msg, 'error');
         // Revert: re-fetch all events
         await reloadCalendarEvents();
+    }
+}
+
+async function deleteScheduleEvent() {
+    if (!currentEventData || !currentEventData.scheduleProgram || !currentEventData.tableId || !currentEventData.rowId) {
+        showToast('Cannot determine schedule item to delete', 'error');
+        return;
+    }
+    const { scheduleProgram, tableId, rowId, eventId } = currentEventData;
+    const title = currentEventData.description || currentEventData.title || 'this item';
+    const confirmed = await showConfirm(`Delete "${title}" from the schedule? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const btn = document.getElementById('schedDeleteBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Deleting…`; }
+
+    // Optimistic removal
+    allEvents = allEvents.filter(e => {
+        // Remove all events from this row (may have multiple date columns)
+        const ep = e.extendedProps || {};
+        return !(ep.type === 'schedule' && ep.program === scheduleProgram && ep.tableId === tableId && ep.rowId === rowId);
+    });
+    if (calendarInstance) {
+        const fcEvent = calendarInstance.getEventById(eventId);
+        if (fcEvent) fcEvent.remove();
+    }
+    closeEventModal();
+    refreshCalendar();
+    applyFilters();
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}`,
+            { method: 'DELETE', signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+        showToast('Schedule item deleted', 'success');
+        _scheduleDeferredSync();
+    } catch (err) {
+        console.error('deleteScheduleEvent error:', err);
+        const msg = err.name === 'AbortError' ? 'Request timed out — please try again' : 'Could not delete — please try again';
+        showToast(msg, 'error');
+        await reloadCalendarEvents();
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Delete`; }
     }
 }
 
@@ -2360,6 +2410,9 @@ function renderCustomListView() {
             html += `<span class="clv-program">${escapeHtml(program)}</span>`;
             html += `<span class="clv-date">${dateKey}</span>`;
             html += `<button class="clv-done-btn clv-done-btn-${type}" data-event-id="${evtId}" data-event-type="${type}" onclick="event.stopPropagation(); clvQuickDone(this)">${doneLabels[type] || 'Done ✓'}</button>`;
+            if (type === 'schedule') {
+                html += `<button class="clv-delete-btn" data-event-id="${evtId}" onclick="event.stopPropagation(); clvDeleteSchedule(this)" title="Delete from schedule">✕</button>`;
+            }
             html += `</div>`;
         });
     }
@@ -2387,7 +2440,7 @@ function renderCustomListView() {
     // Wire up row click (excluding button and handle clicks)
     body.querySelectorAll('.clv-row').forEach(row => {
         row.addEventListener('click', (e) => {
-            if (e.target.closest('.clv-done-btn') || e.target.closest('.clv-drag-handle')) return;
+            if (e.target.closest('.clv-done-btn') || e.target.closest('.clv-delete-btn') || e.target.closest('.clv-drag-handle')) return;
             const eid = row.dataset.eventId;
             if (row.dataset.eventType === 'standalone') {
                 const fcEvt = calendarInstance?.getEventById(eid);
@@ -2707,6 +2760,64 @@ async function clvQuickDone(btn) {
 
     // ── Fire API in background ──
     _clvPersistDone(eventId, eventType, ep, removedEvt);
+}
+
+async function clvDeleteSchedule(btn) {
+    const eventId = btn.dataset.eventId;
+    const evt = allEvents.find(e => e.id === eventId);
+    if (!evt) { showToast('Event not found', 'error'); return; }
+    const ep = evt.extendedProps || {};
+    if (ep.type !== 'schedule' || !ep.program || !ep.tableId || !ep.rowId) {
+        showToast('Cannot delete this event type', 'error');
+        return;
+    }
+    if (!confirm(`Delete "${evt.title}" from the schedule? This cannot be undone.`)) return;
+
+    // Optimistic removal — remove all events from same row (multi-date-column rows)
+    const { program, tableId, rowId } = ep;
+    allEvents = allEvents.filter(e => {
+        const eep = e.extendedProps || {};
+        return !(eep.type === 'schedule' && eep.program === program && eep.tableId === tableId && eep.rowId === rowId);
+    });
+    if (calendarInstance) {
+        const fcEvent = calendarInstance.getEventById(eventId);
+        if (fcEvent) fcEvent.remove();
+    }
+    applyFilters();
+
+    // Animate row removal
+    const row = btn.closest('.clv-row');
+    if (row) {
+        row.style.transition = 'opacity 0.2s, transform 0.2s';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(30px)';
+        setTimeout(() => {
+            row.remove();
+            const countEl = document.getElementById('clvCount');
+            const remaining = document.querySelectorAll('#clvBody .clv-row').length;
+            if (countEl) countEl.textContent = `${remaining} item${remaining !== 1 ? 's' : ''}`;
+            if (remaining === 0) {
+                document.getElementById('clvBody').innerHTML = '<div class="clv-empty">No events this month matching current filters</div>';
+            }
+        }, 220);
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(
+            `/dashboard/api/schedule/${encodeURIComponent(program)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}`,
+            { method: 'DELETE', signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+        showToast('Schedule item deleted', 'success');
+        _scheduleDeferredSync();
+    } catch (err) {
+        console.error('clvDeleteSchedule error:', err);
+        showToast('Could not delete — please try again', 'error');
+        await reloadCalendarEvents();
+    }
 }
 
 /** Persist a done/complete action to the server; revert optimistic removal on failure */

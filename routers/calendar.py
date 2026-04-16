@@ -466,6 +466,9 @@ async def get_calendar_events(request: Request):
                             for col_id, val in row_data.items():
                                 if col_id in date_col_ids or col_id == title_col or col_id == status_col:
                                     continue
+                                # Skip orphaned data from deleted columns
+                                if col_id not in col_lookup:
+                                    continue
                                 val_str = str(val).strip()
                                 if date_pattern.match(val_str):
                                     col_info = col_lookup.get(col_id, {})
