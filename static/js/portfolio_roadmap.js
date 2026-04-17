@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function fetchPortfolioData() {
     try {
-        const response = await fetch('/api/portfolio/roadmap-data');
+        const response = await fetch('/dashboard/api/portfolio/roadmap-data');
         if (!response.ok) throw new Error('Failed to fetch');
         portfolioData = await response.json();
 
@@ -427,12 +427,14 @@ function renderPortfolioChart() {
 
     const layout = {
         title: null,
+        dragmode: false,
         xaxis: {
             title: { text: 'Timeline', font: { size: 12 } },
             type: 'date',
             tickformat: '%b %Y',
             showgrid: true,
-            gridcolor: '#e5e7eb'
+            gridcolor: '#e5e7eb',
+            fixedrange: true
         },
         yaxis: {
             automargin: true,
@@ -440,7 +442,8 @@ function renderPortfolioChart() {
             categoryorder: 'array',
             categoryarray: yCategories,
             showgrid: false,
-            tickfont: { size: hasExpanded ? 10 : 12 }
+            tickfont: { size: hasExpanded ? 10 : 12 },
+            fixedrange: true
         },
         height: chartHeight,
         margin: { l: hasExpanded ? 320 : 300, r: 100, t: 30, b: 60 },
@@ -760,7 +763,7 @@ async function confirmDateChange() {
 
         if (meta.isProgram) {
             // Update program dates
-            response = await fetch(`/api/programs/${encodeURIComponent(meta.programCode)}/dates`, {
+            response = await fetch(`/dashboard/api/programs/${encodeURIComponent(meta.programCode)}/dates`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -770,7 +773,7 @@ async function confirmDateChange() {
             });
         } else if (meta.isProject) {
             // Update project (parent_project group) boundary milestones
-            response = await fetch(`/api/programs/${encodeURIComponent(meta.programCode)}/project-dates`, {
+            response = await fetch(`/dashboard/api/programs/${encodeURIComponent(meta.programCode)}/project-dates`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

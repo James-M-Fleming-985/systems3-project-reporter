@@ -11,7 +11,7 @@ const ganttData = JSON.parse(_ganttBridge.dataset.ganttData);
 
 // ── State ──
 let viewMode = 'project';  // 'project' or 'level'
-let roadmapDetailMode = 'summary';  // 'summary' or 'expanded'
+let roadmapDetailMode = 'expanded';  // 'summary' or 'expanded'
 let availableLevels = [];
 let selectedLevel = null;
 let levelItems = [];
@@ -364,6 +364,8 @@ function renderProjectRoadmap() {
                     milestoneId: task.MilestoneId || '',
                     resource: groupName,
                     isSummary: false,
+                    parentStart: startStr,
+                    parentEnd: endStr,
                     barWidth: 16,
                     status: task.Status,
                     completionPct: pct
@@ -391,12 +393,14 @@ function renderProjectRoadmap() {
     
     const layout = {
         title: null,
+        dragmode: false,
         xaxis: {
             title: { text: 'Timeline', font: { size: 12 } },
             type: 'date',
             tickformat: '%b %Y',
             showgrid: true,
-            gridcolor: '#e5e7eb'
+            gridcolor: '#e5e7eb',
+            fixedrange: true
         },
         yaxis: {
             automargin: true,
@@ -404,7 +408,8 @@ function renderProjectRoadmap() {
             categoryorder: 'array',
             categoryarray: yCategories,
             showgrid: false,
-            tickfont: { size: isExpanded ? 10 : 11 }
+            tickfont: { size: isExpanded ? 10 : 11 },
+            fixedrange: true
         },
         height: chartHeight,
         margin: { l: isExpanded ? 320 : 280, r: 80, t: 20, b: 60 },
@@ -741,12 +746,14 @@ function renderRoadmap() {
     
     const layout = {
         title: null,
+        dragmode: false,
         xaxis: {
             title: { text: 'Timeline', font: { size: 12 } },
             type: 'date',
             tickformat: '%b %Y',
             showgrid: true,
-            gridcolor: '#e5e7eb'
+            gridcolor: '#e5e7eb',
+            fixedrange: true
         },
         yaxis: {
             automargin: true,
@@ -754,7 +761,8 @@ function renderRoadmap() {
             categoryorder: 'array',
             categoryarray: taskNames,
             showgrid: false,
-            tickfont: { size: 11 }
+            tickfont: { size: 11 },
+            fixedrange: true
         },
         height: chartHeight,
         margin: { l: 250, r: 80, t: 20, b: 60 },
@@ -921,23 +929,13 @@ function onDragMove(e) {
     }
     
     // ── Parent-child constraint: children can't exceed parent boundaries ──
+    // Uses pre-computed parentStart/parentEnd from the summary bar at render time
     let constraintViolation = false;
-    if (!dragState.meta.isSummary && dragState.meta.resource) {
-        // Find parent group boundaries
-        const parentTasks = ganttData.filter(t => t.Resource === dragState.meta.resource);
-        if (parentTasks.length > 0) {
-            const parentStart = parentTasks.reduce((min, t) => {
-                const d = new Date(t.Start).getTime();
-                return d < min ? d : min;
-            }, Infinity);
-            const parentEnd = parentTasks.reduce((max, t) => {
-                const d = new Date(t.Finish).getTime();
-                return d > max ? d : max;
-            }, -Infinity);
-            
-            if (newStartMs < parentStart || newEndMs > parentEnd) {
-                constraintViolation = true;
-            }
+    if (!dragState.meta.isSummary && dragState.meta.parentStart && dragState.meta.parentEnd) {
+        const parentStartMs = new Date(dragState.meta.parentStart).getTime();
+        const parentEndMs = new Date(dragState.meta.parentEnd).getTime();
+        if (newStartMs < parentStartMs || newEndMs > parentEndMs) {
+            constraintViolation = true;
         }
     }
     
@@ -986,7 +984,7 @@ function showDragTooltip(x, y, startDate, endDate, violation) {
     const startFmt = new Date(startDate).toLocaleDateString();
     const endFmt = new Date(endDate).toLocaleDateString();
     tooltip.innerHTML = violation
-        ? `<span style="color:#ef4444;">⚠ Exceeds parent boundaries</span><br>${startFmt} – ${endFmt}`
+        ? `<span style="color:#ef4444;">⚠ Adjust parent dates first</span><br>${startFmt} – ${endFmt}`
         : `${startFmt} – ${endFmt}`;
     tooltip.style.left = (x + 12) + 'px';
     tooltip.style.top = (y - 40) + 'px';

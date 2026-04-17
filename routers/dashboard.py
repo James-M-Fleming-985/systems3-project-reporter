@@ -1088,7 +1088,7 @@ from fastapi.responses import JSONResponse
 import yaml
 
 
-@router.get("/dashboard/portfolio-roadmap", response_class=HTMLResponse)
+@router.get("/portfolio-roadmap", response_class=HTMLResponse)
 async def portfolio_roadmap(request: Request):
     """Portfolio-level roadmap showing all programs as Gantt bars."""
     from main import BUILD_VERSION
