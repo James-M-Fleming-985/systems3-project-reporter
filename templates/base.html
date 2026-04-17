@@ -369,6 +369,9 @@
                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if request.url.path == '/dashboard/' %}bg-white/15{% endif %}" title="Portfolio Dashboard">
                         📊 Portfolio
                     </a>
+                    <a href="/dashboard/portfolio-roadmap" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/portfolio-roadmap' in request.url.path %}bg-white/15{% endif %}" title="Portfolio Roadmap">
+                        🗺️ Roadmap
+                    </a>
                     <a href="/calendar" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition {% if '/calendar' in request.url.path %}bg-white/15{% endif %}" title="Cross-program calendar">
                         📅 Calendar
                     </a>
@@ -469,6 +472,7 @@
             {% endif %}
             <!-- Nav items -->
             <a href="/dashboard/" class="mobile-nav-item {% if request.url.path == '/dashboard/' %}active{% endif %}">📊 Portfolio</a>
+            <a href="/dashboard/portfolio-roadmap" class="mobile-nav-item {% if '/portfolio-roadmap' in request.url.path %}active{% endif %}">🗺️ Roadmap</a>
             <a href="/calendar" class="mobile-nav-item {% if '/calendar' in request.url.path %}active{% endif %}">📅 Calendar</a>
             <a href="/backlog" class="mobile-nav-item {% if '/backlog' in request.url.path %}active{% endif %}">📋 Backlog</a>
             <div class="mobile-nav-section">Project Views</div>

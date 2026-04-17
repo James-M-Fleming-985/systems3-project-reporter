@@ -1080,12 +1080,272 @@ async def unarchive_program(project_code: str, request: Request):
 
 
 # =============================================================================
-# Roadmap Settings API
+# Portfolio Roadmap API
 # =============================================================================
 
 from fastapi import Body
 from fastapi.responses import JSONResponse
 import yaml
+
+
+@router.get("/dashboard/portfolio-roadmap", response_class=HTMLResponse)
+async def portfolio_roadmap(request: Request):
+    """Portfolio-level roadmap showing all programs as Gantt bars."""
+    from main import BUILD_VERSION
+    user = get_user_from_request(request)
+    return templates.TemplateResponse("portfolio_roadmap.html", {
+        "request": request,
+        "build_version": BUILD_VERSION,
+        "user": user,
+        "csrf_token": getattr(request.state, 'csrf_token', ''),
+    })
+
+
+@router.get("/api/portfolio/roadmap-data")
+async def portfolio_roadmap_data(request: Request):
+    """
+    Return all non-archived programs with aggregate date ranges and nested projects.
+    Projects are derived from unique parent_project values on milestones.
+    """
+    try:
+        all_projects = get_all_projects(request)
+        programs = [p for p in all_projects if not getattr(p, 'archived', False)]
+
+        result = []
+        for program in programs:
+            milestones = program.milestones
+            if not milestones:
+                # Use program-level dates if no milestones
+                result.append({
+                    "programCode": program.project_code,
+                    "programName": program.project_name,
+                    "startDate": program.start_date or "",
+                    "endDate": getattr(program, 'target_completion', None) or program.start_date or "",
+                    "status": program.status or "NOT_STARTED",
+                    "completionPct": 0,
+                    "milestoneCount": 0,
+                    "completedCount": 0,
+                    "projects": []
+                })
+                continue
+
+            # Group milestones by parent_project
+            groups = {}
+            for ms in milestones:
+                key = ms.parent_project or program.project_name
+                if key not in groups:
+                    groups[key] = []
+                groups[key].append(ms)
+
+            # Build projects array
+            projects_arr = []
+            all_starts = []
+            all_ends = []
+            total_pct = 0
+            total_completed = 0
+
+            for proj_name, proj_milestones in sorted(groups.items()):
+                starts = []
+                ends = []
+                pct_sum = 0
+                completed = 0
+                for ms in proj_milestones:
+                    s = getattr(ms, 'start_date', None) or ms.target_date
+                    e = ms.target_date
+                    if s:
+                        starts.append(s)
+                        all_starts.append(s)
+                    if e:
+                        ends.append(e)
+                        all_ends.append(e)
+                    pct_sum += getattr(ms, 'completion_percentage', None) or 0
+                    if ms.status == 'COMPLETED':
+                        completed += 1
+                        total_completed += 1
+
+                count = len(proj_milestones)
+                total_pct += pct_sum
+                avg = round(pct_sum / count) if count else 0
+
+                proj_start = min(starts) if starts else ""
+                proj_end = max(ends) if ends else ""
+
+                in_progress = any(ms.status == 'IN_PROGRESS' for ms in proj_milestones)
+                if completed == count:
+                    proj_status = "COMPLETED"
+                elif in_progress or completed > 0:
+                    proj_status = "IN_PROGRESS"
+                else:
+                    proj_status = "NOT_STARTED"
+
+                projects_arr.append({
+                    "projectName": proj_name,
+                    "startDate": proj_start,
+                    "endDate": proj_end,
+                    "completionPct": avg,
+                    "milestoneCount": count,
+                    "completedCount": completed,
+                    "status": proj_status
+                })
+
+            ms_count = len(milestones)
+            overall_pct = round(total_pct / ms_count) if ms_count else 0
+            prog_start = min(all_starts) if all_starts else (program.start_date or "")
+            prog_end = max(all_ends) if all_ends else (getattr(program, 'target_completion', None) or "")
+
+            in_prog = any(ms.status == 'IN_PROGRESS' for ms in milestones)
+            if total_completed == ms_count:
+                prog_status = "COMPLETED"
+            elif in_prog or total_completed > 0:
+                prog_status = "IN_PROGRESS"
+            else:
+                prog_status = "NOT_STARTED"
+
+            result.append({
+                "programCode": program.project_code,
+                "programName": program.project_name,
+                "startDate": prog_start,
+                "endDate": prog_end,
+                "status": prog_status,
+                "completionPct": overall_pct,
+                "milestoneCount": ms_count,
+                "completedCount": total_completed,
+                "projects": projects_arr
+            })
+
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error in portfolio roadmap data: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.patch("/api/programs/{project_code}/dates")
+async def update_program_dates(project_code: str, request: Request, body: dict = Body(...)):
+    """
+    Update a program's start_date and/or target_completion in its YAML file.
+    """
+    try:
+        from middleware.project_context import _get_user_repo
+        user_repo = _get_user_repo(request)
+
+        start_date = body.get("start_date")
+        target_completion = body.get("target_completion")
+
+        if not start_date and not target_completion:
+            return JSONResponse({"error": "No dates provided"}, status_code=400)
+
+        # Find the YAML file and update
+        yaml_files = (list(user_repo.data_dir.glob("**/*.yaml")) +
+                      list(user_repo.data_dir.glob("**/*.yml")))
+
+        for yaml_file in yaml_files:
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if not data or not isinstance(data, dict):
+                    continue
+                if data.get('project_code') != project_code:
+                    continue
+
+                if start_date:
+                    data['start_date'] = start_date
+                if target_completion:
+                    data['target_completion'] = target_completion
+
+                with open(yaml_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+                from repositories.project_repository import invalidate_project_cache
+                invalidate_project_cache()
+                try:
+                    from routers.calendar import invalidate_calendar_cache
+                    invalidate_calendar_cache()
+                except Exception:
+                    pass
+
+                logger.info(f"📅 Updated program dates for {project_code}")
+                return {"success": True}
+            except Exception as e:
+                logger.error(f"Error processing {yaml_file}: {e}")
+                continue
+
+        return JSONResponse({"error": f"Program {project_code} not found"}, status_code=404)
+    except Exception as e:
+        logger.error(f"❌ Error updating program dates: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.patch("/api/programs/{project_code}/project-dates")
+async def update_project_dates(project_code: str, request: Request, body: dict = Body(...)):
+    """
+    Update the boundary milestones for a parent_project group within a program.
+    Adjusts the earliest milestone's start_date and latest milestone's target_date.
+    """
+    try:
+        from middleware.project_context import _get_user_repo
+        user_repo = _get_user_repo(request)
+
+        parent_project = body.get("parent_project")
+        new_start = body.get("start_date")
+        new_end = body.get("end_date")
+
+        if not parent_project or (not new_start and not new_end):
+            return JSONResponse({"error": "Missing parent_project or dates"}, status_code=400)
+
+        yaml_files = (list(user_repo.data_dir.glob("**/*.yaml")) +
+                      list(user_repo.data_dir.glob("**/*.yml")))
+
+        for yaml_file in yaml_files:
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if not data or not isinstance(data, dict):
+                    continue
+                if data.get('project_code') != project_code:
+                    continue
+
+                milestones = data.get('milestones', [])
+                group_ms = [m for m in milestones if (m.get('parent_project') or data.get('project_name', '')) == parent_project]
+                if not group_ms:
+                    return JSONResponse({"error": f"No milestones found for project '{parent_project}'"}, status_code=404)
+
+                # Find boundary milestones
+                if new_start:
+                    earliest = min(group_ms, key=lambda m: m.get('start_date') or m.get('target_date', '9999'))
+                    earliest['start_date'] = new_start
+                if new_end:
+                    latest = max(group_ms, key=lambda m: m.get('target_date', '0000'))
+                    latest['target_date'] = new_end
+
+                with open(yaml_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+                from repositories.project_repository import invalidate_project_cache
+                invalidate_project_cache()
+                try:
+                    from routers.calendar import invalidate_calendar_cache
+                    invalidate_calendar_cache()
+                except Exception:
+                    pass
+
+                logger.info(f"📅 Updated project dates for {parent_project} in {project_code}")
+                return {"success": True}
+            except Exception as e:
+                logger.error(f"Error processing {yaml_file}: {e}")
+                continue
+
+        return JSONResponse({"error": f"Program {project_code} not found"}, status_code=404)
+    except Exception as e:
+        logger.error(f"❌ Error updating project dates: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# =============================================================================
+# Roadmap Settings API (per-program)
+# =============================================================================
+
 
 @router.get("/api/roadmap/{project_code}/project-groups")
 async def get_roadmap_project_groups(project_code: str):
