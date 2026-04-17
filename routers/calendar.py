@@ -770,8 +770,11 @@ async def get_calendar_events(request: Request):
                         continue
 
                     task_id = task.get('id', '')
-                    due_date = task.get('due_date', '')
-                    start_date = task.get('start_date') or due_date
+                    due_date_raw = task.get('due_date', '')
+                    # Defensive: YAML safe_load may return datetime.date objects
+                    due_date = due_date_raw.isoformat() if hasattr(due_date_raw, 'isoformat') else str(due_date_raw) if due_date_raw else ''
+                    start_date_raw = task.get('start_date') or due_date_raw
+                    start_date = start_date_raw.isoformat() if hasattr(start_date_raw, 'isoformat') else str(start_date_raw) if start_date_raw else due_date
 
                     if not due_date:
                         continue

@@ -299,9 +299,8 @@ def make_recurring(data: MakeRecurring, request: Request):
     import uuid
     from datetime import timedelta
 
-    cadence_map = {"daily": 1, "weekly": 7, "biweekly": 14, "monthly": 30}
-    delta_days = cadence_map.get(data.recurrence_cadence)
-    if not delta_days:
+    valid_cadences = {"daily", "weekly", "biweekly", "monthly"}
+    if data.recurrence_cadence not in valid_cadences:
         raise HTTPException(status_code=400, detail=f"Invalid cadence: {data.recurrence_cadence}")
 
     count = max(2, min(52, data.recurrence_count))
@@ -346,7 +345,26 @@ def make_recurring(data: MakeRecurring, request: Request):
         # Create N-1 copies
         created = 0
         for i in range(1, count):
-            new_date = base_date + timedelta(days=delta_days * i)
+            cadence = data.recurrence_cadence
+            if cadence == 'daily':
+                new_date = base_date + timedelta(days=i)
+            elif cadence == 'weekly':
+                new_date = base_date + timedelta(weeks=i)
+            elif cadence == 'biweekly':
+                new_date = base_date + timedelta(weeks=2 * i)
+            elif cadence == 'monthly':
+                month = base_date.month - 1 + i
+                year = base_date.year + month // 12
+                month = month % 12 + 1
+                days_in_month = [
+                    31,
+                    29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+                ][month - 1]
+                day = min(base_date.day, days_in_month)
+                new_date = base_date.replace(year=year, month=month, day=day)
+            else:
+                new_date = base_date + timedelta(days=i)
             copy = {
                 'id': str(uuid.uuid4()),
                 'name': f"{target.get('name', '')} ({i+1}/{count})",

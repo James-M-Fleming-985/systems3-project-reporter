@@ -6,10 +6,25 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import yaml
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, date as _date_type, timedelta
 import uuid
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_date_str(value) -> str:
+    """Coerce a value to a 'YYYY-MM-DD' string.
+
+    Handles datetime.date objects (produced by yaml.safe_load when dates
+    are written unquoted), datetime.datetime objects, and plain strings.
+    Returns '' for falsy/unparseable values.
+    """
+    if not value:
+        return ""
+    if isinstance(value, (datetime, _date_type)):
+        return value.isoformat()[:10]
+    s = str(value).split('T')[0].strip()
+    return s
 
 
 class StandaloneTaskRepository:
@@ -54,7 +69,7 @@ class StandaloneTaskRepository:
         try:
             data["last_updated"] = datetime.now().isoformat()
             with open(path, "w", encoding="utf-8") as f:
-                yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+                yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
             return True
         except Exception as e:
             logger.error(f"❌ Error saving standalone tasks for user {user_id}: {e}")
@@ -117,28 +132,36 @@ class StandaloneTaskRepository:
             series_id = None
 
         base_title = (task_data.get("title") or "").strip()
-        base_due = task_data.get("due_date", "")
+        base_due = _ensure_date_str(task_data.get("due_date", ""))
+        base_start = _ensure_date_str(task_data.get("start_date", ""))
         created_tasks: List[Dict[str, Any]] = []
 
         # Pre-parse the base due date once before the loop
         base_due_parsed = None
+        base_start_parsed = None
         if base_due and recurrence_cadence:
-            # Normalise: handle datetime.date objects (from YAML) and ISO strings
-            if hasattr(base_due, 'isoformat'):
-                base_due = base_due.isoformat()
-            # Strip any time component (e.g. "2026-04-10T00:00:00")
-            base_due_str = str(base_due).split('T')[0].strip()
+            base_due_str = base_due  # already normalised by _ensure_date_str
             try:
                 base_due_parsed = datetime.strptime(base_due_str, "%Y-%m-%d").date()
             except ValueError:
                 logger.error(
                     f"❌ Cannot parse due_date '{base_due}' as YYYY-MM-DD — "
-                    f"all {recurrence_count} recurring tasks will use the same date"
+                    f"aborting recurrence; creating single task instead"
                 )
+                recurrence_cadence = None
+                recurrence_count = 1
+                series_id = None
+
+        if base_start and recurrence_cadence:
+            try:
+                base_start_parsed = datetime.strptime(base_start, "%Y-%m-%d").date()
+            except ValueError:
+                pass  # start_date is optional; ignore if unparseable
 
         for i in range(recurrence_count):
             # Compute due date offset for each occurrence
             due_date = base_due
+            start_date = base_start
             if base_due_parsed and recurrence_cadence and i > 0:
                 d = base_due_parsed
                 if recurrence_cadence == "daily":
@@ -160,13 +183,18 @@ class StandaloneTaskRepository:
                     d = d.replace(year=year, month=month, day=day)
                 due_date = d.isoformat()
 
+                # Offset start_date by the same delta so events don't cluster
+                if base_start_parsed:
+                    delta = d - base_due_parsed
+                    start_date = (base_start_parsed + delta).isoformat()
+
             title = f"{base_title} ({i + 1}/{recurrence_count})" if recurrence_count > 1 else base_title
 
             task = {
                 "id": str(uuid.uuid4()),
                 "title": title,
                 "description": task_data.get("description") or "",
-                "start_date": task_data.get("start_date") or "",
+                "start_date": start_date,
                 "due_date": due_date,
                 "status": task_data.get("status") or "NOT_STARTED",
                 "priority": task_data.get("priority") or "MEDIUM",
