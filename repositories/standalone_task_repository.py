@@ -30,6 +30,9 @@ def _ensure_date_str(value) -> str:
 class StandaloneTaskRepository:
     """Repository for persisting per-user standalone tasks."""
 
+    # Track which users have already been checked/repaired this process
+    _repaired_users: set = set()
+
     def __init__(self, storage_dir: Path):
         """
         Args:
@@ -79,9 +82,122 @@ class StandaloneTaskRepository:
     # Public CRUD methods
     # ──────────────────────────────────────────────
 
+    def _repair_broken_recurrence(self, user_id: str, data: Dict[str, Any]) -> bool:
+        """Detect and fix recurrence series where all tasks share the same date.
+
+        Returns True if any repairs were made (and data was re-saved).
+        Only runs once per user per process lifetime.
+        """
+        if user_id in StandaloneTaskRepository._repaired_users:
+            return False
+        StandaloneTaskRepository._repaired_users.add(user_id)
+
+        tasks = data.get("tasks", [])
+        if not tasks:
+            return False
+
+        from collections import defaultdict
+        series_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for t in tasks:
+            sid = t.get("recurrence_series_id")
+            if sid:
+                series_map[sid].append(t)
+
+        modified = False
+        for sid, series_tasks in series_map.items():
+            if len(series_tasks) < 2:
+                continue
+
+            # Sort by occurrence number (e.g. "3 of 12" → 3)
+            def _occ_num(t):
+                occ = t.get("recurrence_occurrence", "1 of 1")
+                try:
+                    return int(occ.split(" of ")[0])
+                except (ValueError, IndexError):
+                    return 0
+            series_tasks.sort(key=_occ_num)
+
+            # Check if all due_dates are the same (the bug symptom)
+            dates = [_ensure_date_str(t.get("due_date", "")) for t in series_tasks]
+            unique_dates = set(d for d in dates if d)
+            if len(unique_dates) > 1:
+                continue  # Already has distinct dates — skip
+
+            base_date_str = dates[0] if dates[0] else None
+            if not base_date_str:
+                continue
+
+            cadence = series_tasks[0].get("recurrence_cadence", "monthly")
+            count = len(series_tasks)
+
+            try:
+                base_date = datetime.strptime(base_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+
+            # Parse base start_date if present
+            base_start_str = _ensure_date_str(series_tasks[0].get("start_date", ""))
+            base_start = None
+            if base_start_str:
+                try:
+                    base_start = datetime.strptime(base_start_str, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+
+            # Recalculate correct dates for each occurrence
+            for i, t in enumerate(series_tasks):
+                if i == 0:
+                    continue
+                d = base_date
+                if cadence == "daily":
+                    d = d + timedelta(days=i)
+                elif cadence == "weekly":
+                    d = d + timedelta(weeks=i)
+                elif cadence == "biweekly":
+                    d = d + timedelta(weeks=2 * i)
+                elif cadence == "monthly":
+                    month = d.month - 1 + i
+                    year = d.year + month // 12
+                    month = month % 12 + 1
+                    days_in_month = [
+                        31,
+                        29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+                    ][month - 1]
+                    day = min(d.day, days_in_month)
+                    d = d.replace(year=year, month=month, day=day)
+                else:
+                    d = d + timedelta(days=i)
+
+                new_date = d.isoformat()
+                if _ensure_date_str(t.get("due_date", "")) != new_date:
+                    t["due_date"] = new_date
+                    modified = True
+
+                # Also offset start_date
+                if base_start:
+                    delta = d - base_date
+                    t["start_date"] = (base_start + delta).isoformat()
+
+            if modified:
+                logger.info(
+                    f"🔧 Repaired recurrence series {sid} for user {user_id}: "
+                    f"{count} tasks, cadence={cadence}, base={base_date_str}"
+                )
+
+        if modified:
+            self._save(user_id, data)
+            logger.info(f"✅ Saved repaired recurring tasks for user {user_id}")
+
+        return modified
+
     def get_all(self, user_id: str) -> List[Dict[str, Any]]:
         """Return all tasks for a user, newest first."""
         data = self._load(user_id)
+
+        # Self-healing: fix broken recurrence dates on first access
+        self._repair_broken_recurrence(user_id, data)
+
         tasks = data.get("tasks", [])
         # Sort: incomplete first (by due_date), then completed
         incomplete = sorted(

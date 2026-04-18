@@ -262,3 +262,80 @@ class TestYamlRoundTrip:
         assert isinstance(task["due_date"], str), (
             f"YAML round-trip produced {type(task['due_date'])} instead of str"
         )
+
+
+# ── Self-healing repair ─────────────────────────────────────────────────
+
+
+class TestSelfHealingRepair:
+    """Verify that get_all() auto-repairs broken recurrence series."""
+
+    def _write_broken_series(self, storage_dir, user_id, count=12, cadence="monthly"):
+        """Write a YAML file with all tasks on the same date (the bug)."""
+        user_dir = storage_dir / "users" / user_id
+        user_dir.mkdir(parents=True, exist_ok=True)
+        broken = {
+            "tasks": [
+                {
+                    "id": f"task-{i}",
+                    "title": f"Review ({i+1}/{count})",
+                    "due_date": "2026-04-30",
+                    "start_date": "2026-04-25",
+                    "status": "NOT_STARTED",
+                    "recurrence_cadence": cadence,
+                    "recurrence_series_id": "broken-series-1",
+                    "recurrence_occurrence": f"{i+1} of {count}",
+                }
+                for i in range(count)
+            ],
+        }
+        with open(user_dir / "standalone_tasks.yaml", "w") as f:
+            yaml.dump(broken, f, default_flow_style=False)
+
+    def test_get_all_repairs_broken_monthly(self, tmp_storage):
+        StandaloneTaskRepository._repaired_users.clear()
+        self._write_broken_series(tmp_storage, "u1", count=12, cadence="monthly")
+        repo = _make_repo(tmp_storage)
+        tasks = repo.get_all("u1")
+        dates = [t["due_date"] for t in tasks]
+        assert len(set(dates)) == 12, f"Expected 12 unique dates, got: {dates}"
+        assert dates[0] == "2026-04-30"
+        assert dates[1] == "2026-05-30"
+        assert dates[-1] == "2027-03-30"
+
+    def test_repair_persists_to_yaml(self, tmp_storage):
+        StandaloneTaskRepository._repaired_users.clear()
+        self._write_broken_series(tmp_storage, "u2", count=3)
+        repo = _make_repo(tmp_storage)
+        repo.get_all("u2")
+        # Reload from a fresh repo instance (simulating server restart)
+        StandaloneTaskRepository._repaired_users.clear()
+        repo2 = _make_repo(tmp_storage)
+        tasks = repo2.get_all("u2")
+        dates = [t["due_date"] for t in tasks]
+        assert len(set(dates)) == 3
+
+    def test_skips_already_correct_series(self, tmp_storage):
+        StandaloneTaskRepository._repaired_users.clear()
+        repo = _make_repo(tmp_storage)
+        repo.create(
+            user_id="u3",
+            task_data={"title": "Good series", "due_date": "2026-04-30"},
+            recurrence_cadence="monthly",
+            recurrence_count=4,
+        )
+        # Clear flag so repair runs again
+        StandaloneTaskRepository._repaired_users.clear()
+        tasks = repo.get_all("u3")
+        dates = [t["due_date"] for t in tasks]
+        # Should still be correct (not mangled by unnecessary repair)
+        assert dates == ["2026-04-30", "2026-05-30", "2026-06-30", "2026-07-30"]
+
+    def test_repair_only_runs_once_per_user(self, tmp_storage):
+        StandaloneTaskRepository._repaired_users.clear()
+        self._write_broken_series(tmp_storage, "u4", count=3)
+        repo = _make_repo(tmp_storage)
+        repo.get_all("u4")  # First call repairs
+        assert "u4" in StandaloneTaskRepository._repaired_users
+        # Second call should skip repair (flag already set)
+        repo.get_all("u4")  # Should not error or re-repair
