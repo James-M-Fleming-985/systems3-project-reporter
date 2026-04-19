@@ -1,0 +1,894 @@
+project_name: Prelim Branding & Outreach
+project_code: MKT-PBO
+status: Active
+start_date: '2026-04-20'
+target_completion: '2026-05-22'
+completion_percentage: 0
+
+milestones:
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 1: Brand Development Strategy (Week 1)
+  # ═══════════════════════════════════════════════════════════
+  - id: null
+    name: Brand Development Strategy
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Identity layer — the foundation. Positioning, narrative, messaging, audience, and visibility strategy.'
+    outline_level: 2
+    parent_levels:
+      '1': Prelim Branding & Outreach
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Milestone: Brand Development Strategy Complete
+  - id: null
+    name: Brand Development Strategy Complete
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Week 1 milestone — all brand identity deliverables finalised.'
+    outline_level: 3
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+    parent_project: Brand Development Strategy
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Tasks under Brand Development Strategy
+  - id: null
+    name: Define Market Positioning
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Define who you are in the market and your competitive positioning.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Define Category - Discovery & Exploitation Engines
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Establish and own the category definition for Discovery & Exploitation Engines.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Draft Founder Narrative
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Write the founder story and philosophy that underpins the brand.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Establish Brand Pillars
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Define 4-5 core content themes that anchor all communications.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Build Messaging Architecture
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Create the structured framework for how you talk about your work.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Create Tone & Style Guide
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Document the brand voice, tone, and writing style standards.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Define Target Audience Profiles
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Identify and document the audience segments you want to attract.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Develop Content Strategy
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Plan what you publish, where, and why — aligned to brand pillars.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Build Visibility Roadmap
+    start_date: '2026-04-20'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Map out how you grow your presence over the next 6-12 months.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Brand Development Strategy
+      '3': Brand Development Strategy Complete
+    parent_project: Brand Development Strategy
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 2: Infrastructure Setup (Week 2)
+  # ═══════════════════════════════════════════════════════════
+  - id: null
+    name: Infrastructure Setup
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Platform layer — build the channels and digital infrastructure.'
+    outline_level: 2
+    parent_levels:
+      '1': Prelim Branding & Outreach
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Milestone: Infrastructure Setup Complete
+  - id: null
+    name: Infrastructure Setup Complete
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Week 2 milestone — all platforms configured and live.'
+    outline_level: 3
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+    parent_project: Infrastructure Setup
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Tasks under Infrastructure Setup
+  - id: null
+    name: Configure Consultancy LinkedIn Profile
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Maintain revenue and credibility. Occasional AI-related posts to show evolution.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+      '3': Infrastructure Setup Complete
+    parent_project: Infrastructure Setup
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Set Up AI Identity LinkedIn Profile
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Future brand — thought leadership, category ownership, AI identity.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+      '3': Infrastructure Setup Complete
+    parent_project: Infrastructure Setup
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Establish X (Twitter) Presence
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Fast-cycle insights, experiments, micro-content, and industry engagement.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+      '3': Infrastructure Setup Complete
+    parent_project: Infrastructure Setup
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Design & Launch Website
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'HQ — manifesto, portfolio, long-form thinking, category definition.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+      '3': Infrastructure Setup Complete
+    parent_project: Infrastructure Setup
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Create Portfolio Hub Repository
+    start_date: '2026-04-27'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Private repository — content, experiments, visuals, build logs, predictions, lessons, frameworks.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Infrastructure Setup
+      '3': Infrastructure Setup Complete
+    parent_project: Infrastructure Setup
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 3: Portfolio of Content (Week 3)
+  # ═══════════════════════════════════════════════════════════
+  - id: null
+    name: Portfolio of Content
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Content layer — build the raw material your content engine will use.'
+    outline_level: 2
+    parent_levels:
+      '1': Prelim Branding & Outreach
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Milestone: Portfolio of Content Complete
+  - id: null
+    name: Portfolio of Content Complete
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Week 3 milestone — all content assets created and catalogued.'
+    outline_level: 3
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+    parent_project: Portfolio of Content
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Tasks under Portfolio of Content
+  - id: null
+    name: Create 20-30 Portfolio Items
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Build a bank of portfolio-quality work samples and case studies.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write 10-15 Short Posts
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Create short-form content for LinkedIn and X distribution.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Draft 3-5 Long-Form Essays
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'In-depth thought leadership pieces for website and LinkedIn.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write Founder Story
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Your personal narrative — philosophy, journey, and mission.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write Category Definition
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Formal definition of Discovery & Exploitation Engines as a category.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write Manifesto
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'The brand manifesto — your declaration of intent and vision.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write Causal Affect Explainer
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Clear, accessible explanation of the Causal Affect platform and methodology.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Write Discovery & Exploitation Engines Explainer
+    start_date: '2026-05-04'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Clear, accessible explanation of the D&E Engines framework.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Portfolio of Content
+      '3': Portfolio of Content Complete
+    parent_project: Portfolio of Content
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 4: Automated Content Deployment System (Week 4)
+  # ═══════════════════════════════════════════════════════════
+  - id: null
+    name: Automated Content Deployment System
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Distribution layer — solve time constraints with automation.'
+    outline_level: 2
+    parent_levels:
+      '1': Prelim Branding & Outreach
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Milestone: Content Deployment System Complete
+  - id: null
+    name: Content Deployment System Complete
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Week 4 milestone — full automation pipeline operational.'
+    outline_level: 3
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+    parent_project: Automated Content Deployment System
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Tasks under Automated Content Deployment System
+  - id: null
+    name: Set Up Content Manager
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Appoint or configure a content manager — human or AI-assisted.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Configure Scheduling Software
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Select and configure content scheduling tool for automated publishing.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Set Up Cross-Posting Automation
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Automate publishing across LinkedIn, X, and website simultaneously.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Build Repurposing Engine
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Create pipeline to turn long-form content into short-form posts.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Create Portfolio-to-Post Pipeline
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Automate the flow from portfolio items to publishable social posts.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Establish Weekly Content Calendar
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Define the weekly publishing cadence and content mix.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Set Monthly Long-Form Cadence
+    start_date: '2026-05-11'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Plan the monthly long-form essay and deep-dive publishing schedule.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Automated Content Deployment System
+      '3': Content Deployment System Complete
+    parent_project: Automated Content Deployment System
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 5: Engagement Monitoring & Feedback Loop (Week 5)
+  # ═══════════════════════════════════════════════════════════
+  - id: null
+    name: Engagement Monitoring & Feedback Loop
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Learning layer — analytics, tracking, and feedback systems.'
+    outline_level: 2
+    parent_levels:
+      '1': Prelim Branding & Outreach
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Milestone: Engagement Monitoring System Complete
+  - id: null
+    name: Engagement Monitoring System Complete
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Week 5 milestone — full monitoring and feedback loop operational.'
+    outline_level: 3
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  # Tasks under Engagement Monitoring & Feedback Loop
+  - id: null
+    name: Set Up Engagement Analytics
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Deploy analytics across all platforms to track engagement metrics.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Configure Topic Performance Tracking
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Track which content topics perform best across channels.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Set Up Audience Growth Tracking
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Monitor follower and subscriber growth across all platforms.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Implement Sentiment Analysis
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Analyse audience sentiment and response to content themes.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Create Content Scoring System
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Score content performance to identify what resonates and what to replicate.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Build Feedback Loop into Portfolio
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Route performance data back to inform portfolio updates and new content creation.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+  - id: null
+    name: Build Feedback Loop into Content Strategy
+    start_date: '2026-05-18'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Close the loop — feed analytics insights back into content strategy and planning.'
+    outline_level: 4
+    parent_levels:
+      '1': Prelim Branding & Outreach
+      '2': Engagement Monitoring & Feedback Loop
+      '3': Engagement Monitoring System Complete
+    parent_project: Engagement Monitoring & Feedback Loop
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MKT-PBO
+
+risks: []
+changes: []
