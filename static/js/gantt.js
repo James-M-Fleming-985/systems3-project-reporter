@@ -20,16 +20,90 @@ let selectedItems = new Set();
 // Project Roadmap state
 let projectGroups = [];        // unique L2 project names
 let selectedGroups = new Set(); // selected group names
+let taskProjectGroups = [];      // resolved group per ganttData index
 
 /**
- * Get the L2 project group name for a task.
- * Uses ParentLevels["2"] (the level-2 ancestor) which is consistent
- * regardless of the task's depth in the hierarchy.
- * Falls back to Resource (parent_project) or ProjectName.
+ * Resolve a stable project group for every task.
+ *
+ * Why this exists:
+ * - Some datasets have inconsistent parent fields across depths/import versions.
+ * - We anchor on actual Level 2 task names when available, then map each row
+ *   to one of those names via ParentLevels/Resource or sequence fallback.
  */
-function getProjectGroup(task) {
-    if (task.ParentLevels && task.ParentLevels["2"]) {
-        return task.ParentLevels["2"];
+function resolveTaskProjectGroups() {
+    taskProjectGroups = new Array(ganttData.length);
+
+    const level2Names = new Set(
+        ganttData
+            .filter(t => t.OutlineLevel === 2 && t.Task)
+            .map(t => t.Task)
+    );
+
+    let currentLevel2 = null;
+
+    ganttData.forEach((task, idx) => {
+        let group = null;
+
+        // Level 2 rows define their own project group.
+        if (task.OutlineLevel === 2 && task.Task) {
+            group = task.Task;
+            currentLevel2 = group;
+        } else {
+            const pl = task.ParentLevels || {};
+            const directCandidates = [pl['2'], pl[2], task.Resource];
+
+            // Prefer candidates that match known Level 2 project names.
+            for (const candidate of directCandidates) {
+                if (candidate && level2Names.has(candidate)) {
+                    group = candidate;
+                    break;
+                }
+            }
+
+            // Sometimes the true L2 ancestor is stored under a different key.
+            if (!group) {
+                for (const value of Object.values(pl)) {
+                    if (value && level2Names.has(value)) {
+                        group = value;
+                        break;
+                    }
+                }
+            }
+
+            // Last resort for mixed/legacy data that still preserves row order.
+            if (!group && currentLevel2) {
+                group = currentLevel2;
+            }
+        }
+
+        // Legacy fallback when no Level 2 rows exist in the payload.
+        if (!group) {
+            const pl = task.ParentLevels || {};
+            group = pl['2'] || pl[2] || task.Resource || task.ProjectName || 'Unknown';
+        }
+
+        taskProjectGroups[idx] = group;
+    });
+}
+
+/**
+ * Get the resolved L2 project group name for a task.
+ * Prefers precomputed per-row assignments from resolveTaskProjectGroups().
+ * Falls back to ParentLevels/Resource/ProjectName if needed.
+ */
+function getProjectGroup(task, idx) {
+    if (typeof idx === 'number' && taskProjectGroups[idx]) {
+        return taskProjectGroups[idx];
+    }
+
+    // Fallback for call sites that don't pass an index.
+    const directIdx = ganttData.indexOf(task);
+    if (directIdx >= 0 && taskProjectGroups[directIdx]) {
+        return taskProjectGroups[directIdx];
+    }
+
+    if (task.ParentLevels && task.ParentLevels['2']) {
+        return task.ParentLevels['2'];
     }
     return task.Resource || task.ProjectName || 'Unknown';
 }
@@ -104,9 +178,11 @@ function setRoadmapDetail(mode) {
 }
 
 function detectProjectGroups() {
+    resolveTaskProjectGroups();
+
     const groupSet = new Set();
-    ganttData.forEach(task => {
-        const group = getProjectGroup(task);
+    ganttData.forEach((task, idx) => {
+        const group = getProjectGroup(task, idx);
         if (group) {
             groupSet.add(group);
         }
@@ -145,7 +221,7 @@ function renderGroupFilterItems() {
     container.innerHTML = projectGroups.map(group => {
         const checked = selectedGroups.has(group) ? 'checked' : '';
         const escapedName = group.replace(/'/g, "\\'");
-        const count = ganttData.filter(t => getProjectGroup(t) === group).length;
+        const count = ganttData.filter((t, idx) => getProjectGroup(t, idx) === group).length;
         return `
             <label class="dropdown-item">
                 <input type="checkbox" ${checked} onchange="toggleGroup('${escapedName}', this.checked)">
@@ -219,8 +295,8 @@ function renderProjectRoadmap() {
     
     // Group tasks by L2 project ancestor, filter to selected groups
     const groupedTasks = {};
-    ganttData.forEach(task => {
-        const group = getProjectGroup(task);
+    ganttData.forEach((task, idx) => {
+        const group = getProjectGroup(task, idx);
         if (group && selectedGroups.has(group)) {
             if (!groupedTasks[group]) groupedTasks[group] = [];
             groupedTasks[group].push(task);
@@ -1129,9 +1205,12 @@ async function confirmDateChange() {
         
         if (response.ok && result.success) {
             // Update ganttData in-memory
-            const task = ganttData.find(t =>
-                t.Task === cleanName && getProjectGroup(t) === meta.resource
-            );
+            const task = ganttData.find((t, idx) => {
+                if (meta.milestoneId && t.MilestoneId) {
+                    return t.MilestoneId === meta.milestoneId;
+                }
+                return t.Task === cleanName && getProjectGroup(t, idx) === meta.resource;
+            });
             if (task) {
                 task.Start = newStart;
                 task.Finish = newEnd;
