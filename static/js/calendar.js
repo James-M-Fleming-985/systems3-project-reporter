@@ -1455,9 +1455,10 @@ async function deleteScheduleEvent() {
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
+        const csrfToken = document.getElementById('csrfToken')?.value || '';
         const resp = await fetch(
             `/dashboard/api/schedule/${encodeURIComponent(scheduleProgram)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}`,
-            { method: 'DELETE', signal: controller.signal }
+            { method: 'DELETE', signal: controller.signal, headers: { 'x-csrf-token': csrfToken } }
         );
         clearTimeout(timeout);
         if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
@@ -2007,9 +2008,10 @@ async function deleteEventFromCalendar() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         
+        const csrfToken = document.getElementById('csrfToken')?.value || '';
         const resp = await fetch(
             `/api/milestones/${encodeURIComponent(projectCode)}/${encodeURIComponent(milestoneId)}`,
-            { method: 'DELETE', signal: controller.signal }
+            { method: 'DELETE', signal: controller.signal, headers: { 'x-csrf-token': csrfToken } }
         );
         clearTimeout(timeoutId);
         
@@ -2805,9 +2807,10 @@ async function clvDeleteSchedule(btn) {
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
+        const csrfToken = document.getElementById('csrfToken')?.value || '';
         const resp = await fetch(
             `/dashboard/api/schedule/${encodeURIComponent(program)}/tables/${encodeURIComponent(tableId)}/rows/${encodeURIComponent(rowId)}`,
-            { method: 'DELETE', signal: controller.signal }
+            { method: 'DELETE', signal: controller.signal, headers: { 'x-csrf-token': csrfToken } }
         );
         clearTimeout(timeout);
         if (!resp.ok) throw new Error(`Server returned ${resp.status}`);

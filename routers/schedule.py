@@ -219,6 +219,8 @@ async def delete_schedule_table(project_name: str, table_id: str):
         if not success:
             raise HTTPException(status_code=404, detail="Table not found")
         
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
         return JSONResponse(content={"success": True})
         
     except HTTPException:
@@ -431,6 +433,8 @@ async def delete_table_row(project_name: str, table_id: str, row_id: str):
     success = schedule_repo.delete_row(project_name, table_id, row_id)
     if not success:
         raise HTTPException(status_code=404, detail="Row not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 

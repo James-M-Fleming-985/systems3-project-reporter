@@ -236,7 +236,8 @@ async def milestone_tracker(request: Request):
         "build_version": BUILD_VERSION,
         "user": user,
         "kanban_columns": kanban_columns,
-        "parent_projects": parent_projects
+        "parent_projects": parent_projects,
+        "csrf_token": getattr(request.state, 'csrf_token', '')
     }
     
     return templates.TemplateResponse("milestones.html", context)

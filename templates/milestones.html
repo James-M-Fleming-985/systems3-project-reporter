@@ -313,6 +313,7 @@
                 <div id="modalStatusDot" class="w-3 h-3 rounded-full bg-gray-400 flex-shrink-0"></div>
                 <input type="text" id="milestoneName" class="text-xl font-bold text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent flex-1 min-w-0 p-0" placeholder="Milestone name">
                 <input type="hidden" id="milestoneIndex" />
+                <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
             </div>
             <button onclick="closeMilestoneModal()" class="text-gray-400 hover:text-gray-600 ml-4 flex-shrink-0" title="Close milestone editor">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
