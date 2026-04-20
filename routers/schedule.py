@@ -187,6 +187,8 @@ async def create_schedule_table(project_name: str, request: CreateTableRequest):
         columns = [col.dict() for col in request.columns]
     
     table = schedule_repo.create_table(project_name, request.name, columns, description=request.description, color=request.color)
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True, "table": table})
 
 
@@ -206,6 +208,8 @@ async def update_schedule_table(project_name: str, table_id: str, request: Updat
     success = schedule_repo.update_table(project_name, table_id, updates)
     if not success:
         raise HTTPException(status_code=404, detail="Table not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 
@@ -241,6 +245,8 @@ async def add_table_row(project_name: str, table_id: str, request: RowData = Non
     row = schedule_repo.add_row(project_name, table_id, row_data)
     if not row:
         raise HTTPException(status_code=404, detail="Table not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True, "row": row})
 
 
@@ -250,6 +256,8 @@ async def update_table_row(project_name: str, table_id: str, row_id: str, reques
     success = schedule_repo.update_row(project_name, table_id, row_id, request.data)
     if not success:
         raise HTTPException(status_code=404, detail="Row not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 
@@ -424,6 +432,8 @@ async def reorder_schedule_sub_tasks(project_name: str, table_id: str, row_id: s
     success = schedule_repo.reorder_sub_tasks(project_name, table_id, row_id, ordered_ids)
     if not success:
         raise HTTPException(status_code=404, detail="Row not found")
+    from routers.calendar import invalidate_calendar_cache
+    invalidate_calendar_cache()
     return JSONResponse(content={"success": True})
 
 
@@ -865,6 +875,8 @@ async def import_schedule_file(
 
             rows_imported = schedule_repo.add_rows_bulk(project_name, table_id, bulk_rows)
 
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_calendar_cache()
             return JSONResponse(content={
                 "success": True,
                 "table_name": table_name,
@@ -915,6 +927,8 @@ async def import_schedule_file(
 
             rows_imported = schedule_repo.add_rows_bulk(project_name, table_id, bulk_rows)
 
+            from routers.calendar import invalidate_calendar_cache
+            invalidate_calendar_cache()
             return JSONResponse(content={
                 "success": True,
                 "table_name": table['name'],
@@ -968,6 +982,8 @@ async def copy_table_from_program(project_name: str, request: CopyTableRequest):
         # Get the updated table with rows
         final_table = schedule_repo.get_table(project_name, new_table['id'])
         
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
         logger.info(f"✅ Copied table '{source_table['name']}' from '{request.source_project}' to '{project_name}' "
                    f"(columns: {len(source_table.get('columns', []))}, rows: {rows_copied})")
         
