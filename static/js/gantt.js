@@ -33,37 +33,49 @@ let taskProjectGroups = [];      // resolved group per ganttData index
 function resolveTaskProjectGroups() {
     taskProjectGroups = new Array(ganttData.length);
 
-    const level2Names = new Set(
+    // Detect the effective "project" outline level dynamically.
+    // Some imports have Program at L1 and Projects at L2.
+    // Others omit Program, so Projects start at L1 and milestones at L2.
+    const numericLevels = ganttData
+        .map(t => Number(t.OutlineLevel))
+        .filter(lvl => Number.isFinite(lvl) && lvl > 0);
+
+    const minLevel = numericLevels.length > 0 ? Math.min(...numericLevels) : 2;
+    const minLevelCount = numericLevels.filter(lvl => lvl === minLevel).length;
+    const projectLevel = minLevelCount === 1 ? (minLevel + 1) : minLevel;
+
+    const projectLevelNames = new Set(
         ganttData
-            .filter(t => t.OutlineLevel === 2 && t.Task)
+            .filter(t => Number(t.OutlineLevel) === projectLevel && t.Task)
             .map(t => t.Task)
     );
 
-    let currentLevel2 = null;
+    let currentProject = null;
 
     ganttData.forEach((task, idx) => {
         let group = null;
+        const taskLevel = Number(task.OutlineLevel);
 
-        // Level 2 rows define their own project group.
-        if (task.OutlineLevel === 2 && task.Task) {
+        // Rows at the detected project level define their own group.
+        if (Number.isFinite(taskLevel) && taskLevel === projectLevel && task.Task) {
             group = task.Task;
-            currentLevel2 = group;
+            currentProject = group;
         } else {
             const pl = task.ParentLevels || {};
-            const directCandidates = [pl['2'], pl[2], task.Resource];
+            const directCandidates = [pl[String(projectLevel)], pl[projectLevel], task.Resource];
 
-            // Prefer candidates that match known Level 2 project names.
+            // Prefer candidates that match known project-level names.
             for (const candidate of directCandidates) {
-                if (candidate && level2Names.has(candidate)) {
+                if (candidate && projectLevelNames.has(candidate)) {
                     group = candidate;
                     break;
                 }
             }
 
-            // Sometimes the true L2 ancestor is stored under a different key.
+            // Sometimes the true project ancestor is stored under a different key.
             if (!group) {
                 for (const value of Object.values(pl)) {
-                    if (value && level2Names.has(value)) {
+                    if (value && projectLevelNames.has(value)) {
                         group = value;
                         break;
                     }
@@ -71,15 +83,15 @@ function resolveTaskProjectGroups() {
             }
 
             // Last resort for mixed/legacy data that still preserves row order.
-            if (!group && currentLevel2) {
-                group = currentLevel2;
+            if (!group && currentProject) {
+                group = currentProject;
             }
         }
 
-        // Legacy fallback when no Level 2 rows exist in the payload.
+        // Legacy fallback when no clear project-level rows exist.
         if (!group) {
             const pl = task.ParentLevels || {};
-            group = pl['2'] || pl[2] || task.Resource || task.ProjectName || 'Unknown';
+            group = pl[String(projectLevel)] || pl[projectLevel] || task.Resource || task.ProjectName || 'Unknown';
         }
 
         taskProjectGroups[idx] = group;
@@ -183,7 +195,11 @@ function detectProjectGroups() {
     const groupSet = new Set();
     ganttData.forEach((task, idx) => {
         const group = getProjectGroup(task, idx);
-        if (group) {
+        const taskLevel = Number(task.OutlineLevel);
+        const parentLevelCount = Object.keys(task.ParentLevels || {}).length;
+        const isLikelyRootSummary = Number.isFinite(taskLevel) && taskLevel <= 1 && parentLevelCount === 0;
+
+        if (group && !isLikelyRootSummary) {
             groupSet.add(group);
         }
     });
