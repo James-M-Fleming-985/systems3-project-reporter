@@ -1824,8 +1824,10 @@ async function deleteMilestone() {
     if (!confirmed) return;
 
     try {
+        const csrfToken = document.getElementById('csrfToken')?.value || '';
         const resp = await fetch(`/api/milestones/${encodeURIComponent(projectCode)}/${encodeURIComponent(milestoneId)}`, {
             method: 'DELETE',
+            headers: { 'x-csrf-token': csrfToken },
         });
 
         if (!resp.ok) {
