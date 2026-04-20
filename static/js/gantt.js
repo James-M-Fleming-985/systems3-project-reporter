@@ -11,7 +11,7 @@ const ganttData = JSON.parse(_ganttBridge.dataset.ganttData);
 
 // ── State ──
 let viewMode = 'project';  // 'project' or 'level'
-let roadmapDetailMode = 'expanded';  // 'summary' or 'expanded'
+let roadmapDetailMode = 'summary';  // 'summary' or 'expanded'
 let availableLevels = [];
 let selectedLevel = null;
 let levelItems = [];
@@ -256,8 +256,8 @@ function renderProjectRoadmap() {
         const startStr = groupStart.toISOString().split('T')[0];
         const endStr = groupEnd.toISOString().split('T')[0];
         
-        // Summary bar label (with bold marker for expanded mode)
-        const summaryLabel = isExpanded ? `▸ ${groupName}` : groupName;
+        // Summary bar label (with expand/collapse marker for expanded mode)
+        const summaryLabel = isExpanded ? `▾ ${groupName}` : `▸ ${groupName}`;
         yCategories.push(summaryLabel);
         
         // Summary bar per project
@@ -810,8 +810,12 @@ function removeDragOverlays() {
 function setupDragHandles(chartDiv, traceMeta) {
     removeDragOverlays();
     
-    const plotArea = chartDiv.querySelector('.plot');
-    if (!plotArea) return;
+    // In Plotly 2.x, '.plot' is an SVG <g> element — HTML divs cannot be appended there.
+    // Instead, append to the plot container div and position relative to it.
+    const svgContainer = chartDiv.querySelector('.svg-container');
+    if (!svgContainer) return;
+    // Ensure relative positioning so absolute children are placed correctly
+    svgContainer.style.position = 'relative';
     
     const xa = chartDiv._fullLayout.xaxis;
     const ya = chartDiv._fullLayout.yaxis;
@@ -829,34 +833,39 @@ function setupDragHandles(chartDiv, traceMeta) {
         const barRight = Math.max(xStart, xEnd);
         const barTop = yPos - barWidth / 2;
         
+        // Offset: Plotly's d2p returns coords relative to the plot area origin,
+        // but we need coords relative to the svg-container div (which includes margins).
+        const plotLeft = xa._offset || 0;
+        const plotTop = ya._offset || 0;
+        
         // Center body (move handle)
         const bodyDiv = document.createElement('div');
         bodyDiv.className = 'drag-handle drag-body';
-        bodyDiv.style.cssText = `position:absolute; left:${barLeft + handleWidth}px; top:${barTop}px; width:${Math.max(barRight - barLeft - 2 * handleWidth, 4)}px; height:${barWidth}px; cursor:grab; z-index:10;`;
-        bodyDiv.title = `Drag to move: ${meta.taskName}`;
+        bodyDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft + handleWidth}px; top:${plotTop + barTop}px; width:${Math.max(barRight - barLeft - 2 * handleWidth, 4)}px; height:${barWidth}px; cursor:grab; z-index:10;`;
+        bodyDiv.title = `Drag to move: ${meta.taskName.replace(/^[▸▾\s]+/, '')}`;
         bodyDiv.addEventListener('mousedown', e => startDrag(e, meta, 'move', chartDiv));
         bodyDiv.addEventListener('touchstart', e => startDrag(e, meta, 'move', chartDiv), {passive: false});
-        plotArea.appendChild(bodyDiv);
+        svgContainer.appendChild(bodyDiv);
         dragOverlays.push(bodyDiv);
         
         // Left edge (resize start)
         const leftDiv = document.createElement('div');
         leftDiv.className = 'drag-handle drag-edge-left';
-        leftDiv.style.cssText = `position:absolute; left:${barLeft}px; top:${barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
+        leftDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
         leftDiv.title = 'Drag to change start date';
         leftDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-left', chartDiv));
         leftDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-left', chartDiv), {passive: false});
-        plotArea.appendChild(leftDiv);
+        svgContainer.appendChild(leftDiv);
         dragOverlays.push(leftDiv);
         
         // Right edge (resize end)
         const rightDiv = document.createElement('div');
         rightDiv.className = 'drag-handle drag-edge-right';
-        rightDiv.style.cssText = `position:absolute; left:${barRight - handleWidth}px; top:${barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
+        rightDiv.style.cssText = `position:absolute; left:${plotLeft + barRight - handleWidth}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
         rightDiv.title = 'Drag to change end date';
         rightDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-right', chartDiv));
         rightDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-right', chartDiv), {passive: false});
-        plotArea.appendChild(rightDiv);
+        svgContainer.appendChild(rightDiv);
         dragOverlays.push(rightDiv);
     });
 }
@@ -1010,7 +1019,7 @@ function showDateChangeModal(meta, oldStart, oldEnd, newStart, newEnd) {
         document.body.appendChild(modal);
     }
     
-    const displayName = meta.taskName.replace(/^[▸\s]+/, '').trim();
+    const displayName = meta.taskName.replace(/^[▸▾\s]+/, '').trim();
     const oldStartFmt = new Date(oldStart).toLocaleDateString();
     const oldEndFmt = new Date(oldEnd).toLocaleDateString();
     const newStartFmt = new Date(newStart).toLocaleDateString();
@@ -1073,7 +1082,7 @@ async function confirmDateChange() {
     
     try {
         // Strip display prefixes from task name for API matching
-        const cleanName = meta.taskName.replace(/^[▸\s]+/, '').trim();
+        const cleanName = meta.taskName.replace(/^[▸▾\s]+/, '').trim();
         
         // Build milestone update payload for the existing /milestones/update endpoint
         const response = await fetch('/milestones/update', {

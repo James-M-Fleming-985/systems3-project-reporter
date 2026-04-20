@@ -514,8 +514,12 @@ function removeDragOverlays() {
 function setupDragHandles(chartDiv, traceMeta) {
     removeDragOverlays();
 
-    const plotArea = chartDiv.querySelector('.plot');
-    if (!plotArea) return;
+    // In Plotly 2.x, '.plot' is an SVG <g> element — HTML divs cannot be appended there.
+    // Instead, append to the svg-container div and position relative to it.
+    const svgContainer = chartDiv.querySelector('.svg-container');
+    if (!svgContainer) return;
+    // Ensure relative positioning so absolute children are placed correctly
+    svgContainer.style.position = 'relative';
 
     const xa = chartDiv._fullLayout.xaxis;
     const ya = chartDiv._fullLayout.yaxis;
@@ -533,34 +537,39 @@ function setupDragHandles(chartDiv, traceMeta) {
         const barRight = Math.max(xStart, xEnd);
         const barTop = yPos - barWidth / 2;
 
+        // Offset: Plotly's d2p returns coords relative to the plot area origin,
+        // but we need coords relative to the svg-container div (which includes margins).
+        const plotLeft = xa._offset || 0;
+        const plotTop = ya._offset || 0;
+
         // Center body (move)
         const bodyDiv = document.createElement('div');
         bodyDiv.className = 'drag-handle drag-body';
-        bodyDiv.style.cssText = `position:absolute; left:${barLeft + handleWidth}px; top:${barTop}px; width:${Math.max(barRight - barLeft - 2 * handleWidth, 4)}px; height:${barWidth}px; cursor:grab; z-index:10;`;
+        bodyDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft + handleWidth}px; top:${plotTop + barTop}px; width:${Math.max(barRight - barLeft - 2 * handleWidth, 4)}px; height:${barWidth}px; cursor:grab; z-index:10;`;
         bodyDiv.title = `Drag to move: ${meta.taskName.replace(/^[▸▾\s]+/, '')}`;
         bodyDiv.addEventListener('mousedown', e => startDrag(e, meta, 'move', chartDiv));
         bodyDiv.addEventListener('touchstart', e => startDrag(e, meta, 'move', chartDiv), {passive: false});
-        plotArea.appendChild(bodyDiv);
+        svgContainer.appendChild(bodyDiv);
         dragOverlays.push(bodyDiv);
 
         // Left edge (resize start)
         const leftDiv = document.createElement('div');
         leftDiv.className = 'drag-handle drag-edge-left';
-        leftDiv.style.cssText = `position:absolute; left:${barLeft}px; top:${barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
+        leftDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
         leftDiv.title = 'Drag to change start date';
         leftDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-left', chartDiv));
         leftDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-left', chartDiv), {passive: false});
-        plotArea.appendChild(leftDiv);
+        svgContainer.appendChild(leftDiv);
         dragOverlays.push(leftDiv);
 
         // Right edge (resize end)
         const rightDiv = document.createElement('div');
         rightDiv.className = 'drag-handle drag-edge-right';
-        rightDiv.style.cssText = `position:absolute; left:${barRight - handleWidth}px; top:${barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
+        rightDiv.style.cssText = `position:absolute; left:${plotLeft + barRight - handleWidth}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
         rightDiv.title = 'Drag to change end date';
         rightDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-right', chartDiv));
         rightDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-right', chartDiv), {passive: false});
-        plotArea.appendChild(rightDiv);
+        svgContainer.appendChild(rightDiv);
         dragOverlays.push(rightDiv);
     });
 }
