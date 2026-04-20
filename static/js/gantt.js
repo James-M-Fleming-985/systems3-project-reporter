@@ -18,8 +18,21 @@ let levelItems = [];
 let selectedItems = new Set();
 
 // Project Roadmap state
-let projectGroups = [];        // unique Resource values
+let projectGroups = [];        // unique L2 project names
 let selectedGroups = new Set(); // selected group names
+
+/**
+ * Get the L2 project group name for a task.
+ * Uses ParentLevels["2"] (the level-2 ancestor) which is consistent
+ * regardless of the task's depth in the hierarchy.
+ * Falls back to Resource (parent_project) or ProjectName.
+ */
+function getProjectGroup(task) {
+    if (task.ParentLevels && task.ParentLevels["2"]) {
+        return task.ParentLevels["2"];
+    }
+    return task.Resource || task.ProjectName || 'Unknown';
+}
 
 // ── Initialize ──
 document.addEventListener('DOMContentLoaded', async function() {
@@ -93,8 +106,9 @@ function setRoadmapDetail(mode) {
 function detectProjectGroups() {
     const groupSet = new Set();
     ganttData.forEach(task => {
-        if (task.Resource) {
-            groupSet.add(task.Resource);
+        const group = getProjectGroup(task);
+        if (group) {
+            groupSet.add(group);
         }
     });
     projectGroups = Array.from(groupSet).sort();
@@ -131,7 +145,7 @@ function renderGroupFilterItems() {
     container.innerHTML = projectGroups.map(group => {
         const checked = selectedGroups.has(group) ? 'checked' : '';
         const escapedName = group.replace(/'/g, "\\'");
-        const count = ganttData.filter(t => t.Resource === group).length;
+        const count = ganttData.filter(t => getProjectGroup(t) === group).length;
         return `
             <label class="dropdown-item">
                 <input type="checkbox" ${checked} onchange="toggleGroup('${escapedName}', this.checked)">
@@ -203,12 +217,13 @@ function renderProjectRoadmap() {
     
     emptyState.style.display = 'none';
     
-    // Group tasks by Resource (parent_project), filter to selected groups
+    // Group tasks by L2 project ancestor, filter to selected groups
     const groupedTasks = {};
     ganttData.forEach(task => {
-        if (task.Resource && selectedGroups.has(task.Resource)) {
-            if (!groupedTasks[task.Resource]) groupedTasks[task.Resource] = [];
-            groupedTasks[task.Resource].push(task);
+        const group = getProjectGroup(task);
+        if (group && selectedGroups.has(group)) {
+            if (!groupedTasks[group]) groupedTasks[group] = [];
+            groupedTasks[group].push(task);
         }
     });
     
@@ -319,9 +334,16 @@ function renderProjectRoadmap() {
         
         // ── Expanded mode: add individual milestone bars under this group ──
         if (isExpanded) {
-            const sortedTasks = [...tasks].sort((a, b) => new Date(a.Start) - new Date(b.Start));
+            // Filter out the L2 summary item itself (it's already the summary bar)
+            // and sort remaining by start date
+            const sortedTasks = [...tasks]
+                .filter(t => t.OutlineLevel !== 2)
+                .sort((a, b) => new Date(a.Start) - new Date(b.Start));
             sortedTasks.forEach(task => {
-                const msLabel = `    ${task.Task}`;
+                // Indent based on depth: L3 = 4 spaces, L4 = 8 spaces, etc.
+                const depth = Math.max(0, (task.OutlineLevel || 3) - 2);
+                const indent = '    '.repeat(depth);
+                const msLabel = `${indent}${task.Task}`;
                 yCategories.push(msLabel);
                 
                 let msStart = task.Start;
@@ -1108,7 +1130,7 @@ async function confirmDateChange() {
         if (response.ok && result.success) {
             // Update ganttData in-memory
             const task = ganttData.find(t =>
-                t.Task === cleanName && t.Resource === meta.resource
+                t.Task === cleanName && getProjectGroup(t) === meta.resource
             );
             if (task) {
                 task.Start = newStart;
