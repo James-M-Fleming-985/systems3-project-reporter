@@ -148,24 +148,17 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # Load all user projects for the Program Roadmap so every active project
-    # in the same programme appears as a group — not just the selected one.
-    # Rules:
-    #   1. Exclude archived projects (they are hidden everywhere)
-    #   2. Only include projects whose code shares the same programme prefix
-    #      as the selected project (e.g. PD-P1 → prefix "PD", so PD-P2 would
-    #      also appear but ZLD-P1 would not).
+    # Load all non-archived user projects for the Program Roadmap so every
+    # active project appears as a group.  Archived projects are blocked.
     all_projects = get_all_projects(request)
-    programme_prefix = project.project_code.split('-')[0] if project.project_code else ''
     programme_projects = [
         p for p in all_projects
         if not getattr(p, 'archived', False)
-        and (not programme_prefix or p.project_code.startswith(programme_prefix))
     ]
     if not programme_projects:
         programme_projects = [project]  # fallback: at minimum show selected project
     
-    # Format data for programme projects (each becomes one or more ProjectGroup entries)
+    # Format data for all active projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
 
     # Diagnostic summary for grouping issues (kept compact for production logs)
