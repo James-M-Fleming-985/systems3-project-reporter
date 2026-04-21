@@ -195,14 +195,17 @@ async def gantt_chart(request: Request):
             for lvl, names in sorted(unique_names_by_level.items())
         }
 
+        unique_groups = sorted({t.get('ProjectGroup') for t in gantt_data if t.get('ProjectGroup')})
+
         logger.info(
             "📊 GanttHierarchy project=%s code=%s total=%s levels=%s "
-            "resources=%s unique_names_by_level=%s parentlevel_entries=%s",
+            "resources=%s groups=%s unique_names_by_level=%s parentlevel_entries=%s",
             project.project_name,
             project.project_code,
             len(gantt_data),
             dict(sorted(level_counts.items())),
             resource_count,
+            unique_groups,
             unique_name_counts,
             dict(sorted(pl_counts.items())),
         )
