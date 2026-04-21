@@ -66,9 +66,6 @@ function detectProjectGroups() {
     if (selectedGroups.size === 0) {
         selectedGroups = new Set(projectGroups);
     }
-
-    // Debug: always visible in MCP browser tool
-    console.warn('[Gantt] ganttData.length=' + ganttData.length + ' projectGroups=' + JSON.stringify(projectGroups));
 }
 
 function toggleGroupFilter() {
@@ -507,8 +504,6 @@ async function loadSavedSettings() {
     } catch (error) {
         console.log('No saved settings');
     }
-    // Debug: log final selectedGroups after settings are applied
-    console.warn('[Gantt] After loadSavedSettings: selectedGroups=' + JSON.stringify(Array.from(selectedGroups)));
 }
 
 function toggleDropdown() {
