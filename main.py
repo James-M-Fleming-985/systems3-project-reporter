@@ -140,6 +140,44 @@ def get_template_context(request: Request, **kwargs):
 project_repo = None
 
 
+def _stamp_programme_codes_if_needed(data_dir):
+    """
+    ONE-OFF: Stamp program_code onto sub-projects that were formerly top-level
+    programmes and later reclassified as projects under a parent programme.
+
+    Known reclassifications:
+      EP-P1  → program_code = 'PD-P1'  (Epistemology Platform → Product Development)
+
+    Safe to run on every startup — skips projects that already have program_code set.
+    """
+    import yaml as _yaml
+
+    known = {
+        'EP-P1': 'PD-P1',
+    }
+
+    yaml_files = list(data_dir.glob("**/*.yaml")) + list(data_dir.glob("**/*.yml"))
+    for yf in yaml_files:
+        try:
+            with open(yf, 'r', encoding='utf-8') as f:
+                d = _yaml.safe_load(f)
+            if not d or not isinstance(d, dict):
+                continue
+            code = d.get('project_code')
+            if code not in known:
+                continue
+            target_programme = known[code]
+            if d.get('program_code') == target_programme:
+                logger.info(f"programme stamp: {code} already stamped → {target_programme}, skipping")
+                continue
+            d['program_code'] = target_programme
+            with open(yf, 'w', encoding='utf-8') as f:
+                _yaml.dump(d, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            logger.info(f"programme stamp: stamped {code} → program_code={target_programme}")
+        except Exception as e:
+            logger.warning(f"programme stamp warning for {yf}: {e}")
+
+
 def _run_amp_merge_if_needed(data_dir):
     """ONE-OFF: Merge AMP-P1 milestones into PD-P1 at startup if not already done."""
     import yaml as _yaml
@@ -240,6 +278,23 @@ async def startup_event():
         _run_amp_merge_if_needed(DATA_DIR)
     except Exception as e:
         logger.warning(f"AMP-P1 merge warning (non-fatal): {e}")
+
+    # Stamp program_code onto sub-projects that were formerly top-level programmes
+    try:
+        _stamp_programme_codes_if_needed(DATA_DIR)
+    except Exception as e:
+        logger.warning(f"programme stamp warning (non-fatal): {e}")
+
+    # Auto-repair recurring task dates that were saved with identical dates
+    # due to the yaml.dump/safe_load mismatch bug (fixed in 2026-04-17 commit).
+    # Safe to run on every startup — skips series that already have distinct dates.
+    try:
+        from routers.admin import repair_recurring_tasks
+        result = await repair_recurring_tasks()
+        body = result.body.decode() if hasattr(result, 'body') else str(result)
+        logger.info(f"Recurrence repair migration: {body}")
+    except Exception as e:
+        logger.warning(f"Recurrence repair migration warning (non-fatal): {e}")
     
     try:
         project_repo = ProjectRepository(data_dir=DATA_DIR)
