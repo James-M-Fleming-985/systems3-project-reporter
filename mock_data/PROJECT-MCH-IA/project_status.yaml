@@ -1,0 +1,1034 @@
+project_name: Material Compliance Horizon Scanning and Impact Assessment Application
+project_code: MCH-IA
+status: Active
+start_date: '2026-04-21'
+target_completion: '2026-10-20'
+completion_percentage: 0
+
+# ═══════════════════════════════════════════════════════════════════
+# This plan EXTENDS the existing MVP in place:
+#   https://github.com/James-M-Fleming-985/mvp-32-mc-scanner-and-risk-identification
+# Phase 1 begins with an audit of what exists; every subsequent phase
+# adds a vertical slice (ingest → normalise → score → display → alert)
+# on top of the same codebase rather than rebuilding.
+#
+# Terminology: the assessment is called IMPACT ASSESSMENT (client term),
+# not "risk assessment".
+#
+# PLM: Phase 2 delivers the CAPABILITY (adapter interface + Teamcenter
+# reference adapter + synthetic dataset), not a tenant rollout.
+# ═══════════════════════════════════════════════════════════════════
+
+milestones:
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 1: MVP Audit, Hardening & UK REACH Production Pipeline
+  # Weeks 1-4  (2026-04-21 → 2026-05-18)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: MVP Audit, Hardening & UK REACH Production Pipeline
+    start_date: '2026-04-21'
+    target_date: '2026-05-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 1 — audit the existing mvp-32 codebase, harden it for production use, and ship the first end-to-end vertical slice for UK REACH.'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    start_date: '2026-04-21'
+    target_date: '2026-05-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 1 milestone — UK REACH ingest → normalise → display works end-to-end on the hardened MVP base.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Audit Existing MVP Codebase
+    start_date: '2026-04-21'
+    target_date: '2026-04-27'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review architecture, dependencies, data model, and gaps in mvp-32-mc-scanner-and-risk-identification. Produce gap analysis vs target scope.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Containerise & Deploy MVP Baseline
+    start_date: '2026-04-21'
+    target_date: '2026-04-27'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Dockerise the MVP, set up dev/staging environments, baseline CI pipeline.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: UK REACH Source Connector
+    start_date: '2026-04-28'
+    target_date: '2026-05-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Production-grade ingest from HSE / UK REACH publication feeds with retry, dedup, and provenance.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Normalisation Schema v1
+    start_date: '2026-04-28'
+    target_date: '2026-05-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Common event schema (substance, CAS, regulation, jurisdiction, status, effective date, scope, threshold). Persisted with source-document linkage.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: LLM Classification (Lifecycle Stage)
+    start_date: '2026-05-05'
+    target_date: '2026-05-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Classify each event by lifecycle stage (proposal, consultation, adopted, in-force, sunset) with deterministic post-checks.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Event Feed UI (UK REACH)
+    start_date: '2026-05-05'
+    target_date: '2026-05-11'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Chronological filterable event feed surfacing UK REACH events with severity, jurisdiction, and lifecycle badges.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: CI, Smoke Tests & Phase 1 Demo
+    start_date: '2026-05-12'
+    target_date: '2026-05-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Smoke tests for ingest → normalise → display; Phase 1 internal demo on hardened MVP base.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': MVP Audit, Hardening & UK REACH Production Pipeline
+      '3': MVP Audit, Hardening & UK REACH Production Pipeline Complete
+    parent_project: MVP Audit, Hardening & UK REACH Production Pipeline
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 2: Impact Assessment Engine + PLM Adapter Capability
+  # Weeks 5-8  (2026-05-19 → 2026-06-15)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: Impact Assessment Engine & PLM Adapter Capability
+    start_date: '2026-05-19'
+    target_date: '2026-06-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 2 — build the impact assessment engine and the PLM adapter capability (interface + Teamcenter reference adapter + synthetic dataset). No tenant rollout in this phase.'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Impact Assessment Engine & PLM Adapter Capability Complete
+    start_date: '2026-05-19'
+    target_date: '2026-06-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 2 milestone — UK REACH events scored against a synthetic Teamcenter dataset via the new PLM adapter; evidence chain end-to-end.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: PLM Adapter Interface Contract
+    start_date: '2026-05-19'
+    target_date: '2026-05-25'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Define language-level contract: list_parts, get_bom, get_substance_declarations, subscribe_changes. PLM-agnostic.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Teamcenter Reference Adapter
+    start_date: '2026-05-19'
+    target_date: '2026-06-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Implement the adapter against Teamcenter Active Workspace REST / TC Open Services. Auth patterns documented (SSO, service account, OAuth).'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Synthetic Teamcenter Dataset
+    start_date: '2026-05-26'
+    target_date: '2026-06-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Build a representative synthetic parts/BOM/substance-declaration dataset for CI, demo, and impact engine testing.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Impact Scoring Rules Engine v1
+    start_date: '2026-06-02'
+    target_date: '2026-06-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Rule-based scoring joining normalised events with PLM substance data. Per-part, per-product, per-business-unit scores.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Evidence Chain & Auditability
+    start_date: '2026-06-02'
+    target_date: '2026-06-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Every impact score links back to the source event and PLM record, with versioned snapshots for audit.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: PLM Adapter SDK & Documentation
+    start_date: '2026-06-09'
+    target_date: '2026-06-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Adapter SDK + docs so further PLMs (Windchill, Aras, 3DEXPERIENCE) can be added later without core changes.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Impact Assessment Engine & PLM Adapter Capability
+      '3': Impact Assessment Engine & PLM Adapter Capability Complete
+    parent_project: Impact Assessment Engine & PLM Adapter Capability
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 3: EU REACH Module + Dashboard & Reporting
+  # Weeks 9-12  (2026-06-16 → 2026-07-13)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: EU REACH Module & Dashboard
+    start_date: '2026-06-16'
+    target_date: '2026-07-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 3 — add the EU REACH/ECHA module under a pluggable module pattern, and ship the full dashboard (heatmap, drill-down, filters, portfolio view).'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: EU REACH Module & Dashboard Complete
+    start_date: '2026-06-16'
+    target_date: '2026-07-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 3 milestone — EU REACH events flow through the same pipeline; dashboard surfaces both UK and EU events with portfolio impact.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Module Pluggability Refactor
+    start_date: '2026-06-16'
+    target_date: '2026-06-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Refactor UK REACH ingest into a module under a pluggable pattern; publish module SDK contract.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: EU REACH / ECHA Connector
+    start_date: '2026-06-16'
+    target_date: '2026-06-29'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Ingest Candidate List, Authorisation List (Annex XIV), Restriction List (Annex XVII), and consultation documents.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Regulatory Heatmap View
+    start_date: '2026-06-23'
+    target_date: '2026-06-29'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Heatmap of jurisdiction × substance class × time intensity.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Event Detail Drill-Down
+    start_date: '2026-06-30'
+    target_date: '2026-07-06'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Source-document viewer, normalised fields, affected parts list with PLM links.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Filters with Shareable URL State
+    start_date: '2026-06-30'
+    target_date: '2026-07-06'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Persistent filters (jurisdiction, substance, lifecycle stage, business unit, product family) with shareable URLs.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Portfolio Impact Dashboard
+    start_date: '2026-07-07'
+    target_date: '2026-07-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'KPI summary, top-N affected products, mitigation backlog, trend.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Dark Mode Pass
+    start_date: '2026-07-07'
+    target_date: '2026-07-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Dark mode parity across feed, heatmap, drill-down, and dashboard.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': EU REACH Module & Dashboard
+      '3': EU REACH Module & Dashboard Complete
+    parent_project: EU REACH Module & Dashboard
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 4: US TSCA + APAC + Public API Layer
+  # Weeks 13-17  (2026-07-14 → 2026-08-17)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: US TSCA, APAC & Public API
+    start_date: '2026-07-14'
+    target_date: '2026-08-17'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 4 — extend coverage to US (TSCA) and APAC (China MEE, Japan METI/CSCL, Korea K-REACH), and ship the public REST API.'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: US TSCA, APAC & Public API Complete
+    start_date: '2026-07-14'
+    target_date: '2026-08-17'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 4 milestone — four new jurisdictions live; public API consumable by external systems with auth + rate limiting + docs.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: US TSCA Connector
+    start_date: '2026-07-14'
+    target_date: '2026-07-27'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'EPA TSCA Inventory updates, SNUR notifications, Section 6 actions.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: China MEE Connector
+    start_date: '2026-07-14'
+    target_date: '2026-07-27'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'China Ministry of Ecology and Environment chemical substance notifications.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Japan METI / CSCL Connector
+    start_date: '2026-07-28'
+    target_date: '2026-08-03'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Japan Chemical Substances Control Law publications and METI updates.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Korea K-REACH Connector
+    start_date: '2026-07-28'
+    target_date: '2026-08-03'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Korea Ministry of Environment K-REACH updates and registrations.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Public REST API (Events, Impact, PLM Refresh)
+    start_date: '2026-08-04'
+    target_date: '2026-08-10'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Endpoints for querying normalised events, retrieving impact assessments, submitting/refreshing PLM data.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Webhook Subscription Management
+    start_date: '2026-08-04'
+    target_date: '2026-08-10'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Subscribe/unsubscribe endpoints, signed payloads, retry policy.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: API Auth, Rate Limiting & Documentation
+    start_date: '2026-08-11'
+    target_date: '2026-08-17'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'API key + OAuth, per-tenant rate limits, OpenAPI spec, developer docs.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': US TSCA, APAC & Public API
+      '3': US TSCA, APAC & Public API Complete
+    parent_project: US TSCA, APAC & Public API
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 5: RoHS, PFAS, SCIP Modules
+  # Weeks 18-21  (2026-08-18 → 2026-09-14)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: RoHS, PFAS & SCIP Modules
+    start_date: '2026-08-18'
+    target_date: '2026-09-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 5 — three substance/scheme-specific modules plus NGO and social signal sources.'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: RoHS, PFAS & SCIP Modules Complete
+    start_date: '2026-08-18'
+    target_date: '2026-09-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 5 milestone — RoHS amendments/exemptions, multi-jurisdiction PFAS, SCIP submissions, plus NGO + social signal feeds all live.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: RoHS Module
+    start_date: '2026-08-18'
+    target_date: '2026-08-31'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'RoHS Directive amendments and exemption decisions; mapping to product categories.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: PFAS Multi-Jurisdiction Module
+    start_date: '2026-08-18'
+    target_date: '2026-08-31'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'PFAS-specific instruments across EU, US states, and APAC; consolidated PFAS view.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: SCIP Submission Module
+    start_date: '2026-09-01'
+    target_date: '2026-09-07'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'ECHA SCIP database submissions and updates; reconcile with PLM substance declarations.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: NGO Campaign Feed (ChemSec, EEB)
+    start_date: '2026-09-01'
+    target_date: '2026-09-07'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Ingest NGO campaign signals (ChemSec SIN List, EEB) as leading indicators for future restriction.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Social Signal Ingest (Curated Handles)
+    start_date: '2026-09-08'
+    target_date: '2026-09-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Curated list of scientific and policy handles on X/LinkedIn; feed into early-warning queue with low-weight scoring.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: LLM Classification Quality Pass
+    start_date: '2026-09-08'
+    target_date: '2026-09-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Evaluation set + accuracy metrics for LLM normalisation/classification across all modules; tighten prompts and post-checks.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': RoHS, PFAS & SCIP Modules
+      '3': RoHS, PFAS & SCIP Modules Complete
+    parent_project: RoHS, PFAS & SCIP Modules
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 6: Batteries, Packaging & Waste, Aerospace/Defence + Hardening
+  # Weeks 22-26  (2026-09-15 → 2026-10-20)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: Batteries, Packaging, Aerospace/Defence & Hardening
+    start_date: '2026-09-15'
+    target_date: '2026-10-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 6 — final regulatory modules, full alerts stack, admin module selector, and production hardening + handover.'
+    outline_level: 2
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    start_date: '2026-09-15'
+    target_date: '2026-10-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 6 milestone — full scope live, performance + security validated, documentation + handover pack delivered.'
+    outline_level: 3
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: EU Batteries Regulation Module
+    start_date: '2026-09-15'
+    target_date: '2026-09-28'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'EU Batteries Regulation obligations, restricted substances, due-diligence updates.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Packaging & Packaging Waste Module
+    start_date: '2026-09-15'
+    target_date: '2026-09-28'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Packaging & Packaging Waste Directive / Regulation updates; restricted substances and recyclability requirements.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Aerospace / Defence Module
+    start_date: '2026-09-29'
+    target_date: '2026-10-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Aerospace/Defence-specific instruments and exemptions (e.g. REACH Annex XIV defence exemptions, ITAR/EAR-relevant material flags).'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Alerts Stack (Email, Webhook, In-App)
+    start_date: '2026-09-29'
+    target_date: '2026-10-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Configurable alerts on new events, status changes, and threshold-crossing impact scores.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Module Selector Admin UI
+    start_date: '2026-10-06'
+    target_date: '2026-10-12'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Admin view to enable/disable regulatory modules per tenant.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Performance & Load Testing
+    start_date: '2026-10-06'
+    target_date: '2026-10-12'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Load test ingest pipeline, API, dashboard with realistic event volumes and PLM dataset sizes.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Security Review
+    start_date: '2026-10-13'
+    target_date: '2026-10-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'OWASP Top 10 review, dependency audit, secrets handling, PLM credential storage, tenant isolation.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
+
+  - id: null
+    name: Documentation & Handover Pack
+    start_date: '2026-10-13'
+    target_date: '2026-10-20'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'User docs, admin docs, API docs, PLM adapter SDK docs, runbook, on-call playbook, handover session.'
+    outline_level: 4
+    parent_levels:
+      '1': Material Compliance Horizon Scanning and Impact Assessment Application
+      '2': Batteries, Packaging, Aerospace/Defence & Hardening
+      '3': Batteries, Packaging, Aerospace/Defence & Hardening Complete
+    parent_project: Batteries, Packaging, Aerospace/Defence & Hardening
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: MCH-IA
