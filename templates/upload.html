@@ -204,7 +204,26 @@
                 </button>
             </div>
         </div>
-    </div>
+
+        <!-- ── Programme Assignments ─────────────────────────────── -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Programme Assignments</h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Assign each project to its programme so the Program Roadmap shows the correct projects.
+                        No re-upload required — changes take effect immediately.
+                    </p>
+                </div>
+                <button onclick="loadProgrammeAssignments()"
+                        class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                    ↻ Refresh
+                </button>
+            </div>
+            <div id="programmeAssignmentTable" class="text-sm text-gray-500 italic">Loading…</div>
+        </div>
+
+    </div><!-- end container -->
 
     <script>
         console.log('=== UPLOAD PAGE LOADED ===');
@@ -1423,33 +1442,8 @@
 
         // Load templates on page load
         loadTemplates();
-    </script>
 
-    <!-- ── Programme Management ─────────────────────────────────── -->
-    <section class="container mx-auto px-4 mt-12 mb-8 max-w-4xl">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900">Programme Assignments</h2>
-                    <p class="text-sm text-gray-500 mt-1">
-                        Each project must be assigned to a programme so the Gantt roadmap shows the correct projects.
-                        Use the dropdowns below to correct any wrong assignments.
-                    </p>
-                </div>
-                <button onclick="loadProgrammeAssignments()"
-                        class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
-                    ↻ Refresh
-                </button>
-            </div>
-
-            <div id="programmeAssignmentTable" class="text-sm text-gray-500 italic">
-                Loading…
-            </div>
-        </div>
-    </section>
-
-    <script>
-        // ── Programme Assignment Management ──────────────────────────────
+        // ── Programme Assignment Management ──────────────────────────
 
         async function loadProgrammeAssignments() {
             const container = document.getElementById('programmeAssignmentTable');
@@ -1470,25 +1464,13 @@
                 container.innerHTML = '<p class="text-gray-400 italic text-sm">No projects found.</p>';
                 return;
             }
-
-            // Collect unique programme codes to populate dropdowns
-            const programmes = [...new Set(
-                projects.map(p => p.program_code).filter(Boolean)
-            )].sort();
-
             const rows = projects.map(p => {
-                const archived = p.archived ? '<span class="text-xs text-gray-400">(archived)</span>' : '';
-                const opts = [`<option value="">— unassigned —</option>`];
-                programmes.forEach(prog => {
-                    const sel = p.program_code === prog ? 'selected' : '';
-                    opts.push(`<option value="${prog}" ${sel}>${prog}</option>`);
-                });
-                // Allow typing a new programme code
-                const currentVal = p.program_code || '';
+                const archived = p.archived ? ' <span class="text-xs text-gray-400">(archived)</span>' : '';
+                const currentVal = (p.program_code || '').replace(/"/g, '&quot;');
                 return `
                     <tr class="border-t border-gray-100 hover:bg-gray-50">
                         <td class="py-2 pr-4 font-mono text-xs text-gray-500 whitespace-nowrap">${p.project_code}</td>
-                        <td class="py-2 pr-4 text-gray-800">${p.project_name} ${archived}</td>
+                        <td class="py-2 pr-4 text-gray-800">${p.project_name}${archived}</td>
                         <td class="py-2 pr-4">
                             <div class="flex items-center gap-2">
                                 <input type="text"
@@ -1502,7 +1484,7 @@
                                 </button>
                                 <button onclick="clearProgrammeAssignment('${p.project_code}')"
                                         class="px-3 py-1 text-xs bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
-                                        title="Remove programme assignment">
+                                        title="Remove assignment">
                                     Clear
                                 </button>
                                 <span id="prog_status_${p.project_code}" class="text-xs"></span>
@@ -1510,7 +1492,6 @@
                         </td>
                     </tr>`;
             }).join('');
-
             container.innerHTML = `
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -1518,23 +1499,19 @@
                             <tr class="text-xs text-gray-400 uppercase tracking-wide">
                                 <th class="pb-2 pr-4">Code</th>
                                 <th class="pb-2 pr-4">Project Name</th>
-                                <th class="pb-2">Programme Assignment</th>
+                                <th class="pb-2">Programme Code</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>
-                <p class="mt-3 text-xs text-gray-400">
-                    Type the Programme project code (e.g. PD-P1) into the box and click Save.
-                    The Gantt will immediately use this assignment — no re-upload required.
-                </p>`;
+                <p class="mt-3 text-xs text-gray-400">Type the Programme project code and click Save. The Program Roadmap updates immediately.</p>`;
         }
 
         async function saveProgrammeAssignment(projectCode) {
             const input = document.getElementById(`prog_input_${projectCode}`);
             const statusEl = document.getElementById(`prog_status_${projectCode}`);
             const newCode = input.value.trim() || null;
-
             statusEl.textContent = 'Saving…';
             statusEl.className = 'text-xs text-gray-400';
             try {
@@ -1556,12 +1533,10 @@
         }
 
         async function clearProgrammeAssignment(projectCode) {
-            const input = document.getElementById(`prog_input_${projectCode}`);
-            input.value = '';
+            document.getElementById(`prog_input_${projectCode}`).value = '';
             await saveProgrammeAssignment(projectCode);
         }
 
-        // Auto-load on page open
         loadProgrammeAssignments();
     </script>
 
