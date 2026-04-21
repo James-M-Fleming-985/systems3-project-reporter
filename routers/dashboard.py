@@ -157,25 +157,25 @@ async def gantt_chart(request: Request):
     all_projects = get_all_projects(request)
     active = [p for p in all_projects if not getattr(p, 'archived', False)]
 
-    any_tagged = any(getattr(p, 'program_code', None) for p in active)
+    # Include a project on this programme's Gantt if:
+    #   1. It IS the selected project (always include the root)
+    #   2. Its program_code matches the selected project's code (explicitly tagged)
+    #   3. It has no program_code yet (untagged = show everywhere until tagged)
+    programme_projects = [
+        p for p in active
+        if p.project_code == project.project_code
+        or getattr(p, 'program_code', None) == project.project_code
+        or not getattr(p, 'program_code', None)
+    ]
+    if not programme_projects:
+        programme_projects = [project]
 
-    if any_tagged:
-        programme_projects = [
-            p for p in active
-            if p.project_code == project.project_code
-            or getattr(p, 'program_code', None) == project.project_code
-        ]
-        if not programme_projects:
-            programme_projects = [project]
-    else:
-        # No project has been tagged yet — show everything and silently stamp
-        # program_code onto every project YAML so future loads are scoped correctly.
-        # This is safe: only the program_code field is written, no milestone data touched.
-        programme_projects = active or [project]
-        repo = _get_user_repo(request)
-        for p in programme_projects:
-            if not getattr(p, 'program_code', None):
-                repo.set_program_code(p.project_code, project.project_code)
+    # Silently stamp any untagged projects with this programme code so future
+    # uploads tag correctly.  Only writes program_code — no milestone data touched.
+    repo = _get_user_repo(request)
+    for p in programme_projects:
+        if not getattr(p, 'program_code', None):
+            repo.set_program_code(p.project_code, project.project_code)
 
     # Format data for programme projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
