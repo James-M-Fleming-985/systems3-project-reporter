@@ -461,3 +461,45 @@ class ProjectRepository:
         
         logger.warning(f"set_project_archived: project_code '{project_code}' not found in any of {len(candidate_files)} files")
         return False
+
+    def set_program_code(self, project_code: str, program_code: str) -> bool:
+        """
+        Stamp program_code onto an existing project YAML without touching
+        any milestone or date data.  Safe to call on live projects.
+
+        Returns True if the file was found and updated.
+        """
+        if not self.data_dir.exists():
+            return False
+
+        yaml_files = (list(self.data_dir.glob("**/*.yaml")) +
+                      list(self.data_dir.glob("**/*.yml")))
+        candidate_files = [f for f in yaml_files if _is_project_file(f)]
+
+        for yaml_file in candidate_files:
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if not data or not isinstance(data, dict):
+                    continue
+                if data.get('project_code') != project_code:
+                    continue
+
+                # Only write if the field is missing or different
+                if data.get('program_code') == program_code:
+                    return True  # already correct, nothing to do
+
+                data['program_code'] = program_code
+
+                with open(yaml_file, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+                logger.info(f"🏷️  Stamped program_code={program_code} onto project {project_code} in {yaml_file}")
+                invalidate_project_cache()
+                return True
+            except Exception as e:
+                logger.error(f"set_program_code error for {yaml_file.name}: {e}")
+                continue
+
+        logger.warning(f"set_program_code: project_code '{project_code}' not found")
+        return False

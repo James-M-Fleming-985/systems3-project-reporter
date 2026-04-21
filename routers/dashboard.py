@@ -19,7 +19,8 @@ from services.chart_formatter import ChartFormatterService
 from middleware.project_context import (
     get_selected_project,
     get_all_projects,
-    get_selected_project_code
+    get_selected_project_code,
+    _get_user_repo,
 )
 
 # Setup logger
@@ -167,8 +168,14 @@ async def gantt_chart(request: Request):
         if not programme_projects:
             programme_projects = [project]
     else:
-        # No project has been tagged yet — show everything (backwards compat)
+        # No project has been tagged yet — show everything and silently stamp
+        # program_code onto every project YAML so future loads are scoped correctly.
+        # This is safe: only the program_code field is written, no milestone data touched.
         programme_projects = active or [project]
+        repo = _get_user_repo(request)
+        for p in programme_projects:
+            if not getattr(p, 'program_code', None):
+                repo.set_program_code(p.project_code, project.project_code)
 
     # Format data for programme projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
