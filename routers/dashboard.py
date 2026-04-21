@@ -157,25 +157,10 @@ async def gantt_chart(request: Request):
     all_projects = get_all_projects(request)
     active = [p for p in all_projects if not getattr(p, 'archived', False)]
 
-    # Include a project on this programme's Gantt if:
-    #   1. It IS the selected project (always include the root)
-    #   2. Its program_code matches the selected project's code (explicitly tagged)
-    #   3. It has no program_code yet (untagged = show everywhere until tagged)
-    programme_projects = [
-        p for p in active
-        if p.project_code == project.project_code
-        or getattr(p, 'program_code', None) == project.project_code
-        or not getattr(p, 'program_code', None)
-    ]
-    if not programme_projects:
-        programme_projects = [project]
-
-    # Silently stamp any untagged projects with this programme code so future
-    # uploads tag correctly.  Only writes program_code — no milestone data touched.
-    repo = _get_user_repo(request)
-    for p in programme_projects:
-        if not getattr(p, 'program_code', None):
-            repo.set_program_code(p.project_code, project.project_code)
+    # Show all non-archived projects on the Gantt.
+    # programme_code scoping caused data-loss issues when the auto-stamp wrote
+    # the wrong code; the group-filter dropdown lets users control visibility instead.
+    programme_projects = active or [project]
 
     # Format data for programme projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
