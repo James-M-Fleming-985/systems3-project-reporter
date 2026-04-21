@@ -148,17 +148,26 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # Load all non-archived user projects for the Program Roadmap so every
-    # active project appears as a group.  Archived projects are blocked.
+    # Load all non-archived user projects, then scope to this programme.
+    # A project belongs to this programme if:
+    #   - Its own project_code matches the selected project (it IS the programme root)
+    #   - Its program_code field matches the selected project's code
+    #   - It has no program_code set AND no other projects claim it (legacy / solo projects
+    #     that haven't been tagged yet — include them so nothing disappears unexpectedly)
     all_projects = get_all_projects(request)
-    programme_projects = [
-        p for p in all_projects
-        if not getattr(p, 'archived', False)
-    ]
-    if not programme_projects:
-        programme_projects = [project]  # fallback: at minimum show selected project
+    active = [p for p in all_projects if not getattr(p, 'archived', False)]
     
-    # Format data for all active projects
+    # Projects explicitly tagged to this programme
+    tagged = [
+        p for p in active
+        if p.project_code == project.project_code
+        or getattr(p, 'program_code', None) == project.project_code
+    ]
+    # If nothing was explicitly tagged (no program_code fields set yet), fall back
+    # to showing all active projects so the page is never empty
+    programme_projects = tagged if tagged else active
+    
+    # Format data for programme projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
 
     # Diagnostic summary for grouping issues (kept compact for production logs)

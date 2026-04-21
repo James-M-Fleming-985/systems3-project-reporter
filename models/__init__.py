@@ -62,6 +62,7 @@ class Project(BaseModel):
     risks: List[Risk] = []
     changes: List[Change] = []
     archived: bool = False  # When True, program is hidden from portfolio and calendar
+    program_code: Optional[str] = None  # Programme this project belongs to (e.g. "PD-P1")
     
     class Config:
         populate_by_name = True  # Allow both snake_case and field names
