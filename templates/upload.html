@@ -275,6 +275,13 @@
             const clearPreviousChanges = document.getElementById('clearChangesCheckbox').checked;
             formData.append('clear_previous_changes', clearPreviousChanges);
 
+            // Stamp the currently selected programme so uploaded projects are
+            // automatically scoped to this programme on the Gantt roadmap
+            const selectedProgrammeCode = localStorage.getItem('selectedProjectCode') || '';
+            if (selectedProgrammeCode) {
+                formData.append('program_code', selectedProgrammeCode);
+            }
+
             // Show progress
             document.getElementById('progress').classList.remove('hidden');
             uploadBtn.disabled = true;

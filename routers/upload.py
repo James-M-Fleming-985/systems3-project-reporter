@@ -176,6 +176,7 @@ async def upload_xml(
     is_baseline: str = Form("false"),
     clear_previous_changes: str = Form("false"),
     target_project_code: str = Form(None),
+    program_code: str = Form(None),
     user=Depends(get_user_or_create_anonymous),
     sub_service: SubscriptionService = Depends(get_subscription_service)
 ):
@@ -665,6 +666,10 @@ async def upload_xml(
                                 break
         
         # Convert to dict for YAML serialization
+        # Preserve existing program_code if re-uploading; use submitted one for new projects
+        existing_program_code = getattr(existing_project, 'program_code', None) if existing_project else None
+        resolved_program_code = existing_program_code or program_code or None
+
         project_dict = {
             'project_name': new_project.project_name,
             'project_code': new_project.project_code,
@@ -672,6 +677,7 @@ async def upload_xml(
             'start_date': new_project.start_date,
             'target_completion': new_project.target_completion,
             'completion_percentage': new_project.completion_percentage,
+            'program_code': resolved_program_code,
             'milestones': milestones_to_save,
             # Save risks from XML to project YAML
             'risks': [
