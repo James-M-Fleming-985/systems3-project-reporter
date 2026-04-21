@@ -149,32 +149,10 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # Load all non-archived user projects, then scope to this programme.
-    # A project belongs to this programme if its program_code matches the
-    # selected project's code, OR if it IS the selected project.
-    # Falls back to showing all active projects only if no project has
-    # program_code set yet (i.e. legacy data before this feature was deployed).
-    all_projects = get_all_projects(request)
-    active_lookup = {
-        p.project_code: p
-        for p in all_projects
-        if not getattr(p, 'archived', False)
-    }
-
-    # The selected project is ALWAYS the first entry — it is the programme root
-    # and may contain sub-project groups via its XML hierarchy (parent_levels['1']).
-    # After it, we add any non-archived sub-projects explicitly tagged to this
-    # programme via their program_code field.
-    # Projects from other programmes are NEVER included here.
-    programme_projects = [project]
-    for p in active_lookup.values():
-        if p.project_code == project.project_code:
-            continue  # already added as root
-        if getattr(p, 'program_code', None) == project.project_code:
-            programme_projects.append(p)
-
-    # Format data for programme projects
-    gantt_data = chart_service.format_gantt_data(programme_projects)
+    # The Gantt shows the selected programme's own milestones only.
+    # Project groups (e.g. "Epistemology Platform") come from parent_levels['1']
+    # inside this single YAML — no other files are involved.
+    gantt_data = chart_service.format_gantt_data([project])
 
     # Diagnostic summary for grouping issues (kept compact for production logs)
     try:
