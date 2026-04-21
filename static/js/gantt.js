@@ -10,12 +10,7 @@ function exportXml() {
 const ganttData = JSON.parse(_ganttBridge.dataset.ganttData);
 
 // ── State ──
-let viewMode = 'project';  // 'project' or 'level'
 let roadmapDetailMode = 'summary';  // 'summary' or 'expanded'
-let availableLevels = [];
-let selectedLevel = null;
-let levelItems = [];
-let selectedItems = new Set();
 
 // Project Roadmap state
 let projectGroups = [];        // unique project group names
@@ -33,60 +28,17 @@ function getProjectGroup(task) {
 
 // ── Initialize ──
 document.addEventListener('DOMContentLoaded', async function() {
-    detectAvailableLevels();
     detectProjectGroups();
     await loadSavedSettings();
-    populateLevelDropdown();
-    applyViewMode();
+    renderGroupFilterItems();
+    renderProjectRoadmap();
     
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('projectDropdown');
         const groupDropdown = document.getElementById('groupFilterDropdown');
-        if (!dropdown.contains(e.target)) closeDropdown();
         if (!groupDropdown.contains(e.target)) closeGroupFilter();
     });
 });
-
-// ══════════════════════════════════════════
-// VIEW MODE TOGGLE
-// ══════════════════════════════════════════
-
-function setViewMode(mode) {
-    viewMode = mode;
-    applyViewMode();
-    saveSettings();
-}
-
-function applyViewMode() {
-    const btnProject = document.getElementById('btnProjectRoadmap');
-    const btnLevel = document.getElementById('btnLevelDetail');
-    const levelControls = document.getElementById('levelDetailControls');
-    const projectControls = document.getElementById('projectRoadmapControls');
-
-    if (viewMode === 'project') {
-        btnProject.classList.add('active');
-        btnLevel.classList.remove('active');
-        levelControls.style.display = 'none';
-        projectControls.style.display = '';
-        renderGroupFilterItems();
-        renderProjectRoadmap();
-    } else {
-        btnLevel.classList.add('active');
-        btnProject.classList.remove('active');
-        levelControls.style.display = '';
-        projectControls.style.display = 'none';
-        
-        if (selectedLevel) {
-            buildLevelItems(selectedLevel);
-            renderDropdownItems();
-            renderRoadmap();
-        } else {
-            renderDropdownItems();
-            updateStatus();
-        }
-    }
-}
 
 // ══════════════════════════════════════════
 // PROJECT ROADMAP VIEW
@@ -525,25 +477,6 @@ async function loadSavedSettings() {
         const response = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/settings`);
         const settings = await response.json();
         
-        // Load view mode
-        if (settings.view_mode && (settings.view_mode === 'project' || settings.view_mode === 'level')) {
-            viewMode = settings.view_mode;
-        }
-        
-        // Load saved level (for level detail view)
-        if (settings.selected_level && availableLevels.includes(settings.selected_level)) {
-            selectedLevel = settings.selected_level;
-            buildLevelItems(selectedLevel);
-        }
-        
-        // Load saved level selections
-        if (selectedLevel && settings.selected_groups && settings.selected_groups.length > 0 && !settings.show_all) {
-            const validNames = new Set(levelItems.map(t => t.Task));
-            selectedItems = new Set(settings.selected_groups.filter(g => validNames.has(g)));
-        } else if (selectedLevel) {
-            selectedItems = new Set(levelItems.map(t => t.Task));
-        }
-        
         // Load saved project group selections (for project roadmap view)
         // Only restore if ALL currently-valid groups were present in the saved list
         // (guards against stale names from a previous data shape restoring a partial view)
@@ -685,10 +618,6 @@ async function saveSettings() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                view_mode: viewMode,
-                selected_level: selectedLevel,
-                selected_groups: Array.from(selectedItems),
-                show_all: selectedItems.size === levelItems.length,
                 selected_project_groups: Array.from(selectedGroups),
                 roadmap_detail_mode: roadmapDetailMode
             })

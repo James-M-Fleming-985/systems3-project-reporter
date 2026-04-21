@@ -472,51 +472,8 @@
 <div class="bg-white rounded-lg shadow p-6">
     <!-- Controls Row - hidden during PPT export -->
     <div class="roadmap-controls mb-4" {% if ppt_export %}style="display: none;" {% endif %}>
-        <!-- View Mode Toggle -->
-        <div class="view-toggle">
-            <button class="view-toggle-btn active" id="btnProjectRoadmap" onclick="setViewMode('project')"
-                title="Switch to project roadmap view">Project Roadmap</button>
-            <button class="view-toggle-btn" id="btnLevelDetail" onclick="setViewMode('level')"
-                title="Switch to level detail view">Level Detail</button>
-        </div>
-
-        <!-- Level Detail Controls (hidden in project roadmap mode) -->
-        <div id="levelDetailControls" style="display: none;" class="roadmap-controls">
-            <!-- Level Selector -->
-            <div>
-                <label class="text-sm font-medium text-gray-700 mr-2">Project Level:</label>
-                <select id="levelSelect" class="level-select" onchange="onLevelChange()">
-                    <option value="">-- Select level --</option>
-                </select>
-            </div>
-
-            <!-- Project Dropdown -->
-            <div class="project-dropdown" id="projectDropdown">
-                <div class="dropdown-toggle" onclick="toggleDropdown()">
-                    <span id="dropdownLabel">Select projects...</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-                <div class="dropdown-menu" id="dropdownMenu">
-                    <div id="dropdownItems">
-                    </div>
-                    <div class="dropdown-actions">
-                        <button class="btn-sm-secondary" onclick="selectAllProjects()"
-                            title="Select all projects">All</button>
-                        <button class="btn-sm-secondary" onclick="selectNoneProjects()"
-                            title="Deselect all projects">None</button>
-                        <button class="btn-sm-primary" onclick="applyAndClose()"
-                            title="Apply project selection">Apply</button>
-                    </div>
-                </div>
-            </div>
-
-            <span class="text-sm text-gray-500" id="selectionStatus">Select a project level first</span>
-        </div>
-
-        <!-- Project Roadmap Controls (shown in project roadmap mode) -->
-        <div id="projectRoadmapControls" class="roadmap-controls">
+        <!-- Project Roadmap Controls -->
+        <div class="roadmap-controls">
             <!-- Summary / Expanded Toggle -->
             <div class="view-toggle" style="margin-right: 8px;">
                 <button class="view-toggle-btn active" id="btnSummary" onclick="setRoadmapDetail('summary')"
