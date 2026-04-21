@@ -270,6 +270,26 @@ function renderProjectRoadmap() {
         
         // Summary bar label (with expand/collapse marker for expanded mode)
         const summaryLabel = isExpanded ? `▾ ${groupName}` : `▸ ${groupName}`;
+        
+        // ── Expanded mode: collect direct-child tasks ─────────────────────
+        // Push children into yCategories BEFORE the summary bar so that in
+        // Plotly's bottom-up Y axis the summary header appears at the TOP of
+        // the group with task bars below it.
+        let childTasksForGroup = [];
+        if (isExpanded) {
+            childTasksForGroup = [...tasks]
+                .filter(t => t.IsDirectChild)
+                .sort((a, b) => new Date(a.Start) - new Date(b.Start));
+            
+            // Reverse before pushing → earliest task ends up highest in yCategories
+            // (last-pushed = top of Plotly's bottom-up stack) → renders below header
+            [...childTasksForGroup].reverse().forEach(task => {
+                const msLabel = `  ${task.Task}`;
+                yCategories.push(msLabel);
+            });
+        }
+        
+        // Summary bar goes LAST → highest index → visually at the TOP of this group
         yCategories.push(summaryLabel);
         
         // Summary bar per project
@@ -329,19 +349,11 @@ function renderProjectRoadmap() {
             xshift: 10
         });
         
-        // ── Expanded mode: add individual milestone bars under this group ──
+        // ── Expanded mode: add individual milestone traces ─────────────────
+        // (yCategories entries were already pushed above, before the summary bar)
         if (isExpanded) {
-            // Filter out the L2 summary item itself (it's already the summary bar)
-            // and sort remaining by start date
-            const sortedTasks = [...tasks]
-                .filter(t => t.OutlineLevel !== 2)
-                .sort((a, b) => new Date(a.Start) - new Date(b.Start));
-            sortedTasks.forEach(task => {
-                // Indent based on depth: L3 = 4 spaces, L4 = 8 spaces, etc.
-                const depth = Math.max(0, (task.OutlineLevel || 3) - 2);
-                const indent = '    '.repeat(depth);
-                const msLabel = `${indent}${task.Task}`;
-                yCategories.push(msLabel);
+            childTasksForGroup.forEach(task => {
+                const msLabel = `  ${task.Task}`;
                 
                 let msStart = task.Start;
                 let msFinish = task.Finish;
@@ -374,7 +386,6 @@ function renderProjectRoadmap() {
                         `Progress: ${pct}%<extra></extra>`
                 });
                 
-                // Milestone drag metadata
                 traceMeta.push({
                     taskName: msLabel,
                     startDate: msStart,
@@ -534,9 +545,19 @@ async function loadSavedSettings() {
         }
         
         // Load saved project group selections (for project roadmap view)
+        // Only restore if ALL currently-valid groups were present in the saved list
+        // (guards against stale names from a previous data shape restoring a partial view)
         if (settings.selected_project_groups && settings.selected_project_groups.length > 0) {
             const validGroups = new Set(projectGroups);
-            selectedGroups = new Set(settings.selected_project_groups.filter(g => validGroups.has(g)));
+            const validSaved = settings.selected_project_groups.filter(g => validGroups.has(g));
+            const allCurrentGroupsSaved = projectGroups.every(g => settings.selected_project_groups.includes(g));
+            if (allCurrentGroupsSaved) {
+                // Saved list covered every current group → honor any deliberate deselection
+                selectedGroups = new Set(validSaved);
+            } else {
+                // Stale or partial saved groups → default to showing everything
+                selectedGroups = new Set(projectGroups);
+            }
         } else {
             selectedGroups = new Set(projectGroups);
         }

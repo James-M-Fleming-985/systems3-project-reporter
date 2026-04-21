@@ -49,6 +49,14 @@ class ChartFormatterService:
             ]
             project_level = min(outline_levels) if outline_levels else None
 
+            # Which outline level should appear as children in expanded mode?
+            # L1-grouping: the group header is synthetic (L1), children = L2
+            # Normal grouping: the group header IS the project row at project_level,
+            #                  children = project_level + 1
+            direct_child_level = project_level if use_l1_grouping else (
+                project_level + 1 if project_level else None
+            )
+
             current_project_group: Optional[str] = None
 
             for milestone in project.milestones:
@@ -105,6 +113,7 @@ class ChartFormatterService:
                     'ProjectCode': project.project_code,
                     'ProjectName': project.project_name,
                     'OutlineLevel': ol,
+                    'IsDirectChild': (ol == direct_child_level) if direct_child_level is not None else False,
                     'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone),
                     'MilestoneId': getattr(milestone, 'id', None) or '',
                 })
