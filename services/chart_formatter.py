@@ -15,79 +15,91 @@ class ChartFormatterService:
     @staticmethod
     def format_gantt_data(projects: List[Project]) -> List[Dict[str, Any]]:
         """
-        Format milestones for Plotly.js Gantt chart
-        
-        Returns list of tasks in format:
-        [
-            {
-                'Task': 'Milestone Name',
-                'Start': '2024-01-01',
-                'Finish': '2024-01-15',
-                'Resource': 'Project Name',
-                'Status': 'COMPLETED'
-            },
-            ...
-        ]
+        Format milestones for Plotly.js Gantt chart.
+
+        Each task now includes a ``ProjectGroup`` field — the correct L2
+        project name for that milestone, computed server-side where the full
+        document order is known.  The JS roadmap view uses ``ProjectGroup``
+        directly so it never needs to guess at hierarchy levels.
         """
         tasks = []
-        
+
         for project in projects:
-            # Build a lookup of child date ranges per parent level
-            # so summary tasks can derive their span from children
             child_ranges = ChartFormatterService._compute_child_date_ranges(
                 project.milestones
             )
-            
+
+            # ── Pass 1: detect the minimum outline level present ──────────────
+            # The XML parser skips L1 (program summary), so the minimum level
+            # in the milestone list is the project level (typically 2).
+            outline_levels = [
+                getattr(m, 'outline_level', None)
+                for m in project.milestones
+                if getattr(m, 'outline_level', None) is not None
+            ]
+            project_level = min(outline_levels) if outline_levels else None
+
+            # ── Pass 2: assign ProjectGroup via document-order tracking ────────
+            # YAML / XML preserves hierarchy order: a parent always appears
+            # before its children.  Walking in order and remembering the last
+            # seen project-level row is therefore guaranteed-correct —
+            # no matter what is stored in parent_levels or parent_project.
+            current_project_group: Optional[str] = None
+
             for milestone in project.milestones:
-                # Use actual start_date if available, otherwise use target_date
+                ol = getattr(milestone, 'outline_level', None)
+
+                if ol is not None and project_level is not None and ol == project_level:
+                    # This row IS a project — it defines its own group
+                    current_project_group = milestone.name
+                    project_group = milestone.name
+                elif ol is not None and project_level is not None and ol > project_level:
+                    # Descendant: try parent_levels first, then sequence fallback
+                    pl = dict(getattr(milestone, 'parent_levels', {}) or {})
+                    pl_project = pl.get(str(project_level)) or pl.get(project_level)
+                    project_group = (
+                        pl_project
+                        or current_project_group
+                        or milestone.parent_project
+                        or project.project_name
+                    )
+                else:
+                    # No outline_level (legacy / manually-created milestones)
+                    project_group = (
+                        milestone.parent_project
+                        or current_project_group
+                        or project.project_name
+                    )
+
+                # ── Dates ─────────────────────────────────────────────────────
                 start_date = getattr(milestone, 'start_date', None) or milestone.target_date
-                
-                # Use target_date as the finish (planned end from XML)
                 finish_date = milestone.target_date
-                
-                # For summary tasks where start == finish, try to derive
-                # the actual span from child task date ranges
-                outline_level = getattr(milestone, 'outline_level', None)
-                if start_date == finish_date and outline_level:
-                    child_key = (outline_level, milestone.name)
+
+                if start_date == finish_date and ol:
+                    child_key = (ol, milestone.name)
                     if child_key in child_ranges:
                         cr = child_ranges[child_key]
                         start_date = cr['min_start']
                         finish_date = cr['max_finish']
-                
-                # Extract project grouping from milestone name (simple approach)
-                # Look for common patterns like "ZnNi Line XXX" or "SF XXX"
-                milestone_name = milestone.name
-                if milestone.parent_project:
-                    resource_name = milestone.parent_project
-                elif "ZnNi Line" in milestone_name:
-                    # Extract ZnNi Line project type
-                    parts = milestone_name.split()
-                    if len(parts) >= 3:
-                        resource_name = f"ZnNi Line {parts[2]}"
-                    else:
-                        resource_name = "ZnNi Line Projects"
-                elif "SF " in milestone_name or "Surface Finish" in milestone_name:
-                    resource_name = "Surface Finish Projects"
-                elif "ICP Analysis" in milestone_name:
-                    resource_name = "ICP Analysis Projects"  
-                else:
-                    resource_name = project.project_name
-                
+
+                # ── Resource (kept for backwards compat; same as ProjectGroup) ─
+                resource_name = project_group
+
                 tasks.append({
                     'Task': milestone.name,
                     'Start': start_date,
                     'Finish': finish_date,
                     'Resource': resource_name,
+                    'ProjectGroup': project_group,   # ← definitive grouping key
                     'Status': milestone.status,
                     'CompletionPct': getattr(milestone, 'completion_percentage', None) or 0,
                     'ProjectCode': project.project_code,
                     'ProjectName': project.project_name,
-                    'OutlineLevel': getattr(milestone, 'outline_level', None),
+                    'OutlineLevel': ol,
                     'ParentLevels': ChartFormatterService._build_full_parent_levels(milestone),
-                    'MilestoneId': getattr(milestone, 'id', None) or ''
+                    'MilestoneId': getattr(milestone, 'id', None) or '',
                 })
-        
+
         return tasks
     
     @staticmethod
