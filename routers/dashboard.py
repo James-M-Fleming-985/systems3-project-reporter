@@ -136,7 +136,7 @@ async def gantt_chart(request: Request):
     """
     from main import BUILD_VERSION
     
-    # Get selected project ONLY
+    # Get selected project for title/context
     project = get_selected_project(request)
     if not project:
         # No project selected - show project selector message
@@ -148,8 +148,14 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # Format data for ONLY this project
-    gantt_data = chart_service.format_gantt_data([project])
+    # Load ALL user projects so the Program Roadmap shows every project as a group,
+    # not just the currently-selected one.  The selected project supplies the title.
+    all_projects = get_all_projects(request)
+    if not all_projects:
+        all_projects = [project]  # fallback: at minimum show selected project
+    
+    # Format data for all projects (each becomes one or more ProjectGroup entries)
+    gantt_data = chart_service.format_gantt_data(all_projects)
 
     # Diagnostic summary for grouping issues (kept compact for production logs)
     try:
