@@ -150,6 +150,53 @@ async def gantt_chart(request: Request):
     
     # Format data for ONLY this project
     gantt_data = chart_service.format_gantt_data([project])
+
+    # Diagnostic summary for grouping issues (kept compact for production logs)
+    try:
+        from collections import Counter
+
+        level_counts = Counter(
+            t.get('OutlineLevel') for t in gantt_data
+            if t.get('OutlineLevel') is not None
+        )
+        resource_count = len({t.get('Resource') for t in gantt_data if t.get('Resource')})
+
+        # Count unique ancestor names per ParentLevels key ("1", "2", "3", ...)
+        pl_counts = Counter()
+        for t in gantt_data:
+            pl = t.get('ParentLevels') or {}
+            if isinstance(pl, dict):
+                for k, v in pl.items():
+                    if v:
+                        pl_counts[str(k)] += 1
+
+        # Unique names by outline level (helps detect true project level)
+        unique_names_by_level = {}
+        for t in gantt_data:
+            ol = t.get('OutlineLevel')
+            name = t.get('Task')
+            if ol is None or not name:
+                continue
+            unique_names_by_level.setdefault(int(ol), set()).add(name)
+
+        unique_name_counts = {
+            lvl: len(names)
+            for lvl, names in sorted(unique_names_by_level.items())
+        }
+
+        logger.info(
+            "📊 GanttHierarchy project=%s code=%s total=%s levels=%s "
+            "resources=%s unique_names_by_level=%s parentlevel_entries=%s",
+            project.project_name,
+            project.project_code,
+            len(gantt_data),
+            dict(sorted(level_counts.items())),
+            resource_count,
+            unique_name_counts,
+            dict(sorted(pl_counts.items())),
+        )
+    except Exception as diag_err:
+        logger.warning("Gantt hierarchy diagnostics failed: %s", diag_err)
     
     logger.info(
         f"📊 Gantt: {project.project_name} - "
