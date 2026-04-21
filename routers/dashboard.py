@@ -149,14 +149,14 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # Program Roadmap: load the selected programme YAML plus every other project
-    # YAML explicitly tagged to this programme via program_code.
-    # Nothing is shown unless program_code == selected project code.
+    # Program Roadmap: load the selected programme YAML plus every project
+    # explicitly tagged to this programme via program_code.
+    # Archived sub-projects are intentionally included — archive means "hidden
+    # from the main dashboard", not "excluded from the programme Gantt".
     all_projects = get_all_projects(request)
     programme_projects = [project] + [
         p for p in all_projects
-        if not getattr(p, 'archived', False)
-        and p.project_code != project.project_code
+        if p.project_code != project.project_code
         and getattr(p, 'program_code', None) == project.project_code
     ]
 
