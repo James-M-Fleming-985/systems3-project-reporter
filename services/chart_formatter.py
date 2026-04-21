@@ -17,10 +17,10 @@ class ChartFormatterService:
         """
         Format milestones for Plotly.js Gantt chart.
 
-        Each task now includes a ``ProjectGroup`` field — the correct L2
-        project name for that milestone, computed server-side where the full
-        document order is known.  The JS roadmap view uses ``ProjectGroup``
-        directly so it never needs to guess at hierarchy levels.
+        Each task includes a ``ProjectGroup`` field — the L1 project name when
+        parent_levels["1"] is populated (XML parser skips L1 rows but preserves
+        the name in parent_levels), otherwise the L2 project name derived from
+        document-order sequence tracking.
         """
         tasks = []
 
@@ -29,9 +29,19 @@ class ChartFormatterService:
                 project.milestones
             )
 
-            # ── Pass 1: detect the minimum outline level present ──────────────
-            # The XML parser skips L1 (program summary), so the minimum level
-            # in the milestone list is the project level (typically 2).
+            # ── Detect whether L1 project names are stored in parent_levels ───
+            # The XML parser skips OutlineLevel==1 rows (program summary) but
+            # records their name in the child's parent_levels["1"].
+            # When that key is present we use it as the project group because
+            # it is the true top-level project name (e.g. "Epistemology Platform").
+            l1_count = sum(
+                1 for m in project.milestones
+                if isinstance(getattr(m, 'parent_levels', None), dict)
+                and (m.parent_levels.get('1') or m.parent_levels.get(1))
+            )
+            use_l1_grouping = l1_count > (len(project.milestones) * 0.5)
+
+            # ── Detect project level for fallback sequence tracking ───────────
             outline_levels = [
                 getattr(m, 'outline_level', None)
                 for m in project.milestones
@@ -39,37 +49,39 @@ class ChartFormatterService:
             ]
             project_level = min(outline_levels) if outline_levels else None
 
-            # ── Pass 2: assign ProjectGroup via document-order tracking ────────
-            # YAML / XML preserves hierarchy order: a parent always appears
-            # before its children.  Walking in order and remembering the last
-            # seen project-level row is therefore guaranteed-correct —
-            # no matter what is stored in parent_levels or parent_project.
             current_project_group: Optional[str] = None
 
             for milestone in project.milestones:
                 ol = getattr(milestone, 'outline_level', None)
+                pl = dict(getattr(milestone, 'parent_levels', {}) or {})
 
-                if ol is not None and project_level is not None and ol == project_level:
-                    # This row IS a project — it defines its own group
-                    current_project_group = milestone.name
-                    project_group = milestone.name
-                elif ol is not None and project_level is not None and ol > project_level:
-                    # Descendant: try parent_levels first, then sequence fallback
-                    pl = dict(getattr(milestone, 'parent_levels', {}) or {})
-                    pl_project = pl.get(str(project_level)) or pl.get(project_level)
+                if use_l1_grouping:
+                    # Primary: use the L1 ancestor stored in parent_levels
                     project_group = (
-                        pl_project
+                        pl.get('1') or pl.get(1)
                         or current_project_group
                         or milestone.parent_project
                         or project.project_name
                     )
                 else:
-                    # No outline_level (legacy / manually-created milestones)
-                    project_group = (
-                        milestone.parent_project
-                        or current_project_group
-                        or project.project_name
-                    )
+                    # Fallback: document-order sequence tracking at project_level
+                    if ol is not None and project_level is not None and ol == project_level:
+                        current_project_group = milestone.name
+                        project_group = milestone.name
+                    elif ol is not None and project_level is not None and ol > project_level:
+                        pl_project = pl.get(str(project_level)) or pl.get(project_level)
+                        project_group = (
+                            pl_project
+                            or current_project_group
+                            or milestone.parent_project
+                            or project.project_name
+                        )
+                    else:
+                        project_group = (
+                            milestone.parent_project
+                            or current_project_group
+                            or project.project_name
+                        )
 
                 # ── Dates ─────────────────────────────────────────────────────
                 start_date = getattr(milestone, 'start_date', None) or milestone.target_date
@@ -82,15 +94,12 @@ class ChartFormatterService:
                         start_date = cr['min_start']
                         finish_date = cr['max_finish']
 
-                # ── Resource (kept for backwards compat; same as ProjectGroup) ─
-                resource_name = project_group
-
                 tasks.append({
                     'Task': milestone.name,
                     'Start': start_date,
                     'Finish': finish_date,
-                    'Resource': resource_name,
-                    'ProjectGroup': project_group,   # ← definitive grouping key
+                    'Resource': project_group,
+                    'ProjectGroup': project_group,
                     'Status': milestone.status,
                     'CompletionPct': getattr(milestone, 'completion_percentage', None) or 0,
                     'ProjectCode': project.project_code,
