@@ -149,10 +149,18 @@ async def gantt_chart(request: Request):
             "user": user
         })
     
-    # The Gantt shows the selected programme's own milestones only.
-    # Project groups (e.g. "Epistemology Platform") come from parent_levels['1']
-    # inside this single YAML — no other files are involved.
-    gantt_data = chart_service.format_gantt_data([project])
+    # Program Roadmap: load the selected programme YAML plus every other project
+    # YAML explicitly tagged to this programme via program_code.
+    # Nothing is shown unless program_code == selected project code.
+    all_projects = get_all_projects(request)
+    programme_projects = [project] + [
+        p for p in all_projects
+        if not getattr(p, 'archived', False)
+        and p.project_code != project.project_code
+        and getattr(p, 'program_code', None) == project.project_code
+    ]
+
+    gantt_data = chart_service.format_gantt_data(programme_projects)
 
     # Diagnostic summary for grouping issues (kept compact for production logs)
     try:
