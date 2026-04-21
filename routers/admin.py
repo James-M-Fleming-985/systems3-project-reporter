@@ -586,3 +586,274 @@ def _read_audit_log(audit_dir: Path, month: str) -> list:
     except Exception as e:
         logger.warning(f"Could not read audit log {log_file}: {e}")
     return events
+
+
+# ── Recurrence Data Repair ────────────────────────────────────────────
+
+@router.post("/admin/repair-recurring-tasks")
+async def repair_recurring_tasks():
+    """
+    Scan all users' standalone tasks for broken recurrence series where
+    every occurrence has the same due_date, and re-calculate the correct
+    sequential dates.
+
+    Also re-saves with yaml.safe_dump to prevent future date corruption.
+
+    Safe to run multiple times — already-correct series are skipped.
+    """
+    from collections import defaultdict
+    from repositories.standalone_task_repository import _ensure_date_str
+
+    users_dir = DATA_DIR / "users"
+    if not users_dir.exists():
+        return JSONResponse({"success": True, "message": "No user data found", "repaired": 0})
+
+    total_repaired = 0
+    repair_details = []
+
+    for user_dir in users_dir.iterdir():
+        if not user_dir.is_dir():
+            continue
+        yaml_path = user_dir / "standalone_tasks.yaml"
+        if not yaml_path.exists():
+            continue
+
+        user_id = user_dir.name
+        try:
+            with open(yaml_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.error(f"Cannot read {yaml_path}: {e}")
+            continue
+
+        tasks = data.get("tasks", [])
+        if not tasks:
+            continue
+
+        # Group tasks by recurrence_series_id
+        series_map = defaultdict(list)
+        for t in tasks:
+            sid = t.get("recurrence_series_id")
+            if sid:
+                series_map[sid].append(t)
+
+        modified = False
+        for sid, series_tasks in series_map.items():
+            if len(series_tasks) < 2:
+                continue
+
+            # Sort by occurrence number
+            def _occ_num(t):
+                occ = t.get("recurrence_occurrence", "1 of 1")
+                try:
+                    return int(occ.split(" of ")[0])
+                except (ValueError, IndexError):
+                    return 0
+            series_tasks.sort(key=_occ_num)
+
+            # Check if all due_dates are the same (the bug symptom)
+            dates = [_ensure_date_str(t.get("due_date", "")) for t in series_tasks]
+            unique_dates = set(d for d in dates if d)
+            if len(unique_dates) > 1:
+                continue  # Series already has distinct dates — skip
+
+            base_date_str = dates[0] if dates[0] else None
+            if not base_date_str:
+                continue
+
+            cadence = series_tasks[0].get("recurrence_cadence", "monthly")
+            count = len(series_tasks)
+
+            try:
+                base_date = datetime.strptime(base_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                logger.error(f"Cannot parse base date '{base_date_str}' for series {sid}")
+                continue
+
+            # Also parse base start_date if present
+            base_start_str = _ensure_date_str(series_tasks[0].get("start_date", ""))
+            base_start = None
+            if base_start_str:
+                try:
+                    base_start = datetime.strptime(base_start_str, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+
+            # Recalculate dates for each occurrence
+            repaired_dates = []
+            for i in range(count):
+                if i == 0:
+                    repaired_dates.append(base_date_str)
+                    continue
+                d = base_date
+                if cadence == "daily":
+                    d = d + timedelta(days=i)
+                elif cadence == "weekly":
+                    d = d + timedelta(weeks=i)
+                elif cadence == "biweekly":
+                    d = d + timedelta(weeks=2 * i)
+                elif cadence == "monthly":
+                    month = d.month - 1 + i
+                    year = d.year + month // 12
+                    month = month % 12 + 1
+                    days_in_month = [
+                        31,
+                        29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+                    ][month - 1]
+                    day = min(d.day, days_in_month)
+                    d = d.replace(year=year, month=month, day=day)
+                else:
+                    d = d + timedelta(days=i)
+                repaired_dates.append(d.isoformat())
+
+            # Apply repaired dates
+            for idx, t in enumerate(series_tasks):
+                old_date = _ensure_date_str(t.get("due_date", ""))
+                new_date = repaired_dates[idx]
+                if old_date != new_date:
+                    t["due_date"] = new_date
+                    modified = True
+
+                    # Also offset start_date if present
+                    if base_start and idx > 0:
+                        new_due = datetime.strptime(new_date, "%Y-%m-%d").date()
+                        delta = new_due - base_date
+                        t["start_date"] = (base_start + delta).isoformat()
+
+            total_repaired += 1
+            repair_details.append({
+                "user_id": user_id,
+                "series_id": sid,
+                "cadence": cadence,
+                "count": count,
+                "base_date": base_date_str,
+                "repaired_dates": repaired_dates,
+                "title": series_tasks[0].get("title", "?"),
+            })
+
+        if modified:
+            # Re-save with safe_dump to fix any lingering date serialization
+            try:
+                data["last_updated"] = datetime.now().isoformat()
+                with open(yaml_path, "w", encoding="utf-8") as f:
+                    yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+                logger.info(f"✅ Repaired recurring tasks for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to save repaired data for {user_id}: {e}")
+
+    logger.info(f"✅ Recurrence repair complete: {total_repaired} series repaired")
+
+    # Invalidate calendar cache so repaired dates take effect immediately
+    try:
+        from routers.calendar import invalidate_calendar_cache
+        invalidate_calendar_cache()
+    except Exception:
+        pass
+
+    return JSONResponse({
+        "success": True,
+        "message": f"Repaired {total_repaired} recurring task series",
+        "total_repaired": total_repaired,
+        "details": repair_details,
+    })
+
+
+# ── Programme Management API ─────────────────────────────────────────
+
+
+@router.get("/api/admin/programme-assignments")
+async def list_programme_assignments(request: Request):
+    """
+    Return all non-archived projects with their current programme assignment.
+
+    Response:
+        {
+            "projects": [
+                {
+                    "project_code": "CA-001",
+                    "project_name": "Causal Affect Scaling ...",
+                    "program_code": "PD-P1"   // null if unassigned
+                },
+                ...
+            ]
+        }
+    """
+    from middleware.project_context import get_all_projects
+    all_projects = get_all_projects(request)
+    return JSONResponse({
+        "projects": [
+            {
+                "project_code": p.project_code,
+                "project_name": p.project_name,
+                "program_code": getattr(p, "program_code", None),
+                "archived": getattr(p, "archived", False),
+            }
+            for p in all_projects
+        ]
+    })
+
+
+@router.patch("/api/admin/project/{project_code}/programme")
+async def assign_project_to_programme(
+    project_code: str,
+    request: Request,
+):
+    """
+    Set (or clear) the program_code on any project YAML without touching
+    milestone or date data.  Pass {"program_code": "PD-P1"} or
+    {"program_code": null} to remove the assignment.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="JSON body required")
+
+    new_program_code = body.get("program_code")  # may be None to clear
+
+    from middleware.project_context import _get_user_repo
+    from repositories.project_repository import invalidate_project_cache
+
+    repo = _get_user_repo(request)
+
+    # Locate and update the YAML file directly
+    yaml_files = (
+        list(repo.data_dir.glob("**/*.yaml"))
+        + list(repo.data_dir.glob("**/*.yml"))
+    )
+
+    from repositories.project_repository import _is_project_file
+    import yaml as _yaml
+
+    for yaml_file in yaml_files:
+        if not _is_project_file(yaml_file):
+            continue
+        try:
+            with open(yaml_file, "r", encoding="utf-8") as f:
+                data = _yaml.safe_load(f)
+            if not data or data.get("project_code") != project_code:
+                continue
+
+            if new_program_code is None:
+                data.pop("program_code", None)
+            else:
+                data["program_code"] = new_program_code
+
+            with open(yaml_file, "w", encoding="utf-8") as f:
+                _yaml.dump(data, f, default_flow_style=False,
+                           sort_keys=False, allow_unicode=True)
+
+            invalidate_project_cache()
+            logger.info(
+                f"🏷️ Programme assignment: {project_code} → {new_program_code!r}"
+            )
+            return JSONResponse({
+                "success": True,
+                "project_code": project_code,
+                "program_code": new_program_code,
+            })
+        except Exception as e:
+            logger.error(f"assign_project_to_programme error for {yaml_file}: {e}")
+            continue
+
+    raise HTTPException(status_code=404, detail=f"Project '{project_code}' not found")

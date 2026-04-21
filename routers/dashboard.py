@@ -155,12 +155,23 @@ async def gantt_chart(request: Request):
     # Falls back to showing all active projects only if no project has
     # program_code set yet (i.e. legacy data before this feature was deployed).
     all_projects = get_all_projects(request)
-    active = [p for p in all_projects if not getattr(p, 'archived', False)]
+    active_lookup = {
+        p.project_code: p
+        for p in all_projects
+        if not getattr(p, 'archived', False)
+    }
 
-    # Show all non-archived projects on the Gantt.
-    # programme_code scoping caused data-loss issues when the auto-stamp wrote
-    # the wrong code; the group-filter dropdown lets users control visibility instead.
-    programme_projects = active or [project]
+    # The selected project is ALWAYS the first entry — it is the programme root
+    # and may contain sub-project groups via its XML hierarchy (parent_levels['1']).
+    # After it, we add any non-archived sub-projects explicitly tagged to this
+    # programme via their program_code field.
+    # Projects from other programmes are NEVER included here.
+    programme_projects = [project]
+    for p in active_lookup.values():
+        if p.project_code == project.project_code:
+            continue  # already added as root
+        if getattr(p, 'program_code', None) == project.project_code:
+            programme_projects.append(p)
 
     # Format data for programme projects
     gantt_data = chart_service.format_gantt_data(programme_projects)
