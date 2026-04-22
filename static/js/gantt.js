@@ -1267,7 +1267,13 @@ async function saveMilestoneChange(meta, oldStart, oldEnd, newStart, newEnd) {
         if (meta.milestoneId && t.MilestoneId) return t.MilestoneId === meta.milestoneId;
         return t.Task === cleanName && getProjectGroup(t) === meta.resource;
     });
-    if (task) { task.Start = newStart; task.Finish = newEnd; }
+    if (!task) {
+        console.warn('[gantt] saveMilestoneChange: no matching task in ganttData', {meta, cleanName});
+        showSavedToast({ message: '⚠ Could not locate task in chart data — change not saved', undoable: false });
+        return;
+    }
+    task.Start = newStart;
+    task.Finish = newEnd;
     rerenderCurrentView();
     
     try {
@@ -1392,9 +1398,13 @@ async function saveGroupShift(meta, deltaDays, oldStart, oldEnd, newStart, newEn
 }
 
 function rerenderCurrentView() {
-    if (typeof viewMode !== 'undefined' && viewMode === 'project') {
+    // gantt.html is the Program Roadmap page → always renderProjectRoadmap.
+    // (The portfolio renderRoadmap() relies on selectedLevel/selectedItems,
+    //  which don't exist here, so calling it would silently throw and the
+    //  chart would never reflect the in-memory ganttData mutation.)
+    if (typeof renderProjectRoadmap === 'function') {
         renderProjectRoadmap();
-    } else {
+    } else if (typeof renderRoadmap === 'function') {
         renderRoadmap();
     }
 }
