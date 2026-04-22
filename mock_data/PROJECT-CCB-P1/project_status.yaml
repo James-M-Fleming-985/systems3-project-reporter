@@ -1,0 +1,1053 @@
+project_name: Competency & Capability Baseline Training
+project_code: CCB-P1
+status: Active
+start_date: '2026-04-22'
+target_completion: '2026-07-14'
+completion_percentage: 0
+
+# ═══════════════════════════════════════════════════════════════════
+# 6 sequential training phases — 2 weeks each
+# Each phase is a true milestone so it surfaces in the Milestone tab
+# and in the calendar.
+# Standard task set per phase (7 tasks):
+#   1. Read pre-course material
+#   2. Identify point of contact
+#   3. Register for training
+#   4. Carry out training
+#   5. Notify line manager on completion
+#   6. Raise completion record / evidence
+#   7. Schedule follow-up / refresher date
+# ═══════════════════════════════════════════════════════════════════
+
+milestones:
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 1: SAP Training
+  # Weeks 1-2  (2026-04-22 → 2026-05-05)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: SAP Training
+    start_date: '2026-04-22'
+    target_date: '2026-05-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 1 — complete SAP training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: SAP Training Complete
+    start_date: '2026-04-22'
+    target_date: '2026-05-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 1 milestone — SAP training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+    parent_project: SAP Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read SAP pre-course material
+    start_date: '2026-04-22'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for SAP training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for SAP training
+    start_date: '2026-04-22'
+    target_date: '2026-04-24'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for SAP training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for SAP training
+    start_date: '2026-04-22'
+    target_date: '2026-04-28'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the SAP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out SAP training
+    start_date: '2026-04-29'
+    target_date: '2026-05-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the SAP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on SAP training completion
+    start_date: '2026-05-01'
+    target_date: '2026-05-04'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that SAP training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for SAP training
+    start_date: '2026-05-04'
+    target_date: '2026-05-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule SAP follow-up / refresher date
+    start_date: '2026-05-04'
+    target_date: '2026-05-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for SAP training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': SAP Training
+      '3': SAP Training Complete
+    parent_project: SAP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 2: Assentis Training
+  # Weeks 3-4  (2026-05-06 → 2026-05-19)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: Assentis Training
+    start_date: '2026-05-06'
+    target_date: '2026-05-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 2 — complete Assentis training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Assentis Training Complete
+    start_date: '2026-05-06'
+    target_date: '2026-05-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 2 milestone — Assentis training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+    parent_project: Assentis Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read Assentis pre-course material
+    start_date: '2026-05-06'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for Assentis training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for Assentis training
+    start_date: '2026-05-06'
+    target_date: '2026-05-08'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for Assentis training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for Assentis training
+    start_date: '2026-05-06'
+    target_date: '2026-05-12'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the Assentis training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out Assentis training
+    start_date: '2026-05-13'
+    target_date: '2026-05-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the Assentis training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on Assentis training completion
+    start_date: '2026-05-15'
+    target_date: '2026-05-18'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that Assentis training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for Assentis training
+    start_date: '2026-05-18'
+    target_date: '2026-05-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule Assentis follow-up / refresher date
+    start_date: '2026-05-18'
+    target_date: '2026-05-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for Assentis training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': Assentis Training
+      '3': Assentis Training Complete
+    parent_project: Assentis Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 3: PDP Training
+  # Weeks 5-6  (2026-05-20 → 2026-06-02)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: PDP Training
+    start_date: '2026-05-20'
+    target_date: '2026-06-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 3 — complete PDP training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: PDP Training Complete
+    start_date: '2026-05-20'
+    target_date: '2026-06-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 3 milestone — PDP training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+    parent_project: PDP Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read PDP pre-course material
+    start_date: '2026-05-20'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for PDP training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for PDP training
+    start_date: '2026-05-20'
+    target_date: '2026-05-22'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for PDP training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for PDP training
+    start_date: '2026-05-20'
+    target_date: '2026-05-26'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the PDP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out PDP training
+    start_date: '2026-05-27'
+    target_date: '2026-05-29'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the PDP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on PDP training completion
+    start_date: '2026-05-29'
+    target_date: '2026-06-01'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that PDP training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for PDP training
+    start_date: '2026-06-01'
+    target_date: '2026-06-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule PDP follow-up / refresher date
+    start_date: '2026-06-01'
+    target_date: '2026-06-02'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for PDP training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PDP Training
+      '3': PDP Training Complete
+    parent_project: PDP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 4: PLM Training
+  # Weeks 7-8  (2026-06-03 → 2026-06-16)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: PLM Training
+    start_date: '2026-06-03'
+    target_date: '2026-06-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 4 — complete PLM training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: PLM Training Complete
+    start_date: '2026-06-03'
+    target_date: '2026-06-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 4 milestone — PLM training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+    parent_project: PLM Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read PLM pre-course material
+    start_date: '2026-06-03'
+    target_date: '2026-06-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for PLM training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for PLM training
+    start_date: '2026-06-03'
+    target_date: '2026-06-05'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for PLM training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for PLM training
+    start_date: '2026-06-03'
+    target_date: '2026-06-09'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the PLM training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out PLM training
+    start_date: '2026-06-10'
+    target_date: '2026-06-12'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the PLM training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on PLM training completion
+    start_date: '2026-06-12'
+    target_date: '2026-06-15'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that PLM training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for PLM training
+    start_date: '2026-06-15'
+    target_date: '2026-06-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule PLM follow-up / refresher date
+    start_date: '2026-06-15'
+    target_date: '2026-06-16'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for PLM training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PLM Training
+      '3': PLM Training Complete
+    parent_project: PLM Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 5: PPQ Training
+  # Weeks 9-10  (2026-06-17 → 2026-06-30)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: PPQ Training
+    start_date: '2026-06-17'
+    target_date: '2026-06-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 5 — complete PPQ training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: PPQ Training Complete
+    start_date: '2026-06-17'
+    target_date: '2026-06-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 5 milestone — PPQ training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+    parent_project: PPQ Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read PPQ pre-course material
+    start_date: '2026-06-17'
+    target_date: '2026-06-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for PPQ training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for PPQ training
+    start_date: '2026-06-17'
+    target_date: '2026-06-19'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for PPQ training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for PPQ training
+    start_date: '2026-06-17'
+    target_date: '2026-06-23'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the PPQ training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out PPQ training
+    start_date: '2026-06-24'
+    target_date: '2026-06-26'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the PPQ training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on PPQ training completion
+    start_date: '2026-06-26'
+    target_date: '2026-06-29'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that PPQ training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for PPQ training
+    start_date: '2026-06-29'
+    target_date: '2026-06-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule PPQ follow-up / refresher date
+    start_date: '2026-06-29'
+    target_date: '2026-06-30'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for PPQ training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': PPQ Training
+      '3': PPQ Training Complete
+    parent_project: PPQ Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PHASE 6: APQP Training
+  # Weeks 11-12  (2026-07-01 → 2026-07-14)
+  # ═══════════════════════════════════════════════════════════════════
+  - id: null
+    name: APQP Training
+    start_date: '2026-07-01'
+    target_date: '2026-07-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 6 — complete APQP training including pre-course preparation, attendance, and post-training evidence.'
+    outline_level: 2
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+    parent_project: null
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: APQP Training Complete
+    start_date: '2026-07-01'
+    target_date: '2026-07-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Phase 6 milestone — APQP training attended, line manager notified, and completion evidence raised.'
+    outline_level: 3
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+    parent_project: APQP Training
+    is_true_milestone: true
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Read APQP pre-course material
+    start_date: '2026-07-01'
+    target_date: '2026-07-03'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Review all pre-reading and preparatory material for APQP training before attending.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Identify point of contact for APQP training
+    start_date: '2026-07-01'
+    target_date: '2026-07-03'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Confirm the training coordinator or L&D contact responsible for APQP training scheduling.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Register for APQP training
+    start_date: '2026-07-01'
+    target_date: '2026-07-07'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Complete enrolment and confirm place on the APQP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Carry out APQP training
+    start_date: '2026-07-08'
+    target_date: '2026-07-10'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Attend and complete the APQP training course.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Notify line manager on APQP training completion
+    start_date: '2026-07-10'
+    target_date: '2026-07-13'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Inform line manager that APQP training has been completed.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Raise completion record / evidence for APQP training
+    start_date: '2026-07-13'
+    target_date: '2026-07-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Upload certificate or log completion evidence to the relevant training record system.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
+
+  - id: null
+    name: Schedule APQP follow-up / refresher date
+    start_date: '2026-07-13'
+    target_date: '2026-07-14'
+    status: NOT_STARTED
+    completion_date: null
+    completion_percentage: 0
+    notes: 'Agree and diary a refresher or follow-up session for APQP training.'
+    outline_level: 4
+    parent_levels:
+      '1': Competency & Capability Baseline Training
+      '2': APQP Training
+      '3': APQP Training Complete
+    parent_project: APQP Training
+    is_true_milestone: false
+    owner: null
+    resources: null
+    project: CCB-P1
