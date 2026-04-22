@@ -896,6 +896,18 @@ function startDrag(e, meta, dragType, chartDiv) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Guard: if the bar's dates are unparseable, refuse the drag rather than
+    // letting onDragMove throw RangeError on Date.toISOString.
+    const sMs = new Date(meta.startDate).getTime();
+    const eMs = new Date(meta.endDate).getTime();
+    if (isNaN(sMs) || isNaN(eMs)) {
+        console.warn('[gantt] startDrag: bar has invalid dates — drag refused', {meta});
+        if (typeof showSavedToast === 'function') {
+            showSavedToast({ message: '⚠ This task has no resolvable dates — cannot drag', undoable: false });
+        }
+        return;
+    }
+    
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     
     dragState = {
@@ -973,8 +985,16 @@ function onDragMove(e) {
         }
     }
     
-    dragState.newStart = msToDateStr(newStartMs);
-    dragState.newEnd = msToDateStr(newEndMs);
+    const newStartStr = msToDateStr(newStartMs);
+    const newEndStr = msToDateStr(newEndMs);
+    if (!newStartStr || !newEndStr) {
+        // Pixel→date conversion produced NaN (e.g. milestone with no resolvable
+        // start/end on a freshly uploaded project). Abort the drag silently
+        // rather than throwing — keep the original dates pinned.
+        return;
+    }
+    dragState.newStart = newStartStr;
+    dragState.newEnd = newEndStr;
     dragState.constraintViolation = constraintViolation;
     
     showDragTooltip(clientX, clientY, dragState.newStart, dragState.newEnd, constraintViolation);
@@ -1031,7 +1051,9 @@ function onDragEnd(e) {
 }
 
 function msToDateStr(ms) {
+    if (ms === null || ms === undefined || !isFinite(ms)) return null;
     const d = new Date(ms);
+    if (isNaN(d.getTime())) return null;
     return d.toISOString().split('T')[0];
 }
 
