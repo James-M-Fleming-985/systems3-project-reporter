@@ -268,6 +268,8 @@ function renderProjectRoadmap() {
             projectCode: tasks[0].ProjectCode || projectCode,
             milestoneId: '',
             resource: groupName,
+            groupName: groupName,
+            groupSize: tasks.length,
             isSummary: true,
             barWidth: 28,
             status: '',
@@ -769,6 +771,51 @@ let dragOverlays = []; // DOM elements for drag handles
 function removeDragOverlays() {
     dragOverlays.forEach(el => el.remove());
     dragOverlays = [];
+    removeDragGhost();
+}
+
+function removeDragGhost() {
+    const g = document.getElementById('dragGhost');
+    if (g) g.remove();
+}
+
+function createDragGhost(chartDiv, meta) {
+    removeDragGhost();
+    const svgContainer = chartDiv.querySelector('.svg-container');
+    if (!svgContainer) return null;
+    const xa = chartDiv._fullLayout.xaxis;
+    const ya = chartDiv._fullLayout.yaxis;
+    const yPos = ya.d2p(meta.taskName);
+    const xStart = xa.d2p(new Date(meta.startDate).getTime());
+    const xEnd = xa.d2p(new Date(meta.endDate).getTime());
+    if (isNaN(yPos) || isNaN(xStart) || isNaN(xEnd)) return null;
+    const barWidth = meta.isSummary ? 28 : (meta.barWidth || 16);
+    const plotLeft = xa._offset || 0;
+    const plotTop = ya._offset || 0;
+    const ghost = document.createElement('div');
+    ghost.id = 'dragGhost';
+    ghost.className = 'drag-ghost';
+    const left = plotLeft + Math.min(xStart, xEnd);
+    const width = Math.max(Math.abs(xEnd - xStart), 4);
+    ghost.style.left = left + 'px';
+    ghost.style.top = (plotTop + yPos - barWidth / 2) + 'px';
+    ghost.style.width = width + 'px';
+    ghost.style.height = barWidth + 'px';
+    svgContainer.appendChild(ghost);
+    return ghost;
+}
+
+function updateDragGhost(chartDiv, meta, newStart, newEnd, violation) {
+    const ghost = document.getElementById('dragGhost');
+    if (!ghost) return;
+    const xa = chartDiv._fullLayout.xaxis;
+    const xStart = xa.d2p(new Date(newStart).getTime());
+    const xEnd = xa.d2p(new Date(newEnd).getTime());
+    if (isNaN(xStart) || isNaN(xEnd)) return;
+    const plotLeft = xa._offset || 0;
+    ghost.style.left = (plotLeft + Math.min(xStart, xEnd)) + 'px';
+    ghost.style.width = Math.max(Math.abs(xEnd - xStart), 4) + 'px';
+    ghost.classList.toggle('violation', !!violation);
 }
 
 /**
@@ -797,7 +844,7 @@ function setupDragHandles(chartDiv, traceMeta) {
         if (isNaN(yPos) || isNaN(xStart) || isNaN(xEnd)) return;
         
         const barWidth = meta.isSummary ? 28 : (meta.barWidth || 16);
-        const handleWidth = 8;
+        const handleWidth = 10;
         const barLeft = Math.min(xStart, xEnd);
         const barRight = Math.max(xStart, xEnd);
         const barTop = yPos - barWidth / 2;
@@ -807,35 +854,41 @@ function setupDragHandles(chartDiv, traceMeta) {
         const plotLeft = xa._offset || 0;
         const plotTop = ya._offset || 0;
         
-        // Center body (move handle)
+        // Body (move handle) — covers FULL bar width so the user can grab anywhere.
+        // Edges sit on top with higher z-index so the resize cursor still wins on the ends.
         const bodyDiv = document.createElement('div');
         bodyDiv.className = 'drag-handle drag-body';
-        bodyDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft + handleWidth}px; top:${plotTop + barTop}px; width:${Math.max(barRight - barLeft - 2 * handleWidth, 4)}px; height:${barWidth}px; cursor:grab; z-index:10;`;
-        bodyDiv.title = `Drag to move: ${meta.taskName.replace(/^[▸▾\s]+/, '')}`;
+        bodyDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft}px; top:${plotTop + barTop}px; width:${Math.max(barRight - barLeft, 4)}px; height:${barWidth}px; cursor:move; z-index:10;`;
+        const cleanLabel = meta.taskName.replace(/^[▸▾\s]+/, '');
+        bodyDiv.title = meta.isSummary
+            ? `Drag to reschedule entire group (${meta.groupSize || '?'} milestones): ${cleanLabel}`
+            : `Drag to move: ${cleanLabel}`;
         bodyDiv.addEventListener('mousedown', e => startDrag(e, meta, 'move', chartDiv));
         bodyDiv.addEventListener('touchstart', e => startDrag(e, meta, 'move', chartDiv), {passive: false});
         svgContainer.appendChild(bodyDiv);
         dragOverlays.push(bodyDiv);
         
-        // Left edge (resize start)
-        const leftDiv = document.createElement('div');
-        leftDiv.className = 'drag-handle drag-edge-left';
-        leftDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
-        leftDiv.title = 'Drag to change start date';
-        leftDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-left', chartDiv));
-        leftDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-left', chartDiv), {passive: false});
-        svgContainer.appendChild(leftDiv);
-        dragOverlays.push(leftDiv);
-        
-        // Right edge (resize end)
-        const rightDiv = document.createElement('div');
-        rightDiv.className = 'drag-handle drag-edge-right';
-        rightDiv.style.cssText = `position:absolute; left:${plotLeft + barRight - handleWidth}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:11;`;
-        rightDiv.title = 'Drag to change end date';
-        rightDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-right', chartDiv));
-        rightDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-right', chartDiv), {passive: false});
-        svgContainer.appendChild(rightDiv);
-        dragOverlays.push(rightDiv);
+        // Edge resize handles — milestones only (summary bars auto-span their children;
+        // resizing a summary edge would visually revert on next render).
+        if (!meta.isSummary) {
+            const leftDiv = document.createElement('div');
+            leftDiv.className = 'drag-handle drag-edge-left';
+            leftDiv.style.cssText = `position:absolute; left:${plotLeft + barLeft}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:12;`;
+            leftDiv.title = 'Drag to change start date';
+            leftDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-left', chartDiv));
+            leftDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-left', chartDiv), {passive: false});
+            svgContainer.appendChild(leftDiv);
+            dragOverlays.push(leftDiv);
+            
+            const rightDiv = document.createElement('div');
+            rightDiv.className = 'drag-handle drag-edge-right';
+            rightDiv.style.cssText = `position:absolute; left:${plotLeft + barRight - handleWidth}px; top:${plotTop + barTop}px; width:${handleWidth}px; height:${barWidth}px; cursor:ew-resize; z-index:12;`;
+            rightDiv.title = 'Drag to change end date';
+            rightDiv.addEventListener('mousedown', e => startDrag(e, meta, 'resize-right', chartDiv));
+            rightDiv.addEventListener('touchstart', e => startDrag(e, meta, 'resize-right', chartDiv), {passive: false});
+            svgContainer.appendChild(rightDiv);
+            dragOverlays.push(rightDiv);
+        }
     });
 }
 
@@ -858,6 +911,9 @@ function startDrag(e, meta, dragType, chartDiv) {
     
     // Show tooltip
     showDragTooltip(clientX, e.touches ? e.touches[0].clientY : e.clientY, meta.startDate, meta.endDate);
+    
+    // Create live ghost preview overlay
+    createDragGhost(chartDiv, meta);
     
     document.addEventListener('mousemove', onDragMove);
     document.addEventListener('mouseup', onDragEnd);
@@ -922,6 +978,7 @@ function onDragMove(e) {
     dragState.constraintViolation = constraintViolation;
     
     showDragTooltip(clientX, clientY, dragState.newStart, dragState.newEnd, constraintViolation);
+    updateDragGhost(dragState.chartDiv, dragState.meta, dragState.newStart, dragState.newEnd, constraintViolation);
 }
 
 function onDragEnd(e) {
@@ -930,19 +987,47 @@ function onDragEnd(e) {
     document.removeEventListener('touchmove', onDragMove);
     document.removeEventListener('touchend', onDragEnd);
     hideDragTooltip();
+    removeDragGhost();
     
     if (!dragState) return;
     
     const { origStart, origEnd, newStart, newEnd, constraintViolation, meta } = dragState;
     dragState = null;
     
-    // If no change or constraint violation, cancel
-    if ((origStart === newStart && origEnd === newEnd) || constraintViolation) {
+    // No change → silent cancel
+    if (origStart === newStart && origEnd === newEnd) return;
+    
+    // Constraint violation → silent cancel (tooltip already warned the user)
+    if (constraintViolation) {
+        showSavedToast({ message: '⚠ Move blocked: child would exceed parent dates', undoable: false });
         return;
     }
     
-    // Show confirmation modal
-    showDateChangeModal(meta, origStart, origEnd, newStart, newEnd);
+    // Day-snap threshold: ignore drags <1 day to avoid accidental edits
+    const dayDelta = Math.abs(Math.round((new Date(newStart) - new Date(origStart)) / 86400000));
+    const endDelta = Math.abs(Math.round((new Date(newEnd) - new Date(origEnd)) / 86400000));
+    if (dayDelta === 0 && endDelta === 0) return;
+    
+    // Branch by drag target type
+    if (meta.isSummary) {
+        // Summary body drag → shift entire group by delta_days.
+        // (Edge handles aren't created on summaries, so dragType will always be 'move' here.)
+        const deltaDays = Math.round((new Date(newStart) - new Date(origStart)) / 86400000);
+        const groupSize = meta.groupSize || 0;
+        
+        // Cascade-confirmation modal only when >5 children would shift
+        if (groupSize > 5) {
+            if (!window.confirm(
+                `Reschedule "${meta.groupName}"?\n\n` +
+                `This will shift ${groupSize} milestones by ${deltaDays > 0 ? '+' : ''}${deltaDays} day(s).\n\n` +
+                `Click OK to apply (a backup will be saved automatically).`
+            )) return;
+        }
+        
+        saveGroupShift(meta, deltaDays, origStart, origEnd, newStart, newEnd);
+    } else {
+        saveMilestoneChange(meta, origStart, origEnd, newStart, newEnd);
+    }
 }
 
 function msToDateStr(ms) {
@@ -1121,4 +1206,195 @@ function showToast(message, type) {
     toast.className = 'gantt-toast ' + (type === 'error' ? 'toast-error' : 'toast-success');
     toast.style.display = 'block';
     setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+// ══════════════════════════════════════════
+// OPTIMISTIC SAVE + UNDO TOAST (Asana/Monday-style)
+// ══════════════════════════════════════════
+
+let _savedToastTimer = null;
+
+/**
+ * Bottom-right toast with optional Undo button.
+ * @param {object} opts {message, undoable, onUndo, durationMs}
+ */
+function showSavedToast(opts) {
+    const { message, undoable = false, onUndo = null, durationMs = 10000 } = opts || {};
+    let toast = document.getElementById('savedToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'savedToast';
+        toast.className = 'toast-saved';
+        document.body.appendChild(toast);
+    }
+    if (_savedToastTimer) { clearTimeout(_savedToastTimer); _savedToastTimer = null; }
+    
+    const undoBtnHtml = undoable
+        ? `<button class="toast-undo" id="savedToastUndoBtn">Undo</button>`
+        : '';
+    toast.innerHTML = `<span class="toast-msg">${escapeHtml(message)}</span>${undoBtnHtml}`;
+    toast.classList.add('show');
+    
+    if (undoable) {
+        const btn = document.getElementById('savedToastUndoBtn');
+        if (btn) {
+            btn.onclick = async () => {
+                btn.disabled = true;
+                btn.textContent = 'Undoing…';
+                try {
+                    if (typeof onUndo === 'function') await onUndo();
+                    toast.classList.remove('show');
+                } catch (err) {
+                    console.error('Undo failed:', err);
+                    btn.textContent = 'Undo failed';
+                }
+            };
+        }
+    }
+    
+    _savedToastTimer = setTimeout(() => { toast.classList.remove('show'); }, durationMs);
+}
+
+/**
+ * Optimistic save for a milestone move/resize.
+ * Updates ganttData immediately, calls /milestones/update, shows Undo toast.
+ */
+async function saveMilestoneChange(meta, oldStart, oldEnd, newStart, newEnd) {
+    const cleanName = meta.taskName.replace(/^[▸▾\s]+/, '').trim();
+    
+    // Optimistic update of in-memory data
+    const task = ganttData.find(t => {
+        if (meta.milestoneId && t.MilestoneId) return t.MilestoneId === meta.milestoneId;
+        return t.Task === cleanName && getProjectGroup(t) === meta.resource;
+    });
+    if (task) { task.Start = newStart; task.Finish = newEnd; }
+    rerenderCurrentView();
+    
+    try {
+        const res = await fetch('/milestones/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: meta.projectCode,
+                milestone: {
+                    id: meta.milestoneId || '',
+                    name: cleanName,
+                    target_date: newEnd,
+                    start_date: newStart,
+                    status: meta.status || 'NOT_STARTED',
+                    completion_percentage: meta.completionPct || 0,
+                    parent_project: meta.resource || ''
+                },
+                confirmed_date_change: true
+            })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) throw new Error(result.detail || 'Save failed');
+        
+        const days = Math.round((new Date(newStart) - new Date(oldStart)) / 86400000);
+        showSavedToast({
+            message: `Saved · "${cleanName}" moved ${days > 0 ? '+' : ''}${days} day(s)`,
+            undoable: true,
+            onUndo: async () => {
+                if (task) { task.Start = oldStart; task.Finish = oldEnd; }
+                rerenderCurrentView();
+                await fetch('/milestones/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_code: meta.projectCode,
+                        milestone: {
+                            id: meta.milestoneId || '',
+                            name: cleanName,
+                            target_date: oldEnd,
+                            start_date: oldStart,
+                            status: meta.status || 'NOT_STARTED',
+                            completion_percentage: meta.completionPct || 0,
+                            parent_project: meta.resource || ''
+                        },
+                        confirmed_date_change: false
+                    })
+                });
+            }
+        });
+    } catch (err) {
+        // Rollback optimistic change
+        if (task) { task.Start = oldStart; task.Finish = oldEnd; }
+        rerenderCurrentView();
+        showSavedToast({ message: '❌ Save failed: ' + (err.message || err), undoable: false });
+    }
+}
+
+/**
+ * Optimistic save for a summary-bar group shift.
+ * Shifts every milestone in ganttData for that group by deltaDays, calls
+ * POST /dashboard/api/roadmap/{code}/group/shift, shows Undo toast.
+ */
+async function saveGroupShift(meta, deltaDays, oldStart, oldEnd, newStart, newEnd) {
+    const groupName = meta.groupName || meta.resource;
+    const projectCode = meta.projectCode;
+    
+    // Optimistic in-memory shift of every task in this group
+    const shiftDate = (s, days) => {
+        const d = new Date(s);
+        d.setDate(d.getDate() + days);
+        return d.toISOString().split('T')[0];
+    };
+    const tasksInGroup = ganttData.filter(t => getProjectGroup(t) === groupName);
+    tasksInGroup.forEach(t => {
+        if (t.Start) t.Start = shiftDate(t.Start, deltaDays);
+        if (t.Finish) t.Finish = shiftDate(t.Finish, deltaDays);
+    });
+    rerenderCurrentView();
+    
+    try {
+        const res = await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/group/shift`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                group_name: groupName,
+                delta_days: deltaDays,
+                confirm: true
+            })
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) throw new Error(result.error || 'Save failed');
+        
+        showSavedToast({
+            message: `Saved · "${groupName}" shifted ${deltaDays > 0 ? '+' : ''}${deltaDays} day(s) (${result.n_milestones_shifted} milestones)`,
+            undoable: true,
+            onUndo: async () => {
+                tasksInGroup.forEach(t => {
+                    if (t.Start) t.Start = shiftDate(t.Start, -deltaDays);
+                    if (t.Finish) t.Finish = shiftDate(t.Finish, -deltaDays);
+                });
+                rerenderCurrentView();
+                await fetch(`/dashboard/api/roadmap/${encodeURIComponent(projectCode)}/group/shift`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_name: groupName,
+                        delta_days: -deltaDays,
+                        confirm: true
+                    })
+                });
+            }
+        });
+    } catch (err) {
+        // Rollback optimistic shift
+        tasksInGroup.forEach(t => {
+            if (t.Start) t.Start = shiftDate(t.Start, -deltaDays);
+            if (t.Finish) t.Finish = shiftDate(t.Finish, -deltaDays);
+        });
+        rerenderCurrentView();
+        showSavedToast({ message: '❌ Group shift failed: ' + (err.message || err), undoable: false });
+    }
+}
+
+function rerenderCurrentView() {
+    if (typeof viewMode !== 'undefined' && viewMode === 'project') {
+        renderProjectRoadmap();
+    } else {
+        renderRoadmap();
+    }
 }

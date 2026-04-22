@@ -88,6 +88,89 @@ def _is_project_file(yaml_file: Path) -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# Atomic write + timestamped backup helper for safe YAML mutations.
+# Used by Gantt drag endpoints (group shift, project bounds) so a crash mid-
+# write can never corrupt the project file.
+# ---------------------------------------------------------------------------
+MAX_BACKUPS_PER_PROJECT = 20
+
+
+def write_yaml_atomic_with_backup(yaml_file: Path, data: dict) -> Path:
+    """
+    Write `data` to `yaml_file` with two safety properties:
+      1. Timestamped backup of the existing file written first
+         (e.g. project_status.yaml.bak.20260422_153012).
+      2. Atomic replace via temp file + os.replace so a crash mid-write
+         leaves either the old or the new file fully intact — never partial.
+
+    Old backups beyond MAX_BACKUPS_PER_PROJECT are pruned (oldest first).
+
+    Returns the path to the backup file that was created (for undo / audit).
+    """
+    import datetime
+    import tempfile
+
+    yaml_file = Path(yaml_file)
+    backup_path = None
+
+    # 1. Backup existing file if present
+    if yaml_file.exists():
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = yaml_file.with_suffix(yaml_file.suffix + f".bak.{ts}")
+        # If the same-second backup already exists (rapid successive writes),
+        # append a suffix so we never overwrite an existing backup.
+        suffix = 0
+        while backup_path.exists():
+            suffix += 1
+            backup_path = yaml_file.with_suffix(
+                yaml_file.suffix + f".bak.{ts}_{suffix}"
+            )
+        try:
+            backup_path.write_bytes(yaml_file.read_bytes())
+        except Exception as e:
+            logger.error(f"backup write failed for {yaml_file}: {e}")
+            raise
+
+    # 2. Atomic write via temp file in same directory (same filesystem)
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=str(yaml_file.parent),
+        prefix=yaml_file.name + ".tmp.",
+        delete=False,
+    )
+    try:
+        yaml.dump(data, tmp, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        tmp.flush()
+        os.fsync(tmp.fileno())
+        tmp.close()
+        os.replace(tmp.name, yaml_file)  # atomic on POSIX & Windows
+    except Exception:
+        try:
+            os.unlink(tmp.name)
+        except Exception:
+            pass
+        raise
+
+    # 3. Prune old backups for this file (keep newest MAX_BACKUPS_PER_PROJECT)
+    try:
+        backups = sorted(
+            yaml_file.parent.glob(yaml_file.name + ".bak.*"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for old in backups[MAX_BACKUPS_PER_PROJECT:]:
+            try:
+                old.unlink()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return backup_path
+
+
 # Sensitive words to replace for privacy
 SENSITIVE_REPLACEMENTS = {
     'Safran': 'Client 1',
@@ -503,3 +586,139 @@ class ProjectRepository:
 
         logger.warning(f"set_program_code: project_code '{project_code}' not found")
         return False
+
+    # ── Gantt drag mutations ────────────────────────────────────────────────
+    def _find_project_yaml(self, project_code: str) -> Optional[Path]:
+        """Locate the YAML file for a given project_code, or None."""
+        if not self.data_dir.exists():
+            return None
+        yaml_files = (list(self.data_dir.glob("**/*.yaml")) +
+                      list(self.data_dir.glob("**/*.yml")))
+        for yf in yaml_files:
+            if not _is_project_file(yf):
+                continue
+            try:
+                with open(yf, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if data and isinstance(data, dict) and data.get('project_code') == project_code:
+                    return yf
+            except Exception:
+                continue
+        return None
+
+    def shift_group_dates(
+        self,
+        project_code: str,
+        group_name: str,
+        delta_days: int,
+    ) -> Tuple[bool, int, Optional[Path]]:
+        """
+        Shift every milestone in the given project whose parent_levels['1']
+        equals group_name (or whose parent_project equals group_name as
+        fallback) by delta_days. Both start_date and target_date are shifted.
+
+        Returns (success, n_shifted, backup_path).
+        """
+        import datetime as _dt
+
+        yaml_file = self._find_project_yaml(project_code)
+        if yaml_file is None:
+            return (False, 0, None)
+
+        try:
+            with open(yaml_file, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.error(f"shift_group_dates read failed for {yaml_file}: {e}")
+            return (False, 0, None)
+
+        milestones = data.get('milestones') or []
+        if not isinstance(milestones, list):
+            return (False, 0, None)
+
+        delta = _dt.timedelta(days=int(delta_days))
+
+        def _matches(ms: dict) -> bool:
+            pl = ms.get('parent_levels') or {}
+            if isinstance(pl, dict):
+                if pl.get('1') == group_name or pl.get(1) == group_name:
+                    return True
+            return ms.get('parent_project') == group_name
+
+        def _shift(value):
+            if not value:
+                return value
+            try:
+                d = _dt.date.fromisoformat(str(value)[:10])
+            except Exception:
+                return value
+            return (d + delta).isoformat()
+
+        n_shifted = 0
+        for ms in milestones:
+            if not isinstance(ms, dict):
+                continue
+            if not _matches(ms):
+                continue
+            if ms.get('target_date'):
+                ms['target_date'] = _shift(ms['target_date'])
+            if ms.get('start_date'):
+                ms['start_date'] = _shift(ms['start_date'])
+            n_shifted += 1
+
+        if n_shifted == 0:
+            logger.info(
+                f"shift_group_dates: no milestones matched group='{group_name}' in {project_code}"
+            )
+            return (True, 0, None)
+
+        backup_path = write_yaml_atomic_with_backup(yaml_file, data)
+        logger.info(
+            f"📅 shift_group_dates: {project_code}/{group_name} shifted "
+            f"{n_shifted} milestones by {delta_days}d (backup={backup_path.name if backup_path else 'none'})"
+        )
+        invalidate_project_cache()
+        return (True, n_shifted, backup_path)
+
+    def set_project_bounds(
+        self,
+        project_code: str,
+        start_date: Optional[str] = None,
+        target_completion: Optional[str] = None,
+    ) -> Tuple[bool, Optional[Path]]:
+        """
+        Update the project's stored start_date and/or target_completion.
+        Children (milestones) are NOT touched.
+
+        Returns (success, backup_path).
+        """
+        yaml_file = self._find_project_yaml(project_code)
+        if yaml_file is None:
+            return (False, None)
+
+        try:
+            with open(yaml_file, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.error(f"set_project_bounds read failed for {yaml_file}: {e}")
+            return (False, None)
+
+        changed = False
+        if start_date and data.get('start_date') != start_date:
+            data['start_date'] = start_date
+            changed = True
+        if target_completion and data.get('target_completion') != target_completion:
+            data['target_completion'] = target_completion
+            changed = True
+
+        if not changed:
+            return (True, None)
+
+        backup_path = write_yaml_atomic_with_backup(yaml_file, data)
+        logger.info(
+            f"📐 set_project_bounds: {project_code} start={start_date} "
+            f"target={target_completion} (backup={backup_path.name if backup_path else 'none'})"
+        )
+        invalidate_project_cache()
+        return (True, backup_path)
+

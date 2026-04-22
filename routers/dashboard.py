@@ -1504,6 +1504,152 @@ async def save_roadmap_settings(project_code: str, settings: dict = Body(...)):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# =============================================================================
+# Gantt drag persistence endpoints (Asana/Monday-style)
+# =============================================================================
+
+def _audit_drag_event(project_code: str, event: dict) -> None:
+    """Append one JSON-line to the per-programme drag audit log."""
+    try:
+        from datetime import datetime as _dt
+        audit_dir = DATA_DIR / "audit_logs"
+        audit_dir.mkdir(parents=True, exist_ok=True)
+        log_file = audit_dir / f"{project_code}_gantt_drag.log"
+        line = {"ts": _dt.utcnow().isoformat() + "Z", **event}
+        import json as _json
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(_json.dumps(line) + "\n")
+    except Exception as e:
+        logger.warning(f"audit log write failed: {e}")
+
+
+def _user_email_from_request(request: Request) -> str:
+    try:
+        sess = getattr(request, "session", None) or {}
+        return sess.get("user_email") or sess.get("email") or "unknown"
+    except Exception:
+        return "unknown"
+
+
+@router.post("/api/roadmap/{project_code}/group/shift")
+async def gantt_shift_group(project_code: str, request: Request, body: dict = Body(...)):
+    """
+    Shift every milestone of a sub-project (group) by N days.
+    Body: { group_name: str, delta_days: int, confirm: true }
+    Safety: requires confirm flag, caps |delta| at 365 days, writes timestamped backup.
+    """
+    try:
+        group_name = (body or {}).get("group_name")
+        delta_days = (body or {}).get("delta_days")
+        confirm = (body or {}).get("confirm")
+
+        if not group_name or not isinstance(group_name, str):
+            return JSONResponse({"error": "group_name required"}, status_code=400)
+        if not isinstance(delta_days, int):
+            try:
+                delta_days = int(delta_days)
+            except Exception:
+                return JSONResponse({"error": "delta_days must be int"}, status_code=400)
+        if confirm is not True:
+            return JSONResponse({"error": "confirm flag required"}, status_code=400)
+        if abs(delta_days) > 365:
+            return JSONResponse({"error": "delta_days exceeds 365-day cap"}, status_code=400)
+
+        from middleware.project_context import _get_user_repo
+        repo = _get_user_repo(request)
+        success, n_shifted, backup_path = repo.shift_group_dates(
+            project_code, group_name, delta_days
+        )
+        if not success:
+            return JSONResponse(
+                {"error": f"shift failed for {project_code}/{group_name}"},
+                status_code=500,
+            )
+
+        user_email = _user_email_from_request(request)
+        _audit_drag_event(project_code, {
+            "op": "group_shift",
+            "group_name": group_name,
+            "delta_days": delta_days,
+            "n_milestones": n_shifted,
+            "backup": backup_path.name if backup_path else None,
+            "user": user_email,
+        })
+
+        return {
+            "success": True,
+            "n_milestones_shifted": n_shifted,
+            "backup_path": backup_path.name if backup_path else None,
+            "undo_token": backup_path.name if backup_path else None,
+        }
+    except Exception as e:
+        logger.error(f"❌ gantt_shift_group failed: {e}", exc_info=True)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/api/roadmap/{project_code}/project-bounds")
+async def gantt_set_project_bounds(project_code: str, request: Request, body: dict = Body(...)):
+    """
+    Update a project's stored start_date / target_completion (summary edge drag).
+    Body: { start_date?: 'YYYY-MM-DD', target_completion?: 'YYYY-MM-DD', confirm: true }
+    Children (milestones) are NOT modified.
+    """
+    try:
+        start_date = (body or {}).get("start_date")
+        target_completion = (body or {}).get("target_completion")
+        confirm = (body or {}).get("confirm")
+
+        if confirm is not True:
+            return JSONResponse({"error": "confirm flag required"}, status_code=400)
+        if not start_date and not target_completion:
+            return JSONResponse(
+                {"error": "at least one of start_date / target_completion required"},
+                status_code=400,
+            )
+
+        # Basic ISO date validation
+        from datetime import date as _date
+        for label, val in (("start_date", start_date), ("target_completion", target_completion)):
+            if val:
+                try:
+                    _date.fromisoformat(str(val)[:10])
+                except Exception:
+                    return JSONResponse(
+                        {"error": f"{label} must be YYYY-MM-DD"}, status_code=400
+                    )
+
+        from middleware.project_context import _get_user_repo
+        repo = _get_user_repo(request)
+        success, backup_path = repo.set_project_bounds(
+            project_code,
+            start_date=start_date,
+            target_completion=target_completion,
+        )
+        if not success:
+            return JSONResponse(
+                {"error": f"project bounds update failed for {project_code}"},
+                status_code=500,
+            )
+
+        user_email = _user_email_from_request(request)
+        _audit_drag_event(project_code, {
+            "op": "project_bounds",
+            "start_date": start_date,
+            "target_completion": target_completion,
+            "backup": backup_path.name if backup_path else None,
+            "user": user_email,
+        })
+
+        return {
+            "success": True,
+            "backup_path": backup_path.name if backup_path else None,
+            "undo_token": backup_path.name if backup_path else None,
+        }
+    except Exception as e:
+        logger.error(f"❌ gantt_set_project_bounds failed: {e}", exc_info=True)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 from datetime import datetime
 
 
