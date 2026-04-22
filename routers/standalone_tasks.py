@@ -71,6 +71,8 @@ class TaskUpdateBody(BaseModel):
     category: Optional[str] = None
     notes: Optional[str] = None
     sub_tasks: Optional[list] = None
+    recurrence_cadence: Optional[str] = None   # daily|weekly|biweekly|monthly — triggers series conversion
+    recurrence_count: Optional[int] = None     # number of occurrences (≥2)
 
 
 class RescheduleBody(BaseModel):
@@ -143,10 +145,54 @@ async def get_task(request: Request, task_id: str):
 
 @router.put("/api/standalone-tasks/{task_id}")
 async def update_task(request: Request, task_id: str, body: TaskUpdateBody):
-    """Update an existing standalone task."""
+    """Update an existing standalone task.
+
+    If ``recurrence_cadence`` is supplied and the task is not yet recurring,
+    the task is converted to a series via ``convert_to_series()``.  The
+    original task becomes occurrence #1; ``recurrence_count``–1 new tasks
+    are created for subsequent occurrences.
+    """
     user_id = _require_user_id(request)
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
-    updated = _get_repo().update(user_id, task_id, updates)
+    repo = _get_repo()
+
+    # ── Series conversion path ───────────────────────────────────────────────
+    if body.recurrence_cadence:
+        existing = repo.get_by_id(user_id, task_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        if existing.get("recurrence_cadence"):
+            # Already recurring — only allow normal field updates (not re-conversion)
+            pass
+        else:
+            count = max(2, min(body.recurrence_count or 4, 52))
+            # Apply any non-recurrence field edits to the task first
+            non_recurrence_updates = {
+                k: v for k, v in body.model_dump().items()
+                if v is not None and k not in ("recurrence_cadence", "recurrence_count")
+            }
+            if non_recurrence_updates:
+                repo.update(user_id, task_id, non_recurrence_updates)
+
+            created = repo.convert_to_series(
+                user_id=user_id,
+                task_id=task_id,
+                recurrence_cadence=body.recurrence_cadence,
+                recurrence_count=count,
+            )
+            if not created:
+                raise HTTPException(status_code=404, detail="Task not found")
+            invalidate_calendar_cache()
+            return JSONResponse(
+                {"success": True, "tasks": created, "total": len(created), "converted": True}
+            )
+
+    # ── Normal single-task update path ───────────────────────────────────────
+    updates = {
+        k: v for k, v in body.model_dump().items()
+        if v is not None and k not in ("recurrence_cadence", "recurrence_count")
+    }
+    updated = repo.update(user_id, task_id, updates)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
     invalidate_calendar_cache()

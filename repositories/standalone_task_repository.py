@@ -342,6 +342,128 @@ class StandaloneTaskRepository:
         )
         return created_tasks
 
+    def convert_to_series(
+        self,
+        user_id: str,
+        task_id: str,
+        recurrence_cadence: str,
+        recurrence_count: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Convert a single non-recurring task into a recurring series.
+
+        The existing task becomes occurrence #1 (its id, sub_tasks and notes are
+        preserved).  recurrence_count – 1 new tasks are appended for later
+        occurrences.  Returns all N dicts in occurrence order.
+        """
+        valid_cadences = ("daily", "weekly", "biweekly", "monthly")
+        if recurrence_cadence not in valid_cadences:
+            raise ValueError(f"Invalid cadence: {recurrence_cadence!r}")
+        recurrence_count = min(max(2, recurrence_count), 52)
+
+        data = self._load(user_id)
+        tasks = data.get("tasks", [])
+
+        # Find the base task
+        base_task = next((t for t in tasks if t.get("id") == task_id), None)
+        if base_task is None:
+            return []
+
+        if base_task.get("recurrence_cadence"):
+            # Already recurring — nothing to convert
+            return [base_task]
+
+        now = datetime.now().isoformat()
+        series_id = str(uuid.uuid4())
+        base_title_raw = (base_task.get("title") or "").strip()
+        base_due = _ensure_date_str(base_task.get("due_date", ""))
+        base_start = _ensure_date_str(base_task.get("start_date", ""))
+
+        # Parse base dates
+        base_due_parsed = None
+        base_start_parsed = None
+        if base_due:
+            try:
+                base_due_parsed = datetime.strptime(base_due, "%Y-%m-%d").date()
+            except ValueError:
+                logger.error(f"❌ Cannot parse due_date '{base_due}' — aborting convert_to_series")
+                return [base_task]
+        if base_start:
+            try:
+                base_start_parsed = datetime.strptime(base_start, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
+        all_tasks: List[Dict[str, Any]] = []
+
+        for i in range(recurrence_count):
+            if i == 0:
+                # Mutate the existing task in-place
+                base_task["title"] = f"{base_title_raw} (1/{recurrence_count})"
+                base_task["recurrence_cadence"] = recurrence_cadence
+                base_task["recurrence_series_id"] = series_id
+                base_task["recurrence_occurrence"] = f"1 of {recurrence_count}"
+                base_task["updated_at"] = now
+                all_tasks.append(base_task)
+            else:
+                # Compute offset date
+                due_date = base_due
+                start_date = base_start
+                if base_due_parsed:
+                    d = base_due_parsed
+                    if recurrence_cadence == "daily":
+                        d = d + timedelta(days=i)
+                    elif recurrence_cadence == "weekly":
+                        d = d + timedelta(weeks=i)
+                    elif recurrence_cadence == "biweekly":
+                        d = d + timedelta(weeks=2 * i)
+                    elif recurrence_cadence == "monthly":
+                        month = d.month - 1 + i
+                        year = d.year + month // 12
+                        month = month % 12 + 1
+                        days_in_month = [
+                            31,
+                            29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                            31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+                        ][month - 1]
+                        day = min(d.day, days_in_month)
+                        d = d.replace(year=year, month=month, day=day)
+                    due_date = d.isoformat()
+                    if base_start_parsed:
+                        delta = d - base_due_parsed
+                        start_date = (base_start_parsed + delta).isoformat()
+
+                new_task = {
+                    "id": str(uuid.uuid4()),
+                    "title": f"{base_title_raw} ({i + 1}/{recurrence_count})",
+                    "description": base_task.get("description") or "",
+                    "start_date": start_date,
+                    "due_date": due_date,
+                    "status": "NOT_STARTED",
+                    "priority": base_task.get("priority") or "MEDIUM",
+                    "owner": base_task.get("owner") or "",
+                    "resources": base_task.get("resources") or "",
+                    "category": base_task.get("category") or "",
+                    "notes": base_task.get("notes") or "",
+                    "sub_tasks": [],
+                    "created_at": now,
+                    "updated_at": now,
+                    "completed_at": None,
+                    "recurrence_cadence": recurrence_cadence,
+                    "recurrence_series_id": series_id,
+                    "recurrence_occurrence": f"{i + 1} of {recurrence_count}",
+                }
+                tasks.append(new_task)
+                all_tasks.append(new_task)
+
+        data["tasks"] = tasks
+        self._save(user_id, data)
+        logger.info(
+            f"✅ Converted task {task_id} to recurring series "
+            f"({recurrence_count}× {recurrence_cadence}) for user {user_id}"
+        )
+        return all_tasks
+
     def update(self, user_id: str, task_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update allowed fields on a task.  Returns updated task or None."""
         data = self._load(user_id)

@@ -2951,11 +2951,13 @@ function showConfirm(message) {
 let _stModalMode = 'create';  // 'create' | 'edit'
 let _stTaskId = null;
 let _stSubTaskData = [];  // [{id, title, completed}] for edit mode
+let _stOriginalCadence = null;  // cadence already persisted on the task being edited
 
 function openNewStandaloneTaskModal(date = null) {
     _stModalMode = 'create';
     _stTaskId = null;
     _stSubTaskData = [];
+    _stOriginalCadence = null;
     _resetStForm();
     if (date) document.getElementById('stDueDate').value = date;
     document.getElementById('stModalTypeLabel').textContent = 'New Task';
@@ -2992,7 +2994,8 @@ async function openEditStandaloneTaskModal(taskId) {
         document.getElementById('stCategory').value = t.category || '';
         document.getElementById('stDescription').value = t.description || '';
 
-        // Recurrence — show existing but don't allow changing in edit mode (too complex)
+        // Recurrence — track the stored cadence so submit can detect new selections
+        _stOriginalCadence = t.recurrence_cadence || null;
         if (t.recurrence_cadence) {
             document.getElementById('stCadence').value = t.recurrence_cadence;
             document.getElementById('stCadence').disabled = true;
@@ -3000,7 +3003,7 @@ async function openEditStandaloneTaskModal(taskId) {
             onCadenceChange();
             const previewEl = document.getElementById('recurrencePreview');
             if (previewEl) {
-                previewEl.textContent = `Part of a recurring series${t.recurrence_occurrence ? ' — ' + t.recurrence_occurrence : ''}. Edit cadence by deleting and recreating.`;
+                previewEl.textContent = `Part of a recurring series${t.recurrence_occurrence ? ' — ' + t.recurrence_occurrence : ''}. Cadence cannot be changed after creation.`;
                 previewEl.classList.remove('hidden');
             }
             // Open recurrence section so user can see it
@@ -3008,6 +3011,9 @@ async function openEditStandaloneTaskModal(taskId) {
             const chevron = document.getElementById('recurrenceChevron');
             if (section) section.classList.remove('hidden');
             if (chevron) chevron.style.transform = 'rotate(180deg)';
+        } else {
+            _stOriginalCadence = null;
+            // Leave recurrence fields enabled so user can convert task to a series
         }
 
         // Sub-tasks
@@ -3200,12 +3206,13 @@ async function submitStandaloneTaskForm() {
         sub_tasks: _stSubTaskData.map(s => ({ id: s.id, title: s.title, completed: s.completed, created_at: s.created_at || new Date().toISOString() })),
     };
 
-    if (_stModalMode === 'create') {
-        const cadence = document.getElementById('stCadence').value;
-        if (cadence) {
-            payload.recurrence_cadence = cadence;
-            payload.recurrence_count = parseInt(document.getElementById('stRecurrenceCount').value) || 1;
-        }
+    // Include recurrence when:
+    //   - creating with a cadence selected, OR
+    //   - editing a non-recurring task and the user has just selected a cadence
+    const cadence = document.getElementById('stCadence').value;
+    if (cadence && !_stOriginalCadence) {
+        payload.recurrence_cadence = cadence;
+        payload.recurrence_count = parseInt(document.getElementById('stRecurrenceCount').value) || 4;
     }
 
     try {
@@ -3223,11 +3230,15 @@ async function submitStandaloneTaskForm() {
         }
         const result = await resp.json();
         closeStandaloneTaskModal();
-        const count = result.tasks ? result.tasks.length : 1;
-        showToast(count > 1 ? `✓ Created ${count} recurring tasks` : '✓ Task saved', 'success');
-        // Deferred sync picks up the new/updated task(s)
-        refreshCalendar();
-        _scheduleDeferredSync(500);  // shorter delay for creates/edits so the new item appears quickly
+        let toastMsg = '✓ Task saved';
+        if (result.converted) {
+            toastMsg = `✓ Converted to recurring series (${result.total} occurrences)`;
+        } else if (result.tasks && result.tasks.length > 1) {
+            toastMsg = `✓ Created ${result.tasks.length} recurring tasks`;
+        }
+        showToast(toastMsg, 'success');
+        // Fetch fresh events from server so all new occurrences appear immediately
+        await reloadCalendarEvents();
     } catch (err) {
         console.error('submitStandaloneTaskForm error:', err);
         errEl.textContent = 'Save failed: ' + err.message;
