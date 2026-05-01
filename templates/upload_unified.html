@@ -883,6 +883,13 @@ async function uploadProjectFile() {
         // Get CSRF token
         const csrfToken = document.getElementById('csrfToken').value;
         
+        console.log('Uploading file:', projectFile.name, 'Size:', projectFile.size, 'bytes');
+        console.log('Form data:', {
+            is_baseline: isBaseline ? 'true' : 'false',
+            target_project_code: selectedProjectCode || 'none',
+            clear_previous_changes: 'false'
+        });
+        
         const response = await fetch('/upload/xml', {
             method: 'POST',
             headers: {
@@ -891,7 +898,16 @@ async function uploadProjectFile() {
             body: formData
         });
         
-        const data = await response.json();
+        console.log('Response status:', response.status, response.statusText);
+        
+        let data;
+        try {
+            data = await response.json();
+            console.log('Response data:', data);
+        } catch (jsonError) {
+            console.error('Failed to parse JSON response:', jsonError);
+            throw new Error(`Server returned invalid response (Status: ${response.status})`);
+        }
         
         document.getElementById('projectProgress').classList.add('hidden');
         
@@ -909,19 +925,45 @@ async function uploadProjectFile() {
                 window.location.href = `/dashboard/gantt?project=${encodeURIComponent(data.project_code)}`;
             }, 2000);
         } else {
-            // Better error logging
+            // Extract error message from various possible formats
+            let errorMsg = 'Upload failed. Please try again.';
+            
+            if (data.error) {
+                errorMsg = data.error;
+            } else if (data.detail) {
+                if (typeof data.detail === 'string') {
+                    errorMsg = data.detail;
+                } else if (Array.isArray(data.detail)) {
+                    // FastAPI validation errors format
+                    errorMsg = data.detail.map(err => 
+                        `${err.loc ? err.loc.join('.') + ': ' : ''}${err.msg}`
+                    ).join('; ');
+                } else {
+                    errorMsg = JSON.stringify(data.detail);
+                }
+            } else if (data.message) {
+                errorMsg = data.message;
+            }
+            
             console.error('Upload failed:', {
                 status: response.status,
                 statusText: response.statusText,
-                result: data
+                data: data,
+                errorMessage: errorMsg
             });
             
-            throw new Error(data.error || data.detail || 'Upload failed. Please try again.');
+            throw new Error(errorMsg);
         }
     } catch (error) {
+        console.error('Upload error caught:', error);
+        
         document.getElementById('projectProgress').classList.add('hidden');
         document.getElementById('projectError').classList.remove('hidden');
-        document.getElementById('projectErrorMessage').textContent = error.message;
+        
+        // Display the actual error message
+        const errorMessage = error.message || String(error);
+        document.getElementById('projectErrorMessage').textContent = errorMessage;
+        
         document.getElementById('projectUploadBtn').disabled = false;
     }
 }
